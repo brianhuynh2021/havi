@@ -15,17 +15,18 @@ Mọi báo cáo đo bằng **khách hỏi giá / khách đến tiệm / khách q
 
 | Thư mục | Nội dung |
 |---|---|
-| [`design/`](design/) | 6 prototype high-fidelity dạng `.dc.html` (mở trực tiếp trong trình duyệt) + `support.js` |
-| [`docs/`](docs/) | Tài liệu handoff, roadmap, technical spec, chiến lược repo |
+| [`prototypes/`](prototypes/) | 6 prototype high-fidelity dạng `.dc.html` (mở trực tiếp trong trình duyệt) + `support.js` |
+| [`docs/`](docs/) | Tài liệu được chia theo nhóm: handoff, product, architecture |
 
 ### Tài liệu chính
 
-- [docs/HANDOFF.md](docs/HANDOFF.md) — mô tả chi tiết từng màn hình, fidelity, luồng duyệt bài
-- [docs/ROADMAP.md](docs/ROADMAP.md) — lộ trình sản phẩm
-- [docs/TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md) — đặc tả kỹ thuật
-- [docs/REPOSITORY_STRATEGY.md](docs/REPOSITORY_STRATEGY.md) — chiến lược tổ chức repo
+- [docs/README.md](docs/README.md) — index tài liệu theo từng nhóm
+- [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — mô tả chi tiết từng màn hình, fidelity, luồng duyệt bài
+- [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — lộ trình sản phẩm
+- [docs/architecture/TECHNICAL_SPEC.md](docs/architecture/TECHNICAL_SPEC.md) — đặc tả kỹ thuật
+- [docs/architecture/REPOSITORY_STRATEGY.md](docs/architecture/REPOSITORY_STRATEGY.md) — chiến lược tổ chức repo
 
-### Prototype (`design/`)
+### Prototype (`prototypes/`)
 
 | File | Màn hình |
 |---|---|
