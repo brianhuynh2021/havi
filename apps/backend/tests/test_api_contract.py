@@ -1,0 +1,42 @@
+"""Kiểm tra app khởi động được và OpenAPI có đủ endpoint theo TECHNICAL_SPEC."""
+
+import pytest
+from fastapi.testclient import TestClient
+
+from api.main import create_app
+
+
+@pytest.fixture(scope="module")
+def client() -> TestClient:
+    return TestClient(create_app())
+
+
+def test_health_khong_can_token(client: TestClient):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/auth/otp/request",
+        "/workspaces",
+        "/brand-profile",
+        "/media",
+        "/content",
+        "/calendar",
+        "/connections",
+        "/inbox",
+        "/leads",
+        "/crm-messages",
+        "/analytics/summary",
+        "/billing/subscription",
+    ],
+)
+def test_openapi_co_du_domain(client: TestClient, path: str):
+    assert path in client.get("/openapi.json").json()["paths"]
+
+
+def test_endpoint_nghiep_vu_yeu_cau_bearer_token(client: TestClient):
+    assert client.get("/content").status_code == 401

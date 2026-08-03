@@ -13,16 +13,34 @@ Mọi báo cáo đo bằng **khách hỏi giá / khách đến tiệm / khách q
 
 ## Cấu trúc repo
 
+Monorepo `havi-platform`, frontend và backend tách kiến trúc nhưng chung repo:
+
 | Thư mục | Nội dung |
 |---|---|
+| [`apps/web/`](apps/web/) | Next.js frontend |
+| [`apps/backend/`](apps/backend/) | FastAPI API + Celery worker + scheduler + domain core |
 | [`prototypes/`](prototypes/) | 6 prototype high-fidelity dạng `.dc.html` (mở trực tiếp trong trình duyệt) + `support.js` |
 | [`docs/`](docs/) | Tài liệu được chia theo nhóm: handoff, product, architecture |
+
+## Chạy local
+
+```bash
+npm install && npm run dev:web
+```
+
+```bash
+cd apps/backend && cp .env.example .env && uv sync --extra dev && cd ../.. && npm run dev:api
+```
+
+Web ở <http://localhost:3000>, API ở <http://localhost:8000> (Swagger tại `/docs`).
+Chi tiết backend: [`apps/backend/README.md`](apps/backend/README.md).
 
 ### Tài liệu chính
 
 - [docs/README.md](docs/README.md) — index tài liệu theo từng nhóm
 - [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — mô tả chi tiết từng màn hình, fidelity, luồng duyệt bài
 - [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — lộ trình sản phẩm
+- [docs/architecture/SYSTEM_ARCHITECTURE.md](docs/architecture/SYSTEM_ARCHITECTURE.md) — sơ đồ hệ thống, frontend và state nội dung
 - [docs/architecture/TECHNICAL_SPEC.md](docs/architecture/TECHNICAL_SPEC.md) — đặc tả kỹ thuật
 - [docs/architecture/REPOSITORY_STRATEGY.md](docs/architecture/REPOSITORY_STRATEGY.md) — chiến lược tổ chức repo
 
@@ -39,10 +57,11 @@ Mọi báo cáo đo bằng **khách hỏi giá / khách đến tiệm / khách q
 
 > Các file `.dc.html` là **design reference** thể hiện giao diện & hành vi mong muốn — không phải production code để copy. Nhiệm vụ: tái tạo pixel-perfect trong codebase thật.
 
-## Tech stack (dự kiến)
+## Tech stack
 
-- **Frontend:** Next.js
-- **Backend:** FastAPI
+- **Frontend:** Next.js 16 (App Router, TypeScript)
+- **Backend:** FastAPI + Celery (worker & Beat), PostgreSQL, Redis
+- **Contract:** OpenAPI — backend là nguồn sự thật, frontend sinh TypeScript client từ đó
 
 ## License
 

@@ -1,0 +1,509 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-background);
+  color: var(--color-ink);
+}
+
+.sidebar {
+  width: 232px;
+  flex: none;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px 14px;
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 20px;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.brandText {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #c9c0b8;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-paper);
+}
+
+.navItemActive {
+  background: rgba(212, 149, 111, 0.25);
+  color: #fff;
+}
+
+.navDot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+}
+
+.navBadge {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.workspaceCard {
+  margin-top: auto;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.workspaceLabel {
+  font-size: 12px;
+  color: #c9c0b8;
+}
+
+.workspaceName {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.workspaceChips {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workspaceChip {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(212, 149, 111, 0.25);
+  color: #e8c4a8;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  padding: 28px 36px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.cardButton,
+.zaloBanner,
+.activityCard {
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.cardButton {
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 160ms ease;
+}
+
+.cardButton:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.statValue {
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.statLabel {
+  margin-top: 4px;
+  color: var(--color-body);
+  font-size: 13px;
+}
+
+.uploadCard {
+  margin-top: 20px;
+  padding: 32px;
+  border: 2px dashed var(--color-primary);
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.uploadTitle {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.uploadBody {
+  max-width: 440px;
+  margin: 8px auto 0;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 14px 28px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.primaryButton:hover {
+  background: var(--color-primary-dark);
+}
+
+.darkCard {
+  margin-top: 20px;
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+}
+
+.darkHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.darkTitle {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.darkMeta {
+  color: #c9c0b8;
+  font-size: 12px;
+}
+
+.suggestionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.suggestionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.suggestionTag {
+  color: #e8c4a8;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.suggestionText {
+  color: var(--color-paper);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.ghostButton {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.ghostButton:hover {
+  background: var(--color-primary-dark);
+}
+
+.successPill {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-success);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.zaloBanner {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 24px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+}
+
+.zaloBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--color-info);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.zaloTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.zaloBody {
+  margin-top: 3px;
+  color: var(--color-body);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.statusPill {
+  padding: 5px 12px;
+  border: 1px solid #cde3d2;
+  border-radius: 999px;
+  background: #f0f7f1;
+  color: var(--color-success);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.activityCard {
+  margin-top: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+}
+
+.sectionEyebrow {
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.activityList {
+  margin-top: 8px;
+}
+
+.activityItem {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.activityItem:last-child {
+  border-bottom: 0;
+}
+
+.activityTime {
+  color: var(--color-muted);
+  font-size: 11.5px;
+}
+
+.activityText {
+  color: var(--color-ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.activityTag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--color-surface-soft);
+  color: var(--color-primary-dark);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    height: auto;
+    position: static;
+  }
+
+  .main {
+    max-width: none;
+    padding: 24px 20px 40px;
+  }
+
+  .statsGrid,
+  .suggestionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .zaloBanner {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .activityItem {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .activityTag {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .mobileNav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .mobileNavItem {
+    white-space: nowrap;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-paper);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mobileNavItemActive {
+    background: rgba(212, 149, 111, 0.25);
+    border-color: rgba(212, 149, 111, 0.4);
+  }
+
+  .main {
+    padding: 20px 16px 32px;
+  }
+
+  .uploadCard,
+  .darkCard,
+  .activityCard {
+    padding: 20px;
+  }
+}
