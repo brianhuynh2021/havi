@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F1ED;}
+a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:underline;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;">
+  <header style="background:#fff;border-bottom:1px solid #E0D9D3;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="width:44px;height:44px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:20px;">Ha</div>
+      <div>
+        <div style="font-family:Merriweather,serif;font-weight:900;font-size:20px;">Havi</div>
+        <div style="font-size:12.5px;color:#4A4A4A;">Hệ Sinh Thái AI Marketing Đa Ngành <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><span style="color:#8A817A;">· One-tap marketing engine</span></sc-if></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="background:#F5F1ED;border:1px solid #E0D9D3;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;color:#4A4A4A;">Bản demo gọi vốn · Investor demo</span>
+    </div>
+  </header>
+
+  <main style="max-width:1240px;margin:0 auto;padding:32px;display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;">
+
+    <aside style="position:sticky;top:24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#B8744D;text-transform:uppercase;">Bạn là ai?</div>
+        <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#8A817A;margin-top:2px;">Pick your industry</div></sc-if>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+          <sc-for list="{{ personaList }}" as="p" hint-placeholder-count="3">
+            <button onClick="{{ p.pick }}" style="display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;background:{{ p.bg }};border:1px solid {{ p.bd }};" style-hover="border-color:#D4956F;">
+              <span style="width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;background:{{ p.badgeBg }};">{{ p.badge }}</span>
+              <span>
+                <span style="display:block;font-weight:600;font-size:14px;color:#2C2C2C;">{{ p.label }}</span>
+                <span style="display:block;font-size:12px;color:#8A817A;">{{ p.sub }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#B8744D;text-transform:uppercase;">Liệu thô đã nạp sẵn</div>
+        <div style="font-size:12.5px;color:#8A817A;margin-top:2px;">Mất chưa tới 30 giây — không cần viết prompt</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+          <sc-for list="{{ inputs }}" as="it" hint-placeholder-count="3">
+            <div style="display:flex;gap:10px;align-items:flex-start;background:#F5F1ED;border:1px solid #E0D9D3;border-radius:8px;padding:10px 12px;">
+              <span style="flex:none;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#3B6B9F;background:#fff;border:1px solid #E0D9D3;border-radius:4px;padding:3px 7px;margin-top:1px;">{{ it.k }}</span>
+              <span style="font-size:13px;line-height:1.45;color:#4A4A4A;flex:1;">{{ it.t }}</span>
+              <sc-if value="{{ it.done }}" hint-placeholder-val="{{ false }}"><span style="color:#5FA76F;font-weight:700;">✓</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <button onClick="{{ run }}" disabled="{{ running }}" style="width:100%;padding:18px;border:none;border-radius:10px;background:#D4956F;color:#fff;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);" style-hover="background:#B8744D;">{{ runLabel }}</button>
+      <button onClick="{{ reset }}" style="width:100%;padding:10px;border:none;background:none;color:#8A817A;font-family:Inter,sans-serif;font-size:13px;cursor:pointer;" style-hover="color:#B8744D;">Chạy lại từ đầu · Reset</button>
+    </aside>
+
+    <section style="display:flex;flex-direction:column;gap:16px;">
+      <div style="padding:0 4px 4px;">
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;line-height:1.25;">Từ liệu thô đến khách hàng thật — chỉ 1 nút bấm</h1>
+        <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><p style="margin:6px 0 0;font-size:13.5px;color:#8A817A;">Raw input → published content → real leads, in one automated run.</p></sc-if>
+      </div>
+
+      <div style="background:#fff;border:1px solid {{ s1Bd }};border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:{{ s1Bg }};">1</span>
+          <div style="flex:1;">
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">Nạp Liệu Thô</div>
+            <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#8A817A;">Raw input — built for busy people</div></sc-if>
+          </div>
+          <span style="font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;background:{{ s1ChipBg }};color:{{ s1ChipFg }};">{{ s1Text }}</span>
+        </div>
+        <p style="margin:12px 0 0 50px;font-size:13.5px;line-height:1.55;color:#4A4A4A;">Ảnh chụp vội, ghi âm lủng củng, 3 gạch đầu dòng — hệ thống nhận tất. Danh sách liệu thô ở cột bên trái sẽ được nạp tự động khi bấm chạy.</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid {{ s2Bd }};border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:{{ s2Bg }};">2</span>
+          <div style="flex:1;">
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">Lò Phản Ứng AI</div>
+            <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#8A817A;">AI processing engine</div></sc-if>
+          </div>
+          <span style="font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;background:{{ s2ChipBg }};color:{{ s2ChipFg }};">{{ s2Text }}</span>
+        </div>
+        <div style="margin:14px 0 0 50px;display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ mediaSteps }}" as="m" hint-placeholder-count="3">
+            <sc-if value="{{ m.show }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4A4A4A;">
+                <span style="color:#5FA76F;font-weight:700;">✓</span><span>{{ m.t }}</span>
+              </div>
+            </sc-if>
+          </sc-for>
+          <sc-if value="{{ s2Idle }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:#8A817A;font-style:italic;">Tự nhận diện ngành nghề, xử lý ảnh/video và chế bản nội dung đa kênh…</div></sc-if>
+        </div>
+        <sc-if value="{{ s2Done }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:16px 0 0 50px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <sc-for list="{{ posts }}" as="po" hint-placeholder-count="4">
+              <div style="border:1px solid #E0D9D3;border-radius:8px;padding:12px 14px;background:#F5F1ED;">
+                <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                  <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#B8744D;">{{ po.tag }}</span>
+                  <span style="font-size:11px;color:#8A817A;">{{ po.ch }}</span>
+                </div>
+                <div style="font-size:12.5px;line-height:1.5;color:#2C2C2C;">{{ po.txt }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="background:#fff;border:1px solid {{ s3Bd }};border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:{{ s3Bg }};">3</span>
+          <div style="flex:1;">
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">Tổng Đài Phân Phối</div>
+            <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#8A817A;">Auto-publishing to every channel</div></sc-if>
+          </div>
+          <span style="font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;background:{{ s3ChipBg }};color:{{ s3ChipFg }};">{{ s3Text }}</span>
+        </div>
+        <div style="margin:14px 0 0 50px;display:flex;flex-direction:column;gap:8px;">
+          <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid #E0D9D3;border-radius:8px;padding:10px 14px;background:#F5F1ED;">
+              <span style="flex:1;font-size:13.5px;font-weight:600;color:#2C2C2C;">{{ ch.n }}</span>
+              <span style="font-size:12px;color:#8A817A;">{{ ch.time }}</span>
+              <sc-if value="{{ ch.done }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:3px 10px;">Đã đăng</span></sc-if>
+              <sc-if value="{{ ch.wait }}" hint-placeholder-val="{{ true }}"><span style="font-size:11.5px;font-weight:600;color:#8A817A;background:#fff;border:1px solid #E0D9D3;border-radius:999px;padding:3px 10px;">Chờ</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid {{ s4Bd }};border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:24px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:{{ s4Bg }};">4</span>
+          <div style="flex:1;">
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">Máy Săn Mồi &amp; Chăm Sóc</div>
+            <sc-if value="{{ showEn }}" hint-placeholder-val="{{ true }}"><div style="font-size:12px;color:#8A817A;">Seeding bots &amp; automated CRM</div></sc-if>
+          </div>
+          <span style="font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;background:{{ s4ChipBg }};color:{{ s4ChipFg }};">{{ s4Text }}</span>
+        </div>
+        <div style="margin:14px 0 0 50px;display:flex;flex-direction:column;gap:8px;">
+          <sc-if value="{{ s4Empty }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:#8A817A;font-style:italic;">Bot quét hội nhóm &amp; CRM đếm ngược sẽ hoạt động sau khi nội dung được đăng…</div></sc-if>
+          <sc-for list="{{ feed }}" as="f" hint-placeholder-count="0">
+            <div style="border-left:3px solid #3B6B9F;background:#F5F1ED;border-radius:0 8px 8px 0;padding:10px 14px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#3B6B9F;margin-bottom:4px;">{{ f.t }}</div>
+              <div style="font-size:13px;line-height:1.5;color:#2C2C2C;">{{ f.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ showResults }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#2C2C2C;border-radius:12px;padding:24px;color:#F5F1ED;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Kết quả sau 1 chu trình</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:14px;">
+            <sc-for list="{{ metrics }}" as="mt" hint-placeholder-count="3">
+              <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px;">
+                <div style="font-family:Merriweather,serif;font-weight:900;font-size:28px;color:#D4956F;">{{ mt.v }}</div>
+                <div style="font-size:12.5px;color:#C9C0B8;margin-top:4px;">{{ mt.l }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin:16px 0 0;font-size:13.5px;line-height:1.55;color:#C9C0B8;">Đây là <strong style="color:#F5F1ED;">một</strong> chu trình. Hệ thống lặp lại mỗi ngày, cho mọi ngành nghề — spa, môi giới, kỹ sư — mà người dùng chỉ cần đúng 1 nút bấm.</p>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.5,&quot;max&quot;:3,&quot;step&quot;:0.25,&quot;unit&quot;:&quot;x&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;showEnglish&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Nội dung&quot;}}">
+class Component extends DCLogic {
+  state = { persona: 'spa', running: false, st: [0,0,0,0], logs: [0,0,0,0], showResults: false };
+  timers = [];
+  DATA = {
+    spa: {
+      label: 'Spa / Tiệm Nước', sub: 'Chủ tiệm địa phương', badge: 'SP', badgeBg: '#D4956F',
+      inputs: [
+        {k:'Ảnh', t:'1 ảnh Before/After của khách vừa làm da'},
+        {k:'Ảnh', t:'Ảnh ly nước mới ra mắt tuần này'},
+        {k:'Ghi chú', t:'"Combo chăm da mùa hè, giảm 20%"'}],
+      media: ['Tăng sáng ảnh, làm mịn da tự động','Chèn logo tiệm vào góc ảnh','Nhận diện ngành: Spa → áp chuỗi prompt phù hợp'],
+      posts: [
+        {tag:'Review địa phương', ch:'Fanpage', txt:'Da bạn ấy "lột xác" sau 5 buổi — ảnh trước/sau thật 100%, không chỉnh quá tay.'},
+        {tag:'Google Maps', ch:'Maps', txt:'Không gian sạch, kỹ thuật viên nhẹ tay — điểm chăm da đáng thử ở Quận 7.'},
+        {tag:'Giật tít ngắn', ch:'Zalo', txt:'MỤN LÂU NĂM? Buổi thử chỉ 99K — inbox giữ chỗ ngay hôm nay.'},
+        {tag:'Kịch bản Reels', ch:'Reels', txt:'Cảnh 1: cận da trước · Cảnh 2: quy trình · Cảnh 3: kết quả + voucher.'}],
+      channels: [
+        {n:'Fanpage Facebook', time:'19:30 · khung giờ vàng'},
+        {n:'Google Maps của tiệm', time:'Cập nhật ngay'},
+        {n:'Zalo OA', time:'20:15'}],
+      feed: [
+        {t:'Bot phát hiện', d:'"Có chỗ nào nặn mụn uy tín ở Q7 không các mẹ?" — nhóm FB Đẹp Cùng Nhau'},
+        {t:'Soạn trả lời — chủ duyệt & gửi', d:'"Chào bạn, mình là chủ Spa An Nhiên gần đó — có buổi thử 99K, bảng giá trong bài này nha →" kèm link bài viết'},
+        {t:'CRM tự động', d:'Khách cũ Ngọc Anh đủ 15 ngày → gửi Zalo ZNS tặng voucher giảm 20%'}],
+      metrics: [{v:'1.240', l:'lượt tiếp cận'},{v:'32', l:'tin nhắn hỏi giá'},{v:'8', l:'lịch hẹn mới'}]
+    },
+    bds: {
+      label: 'Môi Giới / Tín Dụng', sub: 'BĐS, vay vốn', badge: 'MG', badgeBg: '#3B6B9F',
+      inputs: [
+        {k:'Gõ tay', t:'"Nhà Q7 · 4 tỷ · sổ hồng riêng · cần bán gấp"'},
+        {k:'Ảnh', t:'5 ảnh chụp vội bằng điện thoại'}],
+      media: ['Làm nét & tăng sáng 5 tấm ảnh','Chèn số điện thoại môi giới vào ảnh','Nhận diện ngành: BĐS → áp chuỗi prompt phù hợp'],
+      posts: [
+        {tag:'Giật tít FOMO', ch:'Facebook/Zalo', txt:'CHỦ KẸT TIỀN BÁN GẤP nhà Q7 chỉ 4 tỷ — sổ hồng riêng, xem là chốt!'},
+        {tag:'Chuẩn SEO', ch:'Website', txt:'Bán nhà Quận 7 giá 4 tỷ: vị trí, pháp lý và định giá khu vực 2026.'},
+        {tag:'Tin rao vặt', ch:'Chợ Tốt', txt:'Nhà Q7, 4 tỷ, sổ hồng riêng — thương lượng nhẹ cho khách thiện chí.'},
+        {tag:'Kịch bản video', ch:'Reels', txt:'Tour nhà 15 giây: cổng → phòng khách → gác · chốt bằng giá + SĐT.'}],
+      channels: [
+        {n:'Zalo cá nhân', time:'Đăng ngay'},
+        {n:'Fanpage Facebook', time:'20:00 · khung giờ vàng'},
+        {n:'Website rao vặt', time:'Đăng ngay'}],
+      feed: [
+        {t:'Bot phát hiện', d:'"Tầm 4 tỷ nên mua khu nào ở Q7 vậy mọi người?" — group Mua Bán Nhà Đất SG'},
+        {t:'Soạn trả lời — chủ duyệt & gửi', d:'"Chào anh, em là môi giới khu Q7 — đúng tầm 4 tỷ em vừa có căn sổ riêng, anh xem thử →" kèm link bài'},
+        {t:'CRM tự động', d:'Khách hỏi giá 14 ngày trước → Zalo: "Căn anh hỏi vừa giảm 100 triệu…"'}],
+      metrics: [{v:'2.150', l:'lượt tiếp cận'},{v:'18', l:'khách hỏi giá'},{v:'2', l:'lịch hẹn xem nhà'}]
+    },
+    ks: {
+      label: 'Kỹ Sư / Chuyên Gia', sub: 'Xây thương hiệu cá nhân', badge: 'KS', badgeBg: '#4A4A4A',
+      inputs: [
+        {k:'Ghi âm', t:'2 phút kể lại lỗi timeout hệ thống thanh toán vừa sửa'},
+        {k:'Code', t:'Đoạn code retry-queue dán thô, chưa chú thích'},
+        {k:'Ghi chú', t:'"Đăng LinkedIn, giọng điềm đạm"'}],
+      media: ['Bóc băng ghi âm thành văn bản','Nhận diện ngành: Kỹ sư phần mềm','Áp chuỗi prompt "Chuyên gia điềm đạm"'],
+      posts: [
+        {tag:'Phân tích chuyên sâu', ch:'LinkedIn', txt:'Timeout không phải lỗi mạng — 3 bài học khi hàng đợi thanh toán quá tải.'},
+        {tag:'Chuẩn SEO', ch:'Blog/WordPress', txt:'Xử lý retry queue: hướng dẫn từng bước kèm code mẫu.'},
+        {tag:'Kịch bản video', ch:'YouTube', txt:'Mở đầu: tái hiện lỗi · Thân: sơ đồ luồng · Kết: checklist phòng tránh.'},
+        {tag:'Bài siêu ngắn', ch:'Facebook', txt:'Hệ thống sập lúc 2h sáng và cách mình cứu nó trong 20 phút →'}],
+      channels: [
+        {n:'LinkedIn cá nhân', time:'08:30 · giờ vàng dân văn phòng'},
+        {n:'YouTube (mô tả video)', time:'12:00'},
+        {n:'Blog WordPress', time:'Đăng ngay'}],
+      feed: [
+        {t:'Bot phát hiện', d:'"Có ai từng gặp lỗi timeout khi tích hợp cổng thanh toán?" — nhóm LinkedIn Dev Việt'},
+        {t:'Soạn trả lời — chủ duyệt & gửi', d:'"Mình vừa viết bài mổ xẻ đúng lỗi này, kèm code mẫu →" kèm link bài viết'},
+        {t:'CRM tự động', d:'Khách tư vấn cũ đủ 30 ngày → email gửi tài liệu chuyên sâu miễn phí'}],
+      metrics: [{v:'5.800', l:'lượt xem bài viết'},{v:'46', l:'kết nối mới'},{v:'3', l:'lời mời tư vấn'}]
+    }
+  };
+  clearTimers() { this.timers.forEach(clearTimeout); this.timers = []; }
+  componentWillUnmount() { this.clearTimers(); }
+  at(ms, fn) { this.timers.push(setTimeout(fn, ms)); }
+  setSt(i, v, next) {
+    this.setState(s => { const st = [...s.st]; st[i] = v; if (next != null) st[next] = 1; return { st }; });
+  }
+  run() {
+    if (this.state.running) return;
+    this.clearTimers();
+    const sp = this.props.demoSpeed ?? 1;
+    const d = ms => ms / sp;
+    this.setState({ running: true, showResults: false, st: [1,0,0,0], logs: [0,0,0,0] });
+    const P = this.DATA[this.state.persona];
+    const counts = [P.inputs.length, P.media.length, P.channels.length, P.feed.length];
+    const stepMs = [450, 650, 550, 950];
+    let t = 300;
+    counts.forEach((n, i) => {
+      for (let k = 1; k <= n; k++) {
+        t += stepMs[i];
+        const kk = k;
+        this.at(d(t), () => this.setState(s => { const logs = [...s.logs]; logs[i] = kk; return { logs }; }));
+      }
+      t += 450;
+      this.at(d(t), () => this.setSt(i, 2, i < 3 ? i + 1 : null));
+    });
+    t += 500;
+    this.at(d(t), () => this.setState({ running: false, showResults: true }));
+  }
+  reset() {
+    this.clearTimers();
+    this.setState({ running: false, st: [0,0,0,0], logs: [0,0,0,0], showResults: false });
+  }
+  pick(id) {
+    this.clearTimers();
+    this.setState({ persona: id, running: false, st: [0,0,0,0], logs: [0,0,0,0], showResults: false });
+  }
+  stVals(i) {
+    const v = this.state.st[i];
+    if (v === 1) return { bd: '#D4956F', bg: '#D4956F', chipBg: '#D4956F', chipFg: '#fff', text: 'Đang xử lý…' };
+    if (v === 2) return { bd: '#5FA76F', bg: '#5FA76F', chipBg: '#5FA76F', chipFg: '#fff', text: 'Hoàn tất' };
+    return { bd: '#E0D9D3', bg: '#C9C0B8', chipBg: '#EDE7E1', chipFg: '#8A817A', text: 'Chờ chạy' };
+  }
+  renderVals() {
+    const s = this.state;
+    const P = this.DATA[s.persona];
+    const out = {
+      showEn: this.props.showEnglish ?? true,
+      running: s.running, showResults: s.showResults,
+      run: () => this.run(), reset: () => this.reset(),
+      runLabel: s.running ? 'Đang chạy tự động…' : 'Chạy Tự Động — 1 Nút Bấm',
+      personaList: Object.keys(this.DATA).map(id => {
+        const p = this.DATA[id]; const active = id === s.persona;
+        return { label: p.label, sub: p.sub, badge: p.badge, badgeBg: p.badgeBg,
+          bg: active ? '#F9EFE7' : '#fff', bd: active ? '#D4956F' : '#E0D9D3',
+          pick: () => this.pick(id) };
+      }),
+      inputs: P.inputs.map((it, k) => ({ ...it, done: s.logs[0] > k })),
+      mediaSteps: P.media.map((t, k) => ({ t, show: s.logs[1] > k })),
+      s2Idle: s.st[1] === 0,
+      s2Done: s.st[1] === 2,
+      posts: P.posts,
+      channels: P.channels.map((c, k) => ({ ...c, done: s.logs[2] > k, wait: s.logs[2] <= k })),
+      feed: P.feed.slice(0, s.logs[3]),
+      s4Empty: s.logs[3] === 0,
+      metrics: P.metrics
+    };
+    [0,1,2,3].forEach(i => {
+      const v = this.stVals(i), n = i + 1;
+      out['s'+n+'Bd'] = v.bd; out['s'+n+'Bg'] = v.bg;
+      out['s'+n+'ChipBg'] = v.chipBg; out['s'+n+'ChipFg'] = v.chipFg; out['s'+n+'Text'] = v.text;
+    });
+    return out;
+  }
+}
+</script>
+</body>
+</html>

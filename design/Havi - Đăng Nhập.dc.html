@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F1ED;}
+a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:underline;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+input::placeholder{color:#B5ACA4;}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;box-sizing:border-box;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:19px;">Ha</div>
+    <span style="font-family:Merriweather,serif;font-weight:900;font-size:22px;">Havi</span>
+  </div>
+
+  <div style="width:100%;max-width:400px;background:#fff;border:1px solid #E0D9D3;border-radius:18px;padding:36px 32px;box-sizing:border-box;box-shadow:0 4px 20px rgba(0,0,0,0.07);">
+
+    <sc-if value="{{ vLogin }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Chào bạn trở lại</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;text-align:center;">Nhập số điện thoại là vào ngay — không cần nhớ mật khẩu.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Số điện thoại của bạn
+            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:17px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <button onClick="{{ sendOtp }}" disabled="{{ phoneEmpty }}" style="background:{{ primaryBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Nhận mã đăng nhập</button>
+          <p style="margin:0;font-size:12.5px;color:#8A817A;text-align:center;">Mã 6 số sẽ được gửi qua Zalo hoặc SMS</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:22px;">
+          <span style="flex:1;height:1px;background:#E0D9D3;"></span>
+          <span style="font-size:12px;color:#8A817A;">hoặc</span>
+          <span style="flex:1;height:1px;background:#E0D9D3;"></span>
+        </div>
+        <button onClick="{{ loginZalo }}" style="width:100%;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;border:1.5px solid #3B6B9F;color:#3B6B9F;border-radius:12px;padding:15px 0;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#F0F5FA;">
+          <span style="width:26px;height:26px;border-radius:7px;background:#3B6B9F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;">Zalo</span>
+          Tiếp tục với Zalo
+        </button>
+        <div style="text-align:center;margin-top:18px;">
+          <button onClick="{{ goEmail }}" style="background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:12.5px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">Đăng nhập bằng email &amp; mật khẩu</button>
+        </div>
+        <div style="border-top:1px solid #F0EAE4;margin-top:20px;padding-top:20px;text-align:center;">
+          <p style="margin:0;font-size:14px;color:#4A4A4A;">Lần đầu dùng Havi? <button onClick="{{ goSignup }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Tạo tài khoản miễn phí</button></p>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vEmail }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Đăng nhập bằng email</h1>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Email
+            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Mật khẩu
+            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="••••••••" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <button onClick="{{ goForgot }}" style="align-self:flex-end;background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Quên mật khẩu?</button>
+          <button onClick="{{ loginEmail }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Đăng nhập</button>
+        </div>
+        <div style="text-align:center;margin-top:18px;">
+          <button onClick="{{ goLogin }}" style="background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:13px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">← Đăng nhập bằng số điện thoại</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vSignup }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Tạo tài khoản Havi</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;text-align:center;">Chỉ cần tên và số điện thoại — 30 giây là xong.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Tên của bạn
+            <input value="{{ name }}" onChange="{{ setName }}" placeholder="Ví dụ: Chị Hương" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Số điện thoại
+            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <button onClick="{{ signup }}" disabled="{{ signupEmpty }}" style="background:{{ signupBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:2px;" style-hover="background:#B8744D;">Tạo tài khoản</button>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:#8A817A;text-align:center;">Bấm nút là bạn đồng ý với <a href="#">Điều khoản</a> &amp; <a href="#">Bảo mật</a> của Havi.<br>Email và mật khẩu có thể thêm sau trong phần Cài đặt.</p>
+        </div>
+        <div style="border-top:1px solid #F0EAE4;margin-top:20px;padding-top:20px;text-align:center;">
+          <p style="margin:0;font-size:14px;color:#4A4A4A;">Đã có tài khoản? <button onClick="{{ goLogin }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Đăng nhập</button></p>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vOtp }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;">
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Nhập mã 6 số</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Havi vừa gửi mã tới <strong style="color:#2C2C2C;">{{ otpDest }}</strong></p>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:26px;">
+          <sc-for list="{{ otpBoxes }}" as="ob" hint-placeholder-count="6">
+            <input value="{{ ob.v }}" onChange="{{ ob.set }}" onKeyDown="{{ ob.key }}" ref="{{ ob.ref }}" maxLength="1" inputMode="numeric" style="width:46px;height:56px;text-align:center;font-family:Inter,sans-serif;font-size:23px;font-weight:700;color:#2C2C2C;border:1.5px solid {{ ob.bd }};border-radius:12px;outline:none;box-sizing:border-box;" style-focus="border-color:#D4956F;"></input>
+          </sc-for>
+        </div>
+        <sc-if value="{{ otpError }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:14px 0 0;font-size:13px;font-weight:600;color:#C0564A;">Mã chưa đúng — bạn kiểm tra lại nhé.</p>
+        </sc-if>
+        <p style="margin:16px 0 0;font-size:12px;color:#B5ACA4;background:#F5F1ED;border-radius:8px;padding:8px 12px;display:inline-block;">Bản demo: nhập <strong>111111</strong> — mã tự xác nhận khi đủ 6 số</p>
+        <p style="margin:18px 0 0;font-size:13px;color:#8A817A;">Chưa nhận được mã? <sc-if value="{{ canResend }}" hint-placeholder-val="{{ false }}"><button onClick="{{ resend }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Gửi lại</button></sc-if><sc-if value="{{ waiting }}" hint-placeholder-val="{{ true }}"><span style="font-weight:600;">Gửi lại sau {{ countdown }}s</span></sc-if></p>
+        <button onClick="{{ goBack }}" style="margin-top:18px;background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:13px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">← Sửa lại số điện thoại</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vForgot }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;">
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Quên mật khẩu</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Không sao cả — nhập email, Havi gửi mã để bạn đặt lại.</p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;text-align:left;">
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Email đã đăng ký
+            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <button onClick="{{ sendReset }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Gửi mã đặt lại</button>
+        </div>
+        <button onClick="{{ goEmail }}" style="margin-top:20px;background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:13px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">← Quay lại đăng nhập</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vReset }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;">
+        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Đặt mật khẩu mới</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Mã đúng rồi. Chọn mật khẩu mới cho <strong style="color:#2C2C2C;">{{ email }}</strong></p>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;text-align:left;">
+          <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Mật khẩu mới
+            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="Ít nhất 8 ký tự" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+          </label>
+          <button onClick="{{ doReset }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Lưu &amp; đăng nhập</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vDone }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:12px 0;">
+        <div style="width:60px;height:60px;border-radius:999px;background:#5FA76F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin:0 auto;">✓</div>
+        <h1 style="margin:18px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">{{ doneTitle }}</h1>
+        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">{{ doneSub }}</p>
+        <a href="{{ doneHref }}" style="display:inline-block;margin-top:26px;background:#D4956F;color:#fff;border-radius:12px;padding:17px 40px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;color:#fff;text-decoration:none;">{{ doneCta }}</a>
+      </div>
+    </sc-if>
+
+  </div>
+  <p style="margin:20px 0 0;font-size:12px;color:#B5ACA4;">Havi — trợ lý marketing cho tiệm của bạn</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'login', phone: '', email: '', pass: '', name: '',
+    otp: ['','','','','',''], otpError: false, countdown: 0, otpFrom: 'login', doneKind: 'login' };
+  otpRefs = [React.createRef(),React.createRef(),React.createRef(),React.createRef(),React.createRef(),React.createRef()];
+  timer = null;
+  componentWillUnmount(){ clearInterval(this.timer); }
+  startCountdown(){
+    clearInterval(this.timer);
+    this.setState({countdown: 30});
+    this.timer = setInterval(() => {
+      this.setState(s => {
+        if (s.countdown <= 1) { clearInterval(this.timer); return {countdown: 0}; }
+        return {countdown: s.countdown - 1};
+      });
+    }, 1000);
+  }
+  toOtp(from){ this.setState({view:'otp', otp:['','','','','',''], otpError:false, otpFrom:from}); this.startCountdown(); }
+  checkOtp(otp){
+    if (otp.join('').length < 6) return;
+    if (otp.join('') === '111111') {
+      const f = this.state.otpFrom;
+      if (f==='reset') this.setState({view:'reset'});
+      else this.setState({view:'done', doneKind: f==='signup' ? 'signup' : 'login'});
+    } else this.setState({otpError:true});
+  }
+  renderVals() {
+    const s = this.state;
+    const set = k => e => this.setState({[k]: e.target.value});
+    const otpBoxes = s.otp.map((v,i) => ({
+      v, bd: s.otpError ? '#C0564A' : '#E0D9D3', ref: this.otpRefs[i],
+      set: e => {
+        const val = e.target.value.replace(/\D/g,'').slice(-1);
+        const otp = s.otp.slice(); otp[i] = val;
+        this.setState({otp, otpError: false}, () => this.checkOtp(otp));
+        if (val && i < 5) this.otpRefs[i+1].current && this.otpRefs[i+1].current.focus();
+      },
+      key: e => {
+        if (e.key === 'Backspace' && !s.otp[i] && i > 0) this.otpRefs[i-1].current && this.otpRefs[i-1].current.focus();
+      }
+    }));
+    const doneMap = {
+      login: {t:'Đăng nhập thành công!', sub:'Havi đã chuẩn bị sẵn vài việc cho tiệm hôm nay.', href:'Havi - MVP App.dc.html', cta:'Vào trang chính'},
+      signup: {t:'Tài khoản đã sẵn sàng!', sub:'Giờ cho Havi biết bạn kinh doanh gì nhé — chỉ 1 phút thôi.', href:'Havi - Onboarding.dc.html', cta:'Bắt đầu thiết lập'},
+      reset: {t:'Đã đổi mật khẩu!', sub:'Bạn có thể đăng nhập với mật khẩu mới.', href:'Havi - MVP App.dc.html', cta:'Vào trang chính'}
+    };
+    const dn = doneMap[s.doneKind];
+    const phoneEmpty = s.phone.trim().length < 9;
+    const signupEmpty = !s.name.trim() || s.phone.trim().length < 9;
+    return {
+      vLogin: s.view==='login', vEmail: s.view==='email', vSignup: s.view==='signup',
+      vOtp: s.view==='otp', vForgot: s.view==='forgot', vReset: s.view==='reset', vDone: s.view==='done',
+      phone: s.phone, email: s.email, pass: s.pass, name: s.name,
+      setPhone: set('phone'), setEmail: set('email'), setPass: set('pass'), setName: set('name'),
+      phoneEmpty, primaryBg: phoneEmpty ? '#DCC9BB' : '#D4956F',
+      signupEmpty, signupBg: signupEmpty ? '#DCC9BB' : '#D4956F',
+      goSignup: () => this.setState({view:'signup'}), goLogin: () => this.setState({view:'login'}),
+      goEmail: () => this.setState({view:'email'}), goForgot: () => this.setState({view:'forgot'}),
+      goBack: () => this.setState({view: s.otpFrom==='signup' ? 'signup' : s.otpFrom==='reset' ? 'forgot' : 'login'}),
+      sendOtp: () => this.toOtp('login'),
+      signup: () => this.toOtp('signup'),
+      sendReset: () => this.toOtp('reset'),
+      loginEmail: () => this.setState({view:'done', doneKind:'login'}),
+      loginZalo: () => this.setState({view:'done', doneKind:'login'}),
+      otpDest: s.otpFrom==='reset' ? (s.email || 'email của bạn') : (s.phone || 'số của bạn'),
+      otpBoxes, otpError: s.otpError,
+      canResend: s.countdown===0, waiting: s.countdown>0, countdown: s.countdown,
+      resend: () => { this.setState({otp:['','','','','',''], otpError:false}); this.startCountdown(); },
+      doReset: () => this.setState({view:'done', doneKind:'reset'}),
+      doneTitle: dn.t, doneSub: dn.sub, doneHref: dn.href, doneCta: dn.cta
+    };
+  }
+}
+</script>
+</body>
+</html>

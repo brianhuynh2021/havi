@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F1ED;}
+a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:underline;}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;">
+  <header style="background:#fff;border-bottom:1px solid #E0D9D3;padding:16px 32px;">
+    <div style="max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
+        <span style="font-family:Merriweather,serif;font-weight:900;font-size:20px;">Havi</span>
+      </div>
+      <nav style="display:flex;align-items:center;gap:24px;font-size:14px;font-weight:500;">
+        <a href="#cach-hoat-dong" style="color:#4A4A4A;">Cách hoạt động</a>
+        <a href="#nganh" style="color:#4A4A4A;">Cho ngành của bạn</a>
+        <a href="#gia" style="color:#4A4A4A;">Bảng giá</a>
+        <a href="Havi - Đăng Nhập.dc.html" style="color:#4A4A4A;font-weight:600;">Đăng nhập</a>
+        <a href="Havi - Đăng Nhập.dc.html" style="background:#D4956F;color:#fff;border-radius:8px;padding:10px 18px;font-weight:600;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Dùng thử miễn phí</a>
+      </nav>
+    </div>
+  </header>
+
+  <section style="max-width:1120px;margin:0 auto;padding:80px 32px 64px;display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;">
+    <div>
+      <div style="display:inline-block;background:#fff;border:1px solid #E0D9D3;border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:600;color:#B8744D;">Hệ sinh thái AI Marketing đa ngành</div>
+      <h1 style="margin:18px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:44px;line-height:1.2;text-wrap:pretty;">Từ ảnh chụp vội đến khách hàng thật — chỉ 1 nút bấm</h1>
+      <p style="margin:18px 0 0;font-size:17px;line-height:1.6;color:#4A4A4A;text-wrap:pretty;">Không cần viết prompt, không cần biết công nghệ. Ném vào vài tấm ảnh, một đoạn ghi âm hay 3 gạch đầu dòng — Havi tự xử lý, tự đăng đa kênh, tự đi tìm khách cho bạn.</p>
+      <div style="display:flex;gap:12px;margin-top:28px;">
+        <a href="Havi - Đăng Nhập.dc.html" style="background:#D4956F;color:#fff;border-radius:10px;padding:16px 28px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Dùng thử miễn phí 14 ngày</a>
+        <a href="#cach-hoat-dong" style="background:#fff;border:1px solid #E0D9D3;color:#2C2C2C;border-radius:10px;padding:16px 28px;font-weight:600;font-size:16px;" style-hover="border-color:#D4956F;text-decoration:none;">Xem cách hoạt động</a>
+      </div>
+      <div style="display:flex;gap:28px;margin-top:32px;">
+        <sc-for list="{{ heroStats }}" as="st" hint-placeholder-count="3">
+          <div>
+            <div style="font-family:Merriweather,serif;font-weight:900;font-size:24px;color:#B8744D;">{{ st.v }}</div>
+            <div style="font-size:12.5px;color:#8A817A;margin-top:2px;">{{ st.l }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:#2C2C2C;border-radius:16px;padding:28px;color:#F5F1ED;box-shadow:0 8px 16px rgba(0,0,0,0.12);">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Bạn nạp vào</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+        <sc-for list="{{ heroInputs }}" as="hi" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 14px;">
+            <span style="flex:none;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#F5F1ED;background:rgba(212,149,111,0.35);border-radius:4px;padding:3px 7px;">{{ hi.k }}</span>
+            <span style="font-size:13.5px;color:#E8E1DA;">{{ hi.t }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="text-align:center;margin:14px 0;color:#D4956F;font-size:20px;">↓</div>
+      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Havi trả về</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+        <sc-for list="{{ heroOutputs }}" as="ho" hint-placeholder-count="4">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.45;color:#E8E1DA;">{{ ho }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="cach-hoat-dong" style="background:#fff;border-top:1px solid #E0D9D3;border-bottom:1px solid #E0D9D3;padding:72px 32px;">
+    <div style="max-width:1120px;margin:0 auto;">
+      <div style="text-align:center;max-width:640px;margin:0 auto;">
+        <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">4 trạm xử lý, chạy tuần tự bằng 1 nút</h2>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4A4A;">Một luồng khép kín: từ dữ liệu thô đến lượt truy cập và khách hàng thực tế.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px;">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+          <div style="border:1px solid #E0D9D3;border-radius:12px;padding:24px;background:#F5F1ED;" style-hover="box-shadow:0 8px 16px rgba(0,0,0,0.12);">
+            <span style="display:inline-flex;width:34px;height:34px;border-radius:999px;background:#D4956F;color:#fff;align-items:center;justify-content:center;font-weight:700;">{{ s.n }}</span>
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;margin-top:14px;">{{ s.title }}</div>
+            <p style="margin:8px 0 0;font-size:13.5px;line-height:1.55;color:#4A4A4A;">{{ s.desc }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="nganh" style="max-width:1120px;margin:0 auto;padding:72px 32px;">
+    <div style="text-align:center;max-width:640px;margin:0 auto;">
+      <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">Ngành nào cũng chạy được</h2>
+      <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4A4A;">Havi tự nhận diện ngành nghề của bạn và áp chuỗi xử lý phù hợp — không cần cài đặt gì thêm.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;">
+      <sc-for list="{{ industries }}" as="ind" hint-placeholder-count="3">
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.08);" style-hover="box-shadow:0 8px 16px rgba(0,0,0,0.12);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:{{ ind.bg }};">{{ ind.badge }}</span>
+            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">{{ ind.name }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
+            <sc-for list="{{ ind.rows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;gap:10px;align-items:flex-start;">
+                <span style="flex:none;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#B8744D;background:#F9EFE7;border-radius:4px;padding:3px 7px;margin-top:1px;min-width:52px;text-align:center;">{{ r.k }}</span>
+                <span style="font-size:13px;line-height:1.5;color:#4A4A4A;">{{ r.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="gia" style="background:#fff;border-top:1px solid #E0D9D3;padding:72px 32px;">
+    <div style="max-width:1120px;margin:0 auto;">
+      <div style="text-align:center;max-width:640px;margin:0 auto;">
+        <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">Giá bằng 2 ly cà phê mỗi ngày</h2>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4A4A;">Rẻ hơn một nửa so với các công cụ AI marketing khác — và Havi làm giùm chứ không bắt bạn học.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;align-items:stretch;">
+        <sc-for list="{{ pricing }}" as="pl" hint-placeholder-count="3">
+          <div style="border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:0;background:{{ pl.bg }};border:1px solid {{ pl.bd }};box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <div style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ pl.accent }};">{{ pl.name }}</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:12px;">
+              <span style="font-family:Merriweather,serif;font-weight:900;font-size:40px;color:{{ pl.fg }};">{{ pl.price }}</span>
+            </div>
+            <div style="font-size:12.5px;color:{{ pl.sub }};margin-top:4px;">{{ pl.per }}</div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:20px;margin-bottom:24px;">
+              <sc-for list="{{ pl.feats }}" as="ft" hint-placeholder-count="3">
+                <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:{{ pl.fg }};"><span style="color:#5FA76F;font-weight:700;">✓</span><span>{{ ft }}</span></div>
+              </sc-for>
+            </div>
+            <a href="Havi - Đăng Nhập.dc.html" style="margin-top:auto;text-align:center;border-radius:10px;padding:13px;font-weight:700;font-size:14.5px;background:{{ pl.btnBg }};color:{{ pl.btnFg }};border:1px solid {{ pl.btnBd }};" style-hover="text-decoration:none;opacity:.9;">{{ pl.cta }}</a>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#2C2C2C;color:#F5F1ED;padding:72px 32px;">
+    <div style="max-width:720px;margin:0 auto;text-align:center;">
+      <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">Xem Havi chạy thật, ngay bây giờ</h2>
+      <p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#C9C0B8;">Bản demo tương tác: chọn ngành của bạn, bấm 1 nút và xem cả 4 trạm hoạt động — từ liệu thô đến khách hàng.</p>
+      <a href="Havi - AI Marketing.dc.html" style="display:inline-block;margin-top:28px;background:#D4956F;color:#fff;border-radius:10px;padding:16px 32px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Chạy thử demo 1 nút</a>
+    </div>
+  </section>
+
+  <footer style="max-width:1120px;margin:0 auto;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#8A817A;">
+    <span>© 2026 Havi — AI Marketing Đa Ngành</span>
+    <a href="Havi - AI Marketing.dc.html">Demo tương tác →</a>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      heroStats: [
+        {v:'< 30 giây', l:'nạp liệu thô'},
+        {v:'1 nút', l:'chạy cả 4 trạm'},
+        {v:'6+ kênh', l:'đăng tự động'}],
+      heroInputs: [
+        {k:'Ảnh', t:'5 tấm ảnh chụp vội bằng điện thoại'},
+        {k:'Ghi âm', t:'2 phút nói chuyện lủng củng'},
+        {k:'Gõ tay', t:'"Nhà Q7 · 4 tỷ · cần bán gấp"'}],
+      heroOutputs: [
+        'Bài chuyên sâu chuẩn SEO / LinkedIn',
+        'Bài giật tít ngắn cho Facebook / Zalo',
+        'Kịch bản video Shorts / Reels có phụ đề',
+        'Bài đánh giá Google Maps + lịch đăng giờ vàng'],
+      steps: [
+        {n:'1', title:'Nạp Liệu Thô', desc:'Ném ảnh, dán link YouTube, ghi âm hoặc gõ 3 gạch đầu dòng. Không cần viết prompt.'},
+        {n:'2', title:'Lò Phản Ứng AI', desc:'Tự nhận diện ngành, xử lý ảnh/video và chế bản nội dung cho từng kênh.'},
+        {n:'3', title:'Tổng Đài Phân Phối', desc:'Đăng thẳng lên Facebook, Zalo, LinkedIn, TikTok, WordPress, Google Maps — đúng giờ vàng.'},
+        {n:'4', title:'Săn Mồi & Chăm Sóc', desc:'Lắng nghe hội nhóm quanh vùng, soạn sẵn câu tư vấn để bạn bấm gửi; CRM nhắc chăm khách cũ đúng lúc.'}],
+      pricing: [
+        {name:'Dùng thử', price:'0đ', per:'14 ngày — không cần thẻ', cta:'Thử miễn phí',
+         feats:['Đủ mọi tính năng','Kết nối 2 kênh','Hết 14 ngày mới quyết định'],
+         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#B8744D', btnBd:'#D4956F'},
+        {name:'Tiệm Nhỏ', price:'299K', per:'mỗi tháng · 1 tiệm', cta:'Chọn gói này',
+         feats:['Nạp liệu thô, AI viết mọi kênh','Tự đăng 4 kênh giờ vàng','Báo cáo "khách từ đâu tới"'],
+         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#B8744D', btnBd:'#D4956F'},
+        {name:'Toàn Diện', price:'599K', per:'mỗi tháng · 1 tiệm', cta:'Đáng tiền nhất',
+         feats:['Mọi thứ ở gói Tiệm Nhỏ','Lắng nghe hội nhóm + soạn trả lời','CRM tự nhắc chăm khách cũ','Duyệt mọi thứ ngay trong Zalo'],
+         bg:'#2C2C2C', bd:'#2C2C2C', fg:'#F5F1ED', sub:'#C9C0B8', accent:'#D4956F', btnBg:'#D4956F', btnFg:'#fff', btnBd:'#D4956F'}
+      ],
+      industries: [
+        {name:'Spa / Tiệm Nước', badge:'SP', bg:'#D4956F', rows:[
+          {k:'Nạp', t:'Bạn chỉ cần chụp 1 tấm ảnh khách trước/sau khi làm dịch vụ'},
+          {k:'AI', t:'Havi làm đẹp ảnh, gắn logo tiệm và viết bài giới thiệu hấp dẫn'},
+          {k:'Đăng', t:'Tự động đăng lên Fanpage và Google Maps của tiệm'},
+          {k:'Săn', t:'Ai hỏi "chỗ nặn mụn uy tín" quanh vùng, Havi báo ngay và soạn sẵn câu trả lời — bạn ưng thì bấm gửi'}]},
+        {name:'Môi Giới / Tín Dụng', badge:'MG', bg:'#3B6B9F', rows:[
+          {k:'Nạp', t:'Bạn chỉ cần gõ 3 dòng: vị trí, giá, pháp lý — kèm vài ảnh chụp vội'},
+          {k:'AI', t:'Havi làm nét ảnh, gắn số điện thoại và viết tin rao hấp dẫn, dễ lên top tìm kiếm'},
+          {k:'Đăng', t:'Tự động đăng lên Zalo, Fanpage và các trang rao vặt cùng lúc'},
+          {k:'Săn', t:'Có người hỏi mua nhà hay vay vốn trong hội nhóm? Havi báo ngay kèm câu trả lời soạn sẵn — bạn bấm gửi là xong'}]},
+        {name:'Kỹ Sư / Chuyên Gia', badge:'KS', bg:'#4A4A4A', rows:[
+          {k:'Nạp', t:'Bạn chỉ cần ghi âm 2 phút kể lại vấn đề vừa xử lý trong ngày'},
+          {k:'AI', t:'Havi viết lại thành bài chia sẻ kinh nghiệm chuyên nghiệp, dễ đọc'},
+          {k:'Đăng', t:'Tự động đăng lên LinkedIn và YouTube của bạn, đúng giờ nhiều người xem'},
+          {k:'Săn', t:'Ai hỏi đúng vấn đề đó trên mạng, Havi báo bạn kèm câu trả lời soạn sẵn dẫn về bài viết — bạn duyệt rồi gửi'}]}]
+    };
+  }
+}
+</script>
+</body>
+</html>
