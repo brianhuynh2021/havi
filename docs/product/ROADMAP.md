@@ -720,7 +720,8 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [ ] Dựng Lịch đăng và đồng bộ state từ draft đã duyệt.
 - [ ] Dựng Khách tiềm năng và Báo cáo bằng fixture.
 - [ ] Tạo UI primitives và test setup trước khi nhân rộng thêm màn.
-- [ ] Sinh TypeScript client từ OpenAPI scaffold.
+- [x] Sinh TypeScript client từ OpenAPI scaffold (`npm run generate:api` →
+  `apps/web/src/lib/api-client/`; chưa có feature nào nối vào vì backend còn 501).
 - [ ] Scaffold local PostgreSQL/Redis/object storage + Alembic.
 - [ ] Dựng Auth và Onboarding design-complete.
 - [ ] Bắt đầu persistence/auth thật sau khi Gate B đạt.
