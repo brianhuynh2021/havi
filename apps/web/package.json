@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:api": "cd ../backend && uv run python scripts/export_openapi.py > ../web/openapi.json && cd ../web && openapi-typescript openapi.json -o src/lib/api-client/schema.d.ts"
   },
   "dependencies": {
     "next": "16.2.12",
+    "openapi-fetch": "^0.13.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -25,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "jsdom": "^25.0.1",
+    "openapi-typescript": "^7.5.2",
     "typescript": "^5",
     "vitest": "^3.0.5"
   }
