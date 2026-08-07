@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from core.config import get_settings
+from domain.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,9 +22,7 @@ if config.config_file_name is not None:
 # duplicate HAVI_DATABASE_URL vào alembic.ini.
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
 
-# Chưa có domain model nào — set lại khi domain/models có Base.metadata thật
-# (xem docs/architecture/SYSTEM_ARCHITECTURE.md §0 backend target structure).
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

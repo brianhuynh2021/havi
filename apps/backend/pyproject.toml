@@ -31,11 +31,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["api", "core", "worker", "scheduler"]
+packages = ["api", "core", "domain", "worker", "scheduler"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# File autogenerate của Alembic không theo style project — không lint.
+extend-exclude = ["migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
