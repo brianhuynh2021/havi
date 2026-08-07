@@ -48,7 +48,8 @@ cd apps/backend && uv run uvicorn api.main:app --reload --port 8000
 - OpenAPI contract: <http://localhost:8000/openapi.json>
 - Health: <http://localhost:8000/health>
 
-Test và lint:
+Test và lint (`test_auth_flow.py` cần Postgres thật — `docker compose up -d` ở
+root trước; mỗi test tự rollback transaction, không để lại dữ liệu):
 
 ```bash
 cd apps/backend && uv run pytest && uv run ruff check .
@@ -66,23 +67,33 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-Endpoint nghiệp vụ vẫn trả `501 Not Implemented` — có schema request/response
-thật trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture, nhưng
-chưa có application service/repository nào đọc/viết DB.
+`/auth/*` chạy thật trên Postgres (OTP request/verify, sign-up, refresh, me).
+Mọi router khác vẫn trả `501 Not Implemented` — có schema request/response thật
+trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
 
 Đã có thật:
 
 - `core/enums.py` — public enums (kênh, trạng thái, ngành, gói cước…)
 - `core/content_state.py` — state machine của content item, có test
 - `core/config.py` — settings + secret boundary
-- `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`)
-- `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`
+- `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`, chưa insert)
+- `core/phone.py` — chuẩn hoá SĐT Việt Nam (0xxxxxxxxx → +84…)
+- `core/security.py` — JWT access token, hash OTP/refresh token
 - `domain/models/` — SQLAlchemy models thật: `User`, `OtpChallenge`, `RefreshSession`,
   `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
   Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
+- `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
+  cho user/OTP/refresh session/workspace member.
+- `application/services/auth_service.py` — use case OTP + JWT thật, exception
+  thuần (không phụ thuộc FastAPI), router dịch sang HTTP status.
+- `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`
+  đã nối DB thật, 11 domain router khác còn `501`.
+- `tests/test_auth_flow.py` — test thật trên Postgres (không mock), mỗi test
+  rollback transaction riêng — xem `tests/conftest.py`.
 
-Chưa có: JWT thật, OAuth nền tảng, LLM call, adapter kênh, và bất kỳ
-application service/repository nối router → domain models ở trên.
+Chưa có: OAuth nền tảng, LLM call, adapter kênh, provider SMS/Zalo thật (dùng
+`debug_code` tạm), endpoint logout/revoke session, và repository cho các domain
+ngoài auth (workspace CRUD, content, media…).
 
 ## Ràng buộc không được phá
 

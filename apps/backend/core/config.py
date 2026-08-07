@@ -29,8 +29,10 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me"
     jwt_algorithm: str = "HS256"
     access_token_ttl_minutes: int = 60
+    refresh_token_ttl_days: int = 30
     otp_ttl_seconds: int = 300
     otp_resend_cooldown_seconds: int = 30
+    otp_max_attempts: int = 5
 
     token_encryption_key: str = ""
     llm_api_key: str = ""

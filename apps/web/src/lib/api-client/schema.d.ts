@@ -69,7 +69,10 @@ export interface paths {
         put?: never;
         /**
          * Sign Up
-         * @description Tạo user + gửi OTP. Xác thực xong thì `needs_onboarding=true`.
+         * @description Tạo user + gửi OTP. Xác nhận OTP ở `/auth/otp/verify` mới nhận được token.
+         *
+         *     (Trả `TokenPair` ngay ở bước này là sai — sẽ cấp token cho số điện thoại
+         *     chưa được xác minh sở hữu.)
          */
         post: operations["sign_up_auth_sign_up_post"];
         delete?: never;
@@ -1393,12 +1396,17 @@ export interface components {
         /**
          * OtpChallenge
          * @description Frontend dùng `resend_after_seconds` để chạy đồng hồ đếm ngược trên màn OTP.
+         *
+         *     `debug_code` chỉ có giá trị khi `HAVI_DEBUG=true` (chưa có provider SMS/Zalo
+         *     thật — xem ROADMAP.md "Quyết định cần chốt"). Không log OTP ra bất kỳ đâu.
          */
         OtpChallenge: {
             /** Resend After Seconds */
             resend_after_seconds: number;
             /** Expires In Seconds */
             expires_in_seconds: number;
+            /** Debug Code */
+            debug_code?: string | null;
         };
         /**
          * OtpRequest
@@ -1812,12 +1820,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            201: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenPair"];
+                    "application/json": components["schemas"]["OtpChallenge"];
                 };
             };
             /** @description Validation Error */
