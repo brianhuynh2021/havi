@@ -17,6 +17,10 @@ Bổ sung cho README.md + REPOSITORY_STRATEGY.md. Backend = FastAPI (`apps/backe
 - `media_asset {id, workspace_id, url, type: image|audio|video, tags[], status: raw|used|archived, uploaded_at}`
 - Upload trực tiếp lên object storage (S3-compatible), API chỉ lưu metadata
 - UI: lưới ảnh/audio đã nạp, filter theo tag/trạng thái, tái sử dụng cho bài mới
+- Video/Reel dựng từ pipeline Video Understanding → Transcript → Edit Engine →
+  Renderer (P1/P2, thiết kế ở `SYSTEM_ARCHITECTURE.md` §5.3) ghi lại như một
+  `media_asset` mới (`type: video`), không phải bảng riêng — đi qua đúng
+  approval flow như `content_item`.
 
 ## 4. Content Calendar
 - `content_item.scheduled_at` là nguồn dữ liệu; calendar là view, không phải bảng riêng
