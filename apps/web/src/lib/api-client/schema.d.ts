@@ -375,8 +375,11 @@ export interface paths {
          * Create Content Job
          * @description Nút "Để Havi viết cho chị".
          *
-         *     Đẩy 1 job vào hàng đợi; worker gọi LLM đúng 1 lần và sinh 4-5 bản theo kênh.
+         *     Đẩy 1 job vào hàng đợi; worker gọi LLM đúng 1 lần và sinh nhiều bản theo kênh.
          *     API trả ngay `queued`, frontend poll `GET /content/jobs/{id}` cho tới `drafts_ready`.
+         *
+         *     Gửi header `Idempotency-Key` để bấm hai lần không tốn hai lần tiền LLM — cùng
+         *     key trong cùng workspace luôn trả về job đầu tiên và không enqueue lần nữa.
          */
         post: operations["create_content_job_content_jobs_post"];
         delete?: never;
@@ -2498,7 +2501,9 @@ export interface operations {
     create_content_job_content_jobs_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };

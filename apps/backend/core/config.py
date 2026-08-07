@@ -43,7 +43,16 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 5
 
     token_encryption_key: str = ""
-    llm_api_key: str = ""
+
+    # Multi-provider LLM (SYSTEM_ARCHITECTURE.md §5.1) — Gemini ưu tiên, hai
+    # provider còn lại là fallback khi Gemini lỗi/quota/output không đạt.
+    # Provider thiếu key sẽ bị router bỏ qua, không gọi rồi lỗi.
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.6-flash"
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-5"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-5"
 
     facebook_client_id: str = ""
     facebook_client_secret: str = ""

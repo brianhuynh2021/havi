@@ -13,6 +13,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
@@ -23,6 +24,8 @@ from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.storage.object_storage import ObjectStorage
 from application.services.auth_service import AuthService
 from application.services.brand_profile_service import BrandProfileService
+from application.services.content_service import ContentService
+from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.media_service import MediaService
 from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
@@ -83,6 +86,20 @@ def get_media_service(session: DbSessionDep) -> MediaService:
 
 
 MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
+
+
+def get_job_queue() -> JobQueue:
+    return CeleryJobQueue()
+
+
+JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]
+
+
+def get_content_service(session: DbSessionDep, queue: JobQueueDep) -> ContentService:
+    return ContentService(content=ContentRepository(session), queue=queue)
+
+
+ContentServiceDep = Annotated[ContentService, Depends(get_content_service)]
 
 
 class AuthContext:

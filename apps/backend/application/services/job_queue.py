@@ -1,0 +1,34 @@
+"""Port mỏng cho việc đẩy job vào hàng đợi.
+
+Có lớp này để router không import Celery trực tiếp: test override được bằng một
+implementation thu-vào-list, thay vì phải dựng Redis + worker chỉ để kiểm router
+có enqueue đúng hay không. (Celery `task_always_eager` không giải quyết được ở đây
+vì task tạo DB session riêng, không thấy transaction mà test đang rollback.)
+"""
+
+from abc import ABC, abstractmethod
+from uuid import UUID
+
+
+class JobQueue(ABC):
+    @abstractmethod
+    def enqueue_generate_drafts(self, *, workspace_id: UUID, job_id: UUID) -> None: ...
+
+
+class CeleryJobQueue(JobQueue):
+    def enqueue_generate_drafts(self, *, workspace_id: UUID, job_id: UUID) -> None:
+        # Import trong hàm: API process không cần Celery đã cài để khởi động được
+        # (extra `queue` là optional dependency).
+        from worker.tasks import generate_drafts
+
+        generate_drafts.delay(workspace_id=str(workspace_id), job_id=str(job_id))
+
+
+class RecordingJobQueue(JobQueue):
+    """Dùng trong test — ghi lại lời gọi thay vì đẩy vào Redis thật."""
+
+    def __init__(self) -> None:
+        self.enqueued: list[tuple[UUID, UUID]] = []
+
+    def enqueue_generate_drafts(self, *, workspace_id: UUID, job_id: UUID) -> None:
+        self.enqueued.append((workspace_id, job_id))
