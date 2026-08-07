@@ -70,8 +70,12 @@ Web ở <http://localhost:3000>.
 
 ### Kiểm tra nhanh (trước khi commit)
 
+`uv run pytest` cần Postgres thật đang chạy (`npm run infra:up`) — test auth
+tự rollback transaction, không để lại dữ liệu.
+
 ```bash
 npm run lint:web && npm run test:web && npm run build:web
+npm run infra:up
 cd apps/backend && uv run ruff check . && uv run pytest
 ```
 

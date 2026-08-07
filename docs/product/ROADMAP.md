@@ -89,7 +89,8 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 21 backend tests đang pass; Ruff đang pass.
+- [x] 32 backend tests đang pass (21 contract/state-machine + 11 auth thật trên
+  Postgres); Ruff đang pass.
 
 Architecture/docs:
 
@@ -100,10 +101,16 @@ Architecture/docs:
 ### Chưa hoàn thành
 
 - [ ] Frontend routes, interaction thật và visual regression tests.
-- [ ] Generated TypeScript API client.
-- [ ] PostgreSQL models/repositories, Alembic migrations và tenant isolation thật.
-- [ ] JWT/refresh token/OTP provider và session handling.
-- [ ] Object storage, Redis local stack và persistence.
+- [x] Generated TypeScript API client.
+- [x] PostgreSQL models/repositories cho auth (user/OTP/refresh/workspace member),
+  Alembic migrations thật. **Chưa xong:** repository cho content/media/workspace
+  CRUD, và chưa có test chứng minh tenant isolation (workspace A không đọc được
+  dữ liệu workspace B) — mới có kiểm tra membership khi decode JWT.
+- [x] JWT access + refresh token xoay vòng, OTP request/verify/resend-cooldown/attempt-limit
+  thật trên `/auth/*`. **Chưa xong:** OTP provider SMS/Zalo thật (dùng `debug_code`
+  tạm khi `HAVI_DEBUG=true`), và chưa có endpoint logout/revoke session.
+- [x] Redis + object storage (MinIO) local stack (`docker-compose.yml`). **Chưa
+  xong:** code dùng chúng — chưa có Celery job thật, chưa có signed upload.
 - [ ] LLM content pipeline, structured output validation, usage/quota tracking.
 - [ ] OAuth/token encryption và adapter publish Facebook.
 - [ ] Scheduler/retry/idempotency/dead-letter production behavior.
@@ -119,12 +126,17 @@ hệ thống phải có đủ bốn lớp dữ liệu/vận hành sau:
 
 PostgreSQL:
 
-- [ ] `users`, `otp_challenges`, `refresh_sessions`.
-- [ ] `workspaces`, `workspace_members`, `brand_profiles`.
+- [x] `users`, `otp_challenges`, `refresh_sessions` (migration `c5a2a7713af1`).
+- [x] `workspaces`, `workspace_members`, `brand_profiles` (cùng migration trên) —
+  bảng tồn tại và migrate được, nhưng chưa có repository/router nào ghi/đọc
+  `workspaces`/`brand_profiles` (chỉ `workspace_members.is_member` dùng trong auth).
 - [ ] `platform_connections` với token mã hóa.
 - [ ] `media_assets`, `content_jobs`, `content_items`, `content_item_versions`.
-- [ ] `publish_jobs`, `event_logs`, `engagement_snapshots`.
-- [ ] Alembic migrations, indexes, foreign keys và tenant-scoped repositories.
+- [ ] `publish_jobs`, `event_logs`, `engagement_snapshots` (bảng `event_log` đã
+  có schema nhưng `core/events.record_event` vẫn log ra stdout, chưa insert DB).
+- [x] Alembic migrations, indexes, foreign keys cho các bảng auth/workspace ở
+  trên (`alembic check` sạch). **Chưa xong:** tenant-scoped repository cho các
+  domain còn lại, và test tenant isolation.
 
 Redis/job queue:
 
@@ -333,11 +345,19 @@ Backend:
 - [x] Models/migrations cho user, OTP challenge, refresh session, workspace,
   workspace member, brand profile và audit event (`domain/models/`, migration
   `c5a2a7713af1`, verify bằng `alembic check` + insert/query thật trên Postgres).
-  Chưa có repository/application service nào đọc/viết các bảng này — router
-  vẫn trả `501`.
-- [ ] Phone normalization, OTP expiry, attempt limit, resend rate limit và provider adapter.
-- [ ] JWT access token + rotated refresh token; revoke khi logout.
+- [x] Phone normalization (0xxxxxxxxx → +84…, `core/phone.py`), OTP expiry,
+  attempt limit (`otp_max_attempts`), resend rate limit (`otp_resend_cooldown_seconds`)
+  — `application/services/auth_service.py`, test thật ở `tests/test_auth_flow.py`.
+  **Chưa xong:** provider adapter gửi SMS/Zalo thật (đang trả `debug_code` khi
+  `HAVI_DEBUG=true` vì OTP provider chưa chốt — xem §12 "Quyết định cần chốt").
+- [x] JWT access token + rotated refresh token (`/auth/otp/verify`, `/auth/sign-up`,
+  `/auth/refresh`, `/auth/me` đều chạy thật trên Postgres, không còn `501`).
+  **Chưa xong:** endpoint logout/revoke session theo yêu cầu (refresh token chỉ
+  bị revoke khi xoay vòng qua `/auth/refresh`, chưa có cách revoke chủ động).
 - [ ] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
+  (`get_workspace_id` đã 409 khi chưa có `active_workspace_id`, và `get_auth_context`
+  đã kiểm tra `workspace_members` mỗi request — nhưng chưa có domain nào ngoài
+  auth thật sự dùng `WorkspaceDep` để test tenant isolation.)
 - [ ] Workspace create/activate và onboarding completion state.
 - [ ] Encrypt sensitive fields bằng application key management.
 
