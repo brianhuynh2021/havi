@@ -248,6 +248,14 @@ export interface paths {
         /**
          * Update Brand Profile
          * @description Ghi xong phải invalidate cache profile của tenant để worker đọc bản mới.
+         *
+         *     Hiện chưa có cache nào — worker đọc trực tiếp từ DB. Khi thêm cache
+         *     (Redis, xem ROADMAP.md "Hạ tầng bắt buộc trước beta") thì invalidate ở đây.
+         *
+         *     Lưu ý contract: mọi field trong `BrandProfileUpdate` đều optional, nên
+         *     endpoint này hành xử như PATCH (field không gửi thì giữ nguyên) dù dùng verb
+         *     PUT. Hệ quả: gửi `logo_url: null` **không** xoá logo — muốn xoá cần đổi
+         *     contract sang sentinel value, chưa làm vì UI chưa có nút xoá logo.
          */
         put: operations["update_brand_profile_brand_profile_put"];
         post?: never;

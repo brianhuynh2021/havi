@@ -89,8 +89,8 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 32 backend tests đang pass (21 contract/state-machine + 11 auth thật trên
-  Postgres); Ruff đang pass.
+- [x] 48 backend tests đang pass (21 contract/state-machine + 27 auth/workspace/
+  brand-profile chạy thật trên Postgres); Ruff đang pass.
 
 Architecture/docs:
 
@@ -357,12 +357,19 @@ Backend:
 - [x] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
   `PathWorkspaceMemberDep` (api/deps.py) chặn 403 mọi route `{workspace_id}` nếu
   JWT hợp lệ nhưng không phải thành viên — test thật `test_khong_the_doc_workspace_cua_nguoi_khac`.
+  `WorkspaceDep` (workspace đọc từ JWT) đã dùng thật ở `/brand-profile`, verify
+  bằng `test_hai_workspace_khong_doc_thay_profile_cua_nhau` + 409 khi chưa onboarding.
   **Chưa xong:** content/media/... vẫn `501`, nên tenant isolation mới verify
-  được ở domain workspace, chưa ở toàn bộ domain.
+  được ở workspace + brand-profile, chưa ở toàn bộ domain.
 - [x] Workspace create/activate và onboarding completion state. `/workspaces`
   (CRUD), `/workspaces/{id}/activate` (đổi JWT), `/workspaces/{id}/members`
   (invite/list/remove, chặn xoá owner cuối) — `tests/test_workspace_flow.py`,
   9 case chạy thật trên Postgres.
+- [x] Brand profile thật: `GET/PUT /brand-profile` (tone, banned_claims, faq,
+  logo_url, brand_colors), tạo lazy theo `industry` của workspace ở lần gọi đầu
+  — `tests/test_brand_profile_flow.py`, 7 case chạy thật. **Chưa xong:** chưa có
+  cache profile cho worker (worker sẽ đọc trực tiếp DB), và PUT hành xử như PATCH
+  nên không xoá được `logo_url` về null.
 - [ ] Encrypt sensitive fields bằng application key management.
 
 Frontend:

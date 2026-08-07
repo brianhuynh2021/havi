@@ -67,9 +67,9 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-`/auth/*` và `/workspaces/*` chạy thật trên Postgres. 10 router domain còn lại
-vẫn trả `501 Not Implemented` — có schema request/response thật trong OpenAPI
-để `apps/web` sinh TypeScript client và dựng UI fixture trước.
+`/auth/*`, `/workspaces/*` và `/brand-profile` chạy thật trên Postgres. 9 router
+domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
+trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
 
 Đã có thật:
 
@@ -83,20 +83,21 @@ vẫn trả `501 Not Implemented` — có schema request/response thật trong O
   `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
   Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
 - `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
-  cho user/OTP/refresh session/workspace/workspace member.
-- `application/services/auth_service.py` + `workspace_service.py` — use case
-  OTP+JWT và workspace/member thật, exception thuần (không phụ thuộc FastAPI),
-  router dịch sang HTTP status.
-- `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`
-  và `workspaces.py` đã nối DB thật, 10 domain router khác còn `501`.
+  cho user/OTP/refresh session/workspace/workspace member/brand profile.
+- `application/services/` — `auth_service.py` (OTP+JWT), `workspace_service.py`
+  (workspace/member), `brand_profile_service.py` (giọng văn/từ cấm/FAQ). Exception
+  thuần (không phụ thuộc FastAPI), router dịch sang HTTP status.
+- `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`,
+  `workspaces.py`, `brand_profile.py` đã nối DB thật, 9 domain router khác còn `501`.
 - `api/deps.py:PathWorkspaceMemberDep` — chặn 403 khi JWT hợp lệ nhưng không
   phải thành viên của `{workspace_id}` trong path (khác `WorkspaceDep`, đọc từ JWT).
-- `tests/test_auth_flow.py` + `test_workspace_flow.py` — test thật trên Postgres
-  (không mock), mỗi test rollback transaction riêng — xem `tests/conftest.py`.
+- `tests/test_auth_flow.py` + `test_workspace_flow.py` + `test_brand_profile_flow.py`
+  — test thật trên Postgres (không mock), mỗi test rollback transaction riêng —
+  xem `tests/conftest.py`.
 
 Chưa có: OAuth nền tảng, LLM call, adapter kênh, provider SMS/Zalo thật (dùng
-`debug_code` tạm), endpoint logout/revoke session, và repository cho các domain
-ngoài auth/workspace (content, media, brand profile…).
+`debug_code` tạm), endpoint logout/revoke session, cache brand profile cho worker,
+và repository cho các domain còn lại (content, media, calendar, inbox, leads…).
 
 ## Ràng buộc không được phá
 

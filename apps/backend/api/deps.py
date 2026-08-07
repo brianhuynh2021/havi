@@ -11,6 +11,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
@@ -18,6 +19,7 @@ from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.auth_service import AuthService
+from application.services.brand_profile_service import BrandProfileService
 from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
 from core.security import decode_access_token
@@ -51,6 +53,16 @@ def get_workspace_service(
 
 
 WorkspaceServiceDep = Annotated[WorkspaceService, Depends(get_workspace_service)]
+
+
+def get_brand_profile_service(session: DbSessionDep) -> BrandProfileService:
+    return BrandProfileService(
+        profiles=BrandProfileRepository(session),
+        workspaces=WorkspaceRepository(session),
+    )
+
+
+BrandProfileServiceDep = Annotated[BrandProfileService, Depends(get_brand_profile_service)]
 
 
 class AuthContext:
