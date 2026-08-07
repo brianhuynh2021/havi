@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from core.enums import (
     Channel,
@@ -43,27 +43,44 @@ class Page[T](HaviModel):
 # --- Auth -------------------------------------------------------------------
 
 
-class OtpRequest(HaviModel):
-    """SĐT + OTP là kênh chính (qua Zalo/SMS); email + mật khẩu là phụ."""
-
-    phone: str = Field(min_length=9, max_length=15, examples=["0901234567"])
-
-
-class OtpVerify(HaviModel):
-    phone: str = Field(min_length=9, max_length=15)
-    code: str = Field(min_length=6, max_length=6, examples=["111111"])
+MIN_PASSWORD_LENGTH = 8
 
 
 class SignUpRequest(HaviModel):
-    """Đăng ký chỉ cần tên + SĐT; email/mật khẩu thêm sau trong Cài đặt."""
+    """Email + mật khẩu là kênh duy nhất để tạo tài khoản.
 
-    name: str = Field(min_length=1, max_length=120)
-    phone: str = Field(min_length=9, max_length=15)
+    Không dùng SĐT: OTP SMS ở VN tốn phí thật nên ăn vào margin gói 299K/tháng,
+    và chủ tiệm e dè đưa số vì spam. SĐT thêm sau trong Cài đặt, chỉ để Zalo OA.
+    """
+
+    name: str = Field(min_length=1, max_length=120, examples=["Chị Hương"])
+    email: EmailStr = Field(examples=["huong@spaannhien.vn"])
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
 
 
 class EmailLoginRequest(HaviModel):
-    email: str
+    email: EmailStr
     password: str
+
+
+class PasswordResetRequest(HaviModel):
+    """Bước 1 màn "Quên mật khẩu" — gửi mã 6 số qua email."""
+
+    email: EmailStr
+
+
+class PasswordResetConfirm(HaviModel):
+    """Bước 2 — nhập mã trong email + mật khẩu mới."""
+
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, examples=["111111"])
+    new_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
+
+
+class PhoneUpdateRequest(HaviModel):
+    """SĐT tuỳ chọn — chỉ để nhận bản nháp/nhắc duyệt qua Zalo OA, không để đăng nhập."""
+
+    phone: str = Field(min_length=9, max_length=15, examples=["0901234567"])
 
 
 class TokenPair(HaviModel):
@@ -81,8 +98,8 @@ class RefreshRequest(HaviModel):
 class CurrentUser(HaviModel):
     id: UUID
     name: str
-    phone: str
-    email: str | None = None
+    email: str
+    phone: str | None = None
     active_workspace_id: UUID | None = None
 
 
@@ -116,7 +133,10 @@ class WorkspaceMember(HaviModel):
 
 
 class WorkspaceMemberInvite(HaviModel):
-    phone: str = Field(min_length=9, max_length=15)
+    """Mời bằng email, không bằng SĐT: SĐT giờ là field tuỳ chọn nên phần lớn
+    tài khoản không có, mời bằng SĐT sẽ luôn không tìm thấy người."""
+
+    email: EmailStr
     role: WorkspaceRole = WorkspaceRole.MARKETER
 
 

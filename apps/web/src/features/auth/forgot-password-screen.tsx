@@ -8,26 +8,27 @@ import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/ui/otp-input";
 import { useCountdown } from "@/lib/hooks/use-countdown";
 import {
+  MIN_PASSWORD_LENGTH,
   OTP_LENGTH,
   OTP_RESEND_COOLDOWN_SECONDS,
-  isValidVietnamesePhone,
+  isValidEmail,
 } from "./auth.constants";
 import styles from "./auth.module.css";
 
-type Step = "phone" | "otp" | "reset" | "success";
+type Step = "email" | "otp" | "success";
 
 export function ForgotPasswordScreen() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { secondsLeft, start, canResend } = useCountdown(OTP_RESEND_COOLDOWN_SECONDS);
 
-  function requestOtp() {
-    if (!isValidVietnamesePhone(phone)) {
-      setError("Số điện thoại chưa đúng — nhập dạng 0xxxxxxxxx");
+  function requestCode() {
+    if (!isValidEmail(email)) {
+      setError("Email chưa đúng — kiểm tra lại giúp chị nhé");
       return;
     }
     setError(null);
@@ -36,8 +37,12 @@ export function ForgotPasswordScreen() {
   }
 
   function submitNewPassword() {
-    if (newPassword.length < 6) {
-      setError("Mật khẩu mới cần ít nhất 6 ký tự");
+    if (code.length !== OTP_LENGTH) {
+      setError(`Nhập đủ ${OTP_LENGTH} số trong email`);
+      return;
+    }
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(`Mật khẩu mới cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`);
       return;
     }
     setError(null);
@@ -47,23 +52,25 @@ export function ForgotPasswordScreen() {
   return (
     <>
       <h1 className={styles.title}>Quên mật khẩu</h1>
-      <p className={styles.subtitle}>Havi giúp chị/anh đặt lại mật khẩu mới.</p>
+      <p className={styles.subtitle}>Havi gửi mã xác nhận qua email để đặt lại mật khẩu.</p>
 
-      {step === "phone" ? (
+      {step === "email" ? (
         <div className={styles.form}>
-          <label className={styles.label} htmlFor="fp-phone">
-            Số điện thoại đã đăng ký
+          <label className={styles.label} htmlFor="fp-email">
+            Email đã đăng ký
           </label>
           <Input
-            id="fp-phone"
-            inputMode="tel"
-            placeholder="0912345678"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            id="fp-email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="huong@spaannhien.vn"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           {error ? <p className={styles.error}>{error}</p> : null}
 
-          <Button variant="primary" onClick={requestOtp}>
+          <Button variant="primary" onClick={requestCode}>
             Gửi mã xác nhận
           </Button>
 
@@ -74,16 +81,25 @@ export function ForgotPasswordScreen() {
       ) : step === "otp" ? (
         <div className={styles.form}>
           <p className={styles.otpHint}>
-            Havi đã gửi mã {OTP_LENGTH} số tới <strong>{phone}</strong>
+            Havi đã gửi mã {OTP_LENGTH} số tới <strong>{email}</strong>
           </p>
-          <OtpInput value={otp} onChange={setOtp} />
+          <OtpInput value={code} onChange={setCode} />
 
-          <Button
-            variant="primary"
-            disabled={otp.length !== OTP_LENGTH}
-            onClick={() => setStep("reset")}
-          >
-            Xác nhận
+          <label className={styles.label} htmlFor="new-password">
+            Mật khẩu mới
+          </label>
+          <Input
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          {error ? <p className={styles.error}>{error}</p> : null}
+
+          <Button variant="primary" onClick={submitNewPassword}>
+            Đặt lại mật khẩu
           </Button>
 
           <button
@@ -94,24 +110,6 @@ export function ForgotPasswordScreen() {
           >
             {canResend ? "Gửi lại mã" : `Gửi lại mã sau ${secondsLeft}s`}
           </button>
-        </div>
-      ) : step === "reset" ? (
-        <div className={styles.form}>
-          <label className={styles.label} htmlFor="new-password">
-            Mật khẩu mới
-          </label>
-          <Input
-            id="new-password"
-            type="password"
-            placeholder="Ít nhất 6 ký tự"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          {error ? <p className={styles.error}>{error}</p> : null}
-
-          <Button variant="primary" onClick={submitNewPassword}>
-            Đặt lại mật khẩu
-          </Button>
         </div>
       ) : (
         <div className={styles.form}>

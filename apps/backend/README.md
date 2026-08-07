@@ -77,14 +77,14 @@ trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trư
 - `core/content_state.py` — state machine của content item, có test
 - `core/config.py` — settings + secret boundary
 - `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`, chưa insert)
-- `core/phone.py` — chuẩn hoá SĐT Việt Nam (0xxxxxxxxx → +84…)
-- `core/security.py` — JWT access token, hash OTP/refresh token
+- `core/phone.py` — chuẩn hoá SĐT Việt Nam (0xxxxxxxxx → +84…), chỉ dùng cho Zalo OA
+- `core/security.py` — JWT access token, hash password (Argon2id), hash mã 6 số/refresh token
 - `domain/models/` — SQLAlchemy models thật: `User`, `OtpChallenge`, `RefreshSession`,
   `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
   Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
 - `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
   cho user/OTP/refresh session/workspace/workspace member/brand profile.
-- `application/services/` — `auth_service.py` (OTP+JWT), `workspace_service.py`
+- `application/services/` — `auth_service.py` (email+mật khẩu, JWT), `workspace_service.py`
   (workspace/member), `brand_profile_service.py` (giọng văn/từ cấm/FAQ). Exception
   thuần (không phụ thuộc FastAPI), router dịch sang HTTP status.
 - `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`,
