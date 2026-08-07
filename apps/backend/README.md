@@ -20,8 +20,22 @@ Ba process deploy độc lập nhưng dùng chung `core/`. Xem
 
 ## Chạy local
 
+Khởi động Postgres/Redis/MinIO (từ root repo, tài liệu duy nhất — không cần biết gì thêm):
+
+```bash
+docker compose up -d
+```
+
+Cài backend:
+
 ```bash
 cd apps/backend && cp .env.example .env && uv sync --extra dev
+```
+
+Chạy migration (cần extra `db`, xem [`migrations/README.md`](migrations/README.md)):
+
+```bash
+cd apps/backend && uv sync --extra db && uv run alembic upgrade head
 ```
 
 ```bash
