@@ -1,0 +1,23 @@
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.box {
+  width: 44px;
+  height: 52px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.box:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
