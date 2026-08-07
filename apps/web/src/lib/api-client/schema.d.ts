@@ -148,6 +148,10 @@ export interface paths {
         /**
          * Create Workspace
          * @description Bước 1 Onboarding: chọn ngành rồi tạo tiệm.
+         *
+         *     Tự set làm `active_workspace_id` — JWT hiện tại của client chưa phản ánh
+         *     điều này, gọi `/auth/refresh` (hoặc `/workspaces/{id}/activate`) ngay sau
+         *     để lấy token mới.
          */
         post: operations["create_workspace_workspaces_post"];
         delete?: never;
@@ -2146,8 +2150,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                workspace_id: string;
                 user_id: string;
+                workspace_id: string;
             };
             cookie?: never;
         };

@@ -67,9 +67,9 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-`/auth/*` chạy thật trên Postgres (OTP request/verify, sign-up, refresh, me).
-Mọi router khác vẫn trả `501 Not Implemented` — có schema request/response thật
-trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
+`/auth/*` và `/workspaces/*` chạy thật trên Postgres. 10 router domain còn lại
+vẫn trả `501 Not Implemented` — có schema request/response thật trong OpenAPI
+để `apps/web` sinh TypeScript client và dựng UI fixture trước.
 
 Đã có thật:
 
@@ -83,17 +83,20 @@ trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trư
   `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
   Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
 - `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
-  cho user/OTP/refresh session/workspace member.
-- `application/services/auth_service.py` — use case OTP + JWT thật, exception
-  thuần (không phụ thuộc FastAPI), router dịch sang HTTP status.
+  cho user/OTP/refresh session/workspace/workspace member.
+- `application/services/auth_service.py` + `workspace_service.py` — use case
+  OTP+JWT và workspace/member thật, exception thuần (không phụ thuộc FastAPI),
+  router dịch sang HTTP status.
 - `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`
-  đã nối DB thật, 11 domain router khác còn `501`.
-- `tests/test_auth_flow.py` — test thật trên Postgres (không mock), mỗi test
-  rollback transaction riêng — xem `tests/conftest.py`.
+  và `workspaces.py` đã nối DB thật, 10 domain router khác còn `501`.
+- `api/deps.py:PathWorkspaceMemberDep` — chặn 403 khi JWT hợp lệ nhưng không
+  phải thành viên của `{workspace_id}` trong path (khác `WorkspaceDep`, đọc từ JWT).
+- `tests/test_auth_flow.py` + `test_workspace_flow.py` — test thật trên Postgres
+  (không mock), mỗi test rollback transaction riêng — xem `tests/conftest.py`.
 
 Chưa có: OAuth nền tảng, LLM call, adapter kênh, provider SMS/Zalo thật (dùng
 `debug_code` tạm), endpoint logout/revoke session, và repository cho các domain
-ngoài auth (workspace CRUD, content, media…).
+ngoài auth/workspace (content, media, brand profile…).
 
 ## Ràng buộc không được phá
 
