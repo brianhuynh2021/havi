@@ -16,7 +16,9 @@ from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.auth_service import AuthService
+from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
 from core.security import decode_access_token
 
@@ -35,6 +37,20 @@ def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthServic
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_workspace_service(
+    session: DbSessionDep, auth_service: AuthServiceDep
+) -> WorkspaceService:
+    return WorkspaceService(
+        workspaces=WorkspaceRepository(session),
+        members=WorkspaceMemberRepository(session),
+        users=UserRepository(session),
+        auth_service=auth_service,
+    )
+
+
+WorkspaceServiceDep = Annotated[WorkspaceService, Depends(get_workspace_service)]
 
 
 class AuthContext:
@@ -87,3 +103,23 @@ def get_workspace_id(auth: AuthDep) -> UUID:
 
 
 WorkspaceDep = Annotated[UUID, Depends(get_workspace_id)]
+
+
+async def require_path_workspace_member(
+    workspace_id: UUID, auth: AuthDep, session: DbSessionDep
+) -> UUID:
+    """Cho route có `{workspace_id}` trong path (get/update/members/...) — khác
+    `WorkspaceDep` (đọc từ JWT). Không có check này thì bất kỳ JWT hợp lệ nào
+    cũng đọc/sửa được workspace của người khác miễn biết UUID — đây là chặn
+    cross-tenant leak thật, không chỉ ở active_workspace_id.
+    """
+    members = WorkspaceMemberRepository(session)
+    if not await members.is_member(workspace_id=workspace_id, user_id=auth.user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Không có quyền truy cập workspace này",
+        )
+    return workspace_id
+
+
+PathWorkspaceMemberDep = Annotated[UUID, Depends(require_path_workspace_member)]

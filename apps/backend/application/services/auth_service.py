@@ -153,6 +153,10 @@ class AuthService:
             raise RefreshTokenInvalid()
         return await self._issue_token_pair(user)
 
+    async def issue_token_pair(self, user: User) -> TokenPairResult:
+        """Public — WorkspaceService gọi lại khi activate workspace đổi active_workspace_id."""
+        return await self._issue_token_pair(user)
+
     async def _issue_token_pair(self, user: User) -> TokenPairResult:
         access_token = create_access_token(
             user_id=user.id,

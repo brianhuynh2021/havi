@@ -354,11 +354,15 @@ Backend:
   `/auth/refresh`, `/auth/me` đều chạy thật trên Postgres, không còn `501`).
   **Chưa xong:** endpoint logout/revoke session theo yêu cầu (refresh token chỉ
   bị revoke khi xoay vòng qua `/auth/refresh`, chưa có cách revoke chủ động).
-- [ ] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
-  (`get_workspace_id` đã 409 khi chưa có `active_workspace_id`, và `get_auth_context`
-  đã kiểm tra `workspace_members` mỗi request — nhưng chưa có domain nào ngoài
-  auth thật sự dùng `WorkspaceDep` để test tenant isolation.)
-- [ ] Workspace create/activate và onboarding completion state.
+- [x] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
+  `PathWorkspaceMemberDep` (api/deps.py) chặn 403 mọi route `{workspace_id}` nếu
+  JWT hợp lệ nhưng không phải thành viên — test thật `test_khong_the_doc_workspace_cua_nguoi_khac`.
+  **Chưa xong:** content/media/... vẫn `501`, nên tenant isolation mới verify
+  được ở domain workspace, chưa ở toàn bộ domain.
+- [x] Workspace create/activate và onboarding completion state. `/workspaces`
+  (CRUD), `/workspaces/{id}/activate` (đổi JWT), `/workspaces/{id}/members`
+  (invite/list/remove, chặn xoá owner cuối) — `tests/test_workspace_flow.py`,
+  9 case chạy thật trên Postgres.
 - [ ] Encrypt sensitive fields bằng application key management.
 
 Frontend:
