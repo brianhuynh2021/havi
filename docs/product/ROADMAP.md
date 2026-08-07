@@ -180,6 +180,9 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 ### P2 — Sau khi có dữ liệu pilot
 
 - [ ] TikTok/YouTube adapters.
+- [ ] Video pipeline dựng Reel/TikTok thật (Video Understanding → Transcript →
+  Edit Engine → EditPlan.json → Renderer) — thiết kế đã ghi ở
+  `docs/architecture/SYSTEM_ARCHITECTURE.md` §5.3, chưa code.
 - [ ] CRM lifecycle automation 14/30 ngày.
 - [ ] A/B testing tiêu đề/giờ đăng.
 - [ ] Full-auto unlock theo lịch sử duyệt và tỷ lệ sửa.
