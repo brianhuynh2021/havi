@@ -12,6 +12,9 @@
     "generate:api": "npm run generate:api --workspace web",
     "dev:api": "cd apps/backend && uv run uvicorn api.main:app --reload --port 8000",
     "test:api": "cd apps/backend && uv run pytest",
-    "lint:api": "cd apps/backend && uv run ruff check ."
+    "lint:api": "cd apps/backend && uv run ruff check .",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "migrate": "cd apps/backend && uv run alembic upgrade head"
   }
 }

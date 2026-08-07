@@ -722,7 +722,9 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [ ] Tạo UI primitives và test setup trước khi nhân rộng thêm màn.
 - [x] Sinh TypeScript client từ OpenAPI scaffold (`npm run generate:api` →
   `apps/web/src/lib/api-client/`; chưa có feature nào nối vào vì backend còn 501).
-- [ ] Scaffold local PostgreSQL/Redis/object storage + Alembic.
+- [x] Scaffold local PostgreSQL/Redis/object storage + Alembic (`docker-compose.yml`
+  ở root + `apps/backend/migrations/`; verify bằng smoke-test migration thật, chưa
+  có domain model/table nghiệp vụ nào — `target_metadata` vẫn `None` chờ Tuần 4).
 - [ ] Dựng Auth và Onboarding design-complete.
 - [ ] Bắt đầu persistence/auth thật sau khi Gate B đạt.
 
