@@ -27,7 +27,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
         <a href="#nganh" style="color:#4A4A4A;">Cho ngành của bạn</a>
         <a href="#gia" style="color:#4A4A4A;">Bảng giá</a>
         <a href="Havi - Đăng Nhập.dc.html" style="color:#4A4A4A;font-weight:600;">Đăng nhập</a>
-        <a href="Havi - Đăng Nhập.dc.html" style="background:#D4956F;color:#fff;border-radius:8px;padding:10px 18px;font-weight:600;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Dùng thử miễn phí</a>
+        <a href="Havi - Đăng Nhập.dc.html" style="background:#A85B33;color:#fff;border-radius:8px;padding:10px 18px;font-weight:600;" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Dùng thử miễn phí</a>
       </nav>
     </div>
   </header>
@@ -38,7 +38,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
       <h1 style="margin:18px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:44px;line-height:1.2;text-wrap:pretty;">Từ ảnh chụp vội đến khách hàng thật — chỉ 1 nút bấm</h1>
       <p style="margin:18px 0 0;font-size:17px;line-height:1.6;color:#4A4A4A;text-wrap:pretty;">Không cần viết prompt, không cần biết công nghệ. Ném vào vài tấm ảnh, một đoạn ghi âm hay 3 gạch đầu dòng — Havi tự xử lý, tự đăng đa kênh, tự đi tìm khách cho bạn.</p>
       <div style="display:flex;gap:12px;margin-top:28px;">
-        <a href="Havi - Đăng Nhập.dc.html" style="background:#D4956F;color:#fff;border-radius:10px;padding:16px 28px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Dùng thử miễn phí 14 ngày</a>
+        <a href="Havi - Đăng Nhập.dc.html" style="background:#A85B33;color:#fff;border-radius:10px;padding:16px 28px;font-weight:700;font-size:16px;" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Dùng thử miễn phí 14 ngày</a>
         <a href="#cach-hoat-dong" style="background:#fff;border:1px solid #E0D9D3;color:#2C2C2C;border-radius:10px;padding:16px 28px;font-weight:600;font-size:16px;" style-hover="border-color:#D4956F;text-decoration:none;">Xem cách hoạt động</a>
       </div>
       <div style="display:flex;gap:28px;margin-top:32px;">
@@ -100,6 +100,9 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
             <span style="width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:{{ ind.bg }};">{{ ind.badge }}</span>
             <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">{{ ind.name }}</div>
           </div>
+          <div style="margin-top:14px;height:120px;border-radius:8px;border:1px solid #E0D9D3;background:repeating-linear-gradient(45deg,#EFE7DF,#EFE7DF 9px,#F5EEE7 9px,#F5EEE7 18px);display:flex;align-items:flex-end;padding:8px;box-sizing:border-box;">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#8A817A;background:rgba(245,241,237,0.92);border-radius:4px;padding:3px 7px;">{{ ind.imgcap }}</span>
+          </div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
             <sc-for list="{{ ind.rows }}" as="r" hint-placeholder-count="3">
               <div style="display:flex;gap:10px;align-items:flex-start;">
@@ -143,7 +146,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
     <div style="max-width:720px;margin:0 auto;text-align:center;">
       <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">Xem Havi chạy thật, ngay bây giờ</h2>
       <p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:#C9C0B8;">Bản demo tương tác: chọn ngành của bạn, bấm 1 nút và xem cả 4 trạm hoạt động — từ liệu thô đến khách hàng.</p>
-      <a href="Havi - AI Marketing.dc.html" style="display:inline-block;margin-top:28px;background:#D4956F;color:#fff;border-radius:10px;padding:16px 32px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Chạy thử demo 1 nút</a>
+      <a href="Havi - AI Marketing.dc.html" style="display:inline-block;margin-top:28px;background:#A85B33;color:#fff;border-radius:10px;padding:16px 32px;font-weight:700;font-size:16px;" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Chạy thử demo 1 nút</a>
     </div>
   </section>
 
@@ -178,26 +181,26 @@ class Component extends DCLogic {
       pricing: [
         {name:'Dùng thử', price:'0đ', per:'14 ngày — không cần thẻ', cta:'Thử miễn phí',
          feats:['Đủ mọi tính năng','Kết nối 2 kênh','Hết 14 ngày mới quyết định'],
-         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#B8744D', btnBd:'#D4956F'},
+         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#8F4C2A', btnBd:'#D4956F'},
         {name:'Tiệm Nhỏ', price:'299K', per:'mỗi tháng · 1 tiệm', cta:'Chọn gói này',
          feats:['Nạp liệu thô, AI viết mọi kênh','Tự đăng 4 kênh giờ vàng','Báo cáo "khách từ đâu tới"'],
-         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#B8744D', btnBd:'#D4956F'},
+         bg:'#F5F1ED', bd:'#E0D9D3', fg:'#2C2C2C', sub:'#8A817A', accent:'#B8744D', btnBg:'#fff', btnFg:'#8F4C2A', btnBd:'#D4956F'},
         {name:'Toàn Diện', price:'599K', per:'mỗi tháng · 1 tiệm', cta:'Đáng tiền nhất',
          feats:['Mọi thứ ở gói Tiệm Nhỏ','Lắng nghe hội nhóm + soạn trả lời','CRM tự nhắc chăm khách cũ','Duyệt mọi thứ ngay trong Zalo'],
-         bg:'#2C2C2C', bd:'#2C2C2C', fg:'#F5F1ED', sub:'#C9C0B8', accent:'#D4956F', btnBg:'#D4956F', btnFg:'#fff', btnBd:'#D4956F'}
+         bg:'#2C2C2C', bd:'#2C2C2C', fg:'#F5F1ED', sub:'#C9C0B8', accent:'#D4956F', btnBg:'#A85B33', btnFg:'#fff', btnBd:'#D4956F'}
       ],
       industries: [
-        {name:'Spa / Tiệm Nước', badge:'SP', bg:'#D4956F', rows:[
+        {name:'Spa / Tiệm Nước', badge:'SP', bg:'#D4956F', imgcap:'ảnh thật · before/after của khách', rows:[
           {k:'Nạp', t:'Bạn chỉ cần chụp 1 tấm ảnh khách trước/sau khi làm dịch vụ'},
           {k:'AI', t:'Havi làm đẹp ảnh, gắn logo tiệm và viết bài giới thiệu hấp dẫn'},
           {k:'Đăng', t:'Tự động đăng lên Fanpage và Google Maps của tiệm'},
           {k:'Săn', t:'Ai hỏi "chỗ nặn mụn uy tín" quanh vùng, Havi báo ngay và soạn sẵn câu trả lời — bạn ưng thì bấm gửi'}]},
-        {name:'Môi Giới / Tín Dụng', badge:'MG', bg:'#3B6B9F', rows:[
+        {name:'Môi Giới / Tín Dụng', badge:'MG', bg:'#3B6B9F', imgcap:'ảnh thật · căn nhà / mặt bằng', rows:[
           {k:'Nạp', t:'Bạn chỉ cần gõ 3 dòng: vị trí, giá, pháp lý — kèm vài ảnh chụp vội'},
           {k:'AI', t:'Havi làm nét ảnh, gắn số điện thoại và viết tin rao hấp dẫn, dễ lên top tìm kiếm'},
           {k:'Đăng', t:'Tự động đăng lên Zalo, Fanpage và các trang rao vặt cùng lúc'},
           {k:'Săn', t:'Có người hỏi mua nhà hay vay vốn trong hội nhóm? Havi báo ngay kèm câu trả lời soạn sẵn — bạn bấm gửi là xong'}]},
-        {name:'Kỹ Sư / Chuyên Gia', badge:'KS', bg:'#4A4A4A', rows:[
+        {name:'Kỹ Sư / Chuyên Gia', badge:'KS', bg:'#4A4A4A', imgcap:'ảnh thật · sơ đồ / kết quả dự án', rows:[
           {k:'Nạp', t:'Bạn chỉ cần ghi âm 2 phút kể lại vấn đề vừa xử lý trong ngày'},
           {k:'AI', t:'Havi viết lại thành bài chia sẻ kinh nghiệm chuyên nghiệp, dễ đọc'},
           {k:'Đăng', t:'Tự động đăng lên LinkedIn và YouTube của bạn, đúng giờ nhiều người xem'},

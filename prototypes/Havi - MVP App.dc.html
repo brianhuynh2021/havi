@@ -20,23 +20,23 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
   <aside style="width:232px;flex:none;background:#2C2C2C;color:#F5F1ED;display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 20px;">
-      <div style="width:34px;height:34px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:15px;">Ha</div>
-      <span style="font-family:Merriweather,serif;font-weight:900;font-size:18px;">Havi</span>
+      <div style="width:34px;height:34px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
+      <span style="font-family:Merriweather,serif;font-weight:900;font-size:22px;">Havi</span>
     </div>
     <nav style="display:flex;flex-direction:column;gap:4px;">
       <sc-for list="{{ navItems }}" as="nv" hint-placeholder-count="5">
-        <button onClick="{{ nv.go }}" style="display:flex;align-items:center;gap:10px;text-align:left;border:none;cursor:pointer;font-family:Inter,sans-serif;font-size:14px;font-weight:500;padding:11px 12px;border-radius:8px;background:{{ nv.bg }};color:{{ nv.fg }};" style-hover="background:rgba(255,255,255,0.1);">
+        <button onClick="{{ nv.go }}" style="display:flex;align-items:center;gap:10px;text-align:left;border:none;cursor:pointer;font-family:Inter,sans-serif;font-size:15px;font-weight:500;padding:11px 12px;border-radius:8px;background:{{ nv.bg }};color:{{ nv.fg }};" style-hover="background:rgba(255,255,255,0.1);">
           <span style="width:8px;height:8px;border-radius:2px;background:{{ nv.dot }};flex:none;"></span>{{ nv.label }}
-          <sc-if value="{{ nv.count }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;background:#D4956F;color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;">{{ nv.count }}</span></sc-if>
+          <sc-if value="{{ nv.count }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;background:rgba(255,255,255,0.16);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;">{{ nv.count }}</span></sc-if>
         </button>
       </sc-for>
     </nav>
     <div style="margin-top:auto;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px;">
       <div style="font-size:12px;color:#C9C0B8;">Không gian làm việc</div>
-      <div style="font-weight:600;font-size:14px;margin-top:3px;">Spa An Nhiên</div>
+      <div style="font-weight:600;font-size:15px;margin-top:3px;">Spa An Nhiên</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
         <sc-for list="{{ connected }}" as="c" hint-placeholder-count="3">
-          <span style="font-size:10.5px;font-weight:600;background:rgba(212,149,111,0.25);color:#E8C4A8;border-radius:4px;padding:3px 7px;">{{ c }}</span>
+          <span style="font-size:12px;font-weight:600;background:rgba(212,149,111,0.25);color:#C9C0B8;border-radius:4px;padding:3px 7px;">{{ c }}</span>
         </sc-for>
       </div>
     </div>
@@ -46,33 +46,33 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
     <sc-if value="{{ tabHome }}" hint-placeholder-val="{{ true }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;">Chào buổi sáng, chị Hương</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#8A817A;">Thứ Bảy, 1 tháng 8 — hôm nay Havi có vài việc đã lo sẵn cho chị.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Chào buổi sáng, chị Hương</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Thứ Bảy, 1 tháng 8 — hôm nay Havi có vài việc đã lo sẵn cho chị.</p>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px;">
           <sc-for list="{{ homeStats }}" as="hs" hint-placeholder-count="3">
-            <button onClick="{{ hs.go }}" style="text-align:left;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.08);" style-hover="box-shadow:0 8px 16px rgba(0,0,0,0.12);">
-              <div style="font-family:Merriweather,serif;font-weight:900;font-size:26px;color:#B8744D;">{{ hs.v }}</div>
+            <button onClick="{{ hs.go }}" style="text-align:left;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;cursor:pointer;font-family:Inter,sans-serif;" style-hover="border-color:#D4956F;">
+              <div style="font-weight:700;font-size:26px;color:#2C2C2C;">{{ hs.v }}</div>
               <div style="font-size:13px;color:#4A4A4A;margin-top:4px;">{{ hs.l }}</div>
             </button>
           </sc-for>
         </div>
-        <div style="background:#fff;border:2px dashed #D4956F;border-radius:14px;padding:32px;margin-top:20px;text-align:center;">
-          <div style="font-family:Merriweather,serif;font-weight:700;font-size:19px;">Có gì mới ở tiệm hôm nay?</div>
-          <p style="margin:8px auto 0;max-width:440px;font-size:13.5px;line-height:1.55;color:#8A817A;">Thả vài tấm ảnh, ghi âm 1 phút, hoặc gõ vài dòng. Havi sẽ lo phần còn lại — viết bài, chỉnh ảnh và lên lịch đăng.</p>
-          <button onClick="{{ goCreate }}" style="margin-top:18px;background:#D4956F;color:#fff;border:none;border-radius:10px;padding:14px 28px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#B8744D;">+ Tạo nội dung mới</button>
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:14px;padding:32px;margin-top:20px;text-align:center;">
+          <div style="font-weight:600;font-size:18px;">Có gì mới ở tiệm hôm nay?</div>
+          <p style="margin:8px auto 0;max-width:440px;font-size:13px;line-height:1.55;color:#8A817A;">Thả vài tấm ảnh, ghi âm 1 phút, hoặc gõ vài dòng. Havi sẽ lo phần còn lại — viết bài, chỉnh ảnh và lên lịch đăng.</p>
+          <button onClick="{{ goCreate }}" style="margin-top:18px;background:#A85B33;color:#fff;border:none;border-radius:10px;padding:14px 28px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#8F4C2A;">+ Tạo nội dung mới</button>
         </div>
         <div style="background:#2C2C2C;border-radius:14px;padding:22px 24px;margin-top:20px;color:#F5F1ED;">
           <div style="display:flex;align-items:baseline;gap:10px;">
-            <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">Hôm nay chị bận? Havi vẫn có bài sẵn</div>
+            <div style="font-weight:600;font-size:18px;">Hôm nay chị bận? Havi vẫn có bài sẵn</div>
             <span style="font-size:12px;color:#C9C0B8;">Tiệm không "im hơi" ngày nào — khách sẽ không quên chị</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
             <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="2">
               <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
-                <span style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#E8C4A8;">{{ sg.tag }}</span>
-                <span style="font-size:13.5px;line-height:1.5;color:#F5F1ED;">{{ sg.t }}</span>
+                <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#C9C0B8;">{{ sg.tag }}</span>
+                <span style="font-size:13px;line-height:1.5;color:#F5F1ED;">{{ sg.t }}</span>
                 <sc-if value="{{ sg.pending }}" hint-placeholder-val="{{ true }}">
-                  <button onClick="{{ sg.approve }}" style="align-self:flex-start;background:#D4956F;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;" style-hover="background:#B8744D;">Duyệt, đăng giúp tôi</button>
+                  <button onClick="{{ sg.approve }}" style="align-self:flex-start;background:#A85B33;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#8F4C2A;">Duyệt, đăng giúp tôi</button>
                 </sc-if>
                 <sc-if value="{{ sg.done }}" hint-placeholder-val="{{ false }}">
                   <span style="align-self:flex-start;font-size:12px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:6px 14px;">Đã lên lịch · {{ sg.time }}</span>
@@ -81,22 +81,22 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
             </sc-for>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:16px 24px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:16px 24px;margin-top:20px;">
           <span style="flex:none;width:44px;height:44px;border-radius:10px;background:#3B6B9F;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">Zalo</span>
           <div style="flex:1;">
-            <div style="font-weight:700;font-size:14.5px;">Không cần mở app — duyệt ngay trong Zalo</div>
+            <div style="font-weight:700;font-size:15px;">Không cần mở app — duyệt ngay trong Zalo</div>
             <div style="font-size:13px;color:#4A4A4A;margin-top:3px;">Gửi ảnh vào Zalo của Havi, nhận bản nháp, nhắn "OK" là đăng. Bản nháp và câu trả lời chờ duyệt cũng được nhắn tới chị mỗi sáng.</div>
           </div>
-          <span style="flex:none;font-size:11.5px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã bật</span>
+          <span style="flex:none;font-size:12px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã bật</span>
         </div>
-        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B8744D;">Havi vừa làm gì cho chị</div>
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;margin-top:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Havi vừa làm gì cho chị</div>
           <div style="display:flex;flex-direction:column;gap:0;margin-top:8px;">
             <sc-for list="{{ activity }}" as="ac" hint-placeholder-count="4">
               <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #F0EAE4;">
-                <span style="flex:none;font-size:11.5px;color:#8A817A;width:52px;margin-top:1px;">{{ ac.time }}</span>
-                <span style="font-size:13.5px;line-height:1.5;color:#2C2C2C;flex:1;">{{ ac.t }}</span>
-                <span style="flex:none;font-size:10.5px;font-weight:700;text-transform:uppercase;border-radius:4px;padding:3px 8px;background:#F9EFE7;color:#B8744D;">{{ ac.tag }}</span>
+                <span style="flex:none;font-size:12px;color:#8A817A;width:52px;margin-top:1px;">{{ ac.time }}</span>
+                <span style="font-size:13px;line-height:1.5;color:#2C2C2C;flex:1;">{{ ac.t }}</span>
+                <span style="flex:none;font-size:12px;font-weight:700;text-transform:uppercase;border-radius:4px;padding:3px 8px;background:#F0EAE4;color:#8A817A;">{{ ac.tag }}</span>
               </div>
             </sc-for>
           </div>
@@ -106,69 +106,69 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
     <sc-if value="{{ tabCreate }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;">Tạo nội dung mới</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#8A817A;">Đưa Havi nguyên liệu thô — không cần viết sẵn gì cả.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Tạo nội dung mới</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Đưa Havi nguyên liệu thô — không cần viết sẵn gì cả.</p>
         <div style="display:grid;grid-template-columns:360px 1fr;gap:20px;margin-top:24px;align-items:start;">
-          <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B8744D;">Nguyên liệu của chị</div>
+          <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Nguyên liệu của chị</div>
             <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
               <sc-for list="{{ rawItems }}" as="ri" hint-placeholder-count="3">
                 <div style="display:flex;gap:10px;align-items:center;background:#F5F1ED;border:1px solid #E0D9D3;border-radius:8px;padding:10px 12px;">
-                  <span style="flex:none;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#3B6B9F;background:#fff;border:1px solid #E0D9D3;border-radius:4px;padding:3px 7px;">{{ ri.k }}</span>
+                  <span style="flex:none;font-size:12px;font-weight:700;text-transform:uppercase;color:#3B6B9F;background:#fff;border:1px solid #E0D9D3;border-radius:4px;padding:3px 7px;">{{ ri.k }}</span>
                   <span style="font-size:13px;line-height:1.45;color:#4A4A4A;">{{ ri.t }}</span>
                 </div>
               </sc-for>
             </div>
-            <div style="border:2px dashed #E0D9D3;border-radius:8px;padding:16px;margin-top:10px;text-align:center;font-size:12.5px;color:#8A817A;">+ Thả thêm ảnh, ghi âm hoặc gõ vài dòng</div>
-            <button onClick="{{ generate }}" disabled="{{ generating }}" style="width:100%;margin-top:16px;background:#D4956F;color:#fff;border:none;border-radius:10px;padding:15px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#B8744D;">{{ genLabel }}</button>
+            <div style="border:2px dashed #E0D9D3;border-radius:8px;padding:16px;margin-top:10px;text-align:center;font-size:12px;color:#8A817A;">+ Thả thêm ảnh, ghi âm hoặc gõ vài dòng</div>
+            <button onClick="{{ generate }}" disabled="{{ generating }}" style="width:100%;margin-top:16px;background:#A85B33;color:#fff;border:none;border-radius:10px;padding:15px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#8F4C2A;">{{ genLabel }}</button>
             <div style="margin-top:14px;background:#F5F1ED;border:1px solid #E0D9D3;border-radius:10px;padding:12px 14px;">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="flex:1;">
-                  <div style="font-size:12.5px;font-weight:700;color:#2C2C2C;">Chế độ đăng bài</div>
-                  <div style="font-size:11.5px;color:#8A817A;margin-top:2px;">{{ modeDesc }}</div>
+                  <div style="font-size:12px;font-weight:700;color:#2C2C2C;">Chế độ đăng bài</div>
+                  <div style="font-size:12px;color:#8A817A;margin-top:2px;">{{ modeDesc }}</div>
                 </div>
                 <button onClick="{{ toggleMode }}" style="flex:none;width:44px;height:26px;border-radius:999px;border:none;cursor:pointer;position:relative;background:{{ modeBg }};">
                   <span style="position:absolute;top:3px;left:{{ modeKnob }};width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);transition:left .15s;"></span>
                 </button>
               </div>
-              <div style="font-size:11px;color:#B8744D;margin-top:8px;font-weight:600;">{{ modeLabel }}</div>
+              <div style="font-size:12px;color:#4A4A4A;margin-top:8px;font-weight:600;">{{ modeLabel }}</div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <sc-if value="{{ showApproveBar }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:14px;background:#2C2C2C;border-radius:12px;padding:14px 18px;color:#F5F1ED;">
                 <div style="flex:1;">
-                  <div style="font-weight:700;font-size:14.5px;">{{ pendingCount }} bài chờ chị xem qua</div>
+                  <div style="font-weight:700;font-size:15px;">{{ pendingCount }} bài chờ chị xem qua</div>
                   <div style="font-size:12px;color:#C9C0B8;margin-top:2px;">Đọc lướt bên dưới — thấy ổn hết thì bấm 1 nút, Havi đăng đúng giờ vàng từng kênh.</div>
                 </div>
-                <button onClick="{{ approveAll }}" style="flex:none;background:#D4956F;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-family:Inter,sans-serif;font-weight:700;font-size:14px;cursor:pointer;" style-hover="background:#B8744D;">Duyệt &amp; đăng hết</button>
+                <button onClick="{{ approveAll }}" style="flex:none;background:#A85B33;color:#fff;border:none;border-radius:10px;padding:12px 22px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#8F4C2A;">Duyệt &amp; đăng hết</button>
               </div>
             </sc-if>
             <sc-if value="{{ genIdle }}" hint-placeholder-val="{{ true }}">
-              <div style="border:1px solid #E0D9D3;border-radius:12px;padding:40px;text-align:center;color:#8A817A;font-size:13.5px;background:rgba(255,255,255,0.5);">Bản nháp sẽ xuất hiện ở đây — mỗi kênh một phiên bản riêng, viết đúng giọng của tiệm.</div>
+              <div style="border:1px solid #E0D9D3;border-radius:12px;padding:40px;text-align:center;color:#8A817A;font-size:13px;background:rgba(255,255,255,0.5);">Bản nháp sẽ xuất hiện ở đây — mỗi kênh một phiên bản riêng, viết đúng giọng của tiệm.</div>
             </sc-if>
             <sc-if value="{{ generating }}" hint-placeholder-val="{{ false }}">
-              <div style="border:1px solid #D4956F;border-radius:12px;padding:40px;text-align:center;background:#fff;">
-                <div style="font-family:Merriweather,serif;font-weight:700;font-size:16px;color:#B8744D;animation:pulse 1.2s infinite;">{{ genStatus }}</div>
-                <div style="font-size:12.5px;color:#8A817A;margin-top:8px;">Thường mất khoảng 20 giây</div>
+              <div style="border:1px solid #E0D9D3;border-radius:12px;padding:40px;text-align:center;background:#fff;">
+                <div style="font-weight:600;font-size:18px;color:#4A4A4A;animation:pulse 1.2s infinite;">{{ genStatus }}</div>
+                <div style="font-size:12px;color:#8A817A;margin-top:8px;">Thường mất khoảng 20 giây</div>
               </div>
             </sc-if>
             <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="0">
-              <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+              <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:{{ d.chBg }};border-radius:4px;padding:4px 9px;">{{ d.ch }}</span>
+                  <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:{{ d.chBg }};border-radius:4px;padding:4px 9px;">{{ d.ch }}</span>
                   <span style="font-size:12px;color:#8A817A;">{{ d.kind }}</span>
-                  <sc-if value="{{ d.scheduled }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:11.5px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:4px 12px;">Đã lên lịch · {{ d.time }}</span></sc-if>
+                  <sc-if value="{{ d.scheduled }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font-size:12px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:4px 12px;">Đã lên lịch · {{ d.time }}</span></sc-if>
                   <sc-if value="{{ d.pending }}" hint-placeholder-val="{{ false }}">
-                    <button onClick="{{ d.approve }}" style="margin-left:auto;background:#fff;border:1px solid #D4956F;color:#B8744D;border-radius:8px;padding:7px 14px;font-family:Inter,sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;" style-hover="background:#F9EFE7;">Duyệt &amp; lên lịch {{ d.time }}</button>
+                    <button onClick="{{ d.approve }}" style="margin-left:auto;background:#fff;border:1px solid #D4956F;color:#B8744D;border-radius:8px;padding:7px 14px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#F9EFE7;">Duyệt &amp; lên lịch {{ d.time }}</button>
                   </sc-if>
                 </div>
-                <p style="margin:12px 0 0;font-size:13.5px;line-height:1.6;color:#2C2C2C;">{{ d.txt }}</p>
+                <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#2C2C2C;">{{ d.txt }}</p>
                 <sc-if value="{{ d.media }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;font-size:12px;color:#8A817A;background:#F5F1ED;border-radius:6px;padding:8px 12px;">{{ d.media }}</div></sc-if>
               </div>
             </sc-for>
             <sc-if value="{{ allScheduled }}" hint-placeholder-val="{{ false }}">
-              <button onClick="{{ goCalendar }}" style="align-self:flex-start;background:none;border:none;color:#B8744D;font-family:Inter,sans-serif;font-weight:600;font-size:13.5px;cursor:pointer;padding:4px 0;" style-hover="color:#D4956F;">Xem trên lịch đăng →</button>
+              <button onClick="{{ goCalendar }}" style="align-self:flex-start;background:none;border:none;color:#B8744D;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;padding:4px 0;" style-hover="color:#D4956F;">Xem trên lịch đăng →</button>
             </sc-if>
           </div>
         </div>
@@ -177,18 +177,18 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
     <sc-if value="{{ tabCalendar }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;">Lịch đăng tuần này</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#8A817A;">Havi tự chọn khung giờ nhiều người xem nhất cho từng kênh — chị có thể kéo đổi giờ bất kỳ lúc nào.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Lịch đăng tuần này</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Havi tự chọn khung giờ nhiều người xem nhất cho từng kênh — chị có thể kéo đổi giờ bất kỳ lúc nào.</p>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;">
           <sc-for list="{{ days }}" as="day" hint-placeholder-count="4">
             <div style="background:{{ day.bg }};border:1px solid {{ day.bd }};border-radius:12px;padding:14px;min-height:220px;">
               <div style="font-size:12px;font-weight:700;color:{{ day.fg }};">{{ day.name }}</div>
               <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
                 <sc-for list="{{ day.posts }}" as="p" hint-placeholder-count="1">
-                  <div style="background:#fff;border:1px solid #E0D9D3;border-radius:8px;padding:10px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                  <div style="background:#fff;border:1px solid #E0D9D3;border-radius:8px;padding:10px 12px;">
                     <div style="display:flex;justify-content:space-between;gap:6px;">
-                      <span style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:#fff;background:{{ p.chBg }};border-radius:4px;padding:2px 7px;">{{ p.ch }}</span>
-                      <span style="font-size:11px;color:#8A817A;">{{ p.time }}</span>
+                      <span style="font-size:12px;font-weight:700;text-transform:uppercase;color:#fff;background:{{ p.chBg }};border-radius:4px;padding:2px 7px;">{{ p.ch }}</span>
+                      <span style="font-size:12px;color:#8A817A;">{{ p.time }}</span>
                     </div>
                     <div style="font-size:12px;line-height:1.45;color:#4A4A4A;margin-top:6px;">{{ p.t }}</div>
                   </div>
@@ -202,32 +202,32 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
     <sc-if value="{{ tabLeads }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;">Khách tiềm năng</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#8A817A;">Havi lắng nghe tin nhắn, đánh giá và cả các hội nhóm quanh vùng — soạn sẵn câu trả lời, chị đọc ưng thì bấm gửi. Không gì được gửi đi khi chị chưa duyệt.</p>
-        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:14px 20px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Khách tiềm năng</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Havi lắng nghe tin nhắn, đánh giá và cả các hội nhóm quanh vùng — soạn sẵn câu trả lời, chị đọc ưng thì bấm gửi. Không gì được gửi đi khi chị chưa duyệt.</p>
+        <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:14px 20px;margin-top:20px;">
           <span style="flex:none;width:10px;height:10px;border-radius:999px;background:#5FA76F;"></span>
-          <div style="flex:1;font-size:13.5px;color:#2C2C2C;"><strong>Trực tin nhắn 24/7 đang bật</strong> — 8 câu quen thuộc (giá, giờ mở cửa, chỉ đường) chị đã duyệt sẵn, Havi trả lời ngay cả khi chị ngủ. Câu khó mới chờ chị duyệt.</div>
-          <span style="flex:none;font-size:11.5px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã bật</span>
+          <div style="flex:1;font-size:13px;color:#2C2C2C;"><strong>Trực tin nhắn 24/7 đang bật</strong> — 8 câu quen thuộc (giá, giờ mở cửa, chỉ đường) chị đã duyệt sẵn, Havi trả lời ngay cả khi chị ngủ. Câu khó mới chờ chị duyệt.</div>
+          <span style="flex:none;font-size:12px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã bật</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px;">
           <sc-for list="{{ leads }}" as="ld" hint-placeholder-count="4">
-            <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-              <span style="flex:none;width:40px;height:40px;border-radius:999px;background:{{ ld.avBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">{{ ld.av }}</span>
+            <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;">
+              <span style="flex:none;width:40px;height:40px;border-radius:999px;background:{{ ld.avBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;">{{ ld.av }}</span>
               <div style="flex:1;">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <span style="font-weight:600;font-size:14.5px;">{{ ld.name }}</span>
-                  <span style="font-size:11px;color:#8A817A;">{{ ld.src }}</span>
-                  <span style="margin-left:auto;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:{{ ld.stBg }};color:{{ ld.stFg }};">{{ ld.status }}</span>
+                  <span style="font-weight:600;font-size:15px;">{{ ld.name }}</span>
+                  <span style="font-size:12px;color:#8A817A;">{{ ld.src }}</span>
+                  <span style="margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:{{ ld.stBg }};color:{{ ld.stFg }};">{{ ld.status }}</span>
                 </div>
-                <p style="margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#4A4A4A;">{{ ld.msg }}</p>
-                <sc-if value="{{ ld.note }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:12.5px;color:#B8744D;background:#F9EFE7;border-radius:6px;padding:7px 12px;display:inline-block;">{{ ld.note }}</div></sc-if>
+                <p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:#4A4A4A;">{{ ld.msg }}</p>
+                <sc-if value="{{ ld.note }}" hint-placeholder-val="{{ false }}"><div style="margin-top:8px;font-size:12px;color:#4A4A4A;background:#F0EAE4;border-radius:6px;padding:7px 12px;display:inline-block;">{{ ld.note }}</div></sc-if>
                 <sc-if value="{{ ld.reply }}" hint-placeholder-val="{{ false }}">
                   <div style="margin-top:10px;background:#F5F1ED;border:1px solid #E0D9D3;border-radius:8px;padding:12px 14px;">
-                    <div style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#B8744D;">Havi soạn sẵn — chị duyệt rồi mới gửi</div>
+                    <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8A817A;">Havi soạn sẵn — chị duyệt rồi mới gửi</div>
                     <p style="margin:7px 0 0;font-size:13px;line-height:1.55;color:#4A4A4A;">{{ ld.reply }}</p>
                     <div style="display:flex;gap:8px;margin-top:10px;">
                       <sc-if value="{{ ld.canSend }}" hint-placeholder-val="{{ false }}">
-                        <button onClick="{{ ld.send }}" style="background:#D4956F;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:Inter,sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;" style-hover="background:#B8744D;">Gửi trả lời này</button>
+                        <button onClick="{{ ld.send }}" style="background:#A85B33;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#8F4C2A;">Gửi trả lời này</button>
                       </sc-if>
                       <sc-if value="{{ ld.sentOk }}" hint-placeholder-val="{{ false }}">
                         <span style="font-size:12px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:7px 16px;">Đã gửi</span>
@@ -242,49 +242,161 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
       </div>
     </sc-if>
 
+    <sc-if value="{{ tabMaps }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Đánh giá &amp; Google Maps</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Nguồn khách số 1 của tiệm. Havi soạn sẵn câu trả lời cho từng đánh giá — chị đọc rồi bấm gửi.</p>
+
+        <sc-if value="{{ hasUrgent }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:14px;background:#FBF1EE;border:1px solid #E8C6BC;border-radius:12px;padding:14px 20px;margin-top:20px;">
+            <span style="flex:none;width:10px;height:10px;border-radius:999px;background:#C0564A;"></span>
+            <div style="flex:1;font-size:13px;line-height:1.5;color:#2C2C2C;"><strong>{{ urgentText }}</strong> — Havi đã nhắn Zalo cho chị và soạn sẵn câu xin lỗi. Trả lời trong 24 giờ giúp giảm ảnh hưởng lên điểm sao.</div>
+            <button onClick="{{ toggleFilter }}" style="flex:none;background:#A85B33;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#8F4C2A;">{{ filterLabel }}</button>
+          </div>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:300px 1fr;gap:14px;margin-top:20px;align-items:start;">
+
+          <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Điểm sao hiện tại</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px;">
+              <span style="font-weight:700;font-size:26px;color:#2C2C2C;">{{ rating }}</span>
+              <span style="font-size:13px;color:#8A817A;">/ 5 · {{ reviewTotal }} đánh giá</span>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#5FA76F;margin-top:4px;">{{ ratingDelta }}</div>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-top:16px;">
+              <sc-for list="{{ stars }}" as="st" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span style="flex:none;width:26px;font-size:12px;color:#8A817A;">{{ st.n }}★</span>
+                  <div style="flex:1;height:6px;border-radius:999px;background:#F0EAE4;overflow:hidden;"><div style="height:100%;border-radius:999px;background:{{ st.c }};width:{{ st.w }};"></div></div>
+                  <span style="flex:none;width:20px;text-align:right;font-size:12px;color:#4A4A4A;">{{ st.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:18px;border-top:1px solid #F0EAE4;padding-top:6px;">
+              <sc-for list="{{ mapActions }}" as="ma" hint-placeholder-count="2">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;">
+                  <span style="font-size:13px;color:#4A4A4A;">{{ ma.l }}</span>
+                  <span style="font-size:15px;font-weight:700;color:#2C2C2C;">{{ ma.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:12px;color:#8A817A;margin-top:4px;">Số liệu tuần này, lấy từ Google Maps.</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ reviews }}" as="rv" hint-placeholder-count="4">
+              <div style="background:{{ rv.cardBg }};border:1px solid {{ rv.cardBd }};border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;">
+                <span style="flex:none;width:40px;height:40px;border-radius:999px;background:{{ rv.avBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;">{{ rv.av }}</span>
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="font-weight:600;font-size:15px;white-space:nowrap;">{{ rv.name }}</span>
+                    <span style="font-size:13px;font-weight:700;color:{{ rv.starC }};">{{ rv.starText }}</span>
+                    <span style="font-size:12px;color:#8A817A;">{{ rv.time }}</span>
+                    <span style="margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;background:{{ rv.stBg }};color:{{ rv.stFg }};">{{ rv.status }}</span>
+                  </div>
+                  <p style="margin:6px 0 0;font-size:13px;line-height:1.55;color:#4A4A4A;">{{ rv.text }}</p>
+                  <sc-if value="{{ rv.reply }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:10px;background:#F5F1ED;border:1px solid #E0D9D3;border-radius:8px;padding:12px 14px;">
+                      <div style="font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8A817A;">{{ rv.replyLabel }}</div>
+                      <p style="margin:7px 0 0;font-size:13px;line-height:1.55;color:#4A4A4A;">{{ rv.reply }}</p>
+                      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+                        <sc-if value="{{ rv.canSend }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ rv.send }}" style="background:#A85B33;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#8F4C2A;">Gửi trả lời này</button>
+                        </sc-if>
+                        <sc-if value="{{ rv.sentOk }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:12px;font-weight:700;color:#fff;background:#5FA76F;border-radius:999px;padding:7px 16px;">Đã gửi</span>
+                        </sc-if>
+                        <sc-if value="{{ rv.canSend }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:12px;color:#8A817A;">Chị sửa lại chữ nào cũng được trước khi gửi</span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noneShown }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid #E0D9D3;border-radius:12px;padding:40px;text-align:center;font-size:13px;color:#8A817A;background:rgba(255,255,255,0.5);">Không còn đánh giá nào chờ chị trả lời. Havi vẫn đang trực và sẽ báo khi có đánh giá mới.</div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px;">
+          <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Mời khách đánh giá</div>
+            <p style="margin:10px 0 0;font-size:13px;line-height:1.55;color:#4A4A4A;">{{ inviteBody }}</p>
+            <div style="font-size:12px;color:#8A817A;margin-top:8px;">{{ inviteStatus }}</div>
+            <button onClick="{{ invite }}" disabled="{{ inviteDone }}" style="margin-top:14px;background:{{ inviteBg }};color:#fff;border:none;border-radius:8px;padding:11px 20px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;" style-hover="background:#8F4C2A;">{{ inviteCta }}</button>
+            <div style="font-size:12px;color:#8A817A;margin-top:10px;">Chỉ mời khách chị đã đánh dấu hài lòng — Havi không mời tràn lan.</div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Thông tin tiệm trên Maps</div>
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:8px;">
+              <sc-for list="{{ profile }}" as="pf" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0EAE4;">
+                  <div style="flex:1;">
+                    <div style="font-size:13px;font-weight:600;color:#2C2C2C;">{{ pf.l }}</div>
+                    <div style="font-size:12px;color:#8A817A;margin-top:2px;">{{ pf.d }}</div>
+                  </div>
+                  <sc-if value="{{ pf.ok }}" hint-placeholder-val="{{ true }}">
+                    <span style="flex:none;font-size:12px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:4px 12px;">Đã khớp</span>
+                  </sc-if>
+                  <sc-if value="{{ pf.todo }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ pf.fix }}" style="flex:none;background:#fff;border:1px solid #D4956F;color:#B8744D;border-radius:8px;padding:7px 14px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#F9EFE7;">{{ pf.cta }}</button>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ tabReport }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:26px;">Báo cáo tháng 7</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#8A817A;">Havi tóm tắt dễ hiểu — không cần biết đọc số liệu marketing.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Báo cáo tháng 7</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Havi tóm tắt dễ hiểu — không cần biết đọc số liệu marketing.</p>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px;">
           <sc-for list="{{ reportStats }}" as="rs" hint-placeholder-count="3">
-            <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-              <div style="font-family:Merriweather,serif;font-weight:900;font-size:26px;color:#B8744D;">{{ rs.v }}</div>
+            <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:18px 20px;">
+              <div style="font-weight:700;font-size:26px;color:#2C2C2C;">{{ rs.v }}</div>
               <div style="font-size:13px;color:#4A4A4A;margin-top:4px;">{{ rs.l }}</div>
-              <div style="font-size:11.5px;font-weight:600;color:#5FA76F;margin-top:6px;">{{ rs.d }}</div>
+              <div style="font-size:12px;font-weight:600;color:#5FA76F;margin-top:6px;">{{ rs.d }}</div>
             </div>
           </sc-for>
         </div>
-        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px 24px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B8744D;">Khách đến tiệm từ kênh nào</div>
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px 24px;margin-top:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Khách đến tiệm từ kênh nào</div>
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px;">
             <sc-for list="{{ sources }}" as="src" hint-placeholder-count="4">
               <div>
                 <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;">
                   <span style="font-weight:600;color:#2C2C2C;">{{ src.n }}</span>
-                  <span style="font-weight:700;color:#B8744D;">{{ src.v }}</span>
+                  <span style="font-weight:700;color:#2C2C2C;">{{ src.v }}</span>
                 </div>
                 <div style="height:8px;border-radius:999px;background:#F0EAE4;margin-top:6px;overflow:hidden;"><div style="height:100%;border-radius:999px;background:#D4956F;width:{{ src.w }};"></div></div>
-                <div style="font-size:11.5px;color:#8A817A;margin-top:5px;">{{ src.note }}</div>
+                <div style="font-size:12px;color:#8A817A;margin-top:5px;">{{ src.note }}</div>
               </div>
             </sc-for>
           </div>
         </div>
-        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px 24px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B8744D;">Lượt tiếp cận theo tuần</div>
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:22px 24px;margin-top:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Lượt tiếp cận theo tuần</div>
           <div style="display:flex;align-items:flex-end;gap:18px;height:160px;margin-top:18px;">
             <sc-for list="{{ bars }}" as="b" hint-placeholder-count="4">
               <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;">
-                <span style="font-size:11.5px;font-weight:600;color:#4A4A4A;">{{ b.v }}</span>
+                <span style="font-size:12px;font-weight:600;color:#4A4A4A;">{{ b.v }}</span>
                 <div style="width:100%;max-width:64px;border-radius:6px 6px 0 0;background:{{ b.color }};height:{{ b.h }};"></div>
-                <span style="font-size:11.5px;color:#8A817A;">{{ b.l }}</span>
+                <span style="font-size:12px;color:#8A817A;">{{ b.l }}</span>
               </div>
             </sc-for>
           </div>
         </div>
         <div style="background:#2C2C2C;border-radius:12px;padding:20px 24px;margin-top:20px;color:#F5F1ED;">
           <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Havi nhận xét</div>
-          <p style="margin:10px 0 0;font-size:13.5px;line-height:1.6;color:#E8E1DA;">Khách đến tiệm nhiều nhất nhờ đánh giá 5★ trên Google Maps — Havi sẽ tiếp tục mời khách hài lòng để lại đánh giá. Chị chỉ cần chụp thêm 2 ca kết quả đẹp mỗi tuần và quay 1 clip ngắn bằng điện thoại; phần cắt ghép, viết bài, đăng đúng giờ Havi lo hết.</p>
+          <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#E8E1DA;">Khách đến tiệm nhiều nhất nhờ đánh giá 5★ trên Google Maps — Havi sẽ tiếp tục mời khách hài lòng để lại đánh giá. Chị chỉ cần chụp thêm 2 ca kết quả đẹp mỗi tuần và quay 1 clip ngắn bằng điện thoại; phần cắt ghép, viết bài, đăng đúng giờ Havi lo hết.</p>
         </div>
       </div>
     </sc-if>
@@ -294,13 +406,29 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { tab: 'home', gen: 0, genMsg: '', scheduled: {}, sugg: {}, sent: {}, autoMode: false };
+  state = { tab: 'home', gen: 0, genMsg: '', scheduled: {}, sugg: {}, sent: {}, autoMode: false, mapsSent: {}, mapsFilter: false, invited: false, profileFixed: {} };
+  sendMapsReply(i){ this.setState(s => ({ mapsSent: { ...s.mapsSent, [i]: true } })); }
+  REVIEWS = [
+    {av:'T', avBg:'#5FA76F', name:'Trần Thu Hà', stars:5, time:'2 giờ trước', auto:true,
+     text:'"Kỹ thuật viên nhẹ tay, da mình dịu hẳn sau 1 buổi. Không gian sạch, có chỗ để xe trước cửa."',
+     reply:'"Cảm ơn chị Hà đã tin tưởng Spa An Nhiên! Rất mong được chăm sóc da cho chị ở những buổi tiếp theo ạ."'},
+    {av:'M', avBg:'#C0564A', name:'Nguyễn Minh', stars:2, time:'5 giờ trước', urgent:true,
+     text:'"Đặt hẹn 15:00 mà phải chờ gần 30 phút, không ai báo trước. Dịch vụ thì ổn nhưng chờ lâu quá."',
+     reply:'"Em xin lỗi anh Minh về việc để anh chờ mà không báo trước — đây là lỗi của bên em. Em đã nhắc lại quy trình với cả nhóm để không lặp lại. Em xin mời anh một buổi chăm sóc miễn phí để bù đắp, anh nhắn lại giúp em khung giờ thuận tiện nhé ạ."'},
+    {av:'P', avBg:'#3B6B9F', name:'Lê Phương Anh', stars:4, time:'hôm qua',
+     text:'"Combo mùa hè đáng tiền, giá rõ ràng không phát sinh. Trừ điểm vì khó tìm chỗ đậu ô tô."',
+     reply:'"Cảm ơn chị Phương Anh đã góp ý ạ! Tiệm có gửi xe ô tô miễn phí ở toà bên cạnh, lần tới chị nhắn trước em giữ chỗ sẵn cho chị nha."'},
+    {av:'Q', avBg:'#4A4A4A', name:'Phạm Quốc', stars:5, time:'3 ngày trước', auto:true,
+     text:'"Đưa vợ đi làm da, thấy tiệm sạch sẽ và tư vấn thật, không chèo kéo mua thêm."',
+     reply:'"Cảm ơn anh Quốc ạ! Tiệm luôn cố gắng tư vấn đúng nhu cầu để khách yên tâm quay lại."'}
+  ];
   sendReply(i){ this.setState(s => ({ sent: { ...s.sent, [i]: true } })); }
   SUGG = [
     {tag:'Từ kho ảnh của tiệm', t:'Bài "nhìn lại tháng 7" ghép từ 3 ảnh kết quả đẹp nhất tháng — kèm lời cảm ơn khách', time:'19:30 tối nay'},
     {tag:'Theo trend tuần này', t:'Kịch bản TikTok 15s theo trend chăm da mùa nóng — Havi viết sẵn, chị chỉ cần quay 1 cảnh', time:'T2 12:00'}
   ];
   timers = [];
+  CONNECTED = ['Facebook','TikTok','Zalo','Maps','YouTube'];
   CH = { fb: {n:'Fanpage', bg:'#3B6B9F'}, maps: {n:'Google Maps', bg:'#5FA76F'}, zalo: {n:'Zalo', bg:'#3B6B9F'}, reels: {n:'Reels', bg:'#B8744D'} };
   DRAFTS = [
     {ch:'Fanpage', chBg:'#3B6B9F', kind:'Bài giới thiệu', time:'19:30 tối nay', day:0,
@@ -315,7 +443,10 @@ class Component extends DCLogic {
      media:'Video cắt từ clip quay thô — đã thêm phụ đề và nhạc nền'},
     {ch:'TikTok', chBg:'#2C2C2C', kind:'Video ngắn 21s', time:'T2 12:00', day:2,
      txt:'"1 ngày ở Spa An Nhiên" — cắt từ clip quay thô, ghép nhạc đang thịnh hành. Cuối video hiện địa chỉ tiệm và chữ "Ghim địa chỉ ở bình luận".',
-     media:'Đã cắt còn 21 giây, chèn phụ đề động + địa chỉ tiệm ở giây cuối'}
+     media:'Đã cắt còn 21 giây, chèn phụ đề động + địa chỉ tiệm ở giây cuối'},
+    {ch:'YouTube', chBg:'#C75B4A', kind:'Video dài + mô tả', time:'T3 18:00', day:3,
+     txt:'"Quy trình chăm da mụn tại Spa An Nhiên — từ soi da đến sau 5 buổi". Tiêu đề và mô tả viết chuẩn tìm kiếm, có chương mục từng bước để khách nhảy đúng đoạn cần xem.',
+     media:'Video 4 phút ghép từ clip quay thô — đã chèn chương mục, ảnh bìa và gắn địa chỉ tiệm'}
   ];
   BASE_DAYS = [
     {name:'Hôm nay · T7', posts:[]},
@@ -344,11 +475,30 @@ class Component extends DCLogic {
   approveSugg(i){ this.setState(s => ({ sugg: { ...s.sugg, [i]: true } })); }
   renderVals(){
     const s = this.state;
+    const urgentCount = this.REVIEWS.filter((r,i)=> r.urgent && !s.mapsSent[i]).length;
+    const reviewList = this.REVIEWS.map((r,i)=>{
+      const sentOk = r.auto || !!s.mapsSent[i];
+      return { ...r, idx: i,
+        starText: '★'.repeat(r.stars),
+        starC: r.stars <= 2 ? '#C0564A' : '#B8744D',
+        cardBg: (r.urgent && !s.mapsSent[i]) ? '#FBF1EE' : '#fff',
+        cardBd: (r.urgent && !s.mapsSent[i]) ? '#E8C6BC' : '#E0D9D3',
+        status: r.auto ? 'Havi đã cảm ơn' : (s.mapsSent[i] ? 'Đã trả lời' : 'Chờ chị duyệt'),
+        stBg: r.auto ? '#F0F7F1' : (s.mapsSent[i] ? '#F0F7F1' : '#EDE7E1'),
+        stFg: r.auto ? '#5FA76F' : (s.mapsSent[i] ? '#5FA76F' : '#4A4A4A'),
+        replyLabel: r.auto ? 'Havi tự cảm ơn bằng mẫu chị đã duyệt sẵn' : 'Havi soạn sẵn — chị duyệt rồi mới gửi',
+        canSend: !r.auto && !s.mapsSent[i],
+        sentOk,
+        send: ()=>this.sendMapsReply(i) };
+    });
+    const shownReviews = s.mapsFilter ? reviewList.filter(r=>r.canSend) : reviewList;
+    const hasMaps = this.CONNECTED.includes('Maps');
     const tabs = [
       {id:'home', label:'Tổng quan'},
       {id:'create', label:'Tạo nội dung'},
       {id:'calendar', label:'Lịch đăng', count: 3 + Object.keys(s.scheduled).length},
       {id:'leads', label:'Khách tiềm năng', count: 2},
+      ...(hasMaps ? [{id:'maps', label:'Đánh giá & Maps', count: 2 - Object.keys(s.mapsSent).length}] : []),
       {id:'report', label:'Báo cáo'}
     ];
     const drafts = s.gen === 2 ? this.DRAFTS.map((d,i)=>({
@@ -356,7 +506,7 @@ class Component extends DCLogic {
     })) : [];
     const days = this.BASE_DAYS.map((d,di)=>({
       ...d,
-      bg: di===0 ? '#fff' : 'rgba(255,255,255,0.5)', bd: di===0 ? '#D4956F' : '#E0D9D3', fg: di===0 ? '#B8744D' : '#8A817A',
+      bg: di===0 ? '#fff' : 'rgba(255,255,255,0.5)', bd: di===0 ? '#D4956F' : '#E0D9D3', fg: di===0 ? '#2C2C2C' : '#8A817A',
       posts: [
         ...this.DRAFTS.map((dr,i)=> s.scheduled[i] && dr.day===di ? {ch:dr.ch, chBg:dr.chBg, time:dr.time.replace(' tối nay','').replace('ngay khi duyệt','Ngay').replace('CN ',''), t:dr.kind+' — vừa duyệt'} : null).filter(Boolean),
         ...d.posts
@@ -369,9 +519,9 @@ class Component extends DCLogic {
         fg: s.tab===t.id ? '#fff' : '#C9C0B8',
         dot: s.tab===t.id ? '#D4956F' : 'rgba(255,255,255,0.25)'
       })),
-      connected: ['Facebook','TikTok','Zalo','Maps'],
+      connected: this.CONNECTED,
       tabHome: s.tab==='home', tabCreate: s.tab==='create', tabCalendar: s.tab==='calendar',
-      tabLeads: s.tab==='leads', tabReport: s.tab==='report',
+      tabLeads: s.tab==='leads', tabMaps: s.tab==='maps', tabReport: s.tab==='report',
       goCreate: ()=>this.go('create'), goCalendar: ()=>this.go('calendar'),
       suggestions: this.SUGG.map((g,i)=>({ ...g, pending: !s.sugg[i], done: !!s.sugg[i], approve: ()=>this.approveSugg(i) })),
       homeStats: [
@@ -410,22 +560,54 @@ class Component extends DCLogic {
       allScheduled: s.gen===2 && Object.keys(s.scheduled).length === this.DRAFTS.length,
       days,
       leads: [
-        {av:'M', avBg:'#3B6B9F', name:'Nguyễn Mai', src:'Fanpage · 25 phút trước', status:'Mới', stBg:'#D4956F', stFg:'#fff',
+        {av:'M', avBg:'#3B6B9F', name:'Nguyễn Mai', src:'Fanpage · 25 phút trước', status:'Mới', stBg:'#EDE7E1', stFg:'#4A4A4A',
          msg:'"Combo chăm da mùa hè còn slot cuối tuần không em?"', note:'',
          reply:'"Dạ còn 2 slot chiều thứ Bảy chị ơi! Combo mùa hè đang giảm 20%, em gửi bảng giá kèm đây ạ. Chị muốn em giữ slot 15:00 hay 17:00?"'},
         {av:'D', avBg:'#3B6B9F', name:'Nhóm FB "Làm Đẹp Q7"', src:'Havi lắng nghe hội nhóm · 40 phút trước', status:'Cơ hội', stBg:'#3B6B9F', stFg:'#fff',
          msg:'Có người hỏi: "Các mẹ ơi có chỗ nào nặn mụn uy tín gần Phú Mỹ Hưng không?"', note:'',
          reply:'"Chào bạn, mình là chủ Spa An Nhiên ngay gần Phú Mỹ Hưng đây ạ. Bên mình có buổi nặn mụn thử 99K để bạn trải nghiệm trước — inbox mình gửi bảng giá và ảnh kết quả khách cũ nha!"'},
-        {av:'T', avBg:'#5FA76F', name:'Trần Thu', src:'Google Maps · 2 giờ trước', status:'Mới', stBg:'#D4956F', stFg:'#fff',
+        {av:'T', avBg:'#5FA76F', name:'Trần Thu', src:'Google Maps · 2 giờ trước', status:'Mới', stBg:'#EDE7E1', stFg:'#4A4A4A',
          msg:'Hỏi đường đến tiệm và giá buổi thử đầu tiên', note:'',
          reply:'"Dạ tiệm ở 12 Nguyễn Thị Thập, có chỗ để xe trước cửa ạ. Buổi thử đầu tiên chỉ 99K, chị bấm chỉ đường ngay trên Maps là tới nha!"'},
         {av:'L', avBg:'#8A817A', name:'Khách lạ (Messenger)', src:'Fanpage · 21:04 tối qua', status:'Đã trả lời ngay', stBg:'#5FA76F', stFg:'#fff',
          msg:'"Tiệm mở tới mấy giờ vậy shop? Chủ nhật có làm không?"', note:'Havi trả lời trong 5 giây bằng câu FAQ chị duyệt sẵn — kèm gợi ý đặt lịch. Khách đã chọn slot CN 14:00.', reply:''},
-        {av:'N', avBg:'#B8744D', name:'Ngọc Anh', src:'Khách cũ · 15 ngày chưa quay lại', status:'Đang chăm sóc', stBg:'#F9EFE7', stFg:'#B8744D',
+        {av:'N', avBg:'#B8744D', name:'Ngọc Anh', src:'Khách cũ · 15 ngày chưa quay lại', status:'Đang chăm sóc', stBg:'#EDE7E1', stFg:'#4A4A4A',
          msg:'Đã nhận voucher giảm 20% qua Zalo sáng nay (chị đã duyệt gửi), đã xem tin nhắn', note:'', reply:''},
         {av:'H', avBg:'#4A4A4A', name:'Lê Hằng', src:'Fanpage · hôm qua', status:'Đã đặt lịch', stBg:'#5FA76F', stFg:'#fff',
          msg:'Đặt buổi thử chăm da thứ Hai 10:00 — đã xác nhận', note:'', reply:''}
       ].map((ld,i)=>({ ...ld, canSend: !!ld.reply && !s.sent[i], sentOk: !!ld.reply && !!s.sent[i], send: ()=>this.sendReply(i) })),
+      rating: '4,6', reviewTotal: 52, ratingDelta: '▲ 0,2 so với tháng 6',
+      stars: [
+        {n:5, v:38, w:'100%', c:'#B8744D'},
+        {n:4, v:9, w:'24%', c:'#D4956F'},
+        {n:3, v:3, w:'8%', c:'#E0D9D3'},
+        {n:2, v:1, w:'3%', c:'#C0564A'},
+        {n:1, v:1, w:'3%', c:'#C0564A'}
+      ],
+      mapActions: [
+        {l:'Khách bấm chỉ đường', v:'48'},
+        {l:'Khách bấm gọi điện', v:'21'}
+      ],
+      hasUrgent: urgentCount > 0,
+      urgentText: urgentCount + ' đánh giá 1–2★ cần chị xem gấp',
+      toggleFilter: ()=>this.setState({ mapsFilter: !s.mapsFilter }),
+      filterLabel: s.mapsFilter ? 'Hiện tất cả' : 'Chỉ hiện cần trả lời',
+      reviews: shownReviews,
+      noneShown: shownReviews.length === 0,
+      inviteBody: s.invited
+        ? 'Đã gửi lời mời qua Zalo cho 6 khách vừa xong dịch vụ, kèm link Maps bấm 1 lần là viết được.'
+        : '6 khách vừa xong dịch vụ tuần này chưa để lại đánh giá. Havi gửi lời mời qua Zalo, kèm link Maps bấm 1 lần là viết được.',
+      inviteStatus: s.invited ? 'Tuần này đã mời 9 · 2 người đã viết' : 'Tuần này đã mời 3 · 2 người đã viết',
+      invite: ()=>this.setState({ invited: true }),
+      inviteDone: s.invited,
+      inviteBg: s.invited ? '#5FA76F' : '#A85B33',
+      inviteCta: s.invited ? 'Đã gửi lời mời cho 6 khách' : 'Mời 6 khách còn lại',
+      profile: [
+        {l:'Giờ mở cửa', d:'Havi cập nhật hôm qua — khớp với giờ chị đặt trong app', ok:true},
+        {l:'Ảnh tiệm', d:'12 ảnh · Havi thêm 3 ảnh kết quả mới tuần này', ok:true},
+        {l:'Dịch vụ & giá', d: s.profileFixed.svc ? 'Đã thêm 2 dịch vụ mới, chờ Maps duyệt' : 'Thiếu 2 dịch vụ mới chị vừa thêm trong app', ok: !!s.profileFixed.svc, todo: !s.profileFixed.svc, cta:'Cập nhật', fix: ()=>this.setState(st=>({ profileFixed: { ...st.profileFixed, svc: true } }))},
+        {l:'Địa chỉ & số điện thoại', d:'Khớp với Zalo và Fanpage', ok:true}
+      ],
       reportStats: [
         {v:'5.680', l:'lượt tiếp cận trong tháng', d:'▲ 38% so với tháng 6'},
         {v:'94', l:'tin nhắn hỏi giá', d:'▲ 21 tin so với tháng 6'},

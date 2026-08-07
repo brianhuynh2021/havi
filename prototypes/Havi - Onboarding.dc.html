@@ -19,14 +19,14 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 <div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;display:flex;flex-direction:column;align-items:center;padding:48px 24px;box-sizing:border-box;">
   <div style="display:flex;align-items:center;gap:12px;">
     <div style="width:40px;height:40px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
-    <span style="font-family:Merriweather,serif;font-weight:900;font-size:20px;">Havi</span>
+    <span style="font-family:Merriweather,serif;font-weight:900;font-size:22px;">Havi</span>
   </div>
 
   <div style="display:flex;align-items:center;gap:10px;margin-top:32px;">
     <sc-for list="{{ dots }}" as="d" hint-placeholder-count="3">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:{{ d.bg }};color:{{ d.fg }};border:1px solid {{ d.bd }};">{{ d.n }}</span>
-        <span style="font-size:12.5px;font-weight:600;color:{{ d.labelC }};">{{ d.label }}</span>
+        <span style="font-size:12px;font-weight:600;color:{{ d.labelC }};">{{ d.label }}</span>
         <sc-if value="{{ d.line }}" hint-placeholder-val="{{ true }}"><span style="width:36px;height:1px;background:#D9D1C9;"></span></sc-if>
       </div>
     </sc-for>
@@ -36,34 +36,37 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 
     <sc-if value="{{ step1 }}" hint-placeholder-val="{{ true }}">
       <div style="text-align:center;">
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:28px;">Bạn đang kinh doanh gì?</h1>
-        <p style="margin:10px 0 0;font-size:14.5px;color:#8A817A;">Chỉ cần chọn 1 lần — Havi sẽ tự biết cách viết, đăng và tìm khách đúng kiểu ngành của bạn.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Bạn đang kinh doanh gì?</h1>
+        <p style="margin:10px 0 0;font-size:15px;color:#8A817A;">Chỉ cần chọn 1 lần — Havi sẽ tự biết cách viết, đăng và tìm khách đúng kiểu ngành của bạn.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px;">
         <sc-for list="{{ industries }}" as="ind" hint-placeholder-count="6">
-          <button onClick="{{ ind.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 12px;border-radius:12px;cursor:pointer;font-family:Inter,sans-serif;background:{{ ind.bg }};border:1.5px solid {{ ind.bd }};box-shadow:0 2px 8px rgba(0,0,0,0.06);" style-hover="border-color:#D4956F;">
+          <button onClick="{{ ind.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 12px;border-radius:12px;cursor:pointer;font-family:Inter,sans-serif;background:{{ ind.bg }};border:1.5px solid {{ ind.bd }};" style-hover="border-color:#D4956F;">
             <span style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;background:{{ ind.badgeBg }};">{{ ind.badge }}</span>
-            <span style="font-weight:600;font-size:13.5px;color:#2C2C2C;text-align:center;">{{ ind.name }}</span>
+            <span style="font-weight:600;font-size:13px;color:#2C2C2C;text-align:center;">{{ ind.name }}</span>
           </button>
         </sc-for>
       </div>
       <div style="display:flex;justify-content:center;margin-top:28px;">
-        <button onClick="{{ next }}" disabled="{{ noIndustry }}" style="background:{{ nextBg }};color:#fff;border:none;border-radius:10px;padding:15px 40px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#B8744D;">Tiếp tục</button>
+        <button onClick="{{ next }}" disabled="{{ noIndustry }}" style="background:{{ nextBg }};color:#fff;border:none;border-radius:10px;padding:15px 40px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#8F4C2A;">Tiếp tục</button>
       </div>
     </sc-if>
 
     <sc-if value="{{ step2 }}" hint-placeholder-val="{{ false }}">
       <div style="text-align:center;">
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:28px;">Nối các kênh bạn đang có</h1>
-        <p style="margin:10px 0 0;font-size:14.5px;color:#8A817A;">Bấm nối là xong — Havi không đăng gì khi chưa được bạn duyệt. Có 1 kênh là bắt đầu được rồi.</p>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Nối các kênh bạn đang có</h1>
+        <p style="margin:10px 0 0;font-size:15px;color:#8A817A;">{{ chSub }}</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:28px;">
         <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="5">
-          <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:14px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-            <span style="flex:none;width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;background:{{ ch.c }};">{{ ch.b }}</span>
+          <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:14px 18px;">
+            <span style="flex:none;width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;background:{{ ch.c }};">{{ ch.b }}</span>
             <div style="flex:1;">
-              <div style="font-weight:600;font-size:14px;">{{ ch.n }}</div>
-              <div style="font-size:12px;color:#8A817A;">{{ ch.d }}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-weight:600;font-size:15px;">{{ ch.n }}</span>
+                <sc-if value="{{ ch.rec }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:#8A817A;background:#F0EAE4;border-radius:4px;padding:2px 7px;">nên nối trước</span></sc-if>
+              </div>
+              <div style="font-size:12px;color:#8A817A;margin-top:2px;">{{ ch.d }}</div>
             </div>
             <sc-if value="{{ ch.off }}" hint-placeholder-val="{{ true }}">
               <button onClick="{{ ch.connect }}" style="background:#fff;border:1px solid #D4956F;color:#B8744D;border-radius:8px;padding:9px 20px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;" style-hover="background:#F9EFE7;">Nối kênh</button>
@@ -75,35 +78,35 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
         </sc-for>
       </div>
       <div style="display:flex;justify-content:center;gap:12px;margin-top:28px;">
-        <button onClick="{{ back }}" style="background:none;border:none;color:#8A817A;font-family:Inter,sans-serif;font-size:14px;cursor:pointer;padding:15px 10px;" style-hover="color:#B8744D;">← Quay lại</button>
-        <button onClick="{{ next }}" disabled="{{ noChannel }}" style="background:{{ nextBg2 }};color:#fff;border:none;border-radius:10px;padding:15px 40px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#B8744D;">Tiếp tục</button>
+        <button onClick="{{ back }}" style="background:none;border:none;color:#8A817A;font-family:Inter,sans-serif;font-size:15px;cursor:pointer;padding:15px 10px;" style-hover="color:#B8744D;">← Quay lại</button>
+        <button onClick="{{ next }}" disabled="{{ noChannel }}" style="background:{{ nextBg2 }};color:#fff;border:none;border-radius:10px;padding:15px 40px;font-family:Inter,sans-serif;font-weight:700;font-size:15px;cursor:pointer;" style-hover="background:#8F4C2A;">Tiếp tục</button>
       </div>
     </sc-if>
 
     <sc-if value="{{ step3 }}" hint-placeholder-val="{{ false }}">
       <sc-if value="{{ learning }}" hint-placeholder-val="{{ false }}">
-        <div style="text-align:center;background:#fff;border:1px solid #D4956F;border-radius:14px;padding:56px 32px;">
-          <div style="font-family:Merriweather,serif;font-weight:700;font-size:18px;color:#B8744D;animation:pulse 1.2s infinite;">{{ learnMsg }}</div>
+        <div style="text-align:center;background:#fff;border:1px solid #E0D9D3;border-radius:14px;padding:56px 32px;">
+          <div style="font-weight:600;font-size:18px;color:#4A4A4A;animation:pulse 1.2s infinite;">{{ learnMsg }}</div>
           <div style="font-size:13px;color:#8A817A;margin-top:10px;">Havi đang đọc bài cũ trên kênh của bạn để học giọng văn — chỉ 1 lần duy nhất</div>
         </div>
       </sc-if>
       <sc-if value="{{ learned }}" hint-placeholder-val="{{ false }}">
         <div style="text-align:center;">
-          <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:28px;">Xong! Bài đầu tiên đã sẵn sàng</h1>
-          <p style="margin:10px 0 0;font-size:14.5px;color:#8A817A;">Havi đã học giọng văn từ {{ learnSrc }} — bài này viết đúng "chất" của bạn.</p>
+          <h1 style="margin:0;font-weight:700;font-size:26px;">Xong! Bài đầu tiên đã sẵn sàng</h1>
+          <p style="margin:10px 0 0;font-size:15px;color:#8A817A;">Havi đã học giọng văn từ {{ learnSrc }} — bài này viết đúng "chất" của bạn.</p>
         </div>
-        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:14px;padding:24px;margin-top:24px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:14px;padding:24px;margin-top:24px;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#3B6B9F;border-radius:4px;padding:4px 9px;">{{ firstCh }}</span>
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#fff;background:#3B6B9F;border-radius:4px;padding:4px 9px;">{{ firstCh }}</span>
             <span style="font-size:12px;color:#8A817A;">Gợi ý đăng {{ firstTime }}</span>
           </div>
-          <p style="margin:14px 0 0;font-size:14.5px;line-height:1.65;color:#2C2C2C;">{{ firstPost }}</p>
+          <p style="margin:14px 0 0;font-size:15px;line-height:1.65;color:#2C2C2C;">{{ firstPost }}</p>
           <div style="margin-top:12px;font-size:12px;color:#8A817A;background:#F5F1ED;border-radius:6px;padding:8px 12px;">{{ firstMedia }}</div>
         </div>
         <div style="display:flex;justify-content:center;gap:12px;margin-top:28px;">
-          <a href="Havi - MVP App.dc.html" style="background:#D4956F;color:#fff;border-radius:10px;padding:16px 36px;font-weight:700;font-size:15px;" style-hover="background:#B8744D;text-decoration:none;color:#fff;">Duyệt bài &amp; vào trang chính</a>
+          <a href="Havi - MVP App.dc.html" style="background:#A85B33;color:#fff;border-radius:10px;padding:16px 36px;font-weight:700;font-size:15px;" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Duyệt bài &amp; vào trang chính</a>
         </div>
-        <p style="text-align:center;font-size:12.5px;color:#8A817A;margin-top:16px;">Từ mai, mỗi sáng Havi sẽ nhắn bản nháp qua Zalo — bạn chỉ cần "OK".</p>
+        <p style="text-align:center;font-size:12px;color:#8A817A;margin-top:16px;">Từ mai, mỗi sáng Havi sẽ nhắn bản nháp qua Zalo — bạn chỉ cần "OK".</p>
       </sc-if>
     </sc-if>
 
@@ -127,8 +130,17 @@ class Component extends DCLogic {
     {id:'zalo', n:'Zalo', d:'Nhận bản nháp, duyệt bài, chăm khách cũ', b:'Zalo', c:'#3B6B9F'},
     {id:'maps', n:'Google Maps', d:'Cập nhật tiệm, mời & trả lời đánh giá', b:'GM', c:'#5FA76F'},
     {id:'tiktok', n:'TikTok', d:'Đăng video ngắn Havi cắt sẵn', b:'TT', c:'#2C2C2C'},
-    {id:'yt', n:'YouTube', d:'Đăng video + mô tả viết sẵn', b:'YT', c:'#C75B4A'}
+    {id:'yt', n:'YouTube', d:'Đăng video dài + tiêu đề và mô tả viết sẵn', b:'YT', c:'#C75B4A'},
+    {id:'li', n:'LinkedIn', d:'Bài chuyên môn, xây thương hiệu cá nhân', b:'in', c:'#3B6B9F'}
   ];
+  REC = {
+    spa:   ['maps','fb','zalo','tiktok','yt'],
+    fnb:   ['maps','fb','zalo','tiktok','yt'],
+    bds:   ['zalo','fb','yt','tiktok'],
+    ks:    ['li','yt','fb','zalo'],
+    shop:  ['fb','tiktok','zalo','yt'],
+    other: ['fb','zalo','maps','tiktok','yt','li']
+  };
   clearTimers(){ this.timers.forEach(clearTimeout); this.timers = []; }
   componentWillUnmount(){ this.clearTimers(); }
   next(){
@@ -144,6 +156,8 @@ class Component extends DCLogic {
   renderVals(){
     const s = this.state;
     const labels = ['Chọn ngành','Nối kênh','Bài đầu tiên'];
+    const recIds = this.REC[s.industry] || this.CHANNELS.map(c=>c.id);
+    const indName = (this.INDUSTRIES.find(i=>i.id===s.industry)||{}).name || 'ngành của bạn';
     return {
       dots: labels.map((label,i)=>{
         const n = i+1, active = s.step === n, done = s.step > n;
@@ -159,12 +173,16 @@ class Component extends DCLogic {
         bd: s.industry===ind.id ? '#D4956F' : '#E0D9D3',
         pick: ()=>this.setState({ industry: ind.id }) })),
       noIndustry: !s.industry,
-      nextBg: s.industry ? '#D4956F' : '#D9D1C9',
-      channels: this.CHANNELS.map(ch=>({ ...ch,
-        off: !s.conn[ch.id], on: !!s.conn[ch.id],
-        connect: ()=>this.setState(st=>({ conn: { ...st.conn, [ch.id]: true } })) })),
+      nextBg: s.industry ? '#A85B33' : '#D9D1C9',
+      chSub: 'Havi chỉ hiện các kênh phù hợp với ' + indName + '. Bấm nối là xong — không đăng gì khi bạn chưa duyệt. Có 1 kênh là bắt đầu được rồi.',
+      channels: recIds.map((id,k)=>{
+        const ch = this.CHANNELS.find(c=>c.id===id);
+        return { ...ch, rec: k===0,
+          off: !s.conn[ch.id], on: !!s.conn[ch.id],
+          connect: ()=>this.setState(st=>({ conn: { ...st.conn, [ch.id]: true } })) };
+      }),
       noChannel: !Object.keys(s.conn).length,
-      nextBg2: Object.keys(s.conn).length ? '#D4956F' : '#D9D1C9',
+      nextBg2: Object.keys(s.conn).length ? '#A85B33' : '#D9D1C9',
       next: ()=>this.next(), back: ()=>this.setState({ step: 1 }),
       learning: s.learn===1, learned: s.learn===2, learnMsg: s.learnMsg,
       learnSrc: s.conn.fb ? 'Fanpage của bạn' : 'kênh bạn vừa nối',

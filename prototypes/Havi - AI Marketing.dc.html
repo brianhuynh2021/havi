@@ -63,7 +63,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
         </div>
       </div>
 
-      <button onClick="{{ run }}" disabled="{{ running }}" style="width:100%;padding:18px;border:none;border-radius:10px;background:#D4956F;color:#fff;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);" style-hover="background:#B8744D;">{{ runLabel }}</button>
+      <button onClick="{{ run }}" disabled="{{ running }}" style="width:100%;padding:18px;border:none;border-radius:10px;background:#A85B33;color:#fff;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);" style-hover="background:#8F4C2A;">{{ runLabel }}</button>
       <button onClick="{{ reset }}" style="width:100%;padding:10px;border:none;background:none;color:#8A817A;font-family:Inter,sans-serif;font-size:13px;cursor:pointer;" style-hover="color:#B8744D;">Chạy lại từ đầu · Reset</button>
     </aside>
 
@@ -108,6 +108,9 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
           <div style="margin:16px 0 0 50px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <sc-for list="{{ posts }}" as="po" hint-placeholder-count="4">
               <div style="border:1px solid #E0D9D3;border-radius:8px;padding:12px 14px;background:#F5F1ED;">
+                <div style="height:74px;border-radius:6px;margin-bottom:8px;border:1px solid #E0D9D3;background:repeating-linear-gradient(45deg,#EAE1D8,#EAE1D8 8px,#F1EAE2 8px,#F1EAE2 16px);display:flex;align-items:flex-end;padding:6px;box-sizing:border-box;">
+                  <span style="font-family:ui-monospace,Menlo,monospace;font-size:9.5px;color:#8A817A;background:rgba(245,241,237,0.92);border-radius:3px;padding:2px 6px;">{{ po.asset }}</span>
+                </div>
                 <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;">
                   <span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#B8744D;">{{ po.tag }}</span>
                   <span style="font-size:11px;color:#8A817A;">{{ po.ch }}</span>
@@ -309,7 +312,7 @@ class Component extends DCLogic {
       mediaSteps: P.media.map((t, k) => ({ t, show: s.logs[1] > k })),
       s2Idle: s.st[1] === 0,
       s2Done: s.st[1] === 2,
-      posts: P.posts,
+      posts: P.posts.map(po => ({ ...po, asset: 'ảnh AI · ' + po.ch })),
       channels: P.channels.map((c, k) => ({ ...c, done: s.logs[2] > k, wait: s.logs[2] <= k })),
       feed: P.feed.slice(0, s.logs[3]),
       s4Empty: s.logs[3] === 0,

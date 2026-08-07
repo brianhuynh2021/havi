@@ -19,22 +19,22 @@ input::placeholder{color:#B5ACA4;}
 </helmet>
 <div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;box-sizing:border-box;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px;">
-    <div style="width:44px;height:44px;border-radius:10px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:19px;">Ha</div>
+    <div style="width:44px;height:44px;border-radius:10px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
     <span style="font-family:Merriweather,serif;font-weight:900;font-size:22px;">Havi</span>
   </div>
 
-  <div style="width:100%;max-width:400px;background:#fff;border:1px solid #E0D9D3;border-radius:18px;padding:36px 32px;box-sizing:border-box;box-shadow:0 4px 20px rgba(0,0,0,0.07);">
+  <div style="width:100%;max-width:400px;background:#fff;border:1px solid #E0D9D3;border-radius:18px;padding:36px 32px;box-sizing:border-box;">
 
     <sc-if value="{{ vLogin }}" hint-placeholder-val="{{ true }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Chào bạn trở lại</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;text-align:center;">Nhập số điện thoại là vào ngay — không cần nhớ mật khẩu.</p>
+        <h1 style="margin:0;font-weight:700;font-size:22px;text-align:center;">Chào bạn trở lại</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;text-align:center;">Nhập số điện thoại là vào ngay — không cần nhớ mật khẩu.</p>
         <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Số điện thoại của bạn
-            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:17px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
-          <button onClick="{{ sendOtp }}" disabled="{{ phoneEmpty }}" style="background:{{ primaryBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Nhận mã đăng nhập</button>
-          <p style="margin:0;font-size:12.5px;color:#8A817A;text-align:center;">Mã 6 số sẽ được gửi qua Zalo hoặc SMS</p>
+          <button onClick="{{ sendOtp }}" disabled="{{ phoneEmpty }}" style="background:{{ primaryBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:18px;cursor:pointer;" style-hover="background:#8F4C2A;">Nhận mã đăng nhập</button>
+          <p style="margin:0;font-size:12px;color:#8A817A;text-align:center;">Mã 6 số sẽ được gửi qua Zalo hoặc SMS</p>
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:22px;">
           <span style="flex:1;height:1px;background:#E0D9D3;"></span>
@@ -46,26 +46,26 @@ input::placeholder{color:#B5ACA4;}
           Tiếp tục với Zalo
         </button>
         <div style="text-align:center;margin-top:18px;">
-          <button onClick="{{ goEmail }}" style="background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:12.5px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">Đăng nhập bằng email &amp; mật khẩu</button>
+          <button onClick="{{ goEmail }}" style="background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:12px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">Đăng nhập bằng email &amp; mật khẩu</button>
         </div>
         <div style="border-top:1px solid #F0EAE4;margin-top:20px;padding-top:20px;text-align:center;">
-          <p style="margin:0;font-size:14px;color:#4A4A4A;">Lần đầu dùng Havi? <button onClick="{{ goSignup }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Tạo tài khoản miễn phí</button></p>
+          <p style="margin:0;font-size:15px;color:#4A4A4A;">Lần đầu dùng Havi? <button onClick="{{ goSignup }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:15px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Tạo tài khoản miễn phí</button></p>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ vEmail }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Đăng nhập bằng email</h1>
+        <h1 style="margin:0;font-weight:700;font-size:22px;text-align:center;">Đăng nhập bằng email</h1>
         <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Email
-            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Mật khẩu
-            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="••••••••" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="••••••••" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
           <button onClick="{{ goForgot }}" style="align-self:flex-end;background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Quên mật khẩu?</button>
-          <button onClick="{{ loginEmail }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Đăng nhập</button>
+          <button onClick="{{ loginEmail }}" style="background:#A85B33;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:18px;cursor:pointer;" style-hover="background:#8F4C2A;">Đăng nhập</button>
         </div>
         <div style="text-align:center;margin-top:18px;">
           <button onClick="{{ goLogin }}" style="background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:13px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">← Đăng nhập bằng số điện thoại</button>
@@ -75,31 +75,31 @@ input::placeholder{color:#B5ACA4;}
 
     <sc-if value="{{ vSignup }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;text-align:center;">Tạo tài khoản Havi</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;text-align:center;">Chỉ cần tên và số điện thoại — 30 giây là xong.</p>
+        <h1 style="margin:0;font-weight:700;font-size:22px;text-align:center;">Tạo tài khoản Havi</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;text-align:center;">Chỉ cần tên và số điện thoại — 30 giây là xong.</p>
         <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;">
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Tên của bạn
-            <input value="{{ name }}" onChange="{{ setName }}" placeholder="Ví dụ: Chị Hương" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ name }}" onChange="{{ setName }}" placeholder="Ví dụ: Chị Hương" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Số điện thoại
-            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ phone }}" onChange="{{ setPhone }}" type="tel" inputMode="numeric" placeholder="090 123 4567" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
-          <button onClick="{{ signup }}" disabled="{{ signupEmpty }}" style="background:{{ signupBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;margin-top:2px;" style-hover="background:#B8744D;">Tạo tài khoản</button>
+          <button onClick="{{ signup }}" disabled="{{ signupEmpty }}" style="background:{{ signupBg }};color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:18px;cursor:pointer;margin-top:2px;" style-hover="background:#8F4C2A;">Tạo tài khoản</button>
           <p style="margin:0;font-size:12px;line-height:1.5;color:#8A817A;text-align:center;">Bấm nút là bạn đồng ý với <a href="#">Điều khoản</a> &amp; <a href="#">Bảo mật</a> của Havi.<br>Email và mật khẩu có thể thêm sau trong phần Cài đặt.</p>
         </div>
         <div style="border-top:1px solid #F0EAE4;margin-top:20px;padding-top:20px;text-align:center;">
-          <p style="margin:0;font-size:14px;color:#4A4A4A;">Đã có tài khoản? <button onClick="{{ goLogin }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:14px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Đăng nhập</button></p>
+          <p style="margin:0;font-size:15px;color:#4A4A4A;">Đã có tài khoản? <button onClick="{{ goLogin }}" style="background:none;border:none;padding:0;font-family:Inter,sans-serif;font-size:15px;font-weight:700;color:#B8744D;cursor:pointer;" style-hover="color:#D4956F;">Đăng nhập</button></p>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ vOtp }}" hint-placeholder-val="{{ false }}">
       <div style="text-align:center;">
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Nhập mã 6 số</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Havi vừa gửi mã tới <strong style="color:#2C2C2C;">{{ otpDest }}</strong></p>
+        <h1 style="margin:0;font-weight:700;font-size:22px;">Nhập mã 6 số</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;">Havi vừa gửi mã tới <strong style="color:#2C2C2C;">{{ otpDest }}</strong></p>
         <div style="display:flex;justify-content:center;gap:8px;margin-top:26px;">
           <sc-for list="{{ otpBoxes }}" as="ob" hint-placeholder-count="6">
-            <input value="{{ ob.v }}" onChange="{{ ob.set }}" onKeyDown="{{ ob.key }}" ref="{{ ob.ref }}" maxLength="1" inputMode="numeric" style="width:46px;height:56px;text-align:center;font-family:Inter,sans-serif;font-size:23px;font-weight:700;color:#2C2C2C;border:1.5px solid {{ ob.bd }};border-radius:12px;outline:none;box-sizing:border-box;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ ob.v }}" onChange="{{ ob.set }}" onKeyDown="{{ ob.key }}" ref="{{ ob.ref }}" maxLength="1" inputMode="numeric" style="width:46px;height:56px;text-align:center;font-family:Inter,sans-serif;font-size:22px;font-weight:700;color:#2C2C2C;border:1.5px solid {{ ob.bd }};border-radius:12px;outline:none;box-sizing:border-box;" style-focus="border-color:#D4956F;"></input>
           </sc-for>
         </div>
         <sc-if value="{{ otpError }}" hint-placeholder-val="{{ false }}">
@@ -113,13 +113,13 @@ input::placeholder{color:#B5ACA4;}
 
     <sc-if value="{{ vForgot }}" hint-placeholder-val="{{ false }}">
       <div style="text-align:center;">
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Quên mật khẩu</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Không sao cả — nhập email, Havi gửi mã để bạn đặt lại.</p>
+        <h1 style="margin:0;font-weight:700;font-size:22px;">Quên mật khẩu</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;">Không sao cả — nhập email, Havi gửi mã để bạn đặt lại.</p>
         <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;text-align:left;">
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Email đã đăng ký
-            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ email }}" onChange="{{ setEmail }}" type="email" placeholder="tencuaban@gmail.com" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
-          <button onClick="{{ sendReset }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Gửi mã đặt lại</button>
+          <button onClick="{{ sendReset }}" style="background:#A85B33;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:18px;cursor:pointer;" style-hover="background:#8F4C2A;">Gửi mã đặt lại</button>
         </div>
         <button onClick="{{ goEmail }}" style="margin-top:20px;background:none;border:none;padding:6px;font-family:Inter,sans-serif;font-size:13px;color:#8A817A;cursor:pointer;" style-hover="color:#B8744D;">← Quay lại đăng nhập</button>
       </div>
@@ -127,23 +127,23 @@ input::placeholder{color:#B5ACA4;}
 
     <sc-if value="{{ vReset }}" hint-placeholder-val="{{ false }}">
       <div style="text-align:center;">
-        <h1 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">Đặt mật khẩu mới</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">Mã đúng rồi. Chọn mật khẩu mới cho <strong style="color:#2C2C2C;">{{ email }}</strong></p>
+        <h1 style="margin:0;font-weight:700;font-size:22px;">Đặt mật khẩu mới</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;">Mã đúng rồi. Chọn mật khẩu mới cho <strong style="color:#2C2C2C;">{{ email }}</strong></p>
         <div style="display:flex;flex-direction:column;gap:16px;margin-top:26px;text-align:left;">
           <label style="display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600;color:#4A4A4A;">Mật khẩu mới
-            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="Ít nhất 8 ký tự" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:16px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
+            <input value="{{ pass }}" onChange="{{ setPass }}" type="password" placeholder="Ít nhất 8 ký tự" autoFocus="{{ true }}" style="border:1.5px solid #E0D9D3;border-radius:12px;padding:16px;font-family:Inter,sans-serif;font-size:18px;color:#2C2C2C;outline:none;" style-focus="border-color:#D4956F;"></input>
           </label>
-          <button onClick="{{ doReset }}" style="background:#D4956F;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:16px;cursor:pointer;" style-hover="background:#B8744D;">Lưu &amp; đăng nhập</button>
+          <button onClick="{{ doReset }}" style="background:#A85B33;color:#fff;border:none;border-radius:12px;padding:17px 0;font-family:Inter,sans-serif;font-weight:700;font-size:18px;cursor:pointer;" style-hover="background:#8F4C2A;">Lưu &amp; đăng nhập</button>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ vDone }}" hint-placeholder-val="{{ false }}">
       <div style="text-align:center;padding:12px 0;">
-        <div style="width:60px;height:60px;border-radius:999px;background:#5FA76F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin:0 auto;">✓</div>
-        <h1 style="margin:18px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:25px;">{{ doneTitle }}</h1>
-        <p style="margin:8px 0 0;font-size:14px;color:#8A817A;">{{ doneSub }}</p>
-        <a href="{{ doneHref }}" style="display:inline-block;margin-top:26px;background:#D4956F;color:#fff;border-radius:12px;padding:17px 40px;font-weight:700;font-size:16px;" style-hover="background:#B8744D;color:#fff;text-decoration:none;">{{ doneCta }}</a>
+        <div style="width:60px;height:60px;border-radius:999px;background:#5FA76F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto;">✓</div>
+        <h1 style="margin:18px 0 0;font-weight:700;font-size:22px;">{{ doneTitle }}</h1>
+        <p style="margin:8px 0 0;font-size:15px;color:#8A817A;">{{ doneSub }}</p>
+        <a href="{{ doneHref }}" style="display:inline-block;margin-top:26px;background:#A85B33;color:#fff;border-radius:12px;padding:17px 40px;font-weight:700;font-size:18px;" style-hover="background:#8F4C2A;color:#fff;text-decoration:none;">{{ doneCta }}</a>
       </div>
     </sc-if>
 
@@ -205,8 +205,8 @@ class Component extends DCLogic {
       vOtp: s.view==='otp', vForgot: s.view==='forgot', vReset: s.view==='reset', vDone: s.view==='done',
       phone: s.phone, email: s.email, pass: s.pass, name: s.name,
       setPhone: set('phone'), setEmail: set('email'), setPass: set('pass'), setName: set('name'),
-      phoneEmpty, primaryBg: phoneEmpty ? '#DCC9BB' : '#D4956F',
-      signupEmpty, signupBg: signupEmpty ? '#DCC9BB' : '#D4956F',
+      phoneEmpty, primaryBg: phoneEmpty ? '#DCC9BB' : '#A85B33',
+      signupEmpty, signupBg: signupEmpty ? '#DCC9BB' : '#A85B33',
       goSignup: () => this.setState({view:'signup'}), goLogin: () => this.setState({view:'login'}),
       goEmail: () => this.setState({view:'email'}), goForgot: () => this.setState({view:'forgot'}),
       goBack: () => this.setState({view: s.otpFrom==='signup' ? 'signup' : s.otpFrom==='reset' ? 'forgot' : 'login'}),
