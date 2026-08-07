@@ -4,6 +4,7 @@ Mọi endpoint (trừ /health và /auth/*) yêu cầu `Authorization: Bearer <JW
 scope theo `active_workspace_id` — không cho leak chéo tenant.
 """
 
+from functools import lru_cache
 from typing import Annotated
 from uuid import UUID
 
@@ -13,13 +14,16 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.db import DbSessionDep
+from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from adapters.storage.object_storage import ObjectStorage
 from application.services.auth_service import AuthService
 from application.services.brand_profile_service import BrandProfileService
+from application.services.media_service import MediaService
 from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
 from core.security import decode_access_token
@@ -63,6 +67,22 @@ def get_brand_profile_service(session: DbSessionDep) -> BrandProfileService:
 
 
 BrandProfileServiceDep = Annotated[BrandProfileService, Depends(get_brand_profile_service)]
+
+
+@lru_cache
+def _object_storage() -> ObjectStorage:
+    """Singleton — boto3 client giữ connection pool, tạo lại mỗi request là tốn vô
+    ích. Không nhận `Settings` làm tham số vì Pydantic BaseSettings không hashable
+    (lru_cache sẽ vỡ); `get_settings()` đã lru_cache nên vẫn là cùng một instance.
+    """
+    return ObjectStorage(get_settings())
+
+
+def get_media_service(session: DbSessionDep) -> MediaService:
+    return MediaService(media=MediaRepository(session), storage=_object_storage())
+
+
+MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
 
 
 class AuthContext:

@@ -25,6 +25,14 @@ class Settings(BaseSettings):
 
     media_bucket: str = "havi-media"
     media_public_url: str = "http://localhost:9000/havi-media"
+    # S3-compatible endpoint (MinIO ở local, S3/R2/Spaces ở production).
+    media_endpoint_url: str = "http://localhost:9000"
+    media_access_key: str = "minioadmin"
+    media_secret_key: str = "minioadmin"
+    media_region: str = "us-east-1"
+    media_upload_ttl_seconds: int = 900
+    # Chặn ở tầng storage bằng presigned POST condition, không chỉ tin client.
+    media_max_upload_bytes: int = 25 * 1024 * 1024
 
     jwt_secret: str = "change-me"
     jwt_algorithm: str = "HS256"

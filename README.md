@@ -41,7 +41,7 @@ console `9001`), tự tạo bucket `havi-media`. Dừng bằng `npm run infra:do
 ```bash
 cd apps/backend
 cp .env.example .env
-uv sync --extra dev --extra db --extra queue
+uv sync --extra dev --extra db --extra queue --extra storage
 uv run alembic upgrade head   # chạy migration lên Postgres vừa khởi động ở bước 1
 cd ../..
 npm run dev:api

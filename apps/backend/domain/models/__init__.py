@@ -7,6 +7,7 @@ quota, state transition) nằm ở application/domain service, không nằm tron
 
 from domain.models.audit import EventLog
 from domain.models.base import Base
+from domain.models.media import MediaAsset
 from domain.models.user import OtpChallenge, RefreshSession, User
 from domain.models.workspace import BrandProfile, Workspace, WorkspaceMember
 
@@ -18,5 +19,6 @@ __all__ = [
     "Workspace",
     "WorkspaceMember",
     "BrandProfile",
+    "MediaAsset",
     "EventLog",
 ]
