@@ -26,6 +26,11 @@ db = [
     "alembic>=1.14",
     "psycopg[binary]>=3.2",
 ]
+storage = [
+    # boto3 sync là đủ: generate_presigned_post chỉ ký local (HMAC), không gọi
+    # network, nên chạy trong async endpoint không block event loop.
+    "boto3>=1.35",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",

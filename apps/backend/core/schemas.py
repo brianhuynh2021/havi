@@ -180,10 +180,14 @@ class MediaAsset(HaviModel):
     id: UUID
     workspace_id: UUID
     url: str
+    filename: str
+    content_type: str
     type: MediaType
     tags: list[str] = Field(default_factory=list)
     status: MediaStatus
-    uploaded_at: datetime
+    size_bytes: int | None = None
+    # None khi status là `pending` — client chưa gọi /media/{id}/complete.
+    uploaded_at: datetime | None = None
 
 
 class MediaUploadTicket(HaviModel):

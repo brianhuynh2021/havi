@@ -119,8 +119,8 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 59 backend tests đang pass (22 contract/state-machine + 37 auth/workspace/
-  brand-profile chạy thật trên Postgres); Ruff đang pass.
+- [x] 73 backend tests đang pass (22 contract/state-machine + 51 auth/workspace/
+  brand-profile/media chạy thật trên Postgres + MinIO); Ruff đang pass.
 
 Architecture/docs:
 
@@ -139,8 +139,8 @@ Architecture/docs:
 - [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
   (Argon2), đặt lại mật khẩu qua mã 6 số. **Chưa xong:** email provider thật
   (dùng `debug_code` khi `HAVI_DEBUG=true`), endpoint logout/revoke session.
-- [x] Redis + object storage (MinIO) local stack (`docker-compose.yml`). **Chưa
-  xong:** code dùng chúng — chưa có Celery job thật, chưa có signed upload.
+- [x] Object storage (MinIO) đã dùng thật: signed upload + magic-byte validation
+  ở `/media`. **Chưa xong:** Redis chưa dùng — chưa có Celery job thật.
 - [ ] LLM content pipeline, structured output validation, usage/quota tracking.
 - [ ] OAuth/token encryption và adapter publish Facebook.
 - [ ] Scheduler/retry/idempotency/dead-letter production behavior.
@@ -161,7 +161,8 @@ PostgreSQL:
 - [x] `workspaces`, `workspace_members`, `brand_profiles` — có repository + router
   thật (`/workspaces/*`, `/brand-profile`), test chạy trên Postgres.
 - [ ] `platform_connections` với token mã hóa.
-- [ ] `media_assets`, `content_jobs`, `content_items`, `content_item_versions`.
+- [x] `media_assets` (migration `a974c194ff2c`). **Chưa có:** `content_jobs`,
+  `content_items`, `content_item_versions`.
 - [ ] `publish_jobs`, `event_logs`, `engagement_snapshots` (bảng `event_log` đã
   có schema nhưng `core/events.record_event` vẫn log ra stdout, chưa insert DB).
 - [x] Alembic migrations, indexes, foreign keys cho các bảng auth/workspace ở
@@ -177,9 +178,13 @@ Redis/job queue:
 
 Object storage:
 
-- [ ] Signed upload, MIME/size validation và workspace ownership.
+- [x] Signed upload (presigned POST), MIME whitelist + magic-byte check, size
+  limit enforce ở tầng storage bằng `content-length-range`, `workspace_id` trong
+  object key và mọi query scope theo workspace — `tests/test_media_flow.py`,
+  14 case chạy thật trên MinIO.
 - [ ] Chính sách lưu, xóa và lifecycle cho ảnh/audio/video.
-- [ ] Không lưu file upload trực tiếp trong database hoặc filesystem tạm của API.
+- [x] Không lưu file upload trực tiếp trong database hoặc filesystem tạm của API
+  (client POST thẳng lên object storage, API chỉ giữ metadata + `object_key`).
 
 Vận hành dữ liệu:
 
@@ -450,8 +455,12 @@ Mục tiêu: người dùng nạp dữ liệu và nhận draft thật từ async
 
 Backend/worker:
 
-- [ ] Models/migrations cho media asset, content job, content item và event log.
-- [ ] Signed upload URL; validate MIME, size, ownership và upload completion.
+- [x] Models/migrations cho media asset và event log. **Chưa có:** content job,
+  content item.
+- [x] Signed upload URL (presigned POST); validate MIME (whitelist + magic bytes),
+  size (`content-length-range` ở storage), ownership (`workspace_id` trong object
+  key + query scope) và upload completion (`POST /media/{id}/complete` kiểm object
+  có thật trên storage trước khi chuyển `pending → raw`).
 - [ ] Queue content job với idempotency key và workspace quota check.
 - [ ] Content Engine đọc brand profile, gọi LLM một lần và trả structured multi-channel output.
 - [ ] Schema validation, safety/banned-claim validation và fallback khi output lỗi.

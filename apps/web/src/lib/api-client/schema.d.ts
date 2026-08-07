@@ -310,9 +310,35 @@ export interface paths {
         put?: never;
         /**
          * Create Upload Ticket
-         * @description Cấp presigned URL. Client PUT thẳng lên storage, không đi qua API.
+         * @description Cấp presigned POST. Client upload thẳng lên storage, không đi qua API.
+         *
+         *     Dung lượng tối đa được enforce bằng condition `content-length-range` trong
+         *     ticket — storage tự từ chối file quá lớn, API không phải tin client.
+         *
+         *     Asset tạo ra ở trạng thái `pending`; gọi `/media/{id}/complete` sau khi upload
+         *     xong để chuyển sang `raw`.
          */
         post: operations["create_upload_ticket_media_upload_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/media/{asset_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete Upload
+         * @description Xác nhận upload xong — API kiểm object có thật trên storage rồi mới đổi status.
+         */
+        post: operations["complete_upload_media__asset_id__complete_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1362,21 +1388,29 @@ export interface components {
             workspace_id: string;
             /** Url */
             url: string;
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
             type: components["schemas"]["MediaType"];
             /** Tags */
             tags?: string[];
             status: components["schemas"]["MediaStatus"];
-            /**
-             * Uploaded At
-             * Format: date-time
-             */
-            uploaded_at: string;
+            /** Size Bytes */
+            size_bytes?: number | null;
+            /** Uploaded At */
+            uploaded_at?: string | null;
         };
         /**
          * MediaStatus
+         * @description `PENDING` = đã cấp upload ticket nhưng client chưa PUT xong.
+         *
+         *     Cần trạng thái này vì client upload thẳng lên object storage, API không biết
+         *     upload có thành công không cho tới khi client gọi `/media/{id}/complete`.
+         *     Không có nó thì mọi ticket cấp ra đều trông như file đã có thật.
          * @enum {string}
          */
-        MediaStatus: "raw" | "used" | "archived";
+        MediaStatus: "pending" | "raw" | "used" | "archived";
         /**
          * MediaType
          * @enum {string}
@@ -2382,6 +2416,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MediaUploadTicket"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_upload_media__asset_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAsset"];
                 };
             };
             /** @description Validation Error */

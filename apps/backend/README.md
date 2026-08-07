@@ -31,13 +31,13 @@ docker compose up -d
 Cài backend:
 
 ```bash
-cd apps/backend && cp .env.example .env && uv sync --extra dev
+cd apps/backend && cp .env.example .env && uv sync --extra dev --extra db --extra storage
 ```
 
 Chạy migration (cần extra `db`, xem [`migrations/README.md`](migrations/README.md)):
 
 ```bash
-cd apps/backend && uv sync --extra db && uv run alembic upgrade head
+cd apps/backend && uv run alembic upgrade head
 ```
 
 ```bash
@@ -67,8 +67,8 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-`/auth/*`, `/workspaces/*` và `/brand-profile` chạy thật trên Postgres. 9 router
-domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
+`/auth/*`, `/workspaces/*`, `/brand-profile` và `/media` chạy thật (Postgres +
+MinIO). 8 router domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
 trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
 
 Đã có thật:
@@ -79,25 +79,33 @@ trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trư
 - `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`, chưa insert)
 - `core/phone.py` — chuẩn hoá SĐT Việt Nam (0xxxxxxxxx → +84…), chỉ dùng cho Zalo OA
 - `core/security.py` — JWT access token, hash password (Argon2id), hash mã 6 số/refresh token
+- `core/file_signatures.py` — kiểm magic bytes; presigned POST không kiểm nội dung file
 - `domain/models/` — SQLAlchemy models thật: `User`, `OtpChallenge`, `RefreshSession`,
   `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
   Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
 - `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
-  cho user/OTP/refresh session/workspace/workspace member/brand profile.
+  cho user/OTP/refresh session/workspace/workspace member/brand profile/media.
+- `adapters/storage/object_storage.py` — presigned POST lên S3-compatible; dùng POST
+  thay PUT vì chỉ POST cho phép condition `content-length-range` (chặn size ở storage).
 - `application/services/` — `auth_service.py` (email+mật khẩu, JWT), `workspace_service.py`
-  (workspace/member), `brand_profile_service.py` (giọng văn/từ cấm/FAQ). Exception
-  thuần (không phụ thuộc FastAPI), router dịch sang HTTP status.
+  (workspace/member), `brand_profile_service.py` (giọng văn/từ cấm/FAQ),
+  `media_service.py` (upload ticket, xác nhận upload, tag). Exception thuần (không
+  phụ thuộc FastAPI), router dịch sang HTTP status.
 - `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`,
-  `workspaces.py`, `brand_profile.py` đã nối DB thật, 9 domain router khác còn `501`.
+  `workspaces.py`, `brand_profile.py`, `media.py` đã nối DB/storage thật, 8 domain
+  router khác còn `501`.
 - `api/deps.py:PathWorkspaceMemberDep` — chặn 403 khi JWT hợp lệ nhưng không
   phải thành viên của `{workspace_id}` trong path (khác `WorkspaceDep`, đọc từ JWT).
-- `tests/test_auth_flow.py` + `test_workspace_flow.py` + `test_brand_profile_flow.py`
-  — test thật trên Postgres (không mock), mỗi test rollback transaction riêng —
-  xem `tests/conftest.py`.
+- `tests/test_auth_flow.py`, `test_workspace_flow.py`, `test_brand_profile_flow.py`,
+  `test_media_flow.py` — test thật trên Postgres + MinIO (không mock), mỗi test
+  rollback transaction DB riêng — xem `tests/conftest.py`. Lưu ý: object đã upload
+  **không** rollback (storage không có transaction), nên test media để lại object
+  rác trong bucket dev.
 
-Chưa có: OAuth nền tảng, LLM call, adapter kênh, provider SMS/Zalo thật (dùng
+Chưa có: OAuth nền tảng, LLM call, adapter kênh, email provider thật (dùng
 `debug_code` tạm), endpoint logout/revoke session, cache brand profile cho worker,
-và repository cho các domain còn lại (content, media, calendar, inbox, leads…).
+lifecycle/cleanup cho asset `pending` bị bỏ dở, và repository cho các domain còn
+lại (content, calendar, inbox, leads…).
 
 ## Ràng buộc không được phá
 

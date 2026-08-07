@@ -102,6 +102,14 @@ class MediaType(StrEnum):
 
 
 class MediaStatus(StrEnum):
+    """`PENDING` = đã cấp upload ticket nhưng client chưa PUT xong.
+
+    Cần trạng thái này vì client upload thẳng lên object storage, API không biết
+    upload có thành công không cho tới khi client gọi `/media/{id}/complete`.
+    Không có nó thì mọi ticket cấp ra đều trông như file đã có thật.
+    """
+
+    PENDING = "pending"
     RAW = "raw"
     USED = "used"
     ARCHIVED = "archived"
