@@ -43,6 +43,27 @@ Các nguyên tắc không được phá trong bất kỳ sprint nào:
 7. Mọi dữ liệu và job phải được scope theo workspace; không leak chéo tenant.
 8. Publish job phải idempotent; retry không được tạo bài đăng trùng.
 
+### Quyết định đã đổi: email là danh tính đăng nhập, không phải SĐT
+
+Bản roadmap đầu chọn SĐT + OTP làm kênh đăng nhập chính. Đã đổi sang **email +
+mật khẩu**, vì hai lý do:
+
+1. **Chi phí.** OTP SMS ở Việt Nam tốn tiền thật cho mỗi tin (~300–600đ). Mỗi lần
+   đăng nhập và mỗi lần bấm "gửi lại mã" đều ăn vào margin gói 299K/tháng — trái
+   với mục tiêu ở §9 là giữ chi phí AI + hạ tầng trong biên gói giá.
+2. **Tâm lý người dùng.** Nhiều người Việt e dè đưa số điện thoại vì spam call/tin
+   rác, nên bắt buộc SĐT ngay ở bước đăng ký làm giảm tỷ lệ activation.
+
+Không dùng username: thêm một thứ người dùng phải nghĩ ra và dễ quên, trong khi
+email họ đã có sẵn và dùng lại được để khôi phục tài khoản.
+
+**SĐT không bị bỏ** — nó thành field tuỳ chọn, thêm trong Cài đặt (`PUT /auth/phone`),
+chỉ để nhận bản nháp/nhắc duyệt qua Zalo OA. Nghĩa là Zalo OA (P1) vẫn cần thu số
+ở bước đó, chỉ là không chặn đăng ký.
+
+Social login (Google) là hướng mở tiếp theo cho cả hai lý do trên — chưa làm, xem
+§4 P1.
+
 ## 2. Cách đọc bộ thiết kế
 
 Bộ prototype thể hiện hai lớp khác nhau và roadmap phải tách chúng rõ ràng:
@@ -64,7 +85,7 @@ landing page public.
 | MVP App — Lịch đăng | Lịch tuần, post theo kênh, dữ liệu đồng bộ từ bài đã duyệt | Tuần 2 | Tuần 6 |
 | MVP App — Khách tiềm năng | Lead cards, suggested reply, send-after-approval, FAQ strip | Tuần 2 | Sau pilot; pilot dùng intake thủ công |
 | MVP App — Báo cáo | Stats, attribution bars, weekly chart, nhận xét bằng ngôn ngữ đời thường | Tuần 2 | Tuần 8, với dữ liệu MVP tối thiểu |
-| Đăng nhập / Đăng ký | Phone OTP, signup, email login, forgot/reset password, success states | Tuần 3 | Tuần 4 |
+| Đăng nhập / Đăng ký | Email + mật khẩu, signup, forgot/reset password qua email, success states | Tuần 3 | Tuần 4 |
 | Onboarding | Chọn ngành, nối kênh, learning state, first draft | Tuần 3 | Tuần 7 |
 | Landing Page | Hero, 4 trạm, ngành, pricing, CTA | Tuần 3 | Tuần 12 sau khi rà soát claim |
 | AI Marketing | Demo 4 trạm theo persona, progress/log/result | Tuần 3 | Internal sales demo; không phải core app |
@@ -89,7 +110,7 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 48 backend tests đang pass (21 contract/state-machine + 27 auth/workspace/
+- [x] 59 backend tests đang pass (22 contract/state-machine + 37 auth/workspace/
   brand-profile chạy thật trên Postgres); Ruff đang pass.
 
 Architecture/docs:
@@ -102,13 +123,13 @@ Architecture/docs:
 
 - [ ] Frontend routes, interaction thật và visual regression tests.
 - [x] Generated TypeScript API client.
-- [x] PostgreSQL models/repositories cho auth (user/OTP/refresh/workspace member),
-  Alembic migrations thật. **Chưa xong:** repository cho content/media/workspace
-  CRUD, và chưa có test chứng minh tenant isolation (workspace A không đọc được
-  dữ liệu workspace B) — mới có kiểm tra membership khi decode JWT.
-- [x] JWT access + refresh token xoay vòng, OTP request/verify/resend-cooldown/attempt-limit
-  thật trên `/auth/*`. **Chưa xong:** OTP provider SMS/Zalo thật (dùng `debug_code`
-  tạm khi `HAVI_DEBUG=true`), và chưa có endpoint logout/revoke session.
+- [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
+  Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
+  không phải thành viên). **Chưa xong:** repository cho content/media/calendar/
+  inbox/leads.
+- [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
+  (Argon2), đặt lại mật khẩu qua mã 6 số. **Chưa xong:** email provider thật
+  (dùng `debug_code` khi `HAVI_DEBUG=true`), endpoint logout/revoke session.
 - [x] Redis + object storage (MinIO) local stack (`docker-compose.yml`). **Chưa
   xong:** code dùng chúng — chưa có Celery job thật, chưa có signed upload.
 - [ ] LLM content pipeline, structured output validation, usage/quota tracking.
@@ -126,10 +147,10 @@ hệ thống phải có đủ bốn lớp dữ liệu/vận hành sau:
 
 PostgreSQL:
 
-- [x] `users`, `otp_challenges`, `refresh_sessions` (migration `c5a2a7713af1`).
-- [x] `workspaces`, `workspace_members`, `brand_profiles` (cùng migration trên) —
-  bảng tồn tại và migrate được, nhưng chưa có repository/router nào ghi/đọc
-  `workspaces`/`brand_profiles` (chỉ `workspace_members.is_member` dùng trong auth).
+- [x] `users`, `otp_challenges`, `refresh_sessions` (migration `c5a2a7713af1`,
+  `eb7685b1cb83` đổi email thành danh tính chính và SĐT thành tuỳ chọn).
+- [x] `workspaces`, `workspace_members`, `brand_profiles` — có repository + router
+  thật (`/workspaces/*`, `/brand-profile`), test chạy trên Postgres.
 - [ ] `platform_connections` với token mã hóa.
 - [ ] `media_assets`, `content_jobs`, `content_items`, `content_item_versions`.
 - [ ] `publish_jobs`, `event_logs`, `engagement_snapshots` (bảng `event_log` đã
@@ -166,7 +187,7 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 
 ### P0 — Pilot MVP bắt buộc
 
-- [ ] Phone OTP login/signup, refresh/logout.
+- [x] Email + mật khẩu login/signup, refresh token xoay vòng. **Chưa xong:** logout/revoke chủ động.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
 - [ ] Onboarding ngành, brand voice cơ bản và kết nối Facebook Page.
 - [ ] Upload ảnh + nhập text; ghi âm có thể để sau nếu ảnh/text chưa ổn định.
@@ -187,6 +208,8 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [ ] Lead pipeline đơn giản và attribution khách đến từ đâu.
 - [ ] Brand profile nâng cao: banned claims, FAQ editor, logo và brand colors.
 - [ ] Workspace members/roles UI đầy đủ.
+- [ ] Đăng nhập bằng Google (OAuth) — bỏ luôn bước nhập mật khẩu, cost gần 0.
+  `users.password_hash` đã nullable sẵn cho hướng này.
 - [ ] Billing bằng một cổng thanh toán Việt Nam.
 
 ### P2 — Sau khi có dữ liệu pilot
@@ -216,7 +239,8 @@ dịch chữ lại. Mọi quyết định sản phẩm phải ưu tiên bối c�
 
 - [ ] Tiếng Việt là ngôn ngữ mặc định; copy ngắn, đời thường, tránh jargon marketing/AI.
 - [ ] Hỗ trợ nhập số `0xxxxxxxxx`, normalize và lưu dạng `+84`; hiển thị lại theo format quen thuộc.
-- [ ] OTP qua provider phù hợp Việt Nam, có SMS fallback; không phụ thuộc duy nhất vào một kênh.
+- [ ] Email provider để gửi mã đặt lại mật khẩu (hiện trả `debug_code` khi `HAVI_DEBUG=true`).
+- [ ] SĐT tuỳ chọn trong Cài đặt cho Zalo OA — không dùng để đăng nhập (xem §1).
 - [ ] Múi giờ mặc định `Asia/Ho_Chi_Minh`; ngày theo `dd/MM/yyyy`, giờ 24h, tiền tệ VND.
 - [ ] Thiết kế mobile-first cho Android phổ biến, màn hình 360px và mạng 4G không ổn định.
 - [ ] Upload phải resume/retry hợp lý, nén ảnh phía client khi phù hợp và không bắt user chờ vô nghĩa.
@@ -311,8 +335,8 @@ Mục tiêu: hoàn thành toàn bộ bề mặt thiết kế trước khi nối 
 Frontend:
 
 - [ ] Landing Page responsive, anchor navigation, pricing và CTA.
-- [ ] Auth flows: phone login, signup, OTP 6 ô, resend countdown, email login,
-  forgot/reset password và success routes.
+- [x] Auth flows: email login, signup (tên + email + mật khẩu), forgot/reset
+  password qua mã 6 số trong email, resend countdown và success routes.
 - [ ] Onboarding 3 bước: industry, connections, learning state và first draft.
 - [ ] AI Marketing demo theo persona cho sales/internal review.
 - [ ] Thêm reduced-motion behavior cho progress animation.
@@ -326,7 +350,7 @@ Product/legal:
 
 QA:
 
-- [ ] Form validation, OTP keyboard flow, backspace, paste và resend.
+- [ ] Form validation, keyboard flow cho ô mã 6 số (backspace, paste) và resend.
 - [ ] Responsive check tối thiểu 360px, 768px, 1280px và 1440px.
 - [ ] Accessibility check cho label, contrast, focus order và disabled states.
 
@@ -344,16 +368,24 @@ Backend:
 
 - [x] Models/migrations cho user, OTP challenge, refresh session, workspace,
   workspace member, brand profile và audit event (`domain/models/`, migration
-  `c5a2a7713af1`, verify bằng `alembic check` + insert/query thật trên Postgres).
-- [x] Phone normalization (0xxxxxxxxx → +84…, `core/phone.py`), OTP expiry,
-  attempt limit (`otp_max_attempts`), resend rate limit (`otp_resend_cooldown_seconds`)
-  — `application/services/auth_service.py`, test thật ở `tests/test_auth_flow.py`.
-  **Chưa xong:** provider adapter gửi SMS/Zalo thật (đang trả `debug_code` khi
-  `HAVI_DEBUG=true` vì OTP provider chưa chốt — xem §12 "Quyết định cần chốt").
-- [x] JWT access token + rotated refresh token (`/auth/otp/verify`, `/auth/sign-up`,
-  `/auth/refresh`, `/auth/me` đều chạy thật trên Postgres, không còn `501`).
+  `c5a2a7713af1` + `eb7685b1cb83`, verify bằng `alembic check` + round-trip
+  up/down + insert/query thật trên Postgres).
+- [x] Password hashing bằng Argon2id (`core/security.py`). Không dùng passlib
+  (module `crypt` bị xoá ở Python 3.13+) và không dùng bcrypt (truncate âm thầm ở
+  72 bytes — mật khẩu tiếng Việt có dấu ăn ~3 bytes/ký tự nên chạm giới hạn chỉ
+  sau ~24 ký tự).
+- [x] Email chuẩn hoá lowercase để không tạo 2 tài khoản từ `A@x.vn` và `a@x.vn`.
+  Mã đặt lại mật khẩu có TTL, attempt limit và resend cooldown — test thật ở
+  `tests/test_auth_flow.py`. **Chưa xong:** email provider thật (đang trả
+  `debug_code` khi `HAVI_DEBUG=true` — xem §12 "Quyết định cần chốt").
+- [x] SĐT tuỳ chọn (`PUT /auth/phone`) cho Zalo OA, chuẩn hoá về `+84…`, unique
+  để một số không gắn 2 tài khoản. Không dùng để đăng nhập.
+- [x] JWT access token + rotated refresh token (`/auth/sign-up`, `/auth/login/email`,
+  `/auth/password-reset/*`, `/auth/refresh`, `/auth/me` đều chạy thật trên Postgres).
   **Chưa xong:** endpoint logout/revoke session theo yêu cầu (refresh token chỉ
   bị revoke khi xoay vòng qua `/auth/refresh`, chưa có cách revoke chủ động).
+- [x] Không tiết lộ email nào đã đăng ký: sai mật khẩu và email không tồn tại trả
+  cùng 401 + cùng message; `/auth/password-reset/request` luôn trả 202.
 - [x] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
   `PathWorkspaceMemberDep` (api/deps.py) chặn 403 mọi route `{workspace_id}` nếu
   JWT hợp lệ nhưng không phải thành viên — test thật `test_khong_the_doc_workspace_cua_nguoi_khac`.
@@ -377,18 +409,19 @@ Frontend:
 - [ ] Nối auth API, session bootstrap, refresh và logout.
 - [ ] Route guards thật cho guest/onboarding/app.
 - [ ] Nối industry/brand profile onboarding.
-- [ ] Xử lý loading, invalid OTP, expired OTP, throttled và network failure.
+- [ ] Xử lý loading, sai mật khẩu, mã hết hạn, throttled và network failure.
 - [ ] Thêm screen chọn workspace khi user có nhiều workspace.
 
 Tests/security:
 
 - [ ] Integration test chứng minh workspace A không đọc/sửa workspace B.
-- [ ] Tests cho OTP brute force, token expiry/rotation và logout revoke.
-- [ ] Không log OTP, JWT, refresh token hoặc PII nhạy cảm.
+- [x] Tests cho brute force mã đặt lại mật khẩu, refresh token rotation + chặn tái
+  sử dụng. **Chưa xong:** logout revoke (chưa có endpoint).
+- [x] Không log OTP, JWT, refresh token hoặc PII nhạy cảm (chỉ lưu hash trong DB).
 
 Exit criteria:
 
-- [ ] Signup → OTP → onboarding → app chạy end-to-end với DB thật.
+- [ ] Signup (email) → onboarding → app chạy end-to-end với DB thật.
 - [ ] Tenant isolation tests bắt buộc pass trong CI.
 - [ ] Restart API không làm mất user/workspace/session hợp lệ.
 
@@ -735,7 +768,7 @@ Economics:
 | Rủi ro | Tác động | Biện pháp |
 |---|---|---|
 | Facebook app review/quyền API chậm | Chặn publish pilot | Mở app review từ Tuần 1; có adapter sandbox/fake nhưng không gọi đó là production |
-| OTP/Zalo provider chưa chốt | Chặn auth/onboarding | Dùng provider interface + SMS dev stub; chốt vendor trước Tuần 4 |
+| Email provider chưa chốt | Chặn luồng đặt lại mật khẩu (đăng ký/đăng nhập không bị chặn) | Dùng `debug_code` khi debug; chốt vendor trước closed beta |
 | Landing hứa nhiều hơn sản phẩm | Mất niềm tin, rủi ro pháp lý | Capability flags cho copy; review claim ở Tuần 3 và Tuần 9 |
 | LLM output không ổn định | Draft lỗi hoặc claim nguy hiểm | Structured output, schema validation, banned claims, retry giới hạn và human approval |
 | Cross-tenant leak | Sự cố nghiêm trọng | Tenant-scoped repository, deny-by-default và CI isolation tests |
@@ -759,7 +792,7 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Scaffold local PostgreSQL/Redis/object storage + Alembic (`docker-compose.yml`
   ở root + `apps/backend/migrations/`; verify bằng smoke-test migration thật, chưa
   có domain model/table nghiệp vụ nào — `target_metadata` vẫn `None` chờ Tuần 4).
-- [x] Dựng Auth và Onboarding design-complete (đăng nhập SĐT+OTP, đăng ký,
+- [x] Dựng Auth và Onboarding design-complete (đăng nhập email+mật khẩu, đăng ký,
   quên/đặt lại mật khẩu, onboarding 3 bước) bằng fixture, chưa nối API thật.
   **Chưa làm:** Landing Page và demo AI Marketing (sales-only, không phải core
   app — để P1/P2), route guards mock, keyboard/focus walkthrough thủ công,
@@ -773,7 +806,7 @@ Các quyết định này có deadline để không chặn roadmap:
 | Trạng thái | Quyết định | Deadline | Owner đề xuất |
 |---|---|---:|---|
 | [ ] | Ngành pilot đầu tiên | Trước Tuần 1 | Product |
-| [ ] | OTP provider và chi phí | Cuối Tuần 1 | Backend/Product |
+| [ ] | Email provider gửi mã đặt lại mật khẩu và chi phí | Trước Tuần 9 | Backend/Product |
 | [ ] | Cloud region, Postgres, Redis, object storage | Cuối Tuần 1 | Engineering |
 | [ ] | Facebook developer app + quyền cần xin | Trong Tuần 1 | Product/Backend |
 | [ ] | Web responsive breakpoint support chính thức | Cuối Tuần 2 | Frontend/Design |

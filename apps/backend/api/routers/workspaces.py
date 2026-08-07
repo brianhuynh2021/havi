@@ -119,12 +119,12 @@ async def invite_member(
 ) -> WorkspaceMember:
     try:
         row = await workspace_service.invite_member(
-            workspace_id=workspace_id, phone=payload.phone, role=payload.role
+            workspace_id=workspace_id, email=payload.email, role=payload.role
         )
     except InviteUserNotFound as exc:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
-            "Số điện thoại chưa có tài khoản Havi — mời họ đăng ký trước",
+            "Email chưa có tài khoản Havi — mời họ đăng ký trước",
         ) from exc
     except AlreadyMember as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, "Đã là thành viên workspace này") from exc

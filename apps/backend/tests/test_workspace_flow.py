@@ -4,15 +4,13 @@ from httpx import AsyncClient
 
 
 async def _sign_up_and_login(
-    client: AsyncClient, *, name: str = "Chị Hương", phone: str = "0912345678"
+    client: AsyncClient, *, name: str = "Chị Hương", email: str
 ) -> dict:
-    signup = await client.post("/auth/sign-up", json={"name": name, "phone": phone})
-    assert signup.status_code == 202, signup.text
-    code = signup.json()["debug_code"]
-
-    login = await client.post("/auth/otp/verify", json={"phone": phone, "code": code})
-    assert login.status_code == 200, login.text
-    return login.json()
+    signup = await client.post(
+        "/auth/sign-up", json={"name": name, "email": email, "password": "matkhau123"}
+    )
+    assert signup.status_code == 201, signup.text
+    return signup.json()
 
 
 def _auth_headers(token_pair: dict) -> dict:
@@ -20,7 +18,7 @@ def _auth_headers(token_pair: dict) -> dict:
 
 
 async def test_tao_workspace_tu_dong_thanh_active(client: AsyncClient):
-    token_pair = await _sign_up_and_login(client, phone="0910000001")
+    token_pair = await _sign_up_and_login(client, email="w0001@havi.vn")
     headers = _auth_headers(token_pair)
 
     create = await client.post(
@@ -44,8 +42,8 @@ async def test_tao_workspace_tu_dong_thanh_active(client: AsyncClient):
 
 
 async def test_list_workspaces_chi_thay_workspace_cua_minh(client: AsyncClient):
-    token_a = await _sign_up_and_login(client, name="Chị A", phone="0910000002")
-    token_b = await _sign_up_and_login(client, name="Chị B", phone="0910000003")
+    token_a = await _sign_up_and_login(client, name="Chị A", email="w0002@havi.vn")
+    token_b = await _sign_up_and_login(client, name="Chị B", email="w0003@havi.vn")
 
     await client.post(
         "/workspaces", json={"name": "Tiệm A", "industry": "spa"}, headers=_auth_headers(token_a)
@@ -62,8 +60,8 @@ async def test_list_workspaces_chi_thay_workspace_cua_minh(client: AsyncClient):
 
 
 async def test_khong_the_doc_workspace_cua_nguoi_khac(client: AsyncClient):
-    token_a = await _sign_up_and_login(client, name="Chị A", phone="0910000004")
-    token_b = await _sign_up_and_login(client, name="Chị B", phone="0910000005")
+    token_a = await _sign_up_and_login(client, name="Chị A", email="w0004@havi.vn")
+    token_b = await _sign_up_and_login(client, name="Chị B", email="w0005@havi.vn")
 
     create_a = await client.post(
         "/workspaces", json={"name": "Tiệm A", "industry": "spa"}, headers=_auth_headers(token_a)
@@ -76,7 +74,7 @@ async def test_khong_the_doc_workspace_cua_nguoi_khac(client: AsyncClient):
 
 
 async def test_update_workspace_doi_publish_mode(client: AsyncClient):
-    token = await _sign_up_and_login(client, phone="0910000006")
+    token = await _sign_up_and_login(client, email="w0006@havi.vn")
     headers = _auth_headers(token)
     create = await client.post(
         "/workspaces", json={"name": "Tiệm", "industry": "spa"}, headers=headers
@@ -91,7 +89,7 @@ async def test_update_workspace_doi_publish_mode(client: AsyncClient):
 
 
 async def test_activate_workspace_tra_token_moi(client: AsyncClient):
-    token = await _sign_up_and_login(client, phone="0910000007")
+    token = await _sign_up_and_login(client, email="w0007@havi.vn")
     headers = _auth_headers(token)
     create = await client.post(
         "/workspaces", json={"name": "Tiệm", "industry": "spa"}, headers=headers
@@ -105,9 +103,9 @@ async def test_activate_workspace_tra_token_moi(client: AsyncClient):
     assert body["needs_onboarding"] is False
 
 
-async def test_invite_member_bang_sdt_da_co_tai_khoan(client: AsyncClient):
-    owner_token = await _sign_up_and_login(client, name="Chị Owner", phone="0910000008")
-    await _sign_up_and_login(client, name="Anh Marketer", phone="0910000009")
+async def test_invite_member_bang_email_da_co_tai_khoan(client: AsyncClient):
+    owner_token = await _sign_up_and_login(client, name="Chị Owner", email="w0008@havi.vn")
+    await _sign_up_and_login(client, name="Anh Marketer", email="w0009@havi.vn")
 
     headers = _auth_headers(owner_token)
     create = await client.post(
@@ -117,7 +115,7 @@ async def test_invite_member_bang_sdt_da_co_tai_khoan(client: AsyncClient):
 
     invite = await client.post(
         f"/workspaces/{workspace_id}/members",
-        json={"phone": "0910000009", "role": "marketer"},
+        json={"email": "w0009@havi.vn", "role": "marketer"},
         headers=headers,
     )
     assert invite.status_code == 201, invite.text
@@ -129,8 +127,8 @@ async def test_invite_member_bang_sdt_da_co_tai_khoan(client: AsyncClient):
     assert names == {"Chị Owner", "Anh Marketer"}
 
 
-async def test_invite_member_sdt_chua_co_tai_khoan_tra_404(client: AsyncClient):
-    owner_token = await _sign_up_and_login(client, phone="0910000010")
+async def test_invite_member_email_chua_co_tai_khoan_tra_404(client: AsyncClient):
+    owner_token = await _sign_up_and_login(client, email="w0010@havi.vn")
     headers = _auth_headers(owner_token)
     create = await client.post(
         "/workspaces", json={"name": "Tiệm", "industry": "spa"}, headers=headers
@@ -139,14 +137,14 @@ async def test_invite_member_sdt_chua_co_tai_khoan_tra_404(client: AsyncClient):
 
     invite = await client.post(
         f"/workspaces/{workspace_id}/members",
-        json={"phone": "0999999999", "role": "marketer"},
+        json={"email": "khongtontai@havi.vn", "role": "marketer"},
         headers=headers,
     )
     assert invite.status_code == 404
 
 
 async def test_khong_the_xoa_owner_duy_nhat(client: AsyncClient):
-    token = await _sign_up_and_login(client, phone="0910000011")
+    token = await _sign_up_and_login(client, email="w0011@havi.vn")
     headers = _auth_headers(token)
     create = await client.post(
         "/workspaces", json={"name": "Tiệm", "industry": "spa"}, headers=headers
@@ -162,8 +160,8 @@ async def test_khong_the_xoa_owner_duy_nhat(client: AsyncClient):
 
 
 async def test_xoa_member_thuong_thanh_cong(client: AsyncClient):
-    owner_token = await _sign_up_and_login(client, name="Chị Owner", phone="0910000012")
-    member_login = await _sign_up_and_login(client, name="Anh M", phone="0910000013")
+    owner_token = await _sign_up_and_login(client, name="Chị Owner", email="w0012@havi.vn")
+    member_login = await _sign_up_and_login(client, name="Anh M", email="w0013@havi.vn")
 
     headers = _auth_headers(owner_token)
     create = await client.post(
@@ -172,7 +170,7 @@ async def test_xoa_member_thuong_thanh_cong(client: AsyncClient):
     workspace_id = create.json()["id"]
     await client.post(
         f"/workspaces/{workspace_id}/members",
-        json={"phone": "0910000013", "role": "marketer"},
+        json={"email": "w0013@havi.vn", "role": "marketer"},
         headers=headers,
     )
     member_me = await client.get("/auth/me", headers=_auth_headers(member_login))

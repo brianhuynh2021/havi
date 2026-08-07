@@ -10,22 +10,22 @@ class OtpRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_latest_for_phone(self, phone: str) -> OtpChallenge | None:
+    async def get_latest_for_email(self, email: str) -> OtpChallenge | None:
         result = await self._session.execute(
             select(OtpChallenge)
-            .where(OtpChallenge.phone == phone)
+            .where(OtpChallenge.email == email)
             .order_by(OtpChallenge.created_at.desc())
             .limit(1)
         )
         return result.scalar_one_or_none()
 
-    async def get_active_for_phone(self, phone: str) -> OtpChallenge | None:
+    async def get_active_for_email(self, email: str) -> OtpChallenge | None:
         """Challenge còn hạn, chưa dùng — dùng để verify."""
         now = datetime.now(UTC)
         result = await self._session.execute(
             select(OtpChallenge)
             .where(
-                OtpChallenge.phone == phone,
+                OtpChallenge.email == email,
                 OtpChallenge.consumed_at.is_(None),
                 OtpChallenge.expires_at > now,
             )
@@ -34,8 +34,8 @@ class OtpRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create(self, *, phone: str, code_hash: str, expires_at: datetime) -> OtpChallenge:
-        challenge = OtpChallenge(phone=phone, code_hash=code_hash, expires_at=expires_at)
+    async def create(self, *, email: str, code_hash: str, expires_at: datetime) -> OtpChallenge:
+        challenge = OtpChallenge(email=email, code_hash=code_hash, expires_at=expires_at)
         self._session.add(challenge)
         await self._session.flush()
         return challenge

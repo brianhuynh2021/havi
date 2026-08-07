@@ -2,6 +2,11 @@
 
 Bổ sung cho README.md + REPOSITORY_STRATEGY.md. Backend = FastAPI (`apps/backend/api`), owner mọi DB/secret.
 
+## 0. Tài khoản người dùng
+- `user {id, email (unique, danh tính đăng nhập), name, password_hash (nullable — mở đường cho Google login), phone (nullable, unique — chỉ để Zalo OA, không đăng nhập), active_workspace_id, created_at}`
+- Email + mật khẩu (Argon2id) là kênh duy nhất tạo/đăng nhập tài khoản. Lý do không dùng SĐT+OTP: chi phí SMS ở VN + tâm lý e dè cho số — xem `ROADMAP.md` §1.
+- Đặt lại mật khẩu: mã 6 số qua email (`otp_challenge {email, code_hash, expires_at, attempt_count, consumed_at}`), TTL + attempt limit + resend cooldown.
+
 ## 1. Workspace (multi-tenant)
 - `workspace {id, name, industry, owner_user_id, plan, created_at}`
 - `workspace_member {workspace_id, user_id, role: owner|marketer|reviewer|sales}`
@@ -54,11 +59,12 @@ Bổ sung cho README.md + REPOSITORY_STRATEGY.md. Backend = FastAPI (`apps/backe
 ## 10. Settings & Billing
 - Brand profile (mục 2), Connected accounts (mục 6), Chế độ đăng bài (review_first/full_auto, đã có trong MVP App)
 - `subscription {workspace_id, plan, status, current_period_end}` — tích hợp cổng thanh toán VN (VNPay/Momo) qua backend, không lộ secret ra frontend
-- Quản lý thành viên workspace (mời, đổi role, xoá)
+- Quản lý thành viên workspace (mời **bằng email** vì SĐT là tuỳ chọn, đổi role, xoá — chặn xoá owner cuối cùng)
 
 ## API surface (OpenAPI, tóm tắt theo domain)
 ```
-/auth/*              OTP, email login, refresh token
+/auth/*              sign-up/login email+mật khẩu, password reset, refresh token,
+                     PUT /auth/phone (SĐT tuỳ chọn cho Zalo OA)
 /workspaces/*         CRUD, members
 /brand-profile        GET/PUT
 /media                upload, list, tag

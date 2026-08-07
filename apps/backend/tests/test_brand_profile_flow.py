@@ -9,20 +9,18 @@ from httpx import AsyncClient
 
 
 async def _sign_up_and_login(
-    client: AsyncClient, *, name: str = "Chị Hương", phone: str
+    client: AsyncClient, *, name: str = "Chị Hương", email: str
 ) -> dict:
-    signup = await client.post("/auth/sign-up", json={"name": name, "phone": phone})
-    assert signup.status_code == 202, signup.text
-    login = await client.post(
-        "/auth/otp/verify", json={"phone": phone, "code": signup.json()["debug_code"]}
+    signup = await client.post(
+        "/auth/sign-up", json={"name": name, "email": email, "password": "matkhau123"}
     )
-    assert login.status_code == 200, login.text
-    return login.json()
+    assert signup.status_code == 201, signup.text
+    return signup.json()
 
 
-async def _onboard(client: AsyncClient, *, phone: str, name: str, industry: str) -> dict:
+async def _onboard(client: AsyncClient, *, email: str, name: str, industry: str) -> dict:
     """Đăng ký → tạo workspace → refresh để JWT mang active_workspace_id."""
-    token_pair = await _sign_up_and_login(client, name=name, phone=phone)
+    token_pair = await _sign_up_and_login(client, name=name, email=email)
     create = await client.post(
         "/workspaces",
         json={"name": f"Tiệm {name}", "industry": industry},
@@ -42,7 +40,7 @@ def _headers(token_pair: dict) -> dict:
 
 async def test_get_lan_dau_tu_tao_profile_rong_theo_nganh_workspace(client: AsyncClient):
     token_pair = await _onboard(
-        client, phone="0920000001", name="Hương", industry="spa"
+        client, email="b0001@havi.vn", name="Hương", industry="spa"
     )
 
     response = await client.get("/brand-profile", headers=_headers(token_pair))
@@ -57,7 +55,7 @@ async def test_get_lan_dau_tu_tao_profile_rong_theo_nganh_workspace(client: Asyn
 
 async def test_chua_co_workspace_thi_bi_chan_409(client: AsyncClient):
     # Đăng ký xong nhưng chưa tạo workspace — active_workspace_id vẫn None.
-    token_pair = await _sign_up_and_login(client, phone="0920000002")
+    token_pair = await _sign_up_and_login(client, email="b0002@havi.vn")
     assert token_pair["needs_onboarding"] is True
 
     response = await client.get("/brand-profile", headers=_headers(token_pair))
@@ -66,7 +64,7 @@ async def test_chua_co_workspace_thi_bi_chan_409(client: AsyncClient):
 
 async def test_put_ghi_duoc_tone_banned_claims_va_faq(client: AsyncClient):
     token_pair = await _onboard(
-        client, phone="0920000003", name="Hương", industry="spa"
+        client, email="b0003@havi.vn", name="Hương", industry="spa"
     )
     headers = _headers(token_pair)
 
@@ -95,7 +93,7 @@ async def test_put_ghi_duoc_tone_banned_claims_va_faq(client: AsyncClient):
 
 async def test_put_ghi_xong_get_doc_lai_dung_du_lieu(client: AsyncClient):
     token_pair = await _onboard(
-        client, phone="0920000004", name="Hương", industry="food_beverage"
+        client, email="b0004@havi.vn", name="Hương", industry="food_beverage"
     )
     headers = _headers(token_pair)
 
@@ -109,7 +107,7 @@ async def test_put_ghi_xong_get_doc_lai_dung_du_lieu(client: AsyncClient):
 
 async def test_put_field_khong_gui_thi_giu_nguyen_gia_tri_cu(client: AsyncClient):
     token_pair = await _onboard(
-        client, phone="0920000005", name="Hương", industry="spa"
+        client, email="b0005@havi.vn", name="Hương", industry="spa"
     )
     headers = _headers(token_pair)
 
@@ -126,9 +124,9 @@ async def test_put_field_khong_gui_thi_giu_nguyen_gia_tri_cu(client: AsyncClient
 
 
 async def test_hai_workspace_khong_doc_thay_profile_cua_nhau(client: AsyncClient):
-    token_a = await _onboard(client, phone="0920000006", name="A", industry="spa")
+    token_a = await _onboard(client, email="b0006@havi.vn", name="A", industry="spa")
     token_b = await _onboard(
-        client, phone="0920000007", name="B", industry="real_estate"
+        client, email="b0007@havi.vn", name="B", industry="real_estate"
     )
 
     await client.put(

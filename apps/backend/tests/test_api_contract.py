@@ -20,7 +20,8 @@ def test_health_khong_can_token(client: TestClient):
 @pytest.mark.parametrize(
     "path",
     [
-        "/auth/otp/request",
+        "/auth/sign-up",
+        "/auth/login/email",
         "/workspaces",
         "/brand-profile",
         "/media",

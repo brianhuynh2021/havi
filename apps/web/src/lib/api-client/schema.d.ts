@@ -21,43 +21,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/otp/request": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Request Otp
-         * @description Gửi OTP qua Zalo/SMS. Trả về số giây phải chờ trước khi cho gửi lại.
-         */
-        post: operations["request_otp_auth_otp_request_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/otp/verify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Verify Otp */
-        post: operations["verify_otp_auth_otp_verify_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/sign-up": {
         parameters: {
             query?: never;
@@ -69,10 +32,7 @@ export interface paths {
         put?: never;
         /**
          * Sign Up
-         * @description Tạo user + gửi OTP. Xác nhận OTP ở `/auth/otp/verify` mới nhận được token.
-         *
-         *     (Trả `TokenPair` ngay ở bước này là sai — sẽ cấp token cho số điện thoại
-         *     chưa được xác minh sở hữu.)
+         * @description Đăng ký xong đăng nhập luôn — mật khẩu đã là bằng chứng sở hữu tài khoản.
          */
         post: operations["sign_up_auth_sign_up_post"];
         delete?: never;
@@ -90,11 +50,68 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Login Email
-         * @description Đường phụ — chỉ dùng khi user đã thêm email/mật khẩu trong Cài đặt.
-         */
+        /** Login Email */
         post: operations["login_email_auth_login_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-reset/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Password Reset
+         * @description Gửi mã 6 số qua email. Email chưa đăng ký cũng trả 202 (không tiết lộ).
+         */
+        post: operations["request_password_reset_auth_password_reset_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-reset/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Password Reset
+         * @description Đặt mật khẩu mới rồi đăng nhập luôn — khỏi bắt user nhập lại.
+         */
+        post: operations["confirm_password_reset_auth_password_reset_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Phone
+         * @description Thêm/đổi SĐT để nhận bản nháp qua Zalo OA — không phải kênh đăng nhập.
+         */
+        put: operations["set_phone_auth_phone_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1140,16 +1157,19 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Phone */
-            phone: string;
             /** Email */
-            email?: string | null;
+            email: string;
+            /** Phone */
+            phone?: string | null;
             /** Active Workspace Id */
             active_workspace_id?: string | null;
         };
         /** EmailLoginRequest */
         EmailLoginRequest: {
-            /** Email */
+            /**
+             * Email
+             * Format: email
+             */
             email: string;
             /** Password */
             password: string;
@@ -1409,8 +1429,8 @@ export interface components {
          * OtpChallenge
          * @description Frontend dùng `resend_after_seconds` để chạy đồng hồ đếm ngược trên màn OTP.
          *
-         *     `debug_code` chỉ có giá trị khi `HAVI_DEBUG=true` (chưa có provider SMS/Zalo
-         *     thật — xem ROADMAP.md "Quyết định cần chốt"). Không log OTP ra bất kỳ đâu.
+         *     `debug_code` chỉ có giá trị khi `HAVI_DEBUG=true` (chưa có email provider thật
+         *     — xem ROADMAP.md "Quyết định cần chốt"). Không log mã ra bất kỳ đâu.
          */
         OtpChallenge: {
             /** Resend After Seconds */
@@ -1419,27 +1439,6 @@ export interface components {
             expires_in_seconds: number;
             /** Debug Code */
             debug_code?: string | null;
-        };
-        /**
-         * OtpRequest
-         * @description SĐT + OTP là kênh chính (qua Zalo/SMS); email + mật khẩu là phụ.
-         */
-        OtpRequest: {
-            /**
-             * Phone
-             * @example 0901234567
-             */
-            phone: string;
-        };
-        /** OtpVerify */
-        OtpVerify: {
-            /** Phone */
-            phone: string;
-            /**
-             * Code
-             * @example 111111
-             */
-            code: string;
         };
         /** Page[ContentItem] */
         Page_ContentItem_: {
@@ -1527,6 +1526,46 @@ export interface components {
             offset: number;
         };
         /**
+         * PasswordResetConfirm
+         * @description Bước 2 — nhập mã trong email + mật khẩu mới.
+         */
+        PasswordResetConfirm: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /**
+             * Code
+             * @example 111111
+             */
+            code: string;
+            /** New Password */
+            new_password: string;
+        };
+        /**
+         * PasswordResetRequest
+         * @description Bước 1 màn "Quên mật khẩu" — gửi mã 6 số qua email.
+         */
+        PasswordResetRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /**
+         * PhoneUpdateRequest
+         * @description SĐT tuỳ chọn — chỉ để nhận bản nháp/nhắc duyệt qua Zalo OA, không để đăng nhập.
+         */
+        PhoneUpdateRequest: {
+            /**
+             * Phone
+             * @example 0901234567
+             */
+            phone: string;
+        };
+        /**
          * Plan
          * @description Bảng giá landing page: 0đ 14 ngày / Tiệm Nhỏ 299K / Toàn Diện 599K.
          * @enum {string}
@@ -1592,13 +1631,25 @@ export interface components {
         };
         /**
          * SignUpRequest
-         * @description Đăng ký chỉ cần tên + SĐT; email/mật khẩu thêm sau trong Cài đặt.
+         * @description Email + mật khẩu là kênh duy nhất để tạo tài khoản.
+         *
+         *     Không dùng SĐT: OTP SMS ở VN tốn phí thật nên ăn vào margin gói 299K/tháng,
+         *     và chủ tiệm e dè đưa số vì spam. SĐT thêm sau trong Cài đặt, chỉ để Zalo OA.
          */
         SignUpRequest: {
-            /** Name */
+            /**
+             * Name
+             * @example Chị Hương
+             */
             name: string;
-            /** Phone */
-            phone: string;
+            /**
+             * Email
+             * Format: email
+             * @example huong@spaannhien.vn
+             */
+            email: string;
+            /** Password */
+            password: string;
         };
         /** Subscription */
         Subscription: {
@@ -1704,10 +1755,17 @@ export interface components {
             name: string;
             role: components["schemas"]["WorkspaceRole"];
         };
-        /** WorkspaceMemberInvite */
+        /**
+         * WorkspaceMemberInvite
+         * @description Mời bằng email, không bằng SĐT: SĐT giờ là field tuỳ chọn nên phần lớn
+         *     tài khoản không có, mời bằng SĐT sẽ luôn không tìm thấy người.
+         */
         WorkspaceMemberInvite: {
-            /** Phone */
-            phone: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
             /** @default marketer */
             role: components["schemas"]["WorkspaceRole"];
         };
@@ -1752,72 +1810,6 @@ export interface operations {
             };
         };
     };
-    request_otp_auth_otp_request_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OtpRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OtpChallenge"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    verify_otp_auth_otp_verify_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OtpVerify"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokenPair"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     sign_up_auth_sign_up_post: {
         parameters: {
             query?: never;
@@ -1832,12 +1824,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            202: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OtpChallenge"];
+                    "application/json": components["schemas"]["TokenPair"];
                 };
             };
             /** @description Validation Error */
@@ -1871,6 +1863,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenPair"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_password_reset_auth_password_reset_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OtpChallenge"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_password_reset_auth_password_reset_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenPair"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_phone_auth_phone_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUser"];
                 };
             };
             /** @description Validation Error */

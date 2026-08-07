@@ -1,4 +1,7 @@
-"""Use case cho /auth/* — OTP là kênh chính, JWT access + refresh token xoay vòng.
+"""Use case cho /auth/* — email + mật khẩu là kênh duy nhất tạo/đăng nhập tài khoản.
+
+SĐT là field tuỳ chọn, chỉ để gửi bản nháp qua Zalo OA — không dùng để đăng nhập
+(OTP SMS ở VN tốn phí thật, ăn vào margin gói 299K/tháng).
 
 Ném exception thuần (không phải HTTPException) để giữ layer này không phụ thuộc
 FastAPI — router (`api/routers/auth.py`) là nơi dịch sang HTTP status, giống cách
@@ -20,17 +23,20 @@ from core.security import (
     generate_otp_code,
     generate_refresh_token,
     hash_otp_code,
+    hash_password,
     hash_refresh_token,
+    verify_password,
 )
 from domain.models.user import User
 
 
-class PhoneAlreadyRegistered(Exception):
+class EmailAlreadyRegistered(Exception):
     pass
 
 
-class PhoneNotRegistered(Exception):
-    pass
+class InvalidCredentials(Exception):
+    """Dùng chung cho "email không tồn tại" và "sai mật khẩu" — không tiết lộ
+    email nào đã đăng ký (user enumeration)."""
 
 
 class OtpRateLimited(Exception):
@@ -51,6 +57,10 @@ class RefreshTokenInvalid(Exception):
 
 
 class InvalidPhoneFormat(Exception):
+    pass
+
+
+class PhoneAlreadyUsed(Exception):
     pass
 
 
@@ -83,33 +93,51 @@ class AuthService:
         self._refresh_sessions = refresh_sessions
         self._settings = settings
 
-    async def sign_up(self, *, name: str, phone: str) -> OtpChallengeResult:
-        normalized = self._normalize_or_raise(phone)
-        if await self._users.get_by_phone(normalized) is not None:
-            raise PhoneAlreadyRegistered()
-        await self._users.create(phone=normalized, name=name)
-        return await self._issue_otp_challenge(normalized)
+    async def sign_up(self, *, name: str, email: str, password: str) -> TokenPairResult:
+        """Đăng ký xong đăng nhập luôn — email chưa cần xác minh để dùng app.
 
-    async def request_otp(self, *, phone: str) -> OtpChallengeResult:
-        normalized = self._normalize_or_raise(phone)
-        if await self._users.get_by_phone(normalized) is None:
-            raise PhoneNotRegistered()
-        return await self._issue_otp_challenge(normalized)
+        (Khác luồng SĐT+OTP cũ: ở đó phải verify OTP mới cấp token vì cần chứng
+        minh sở hữu số. Với email+password, mật khẩu chính là bằng chứng.)
+        """
+        normalized_email = self._normalize_email(email)
+        if await self._users.get_by_email(normalized_email) is not None:
+            raise EmailAlreadyRegistered()
+        user = await self._users.create(
+            email=normalized_email, name=name, password_hash=hash_password(password)
+        )
+        return await self._issue_token_pair(user)
 
-    async def _issue_otp_challenge(self, phone: str) -> OtpChallengeResult:
+    async def login_with_email(self, *, email: str, password: str) -> TokenPairResult:
+        user = await self._users.get_by_email(self._normalize_email(email))
+        if user is None or user.password_hash is None:
+            raise InvalidCredentials()
+        if not verify_password(password, user.password_hash):
+            raise InvalidCredentials()
+        return await self._issue_token_pair(user)
+
+    async def request_password_reset(self, *, email: str) -> OtpChallengeResult:
+        """Không tiết lộ email có tồn tại hay không — luôn trả về challenge giống nhau.
+
+        Với email chưa đăng ký thì không tạo challenge (không gửi mail), nhưng
+        response vẫn như thành công để tránh user enumeration.
+        """
+        normalized_email = self._normalize_email(email)
         cooldown = self._settings.otp_resend_cooldown_seconds
-        latest = await self._otp_challenges.get_latest_for_phone(phone)
+        ttl = self._settings.otp_ttl_seconds
+
+        if await self._users.get_by_email(normalized_email) is None:
+            return OtpChallengeResult(resend_after_seconds=cooldown, expires_in_seconds=ttl)
+
+        latest = await self._otp_challenges.get_latest_for_email(normalized_email)
         if latest is not None:
             elapsed = (datetime.now(UTC) - latest.created_at).total_seconds()
             if elapsed < cooldown:
                 raise OtpRateLimited(retry_after_seconds=int(cooldown - elapsed))
 
         code = generate_otp_code()
-        code_hash = hash_otp_code(code, phone, self._settings)
-        ttl = self._settings.otp_ttl_seconds
         await self._otp_challenges.create(
-            phone=phone,
-            code_hash=code_hash,
+            email=normalized_email,
+            code_hash=hash_otp_code(code, normalized_email, self._settings),
             expires_at=datetime.now(UTC) + timedelta(seconds=ttl),
         )
         return OtpChallengeResult(
@@ -118,25 +146,45 @@ class AuthService:
             debug_code=code if self._settings.debug else None,
         )
 
-    async def verify_otp(self, *, phone: str, code: str) -> TokenPairResult:
-        normalized = self._normalize_or_raise(phone)
-        challenge = await self._otp_challenges.get_active_for_phone(normalized)
+    async def confirm_password_reset(
+        self, *, email: str, code: str, new_password: str
+    ) -> TokenPairResult:
+        normalized_email = self._normalize_email(email)
+        challenge = await self._otp_challenges.get_active_for_email(normalized_email)
         if challenge is None:
             raise OtpInvalidOrExpired()
         if challenge.attempt_count >= self._settings.otp_max_attempts:
             raise OtpTooManyAttempts()
 
-        expected_hash = hash_otp_code(code, normalized, self._settings)
+        expected_hash = hash_otp_code(code, normalized_email, self._settings)
         if not hmac.compare_digest(expected_hash, challenge.code_hash):
             await self._otp_challenges.increment_attempt(challenge)
             raise OtpInvalidOrExpired()
 
         await self._otp_challenges.consume(challenge)
-        user = await self._users.get_by_phone(normalized)
+        user = await self._users.get_by_email(normalized_email)
         if user is None:
-            # Không nên xảy ra: challenge chỉ tạo sau khi user đã tồn tại.
-            raise PhoneNotRegistered()
+            # Không nên xảy ra: challenge chỉ tạo cho email đã đăng ký.
+            raise OtpInvalidOrExpired()
+        await self._users.set_password_hash(user, hash_password(new_password))
         return await self._issue_token_pair(user)
+
+    async def set_phone(self, *, user_id: UUID, phone: str) -> User:
+        """SĐT tuỳ chọn cho Zalo OA — vẫn unique để một số không gắn 2 tài khoản."""
+        try:
+            normalized = normalize_vietnamese_phone(phone)
+        except InvalidPhoneNumber as exc:
+            raise InvalidPhoneFormat() from exc
+
+        existing = await self._users.get_by_phone(normalized)
+        if existing is not None and existing.id != user_id:
+            raise PhoneAlreadyUsed()
+
+        user = await self._users.get_by_id(user_id)
+        if user is None:
+            raise InvalidCredentials()
+        await self._users.set_phone(user, normalized)
+        return user
 
     async def get_user_by_id(self, user_id: UUID) -> User | None:
         return await self._users.get_by_id(user_id)
@@ -176,8 +224,7 @@ class AuthService:
             needs_onboarding=user.active_workspace_id is None,
         )
 
-    def _normalize_or_raise(self, phone: str) -> str:
-        try:
-            return normalize_vietnamese_phone(phone)
-        except InvalidPhoneNumber as exc:
-            raise InvalidPhoneFormat() from exc
+    @staticmethod
+    def _normalize_email(email: str) -> str:
+        """Lowercase để "Huong@x.vn" và "huong@x.vn" không tạo 2 tài khoản."""
+        return email.strip().lower()

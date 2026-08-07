@@ -1,9 +1,15 @@
-"""JWT access token, hash OTP và hash refresh token.
+"""JWT access token, hash password, hash OTP và hash refresh token.
 
-Không dùng bcrypt/passlib cho OTP — mã 6 số sống rất ngắn (otp_ttl_seconds) và bị
-chặn brute-force bằng attempt_count, không cần cost factor cao như password.
-Refresh token là chuỗi ngẫu nhiên entropy cao (secrets.token_urlsafe) nên hash
-thường (sha256) là đủ — khác với password người dùng tự chọn (entropy thấp).
+Ba loại secret, ba cách hash khác nhau — có lý do:
+
+- **Password** người dùng tự chọn → entropy thấp, sống lâu → phải Argon2id (có
+  cost factor + salt). Không dùng passlib: module `crypt` nó phụ thuộc đã bị xoá
+  ở Python 3.13+. Không dùng bcrypt: nó truncate âm thầm ở 72 bytes, mà mật khẩu
+  tiếng Việt có dấu ăn ~3 bytes/ký tự nên chạm giới hạn chỉ sau ~24 ký tự.
+- **OTP** 6 số → sống rất ngắn (`otp_ttl_seconds`) và bị chặn brute-force bằng
+  `attempt_count` → HMAC-SHA256 là đủ, không cần cost factor.
+- **Refresh token** → chuỗi ngẫu nhiên entropy cao (`secrets.token_urlsafe`) →
+  sha256 thường là đủ, không có gì để brute-force.
 """
 
 import hashlib
@@ -13,8 +19,23 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import jwt
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, VerifyMismatchError
 
 from core.config import Settings
+
+_password_hasher = PasswordHasher()
+
+
+def hash_password(password: str) -> str:
+    return _password_hasher.hash(password)
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    try:
+        return _password_hasher.verify(password_hash, password)
+    except (VerifyMismatchError, VerificationError):
+        return False
 
 
 def hash_otp_code(code: str, phone: str, settings: Settings) -> str:

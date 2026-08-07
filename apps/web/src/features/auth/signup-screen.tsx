@@ -5,38 +5,31 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { OtpInput } from "@/components/ui/otp-input";
-import { useCountdown } from "@/lib/hooks/use-countdown";
-import {
-  OTP_LENGTH,
-  OTP_RESEND_COOLDOWN_SECONDS,
-  isValidVietnamesePhone,
-} from "./auth.constants";
+import { MIN_PASSWORD_LENGTH, isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
-
-type Step = "info" | "otp" | "success";
 
 export function SignupScreen() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("info");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { secondsLeft, start, canResend } = useCountdown(OTP_RESEND_COOLDOWN_SECONDS);
 
-  function submitInfo() {
+  function submit() {
     if (!name.trim()) {
       setError("Nhập tên tiệm hoặc tên chị/anh để Havi xưng hô đúng");
       return;
     }
-    if (!isValidVietnamesePhone(phone)) {
-      setError("Số điện thoại chưa đúng — nhập dạng 0xxxxxxxxx");
+    if (!isValidEmail(email)) {
+      setError("Email chưa đúng — kiểm tra lại giúp chị nhé");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Mật khẩu cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`);
       return;
     }
     setError(null);
-    setStep("otp");
-    start();
+    router.push("/onboarding");
   }
 
   return (
@@ -44,78 +37,57 @@ export function SignupScreen() {
       <h1 className={styles.title}>Đăng ký</h1>
       <p className={styles.subtitle}>Havi cần vài thông tin để bắt đầu.</p>
 
-      {step === "info" ? (
-        <div className={styles.form}>
-          <label className={styles.label} htmlFor="name">
-            Tên chị/anh hoặc tên tiệm
-          </label>
-          <Input
-            id="name"
-            placeholder="Chị Hương / Spa An Nhiên"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+      <div className={styles.form}>
+        <label className={styles.label} htmlFor="name">
+          Tên chị/anh hoặc tên tiệm
+        </label>
+        <Input
+          id="name"
+          placeholder="Chị Hương / Spa An Nhiên"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-          <label className={styles.label} htmlFor="signup-phone">
-            Số điện thoại
-          </label>
-          <Input
-            id="signup-phone"
-            inputMode="tel"
-            placeholder="0912345678"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          {error ? <p className={styles.error}>{error}</p> : null}
+        <label className={styles.label} htmlFor="signup-email">
+          Email
+        </label>
+        <Input
+          id="signup-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="huong@spaannhien.vn"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-          <p className={styles.consentText}>
-            Bấm tiếp tục là chị/anh đồng ý với Điều khoản sử dụng và Chính sách
-            bảo mật của Havi.
-          </p>
+        <label className={styles.label} htmlFor="signup-password">
+          Mật khẩu
+        </label>
+        <Input
+          id="signup-password"
+          type="password"
+          autoComplete="new-password"
+          placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error ? <p className={styles.error}>{error}</p> : null}
 
-          <Button variant="primary" onClick={submitInfo}>
-            Tiếp tục
-          </Button>
+        <p className={styles.consentText}>
+          Bấm tiếp tục là chị/anh đồng ý với Điều khoản sử dụng và Chính sách
+          bảo mật của Havi. Số điện thoại thêm sau trong Cài đặt nếu chị/anh muốn
+          nhận bản nháp qua Zalo.
+        </p>
 
-          <p className={styles.footerText}>
-            Đã có tài khoản? <Link href="/dang-nhap">Đăng nhập</Link>
-          </p>
-        </div>
-      ) : step === "otp" ? (
-        <div className={styles.form}>
-          <p className={styles.otpHint}>
-            Havi đã gửi mã {OTP_LENGTH} số tới <strong>{phone}</strong>
-          </p>
-          <OtpInput value={otp} onChange={setOtp} />
+        <Button variant="primary" onClick={submit}>
+          Tiếp tục
+        </Button>
 
-          <Button
-            variant="primary"
-            disabled={otp.length !== OTP_LENGTH}
-            onClick={() => setStep("success")}
-          >
-            Xác nhận
-          </Button>
-
-          <button
-            type="button"
-            className={styles.resendLink}
-            disabled={!canResend}
-            onClick={start}
-          >
-            {canResend ? "Gửi lại mã" : `Gửi lại mã sau ${secondsLeft}s`}
-          </button>
-        </div>
-      ) : (
-        <div className={styles.form}>
-          <p className={styles.successText}>
-            Xác nhận thành công! Havi sẽ hỏi vài câu ngắn để hiểu tiệm của
-            chị/anh hơn.
-          </p>
-          <Button variant="primary" onClick={() => router.push("/onboarding")}>
-            Bắt đầu onboarding
-          </Button>
-        </div>
-      )}
+        <p className={styles.footerText}>
+          Đã có tài khoản? <Link href="/dang-nhap">Đăng nhập</Link>
+        </p>
+      </div>
     </>
   );
 }

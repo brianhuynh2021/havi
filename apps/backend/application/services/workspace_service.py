@@ -11,7 +11,6 @@ from adapters.persistence.workspace_member_repository import WorkspaceMemberRepo
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.auth_service import AuthService, TokenPairResult
 from core.enums import Industry, PublishMode, WorkspaceRole
-from core.phone import InvalidPhoneNumber, normalize_vietnamese_phone
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
 
@@ -104,14 +103,9 @@ class WorkspaceService:
         return [MemberWithUser(member=member, user=user) for member, user in rows]
 
     async def invite_member(
-        self, *, workspace_id: UUID, phone: str, role: WorkspaceRole
+        self, *, workspace_id: UUID, email: str, role: WorkspaceRole
     ) -> MemberWithUser:
-        try:
-            normalized = normalize_vietnamese_phone(phone)
-        except InvalidPhoneNumber as exc:
-            raise InviteUserNotFound() from exc
-
-        user = await self._users.get_by_phone(normalized)
+        user = await self._users.get_by_email(email.strip().lower())
         if user is None:
             raise InviteUserNotFound()
         if await self._members.is_member(workspace_id=workspace_id, user_id=user.id):
