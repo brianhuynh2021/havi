@@ -24,16 +24,68 @@ Monorepo `havi-platform`, frontend và backend tách kiến trúc nhưng chung r
 
 ## Chạy local
 
-```bash
-npm install && npm run dev:web
-```
+Thứ tự: hạ tầng (Docker) → backend → frontend. Cần có Docker, Node 20+, và
+[`uv`](https://docs.astral.sh/uv/) cài sẵn.
+
+### 1. Hạ tầng — Postgres, Redis, MinIO
 
 ```bash
-cd apps/backend && cp .env.example .env && uv sync --extra dev && cd ../.. && npm run dev:api
+npm run infra:up
 ```
 
-Web ở <http://localhost:3000>, API ở <http://localhost:8000> (Swagger tại `/docs`).
-Chi tiết backend: [`apps/backend/README.md`](apps/backend/README.md).
+Khởi động Postgres (`5432`), Redis (`6379`) và MinIO S3-compatible (`9000`,
+console `9001`), tự tạo bucket `havi-media`. Dừng bằng `npm run infra:down`.
+
+### 2. Backend — FastAPI + Celery
+
+```bash
+cd apps/backend
+cp .env.example .env
+uv sync --extra dev --extra db --extra queue
+uv run alembic upgrade head   # chạy migration lên Postgres vừa khởi động ở bước 1
+cd ../..
+npm run dev:api
+```
+
+API ở <http://localhost:8000> (Swagger tại `/docs`, chỉ bật khi `HAVI_DEBUG=true`).
+Chi tiết: [`apps/backend/README.md`](apps/backend/README.md).
+
+Chạy worker/scheduler khi cần (cần Redis ở bước 1):
+
+```bash
+cd apps/backend
+uv run celery -A worker.celery_app:celery_app worker -l info
+uv run celery -A scheduler.beat:celery_app beat -l info
+```
+
+### 3. Frontend — Next.js
+
+```bash
+npm install
+npm run generate:api   # sinh TypeScript client từ OpenAPI của backend (cần backend chạy hoặc export được schema)
+npm run dev:web
+```
+
+Web ở <http://localhost:3000>.
+
+### Kiểm tra nhanh (trước khi commit)
+
+```bash
+npm run lint:web && npm run test:web && npm run build:web
+cd apps/backend && uv run ruff check . && uv run pytest
+```
+
+### Tổng hợp lệnh
+
+| Lệnh | Việc gì |
+|---|---|
+| `npm run infra:up` / `infra:down` | Bật/tắt Postgres, Redis, MinIO |
+| `npm run migrate` | `alembic upgrade head` |
+| `npm run dev:web` / `dev:api` | Chạy frontend / backend (dev, reload) |
+| `npm run generate:api` | Sinh lại TypeScript client từ OpenAPI |
+| `npm run lint:web` / `lint:api` | Lint frontend / backend |
+| `npm run test:web` / `test:api` | Test frontend (Vitest) / backend (pytest) |
+| `npm run build:web` | Production build frontend |
 
 ### Tài liệu chính
 
