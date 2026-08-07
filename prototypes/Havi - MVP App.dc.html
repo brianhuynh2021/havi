@@ -18,7 +18,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 </helmet>
 <div style="min-height:100vh;display:flex;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;">
 
-  <aside style="width:232px;flex:none;background:#2C2C2C;color:#F5F1ED;display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;box-sizing:border-box;">
+  <aside style="width:232px;flex:none;background:#2C2C2C;color:#F5F1ED;display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;box-sizing:border-box;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 20px;">
       <div style="width:34px;height:34px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
       <span style="font-family:Merriweather,serif;font-weight:900;font-size:22px;">Havi</span>
@@ -34,11 +34,16 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
     <div style="margin-top:auto;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px;">
       <div style="font-size:12px;color:#C9C0B8;">Không gian làm việc</div>
       <div style="font-weight:600;font-size:15px;margin-top:3px;">Spa An Nhiên</div>
+      <div style="font-size:12px;color:#8A817A;margin-top:8px;">{{ industryName }}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
         <sc-for list="{{ connected }}" as="c" hint-placeholder-count="3">
-          <span style="font-size:12px;font-weight:600;background:rgba(212,149,111,0.25);color:#C9C0B8;border-radius:4px;padding:3px 7px;">{{ c }}</span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;background:rgba(255,255,255,0.1);color:#E8E1DA;border-radius:4px;padding:3px 7px;"><span style="width:6px;height:6px;border-radius:999px;background:{{ c.c }};"></span>{{ c.n }}</span>
         </sc-for>
+        <sc-if value="{{ noneConnected }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:12px;color:#8A817A;">Chưa nối kênh nào</span>
+        </sc-if>
       </div>
+      <button onClick="{{ goChannels }}" style="width:100%;margin-top:10px;background:none;border:1px solid rgba(255,255,255,0.2);color:#C9C0B8;border-radius:8px;padding:8px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:rgba(255,255,255,0.1);color:#fff;">Quản lý kênh</button>
     </div>
   </aside>
 
@@ -81,6 +86,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
             </sc-for>
           </div>
         </div>
+        <sc-if value="{{ zaloOn }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:16px 24px;margin-top:20px;">
           <span style="flex:none;width:44px;height:44px;border-radius:10px;background:#3B6B9F;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">Zalo</span>
           <div style="flex:1;">
@@ -89,6 +95,7 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
           </div>
           <span style="flex:none;font-size:12px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã bật</span>
         </div>
+        </sc-if>
         <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;margin-top:20px;">
           <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Havi vừa làm gì cho chị</div>
           <div style="display:flex;flex-direction:column;gap:0;margin-top:8px;">
@@ -401,12 +408,55 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
       </div>
     </sc-if>
 
+    <sc-if value="{{ tabChannels }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0;font-weight:700;font-size:26px;">Kênh của tiệm</h1>
+        <p style="margin:6px 0 0;font-size:15px;color:#8A817A;">Havi chỉ hiện các kênh hợp với ngành của chị — nối thêm hay tắt bớt lúc nào cũng được. Nối kênh nào, cả app chỉ làm việc trên kênh đó.</p>
+
+        <div style="background:#fff;border:1px solid #E0D9D3;border-radius:12px;padding:20px 24px;margin-top:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8A817A;">Ngành của chị</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+            <sc-for list="{{ industries }}" as="ind" hint-placeholder-count="6">
+              <button onClick="{{ ind.pick }}" style="display:flex;align-items:center;gap:8px;background:{{ ind.bg }};border:1px solid {{ ind.bd }};border-radius:999px;padding:7px 14px 7px 7px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;color:#2C2C2C;cursor:pointer;" style-hover="border-color:#D4956F;">
+                <span style="width:26px;height:26px;border-radius:999px;background:{{ ind.badgeBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">{{ ind.badge }}</span>{{ ind.name }}
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size:12px;color:#8A817A;margin-top:12px;">{{ industryHint }}</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+          <sc-for list="{{ channelRows }}" as="ch" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid {{ ch.bd }};border-radius:12px;padding:14px 18px;">
+              <span style="flex:none;width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;background:{{ ch.c }};">{{ ch.b }}</span>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-weight:600;font-size:15px;">{{ ch.n }}</span>
+                  <sc-if value="{{ ch.rec }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:#B8744D;background:#F9EFE7;border:1px solid #E8D3C2;border-radius:999px;padding:2px 9px;">Nên nối trước</span></sc-if>
+                </div>
+                <div style="font-size:13px;color:#8A817A;margin-top:3px;">{{ ch.d }}</div>
+              </div>
+              <sc-if value="{{ ch.on }}" hint-placeholder-val="{{ true }}">
+                <span style="flex:none;font-size:12px;font-weight:700;color:#5FA76F;background:#F0F7F1;border:1px solid #CDE3D2;border-radius:999px;padding:5px 12px;">Đã nối</span>
+              </sc-if>
+              <button onClick="{{ ch.toggle }}" style="flex:none;background:{{ ch.btnBg }};border:1px solid {{ ch.btnBd }};color:{{ ch.btnFg }};border-radius:8px;padding:9px 18px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;" style-hover="border-color:#D4956F;">{{ ch.cta }}</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.5);border:1px dashed #E0D9D3;border-radius:12px;padding:14px 20px;margin-top:14px;">
+          <div style="flex:1;font-size:13px;line-height:1.5;color:#4A4A4A;">{{ hiddenText }}</div>
+          <button onClick="{{ toggleAllCh }}" style="flex:none;background:#fff;border:1px solid #D4956F;color:#B8744D;border-radius:8px;padding:8px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:12px;cursor:pointer;" style-hover="background:#F9EFE7;">{{ toggleAllLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
   </main>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { tab: 'home', gen: 0, genMsg: '', scheduled: {}, sugg: {}, sent: {}, autoMode: false, mapsSent: {}, mapsFilter: false, invited: false, profileFixed: {} };
+  state = { tab: 'home', gen: 0, genMsg: '', scheduled: {}, sugg: {}, sent: {}, autoMode: false, mapsSent: {}, mapsFilter: false, invited: false, profileFixed: {}, industry: 'spa', conn: { maps:true, fb:true, zalo:true, tiktok:true, yt:true }, showAllCh: false };
   sendMapsReply(i){ this.setState(s => ({ mapsSent: { ...s.mapsSent, [i]: true } })); }
   REVIEWS = [
     {av:'T', avBg:'#5FA76F', name:'Trần Thu Hà', stars:5, time:'2 giờ trước', auto:true,
@@ -428,31 +478,57 @@ class Component extends DCLogic {
     {tag:'Theo trend tuần này', t:'Kịch bản TikTok 15s theo trend chăm da mùa nóng — Havi viết sẵn, chị chỉ cần quay 1 cảnh', time:'T2 12:00'}
   ];
   timers = [];
-  CONNECTED = ['Facebook','TikTok','Zalo','Maps','YouTube'];
-  CH = { fb: {n:'Fanpage', bg:'#3B6B9F'}, maps: {n:'Google Maps', bg:'#5FA76F'}, zalo: {n:'Zalo', bg:'#3B6B9F'}, reels: {n:'Reels', bg:'#B8744D'} };
+  INDUSTRIES = [
+    {id:'spa', name:'Spa / Làm đẹp', badge:'SP', badgeBg:'#D4956F'},
+    {id:'fnb', name:'Quán ăn / Cà phê', badge:'QA', badgeBg:'#5FA76F'},
+    {id:'bds', name:'Môi giới / Tín dụng', badge:'MG', badgeBg:'#3B6B9F'},
+    {id:'ks', name:'Kỹ sư / Chuyên gia', badge:'KS', badgeBg:'#4A4A4A'},
+    {id:'shop', name:'Shop online', badge:'SO', badgeBg:'#B8744D'},
+    {id:'other', name:'Ngành khác', badge:'++', badgeBg:'#8A817A'}
+  ];
+  CHANNELS = [
+    {id:'fb', n:'Facebook (Fanpage)', short:'Facebook', d:'Đăng bài, đọc tin nhắn & bình luận', b:'FB', c:'#3B6B9F'},
+    {id:'zalo', n:'Zalo', short:'Zalo', d:'Nhận bản nháp, duyệt bài, chăm khách cũ', b:'Zalo', c:'#3B6B9F'},
+    {id:'maps', n:'Google Maps', short:'Maps', d:'Cập nhật tiệm, mời & trả lời đánh giá', b:'GM', c:'#5FA76F'},
+    {id:'tiktok', n:'TikTok', short:'TikTok', d:'Đăng video ngắn Havi cắt sẵn', b:'TT', c:'#2C2C2C'},
+    {id:'yt', n:'YouTube', short:'YouTube', d:'Đăng video dài + tiêu đề và mô tả viết chuẩn tìm kiếm', b:'YT', c:'#C75B4A'},
+    {id:'li', n:'LinkedIn', short:'LinkedIn', d:'Bài chuyên môn, xây thương hiệu cá nhân', b:'in', c:'#3B6B9F'}
+  ];
+  REC = {
+    spa:   ['maps','fb','zalo','tiktok','yt'],
+    fnb:   ['maps','fb','zalo','tiktok','yt'],
+    bds:   ['zalo','fb','yt','tiktok'],
+    ks:    ['li','yt','fb','zalo'],
+    shop:  ['fb','tiktok','zalo','yt'],
+    other: ['fb','zalo','maps','tiktok','yt','li']
+  };
+  recIds(){ return this.REC[this.state.industry] || this.CHANNELS.map(c=>c.id); }
+  isOn(id){ return !!this.state.conn[id] && this.recIds().includes(id); }
+  toggleCh(id){ this.setState(s => ({ conn: { ...s.conn, [id]: !s.conn[id] } })); }
+  pickIndustry(id){ this.setState({ industry: id }); }
   DRAFTS = [
-    {ch:'Fanpage', chBg:'#3B6B9F', kind:'Bài giới thiệu', time:'19:30 tối nay', day:0,
+    {chId:'fb', ch:'Fanpage', chBg:'#3B6B9F', kind:'Bài giới thiệu', time:'19:30 tối nay', day:0,
      txt:'Da bạn ấy "lột xác" sau 5 buổi chăm sóc — ảnh trước/sau thật 100%, không chỉnh quá tay. Tháng 8 này tiệm có combo chăm da mùa hè giảm 20%, inbox để giữ chỗ nhé!',
      media:'Ảnh Before/After — đã tăng sáng, làm mịn và gắn logo Spa An Nhiên'},
-    {ch:'Google Maps', chBg:'#5FA76F', kind:'Cập nhật địa điểm', time:'ngay khi duyệt', day:0,
+    {chId:'maps', ch:'Google Maps', chBg:'#5FA76F', kind:'Cập nhật địa điểm', time:'ngay khi duyệt', day:0,
      txt:'Không gian sạch sẽ, kỹ thuật viên nhẹ tay — điểm chăm sóc da đáng thử ở Quận 7. Combo mùa hè đang giảm 20% đến hết tháng.', media:''},
-    {ch:'Zalo', chBg:'#3B6B9F', kind:'Tin nhắn ngắn', time:'20:15 tối nay', day:0,
+    {chId:'zalo', ch:'Zalo', chBg:'#3B6B9F', kind:'Tin nhắn ngắn', time:'20:15 tối nay', day:0,
      txt:'MỤN LÂU NĂM khiến chị mất tự tin? Buổi thử đầu tiên chỉ 99K — nhắn "DA" để giữ chỗ ngay hôm nay.', media:''},
-    {ch:'Reels', chBg:'#B8744D', kind:'Kịch bản video 15s', time:'CN 20:00', day:1,
+    {chId:'fb', ch:'Reels', chBg:'#B8744D', kind:'Kịch bản video 15s', time:'CN 20:00', day:1,
      txt:'Cảnh 1: cận cảnh da trước khi làm · Cảnh 2: quy trình chăm sóc · Cảnh 3: kết quả + voucher. Phụ đề động đã chèn sẵn, chỉ cần bấm đăng.',
      media:'Video cắt từ clip quay thô — đã thêm phụ đề và nhạc nền'},
-    {ch:'TikTok', chBg:'#2C2C2C', kind:'Video ngắn 21s', time:'T2 12:00', day:2,
+    {chId:'tiktok', ch:'TikTok', chBg:'#2C2C2C', kind:'Video ngắn 21s', time:'T2 12:00', day:2,
      txt:'"1 ngày ở Spa An Nhiên" — cắt từ clip quay thô, ghép nhạc đang thịnh hành. Cuối video hiện địa chỉ tiệm và chữ "Ghim địa chỉ ở bình luận".',
      media:'Đã cắt còn 21 giây, chèn phụ đề động + địa chỉ tiệm ở giây cuối'},
-    {ch:'YouTube', chBg:'#C75B4A', kind:'Video dài + mô tả', time:'T3 18:00', day:3,
+    {chId:'yt', ch:'YouTube', chBg:'#C75B4A', kind:'Video dài + mô tả', time:'T3 18:00', day:3,
      txt:'"Quy trình chăm da mụn tại Spa An Nhiên — từ soi da đến sau 5 buổi". Tiêu đề và mô tả viết chuẩn tìm kiếm, có chương mục từng bước để khách nhảy đúng đoạn cần xem.',
      media:'Video 4 phút ghép từ clip quay thô — đã chèn chương mục, ảnh bìa và gắn địa chỉ tiệm'}
   ];
   BASE_DAYS = [
     {name:'Hôm nay · T7', posts:[]},
-    {name:'CN 2/8', posts:[{ch:'Fanpage', chBg:'#3B6B9F', time:'19:30', t:'Minigame tặng 3 suất chăm da miễn phí'}]},
-    {name:'T2 3/8', posts:[{ch:'Google Maps', chBg:'#5FA76F', time:'09:00', t:'Trả lời 2 đánh giá mới của khách'},{ch:'TikTok', chBg:'#2C2C2C', time:'12:00', t:'Video trend giờ nghỉ trưa — khung giờ nhiều người lướt'}]},
-    {name:'T3 4/8', posts:[{ch:'Zalo', chBg:'#3B6B9F', time:'20:15', t:'Nhắc lịch 4 khách đến hạn chăm sóc lại'}]}
+    {name:'CN 2/8', posts:[{chId:'fb', ch:'Fanpage', chBg:'#3B6B9F', time:'19:30', t:'Minigame tặng 3 suất chăm da miễn phí'}]},
+    {name:'T2 3/8', posts:[{chId:'maps', ch:'Google Maps', chBg:'#5FA76F', time:'09:00', t:'Trả lời 2 đánh giá mới của khách'},{chId:'tiktok', ch:'TikTok', chBg:'#2C2C2C', time:'12:00', t:'Video trend giờ nghỉ trưa — khung giờ nhiều người lướt'}]},
+    {name:'T3 4/8', posts:[{chId:'zalo', ch:'Zalo', chBg:'#3B6B9F', time:'20:15', t:'Nhắc lịch 4 khách đến hạn chăm sóc lại'},{chId:'yt', ch:'YouTube', chBg:'#C75B4A', time:'18:00', t:'Video dài "Quy trình chăm da mụn" — đã viết sẵn tiêu đề & mô tả'}]}
   ];
   clearTimers(){ this.timers.forEach(clearTimeout); this.timers = []; }
   componentWillUnmount(){ this.clearTimers(); }
@@ -464,14 +540,14 @@ class Component extends DCLogic {
     const msgs = ['Đang xem ảnh và ghi âm của chị…','Đang chỉnh ảnh và gắn logo tiệm…','Đang viết bài cho từng kênh…'];
     msgs.forEach((m,i)=> this.timers.push(setTimeout(()=>this.setState({genMsg:m}), 900*i)));
     this.timers.push(setTimeout(()=>{
-      if (this.state.autoMode) {
-        const all = {}; this.DRAFTS.forEach((_,i)=> all[i]=true);
-        this.setState({ gen: 2, scheduled: all });
-      } else this.setState({ gen: 2 });
+      if (this.state.autoMode) this.setState({ gen: 2, scheduled: this.allApproved() });
+      else this.setState({ gen: 2 });
     }, 2900));
   }
+  visIdx(){ return this.DRAFTS.map((d,i)=>i).filter(i=>this.isOn(this.DRAFTS[i].chId)); }
+  allApproved(){ const all = {}; this.visIdx().forEach(i=> all[i]=true); return all; }
   approve(i){ this.setState(s => ({ scheduled: { ...s.scheduled, [i]: true } })); }
-  approveAll(){ const all = {}; this.DRAFTS.forEach((_,i)=> all[i]=true); this.setState({ scheduled: all }); }
+  approveAll(){ this.setState({ scheduled: this.allApproved() }); }
   approveSugg(i){ this.setState(s => ({ sugg: { ...s.sugg, [i]: true } })); }
   renderVals(){
     const s = this.state;
@@ -492,24 +568,29 @@ class Component extends DCLogic {
         send: ()=>this.sendMapsReply(i) };
     });
     const shownReviews = s.mapsFilter ? reviewList.filter(r=>r.canSend) : reviewList;
-    const hasMaps = this.CONNECTED.includes('Maps');
+    const recIds = this.recIds();
+    const onIds = recIds.filter(id=>this.isOn(id));
+    const hasMaps = this.isOn('maps');
+    const vis = this.visIdx();
+    const plannedBase = this.BASE_DAYS.reduce((n,d)=> n + d.posts.filter(p=>this.isOn(p.chId)).length, 0);
     const tabs = [
       {id:'home', label:'Tổng quan'},
       {id:'create', label:'Tạo nội dung'},
-      {id:'calendar', label:'Lịch đăng', count: 3 + Object.keys(s.scheduled).length},
+      {id:'calendar', label:'Lịch đăng', count: plannedBase + vis.filter(i=>s.scheduled[i]).length},
       {id:'leads', label:'Khách tiềm năng', count: 2},
       ...(hasMaps ? [{id:'maps', label:'Đánh giá & Maps', count: 2 - Object.keys(s.mapsSent).length}] : []),
-      {id:'report', label:'Báo cáo'}
+      {id:'report', label:'Báo cáo'},
+      {id:'channels', label:'Kênh', count: onIds.length}
     ];
-    const drafts = s.gen === 2 ? this.DRAFTS.map((d,i)=>({
-      ...d, scheduled: !!s.scheduled[i], pending: !s.scheduled[i], approve: ()=>this.approve(i)
+    const drafts = s.gen === 2 ? vis.map(i=>({
+      ...this.DRAFTS[i], scheduled: !!s.scheduled[i], pending: !s.scheduled[i], approve: ()=>this.approve(i)
     })) : [];
     const days = this.BASE_DAYS.map((d,di)=>({
       ...d,
       bg: di===0 ? '#fff' : 'rgba(255,255,255,0.5)', bd: di===0 ? '#D4956F' : '#E0D9D3', fg: di===0 ? '#2C2C2C' : '#8A817A',
       posts: [
-        ...this.DRAFTS.map((dr,i)=> s.scheduled[i] && dr.day===di ? {ch:dr.ch, chBg:dr.chBg, time:dr.time.replace(' tối nay','').replace('ngay khi duyệt','Ngay').replace('CN ',''), t:dr.kind+' — vừa duyệt'} : null).filter(Boolean),
-        ...d.posts
+        ...vis.map(i=>{ const dr = this.DRAFTS[i]; return (s.scheduled[i] && dr.day===di) ? {ch:dr.ch, chBg:dr.chBg, time:dr.time.replace(' tối nay','').replace('ngay khi duyệt','Ngay').replace('CN ','').replace('T2 ','').replace('T3 ',''), t:dr.kind+' — vừa duyệt'} : null; }).filter(Boolean),
+        ...d.posts.filter(p=>this.isOn(p.chId))
       ]
     }));
     return {
@@ -519,9 +600,33 @@ class Component extends DCLogic {
         fg: s.tab===t.id ? '#fff' : '#C9C0B8',
         dot: s.tab===t.id ? '#D4956F' : 'rgba(255,255,255,0.25)'
       })),
-      connected: this.CONNECTED,
+      connected: onIds.map(id=>{ const c = this.CHANNELS.find(x=>x.id===id); return { n: c.short, c: c.c }; }),
+      noneConnected: onIds.length === 0,
+      zaloOn: this.isOn('zalo'),
+      industryName: (this.INDUSTRIES.find(i=>i.id===s.industry)||{}).name || '',
+      goChannels: ()=>this.go('channels'),
       tabHome: s.tab==='home', tabCreate: s.tab==='create', tabCalendar: s.tab==='calendar',
       tabLeads: s.tab==='leads', tabMaps: s.tab==='maps', tabReport: s.tab==='report',
+      tabChannels: s.tab==='channels',
+      industries: this.INDUSTRIES.map(ind=>({ ...ind,
+        bg: s.industry===ind.id ? '#F9EFE7' : '#fff',
+        bd: s.industry===ind.id ? '#D4956F' : '#E0D9D3',
+        pick: ()=>this.pickIndustry(ind.id) })),
+      industryHint: 'Havi đang hiện ' + recIds.length + ' kênh hợp với ngành này. Đổi ngành, danh sách kênh và cách viết bài cũng đổi theo.',
+      channelRows: (s.showAllCh ? this.CHANNELS.map(c=>c.id) : recIds).map((id,k)=>{
+        const c = this.CHANNELS.find(x=>x.id===id); const on = this.isOn(id);
+        return { ...c, rec: k===0 && recIds.includes(id), on,
+          bd: on ? '#CDE3D2' : '#E0D9D3',
+          cta: on ? 'Ngắt kênh' : 'Nối kênh',
+          btnBg: on ? '#fff' : '#A85B33', btnFg: on ? '#8A817A' : '#fff',
+          btnBd: on ? '#E0D9D3' : '#A85B33',
+          toggle: ()=>this.toggleCh(id) };
+      }),
+      hiddenText: s.showAllCh
+        ? 'Đang hiện cả những kênh Havi thấy chưa hợp với ngành của chị — nối cũng được, nhưng hiệu quả thường thấp hơn.'
+        : (this.CHANNELS.length - recIds.length) + ' kênh khác đang được ẩn vì ít hợp với ngành của chị.',
+      toggleAllLabel: s.showAllCh ? 'Chỉ hiện kênh hợp ngành' : 'Xem tất cả kênh',
+      toggleAllCh: ()=>this.setState({ showAllCh: !s.showAllCh }),
       goCreate: ()=>this.go('create'), goCalendar: ()=>this.go('calendar'),
       suggestions: this.SUGG.map((g,i)=>({ ...g, pending: !s.sugg[i], done: !!s.sugg[i], approve: ()=>this.approveSugg(i) })),
       homeStats: [
@@ -548,8 +653,8 @@ class Component extends DCLogic {
       genLabel: s.gen===1 ? 'Havi đang viết…' : (s.gen===2 ? 'Viết lại bản khác' : 'Để Havi viết cho chị'),
       genStatus: s.genMsg,
       drafts,
-      pendingCount: s.gen===2 ? this.DRAFTS.length - Object.keys(s.scheduled).length : 0,
-      showApproveBar: s.gen===2 && Object.keys(s.scheduled).length < this.DRAFTS.length,
+      pendingCount: s.gen===2 ? vis.filter(i=>!s.scheduled[i]).length : 0,
+      showApproveBar: s.gen===2 && vis.some(i=>!s.scheduled[i]),
       approveAll: ()=>this.approveAll(),
       autoMode: s.autoMode,
       toggleMode: ()=>this.setState({autoMode: !s.autoMode}),
@@ -557,7 +662,7 @@ class Component extends DCLogic {
       modeKnob: s.autoMode ? '21px' : '3px',
       modeDesc: s.autoMode ? 'Havi tự đăng ngay khi viết xong' : 'Chị xem qua rồi bấm duyệt mới đăng',
       modeLabel: s.autoMode ? 'Tự động hoàn toàn — dành cho chị đã tin tưởng Havi' : 'Xem rồi đăng (khuyên dùng) — không gì lên mạng khi chị chưa gật đầu',
-      allScheduled: s.gen===2 && Object.keys(s.scheduled).length === this.DRAFTS.length,
+      allScheduled: s.gen===2 && vis.length > 0 && vis.every(i=>!!s.scheduled[i]),
       days,
       leads: [
         {av:'M', avBg:'#3B6B9F', name:'Nguyễn Mai', src:'Fanpage · 25 phút trước', status:'Mới', stBg:'#EDE7E1', stFg:'#4A4A4A',
@@ -575,7 +680,8 @@ class Component extends DCLogic {
          msg:'Đã nhận voucher giảm 20% qua Zalo sáng nay (chị đã duyệt gửi), đã xem tin nhắn', note:'', reply:''},
         {av:'H', avBg:'#4A4A4A', name:'Lê Hằng', src:'Fanpage · hôm qua', status:'Đã đặt lịch', stBg:'#5FA76F', stFg:'#fff',
          msg:'Đặt buổi thử chăm da thứ Hai 10:00 — đã xác nhận', note:'', reply:''}
-      ].map((ld,i)=>({ ...ld, canSend: !!ld.reply && !s.sent[i], sentOk: !!ld.reply && !!s.sent[i], send: ()=>this.sendReply(i) })),
+      ].map((ld,i)=>({ ...ld, canSend: !!ld.reply && !s.sent[i], sentOk: !!ld.reply && !!s.sent[i], send: ()=>this.sendReply(i) }))
+       .filter(ld=> this.isOn(ld.src.indexOf('Google Maps')===0 ? 'maps' : (ld.src.indexOf('Khách cũ')===0 ? 'zalo' : 'fb'))),
       rating: '4,6', reviewTotal: 52, ratingDelta: '▲ 0,2 so với tháng 6',
       stars: [
         {n:5, v:38, w:'100%', c:'#B8744D'},
@@ -614,11 +720,13 @@ class Component extends DCLogic {
         {v:'26', l:'khách đến tiệm từ kênh online', d:'▲ 9 khách so với tháng 6'}
       ],
       sources: [
-        {n:'Google Maps & đánh giá 5★', v:'9 khách', w:'100%', note:'8/10 khách xem đánh giá trước khi chọn spa — Havi tự mời khách hài lòng để lại đánh giá'},
-        {n:'Facebook & Reels', v:'7 khách', w:'78%', note:'Ảnh trước/sau là dạng bài hút khách nhất'},
-        {n:'TikTok video ngắn', v:'6 khách', w:'67%', note:'Video quay vội, Havi cắt và chèn phụ đề tự động'},
-        {n:'Zalo nhắc hẹn khách cũ', v:'4 khách quay lại', w:'44%', note:'Voucher đúng ngày khách "sắp quên" tiệm'}
-      ],
+        {id:'maps', n:'Google Maps & đánh giá 5★', v:'9 khách', w:'100%', note:'8/10 khách xem đánh giá trước khi chọn spa — Havi tự mời khách hài lòng để lại đánh giá'},
+        {id:'fb', n:'Facebook & Reels', v:'7 khách', w:'78%', note:'Ảnh trước/sau là dạng bài hút khách nhất'},
+        {id:'tiktok', n:'TikTok video ngắn', v:'6 khách', w:'67%', note:'Video quay vội, Havi cắt và chèn phụ đề tự động'},
+        {id:'yt', n:'YouTube video dài', v:'5 khách', w:'56%', note:'Khách tìm "chăm da mụn Quận 7" trên YouTube — video cũ vẫn kéo khách hàng tháng'},
+        {id:'zalo', n:'Zalo nhắc hẹn khách cũ', v:'4 khách quay lại', w:'44%', note:'Voucher đúng ngày khách "sắp quên" tiệm'},
+        {id:'li', n:'LinkedIn', v:'2 khách', w:'22%', note:'Bài chuyên môn kéo khách doanh nghiệp'}
+      ].filter(x=>this.isOn(x.id)),
       bars: [
         {l:'Tuần 1', v:'980', h:'42%', color:'#E0D9D3'},
         {l:'Tuần 2', v:'1.150', h:'50%', color:'#E0D9D3'},
