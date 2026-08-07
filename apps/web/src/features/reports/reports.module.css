@@ -1,0 +1,166 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.insightCard {
+  margin-top: 20px;
+  padding: 20px 24px;
+  border-radius: 14px;
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+}
+
+.insightLabel {
+  color: #e8c4a8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.insightText {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.statsGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.statCard {
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.statValue {
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.statLabel {
+  margin-top: 4px;
+  color: var(--color-body);
+  font-size: 13px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chartCard,
+.attributionCard {
+  margin-top: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.chartBars {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+  height: 140px;
+}
+
+.chartColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.chartBar {
+  width: 100%;
+  max-width: 28px;
+  min-height: 4px;
+  border-radius: 6px 6px 0 0;
+  background: var(--color-primary);
+}
+
+.chartValue {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.chartLabel {
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--color-muted);
+}
+
+.attributionList {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attributionRow {
+  display: grid;
+  grid-template-columns: 96px 1fr 40px;
+  align-items: center;
+  gap: 10px;
+}
+
+.attributionLabel {
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+.attributionTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  overflow: hidden;
+}
+
+.attributionFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.attributionPercent {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 1080px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}

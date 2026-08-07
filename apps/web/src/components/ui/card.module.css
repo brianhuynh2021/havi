@@ -1,0 +1,16 @@
+.card {
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px;
+}
+
+.paper {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.dark {
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+}
