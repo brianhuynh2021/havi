@@ -725,7 +725,11 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Scaffold local PostgreSQL/Redis/object storage + Alembic (`docker-compose.yml`
   ở root + `apps/backend/migrations/`; verify bằng smoke-test migration thật, chưa
   có domain model/table nghiệp vụ nào — `target_metadata` vẫn `None` chờ Tuần 4).
-- [ ] Dựng Auth và Onboarding design-complete.
+- [x] Dựng Auth và Onboarding design-complete (đăng nhập SĐT+OTP, đăng ký,
+  quên/đặt lại mật khẩu, onboarding 3 bước) bằng fixture, chưa nối API thật.
+  **Chưa làm:** Landing Page và demo AI Marketing (sales-only, không phải core
+  app — để P1/P2), route guards mock, keyboard/focus walkthrough thủ công,
+  design sign-off (cần founder/QA, không tự tick được).
 - [ ] Bắt đầu persistence/auth thật sau khi Gate B đạt.
 
 ## 12. Quyết định cần chốt
