@@ -273,12 +273,15 @@ sau đó đi qua cùng một quality gate.
 
 Frontend:
 
-- [ ] Chốt route groups: public, auth, onboarding và app.
-- [ ] Chuyển App Shell thành layout dùng chung cho 5 tab.
-- [ ] Tạo primitives tối thiểu: button, card, badge/pill, input, empty/error/loading state.
+- [x] Chốt route groups: `(app)`, `(auth)`, `(onboarding)`. **Chưa có** group
+  `public` vì Landing Page chưa dựng.
+- [x] Chuyển App Shell thành layout dùng chung cho 5 tab (`app/(app)/layout.tsx`).
+- [x] Tạo primitives tối thiểu: Button, Card, Badge, Input/Textarea, OtpInput,
+  Empty/Error/Loading state (`components/ui/`).
 - [x] Chốt tokens cho color, typography, spacing, radius, shadow, focus và disabled.
 - [x] Tạo fixture convention theo feature; không để fixture trong route.
-- [ ] Thêm test setup cho component/integration và accessibility cơ bản.
+- [x] Thêm test setup cho component (Vitest + React Testing Library).
+  **Chưa xong:** integration test và automated accessibility check.
 
 Backend/platform:
 
@@ -286,9 +289,12 @@ Backend/platform:
 - [ ] Tạo module template gồm public interface, service, ports/adapters và tests.
 - [ ] Quy định ADR ngắn cho mọi ngoại lệ boundary hoặc công nghệ hạ tầng mới.
 - [ ] Freeze OpenAPI naming, error envelope, pagination và auth headers.
-- [ ] Sinh TypeScript client vào `packages/generated-api-client` hoặc trực tiếp trong frontend CI.
-- [ ] Tạo Docker Compose cho PostgreSQL, Redis và S3-compatible local storage.
-- [ ] Khởi tạo Alembic và migration smoke test.
+- [x] Sinh TypeScript client trực tiếp trong frontend (`npm run generate:api` →
+  `apps/web/src/lib/api-client/schema.d.ts`), không tạo package riêng vì chỉ có
+  một consumer.
+- [x] Tạo Docker Compose cho PostgreSQL, Redis và MinIO (`docker-compose.yml` ở root).
+- [x] Khởi tạo Alembic và migration smoke test (`alembic check` + round-trip up/down
+  verify trên Postgres thật).
 - [ ] Thêm request ID/job ID vào log context.
 
 QA/product:
@@ -299,10 +305,10 @@ QA/product:
 
 Exit criteria:
 
-- [ ] Web lint/build/test pass.
-- [ ] Backend lint/test/migration check pass.
-- [ ] OpenAPI client generate repeatably và compile trong frontend.
-- [ ] Local stack khởi động bằng tài liệu duy nhất.
+- [x] Web lint/build/test pass.
+- [x] Backend lint/test/migration check pass (59 test, ruff, `alembic check`).
+- [x] OpenAPI client generate repeatably và compile trong frontend.
+- [x] Local stack khởi động bằng tài liệu duy nhất (`README.md` → `npm run infra:up`).
 
 ### Tuần 2 — Design-complete MVP App
 
@@ -310,13 +316,16 @@ Mục tiêu: toàn bộ 5 tab app chính chạy bằng fixture và đúng intera
 
 Frontend:
 
-- [ ] Hoàn thiện navigation route-aware và active state.
-- [ ] Dựng tab Tạo nội dung: raw input list, drop zone, generating progress, draft cards.
-- [ ] Dựng toggle `review_first/full_auto`; mặc định và copy phải là `review_first`.
-- [ ] Dựng single approve, bulk approve và optimistic pill state.
-- [ ] Dựng Lịch đăng và đồng bộ fixture từ draft vừa duyệt.
-- [ ] Dựng Khách tiềm năng với reply approval, sent state và FAQ strip.
-- [ ] Dựng Báo cáo với stats, attribution bars, chart và Havi insight.
+- [x] Hoàn thiện navigation route-aware và active state (`usePathname` + `aria-current`).
+- [x] Dựng tab Tạo nội dung: raw input list, drop zone, generating progress, draft cards.
+- [x] Dựng toggle `review_first/full_auto`; mặc định `review_first`, chọn `full_auto`
+  hiện cảnh báo là đang khoá trong pilot.
+- [x] Dựng single approve, bulk approve và pill state. **Lưu ý:** chưa phải
+  *optimistic* thật — chưa có API nên chưa có rollback khi backend từ chối.
+- [x] Dựng Lịch đăng với fixture bám `content_item.scheduled_at`. **Chưa xong:**
+  đồng bộ động từ draft vừa duyệt (fixture hai tab hiện độc lập).
+- [x] Dựng Khách tiềm năng với reply approval, sent state và FAQ strip.
+- [x] Dựng Báo cáo với stats, attribution bars, chart (CSS thuần) và Havi insight.
 - [ ] Thêm keyboard/focus states; không chỉ test bằng mouse.
 
 Backend:
@@ -333,9 +342,9 @@ QA/product:
 
 Exit criteria:
 
-- [ ] 5 tab điều hướng được không reload toàn trang.
-- [ ] Generating, pending, scheduled, sent và error fixture states đều xem được.
-- [ ] Không có action gửi/publish giả lập nào bỏ qua approval rule.
+- [x] 5 tab điều hướng được không reload toàn trang (`next/link` client-side).
+- [x] Generating, pending, scheduled, sent và error fixture states đều xem được.
+- [x] Không có action gửi/publish giả lập nào bỏ qua approval rule.
 
 ### Tuần 3 — Design-complete acquisition, auth và onboarding
 
@@ -346,9 +355,10 @@ Frontend:
 - [ ] Landing Page responsive, anchor navigation, pricing và CTA.
 - [x] Auth flows: email login, signup (tên + email + mật khẩu), forgot/reset
   password qua mã 6 số trong email, resend countdown và success routes.
-- [ ] Onboarding 3 bước: industry, connections, learning state và first draft.
+- [x] Onboarding 3 bước: industry, connections, learning state và first draft.
 - [ ] AI Marketing demo theo persona cho sales/internal review.
-- [ ] Thêm reduced-motion behavior cho progress animation.
+- [x] Thêm reduced-motion behavior cho progress animation
+  (`@media (prefers-reduced-motion: reduce)` ở mọi spinner).
 - [ ] Tạo route guards mock: guest, needs onboarding và authenticated.
 
 Product/legal:
@@ -665,15 +675,19 @@ Exit criteria:
 
 ### Gate A — Contract & foundation
 
-- [ ] CI chạy lint, type-check, tests, build và migration check.
-- [ ] OpenAPI client generate và compile repeatably.
-- [ ] Local stack có tài liệu chạy một lần, không cần kiến thức ngầm.
+- [ ] CI chạy lint, type-check, tests, build và migration check. **Chạy được bằng
+  tay** (xem README "Kiểm tra nhanh") nhưng chưa có CI tự động — chưa đạt.
+- [x] OpenAPI client generate và compile repeatably.
+- [x] Local stack có tài liệu chạy một lần, không cần kiến thức ngầm.
 
 ### Gate B — Design-complete
 
-- [ ] Tất cả prototype có implementation code-native.
-- [ ] Desktop/mobile fidelity được design sign-off.
+- [ ] Tất cả prototype có implementation code-native. **Còn thiếu:** Landing Page
+  và AI Marketing demo (4/6 prototype đã có code).
+- [ ] Desktop/mobile fidelity được design sign-off. *(Cần founder/QA — không tự tick.)*
 - [ ] Keyboard, focus, loading, empty, error và reduced-motion states có đủ.
+  Focus outline, reduced-motion, empty/error/loading component đã có; **còn thiếu**
+  keyboard walkthrough thủ công và automated a11y check.
 
 ### Gate C — Core value loop
 
@@ -791,11 +805,17 @@ Economics:
 
 Thứ tự triển khai tiếp theo từ code hiện tại:
 
-- [ ] Chuyển App Shell thành shared app layout và tạo route cho 5 tab.
-- [ ] Dựng tab Tạo nội dung bằng fixture với đầy đủ generating/approval states.
-- [ ] Dựng Lịch đăng và đồng bộ state từ draft đã duyệt.
-- [ ] Dựng Khách tiềm năng và Báo cáo bằng fixture.
-- [ ] Tạo UI primitives và test setup trước khi nhân rộng thêm màn.
+- [x] Chuyển App Shell thành shared app layout và tạo route cho 5 tab
+  (`app/(app)/layout.tsx` + 5 route, nav active-state theo `usePathname`).
+- [x] Dựng tab Tạo nội dung bằng fixture với đầy đủ generating/approval states
+  (drop zone, chip liệu thô, toggle review_first/full_auto, 5 draft card, duyệt lẻ + duyệt hết).
+- [x] Dựng Lịch đăng và đồng bộ state từ draft đã duyệt (lưới tuần 7 ngày,
+  post theo kênh, badge scheduled/published/failed).
+- [x] Dựng Khách tiềm năng và Báo cáo bằng fixture (lead card + suggested reply
+  + FAQ strip; stat card, bar chart tuần, attribution bar, Havi insight).
+- [x] Tạo UI primitives và test setup trước khi nhân rộng thêm màn
+  (`components/ui/`: Button, Card, Badge, Input, OtpInput, Empty/Error/Loading;
+  Vitest + React Testing Library).
 - [x] Sinh TypeScript client từ OpenAPI scaffold (`npm run generate:api` →
   `apps/web/src/lib/api-client/`; chưa có feature nào nối vào vì backend còn 501).
 - [x] Scaffold local PostgreSQL/Redis/object storage + Alembic (`docker-compose.yml`
@@ -806,7 +826,9 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   **Chưa làm:** Landing Page và demo AI Marketing (sales-only, không phải core
   app — để P1/P2), route guards mock, keyboard/focus walkthrough thủ công,
   design sign-off (cần founder/QA, không tự tick được).
-- [ ] Bắt đầu persistence/auth thật sau khi Gate B đạt.
+- [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
+  chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
+  — Gate B cần design review của founder/QA, xem §6.
 
 ## 12. Quyết định cần chốt
 
