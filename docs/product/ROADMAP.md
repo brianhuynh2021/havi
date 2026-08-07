@@ -64,6 +64,15 @@ chỉ để nhận bản nháp/nhắc duyệt qua Zalo OA. Nghĩa là Zalo OA (P
 Social login (Google) là hướng mở tiếp theo cho cả hai lý do trên — chưa làm, xem
 §4 P1.
 
+**Zalo Login: không làm.** Zalo chỉ là kênh *gửi tin* (Zalo OA — bản nháp, nhắc
+duyệt), không phải kênh đăng nhập. Lưu ý dễ nhầm: Zalo OA và Zalo Login là hai
+OAuth app khác nhau; tương tự Google Business (đăng bài) khác Google Sign-In
+(đăng nhập). Các biến `zalo_client_id`/`google_client_id` trong `core/config.py`
+là cho kênh publish, **không** dùng được để đăng nhập.
+
+Vậy danh sách kênh đăng nhập chốt lại: **email + mật khẩu** (đã chạy), **Google
+Sign-In** (P1). Không SĐT, không Zalo, không username.
+
 ## 2. Cách đọc bộ thiết kế
 
 Bộ prototype thể hiện hai lớp khác nhau và roadmap phải tách chúng rõ ràng:
