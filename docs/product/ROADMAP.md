@@ -330,8 +330,11 @@ Mục tiêu: người dùng thật có thể đăng ký, tạo workspace và ho�
 
 Backend:
 
-- [ ] Models/migrations cho user, OTP challenge, refresh session, workspace,
-  workspace member, brand profile và audit event.
+- [x] Models/migrations cho user, OTP challenge, refresh session, workspace,
+  workspace member, brand profile và audit event (`domain/models/`, migration
+  `c5a2a7713af1`, verify bằng `alembic check` + insert/query thật trên Postgres).
+  Chưa có repository/application service nào đọc/viết các bảng này — router
+  vẫn trả `501`.
 - [ ] Phone normalization, OTP expiry, attempt limit, resend rate limit và provider adapter.
 - [ ] JWT access token + rotated refresh token; revoke khi logout.
 - [ ] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.

@@ -10,8 +10,10 @@ apps/backend/
 ├── api/            # FastAPI entrypoint — routers theo domain
 ├── worker/         # Celery worker — chế bản AI, listening, soạn reply
 ├── scheduler/      # Celery Beat — đăng giờ vàng, refresh token, nhắc CRM
-├── core/           # Domain dùng chung: config, enums, state machine, event_log
-├── migrations/     # Alembic (chưa khởi tạo)
+├── core/           # Scaffold chuyển tiếp: config, enums, state machine, event_log
+├── domain/
+│   └── models/     # SQLAlchemy models — nguồn sự thật của DB schema
+├── migrations/     # Alembic (đã khởi tạo, xem migrations/README.md)
 └── tests/
 ```
 
@@ -64,20 +66,23 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-Đây là **scaffold khoá contract**, chưa nối DB. Mọi endpoint nghiệp vụ đã có schema
-request/response thật trong OpenAPI nhưng trả `501 Not Implemented`. Mục đích: `apps/web`
-sinh được TypeScript client và dựng UI bằng fixture ngay, đúng thứ tự triển khai trong
-[`SYSTEM_ARCHITECTURE.md`](../../docs/architecture/SYSTEM_ARCHITECTURE.md) §4.
+Endpoint nghiệp vụ vẫn trả `501 Not Implemented` — có schema request/response
+thật trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture, nhưng
+chưa có application service/repository nào đọc/viết DB.
 
 Đã có thật:
 
 - `core/enums.py` — public enums (kênh, trạng thái, ngành, gói cước…)
 - `core/content_state.py` — state machine của content item, có test
 - `core/config.py` — settings + secret boundary
-- `core/events.py` — khung `event_log`
+- `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`)
 - `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`
+- `domain/models/` — SQLAlchemy models thật: `User`, `OtpChallenge`, `RefreshSession`,
+  `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
+  Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
 
-Chưa có: persistence layer, JWT thật, OAuth nền tảng, LLM call, adapter kênh.
+Chưa có: JWT thật, OAuth nền tảng, LLM call, adapter kênh, và bất kỳ
+application service/repository nối router → domain models ở trên.
 
 ## Ràng buộc không được phá
 

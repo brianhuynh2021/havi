@@ -21,10 +21,10 @@ uv run alembic upgrade head
 (`HAVI_DATABASE_URL`) — không set `sqlalchemy.url` trong `alembic.ini`, tránh hai
 nguồn sự thật.
 
-`target_metadata` trong `env.py` đang là `None` vì chưa có domain model nào. Khi
-bắt đầu implement persistence thật (Tuần 4, xem `docs/product/ROADMAP.md`), trỏ
-nó vào `Base.metadata` của SQLAlchemy models trong `domain/models/` để
-`--autogenerate` hoạt động.
+`target_metadata` trong `env.py` trỏ vào `domain.models.Base.metadata`. Thêm
+model mới thì import nó vào `domain/models/__init__.py` để `--autogenerate`
+thấy được, rồi luôn chạy `uv run alembic check` trước khi commit — phải báo
+"No new upgrade operations detected." mới coi là model ↔ migration khớp nhau.
 
 ## Quy tắc
 
