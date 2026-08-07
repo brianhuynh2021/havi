@@ -4,17 +4,37 @@ Phễu listening (tiết kiệm token): 100% bài → keyword + rule (0 token) �
 chấm điểm ý định → ~1% → LLM soạn trả lời → dừng ở pending_approval.
 """
 
+import asyncio
+from uuid import UUID
+
+from application.services.content_engine import GenerationFailed
 from worker.celery_app import celery_app
 
 
 @celery_app.task(name="havi.content.generate_drafts", bind=True, max_retries=3)
-def generate_drafts(self, job_id: str) -> None:  # noqa: ANN001
-    """Ingest media → đọc brand profile (cache) → 1 lần gọi LLM sinh mọi kênh.
+def generate_drafts(self, workspace_id: str, job_id: str) -> None:  # noqa: ANN001
+    """Ingest media → đọc brand profile → 1 lần gọi LLM sinh mọi kênh.
 
     Trạng thái draft khi sinh xong lấy từ `core.content_state.initial_status(publish_mode)`.
+
+    Không Celery-retry khi `GenerationFailed`: ProviderRouter đã thử lần lượt mọi
+    provider được cấu hình rồi mới ném lỗi này, nên retry cùng prompt gần như chỉ
+    lặp lại thất bại và tốn thêm tiền. Job đã được đánh `failed` kèm reason để chủ
+    tiệm thấy và bấm tạo lại nếu muốn. Celery retry vẫn giữ cho lỗi hạ tầng
+    (DB/Redis mất kết nối) — những lỗi đó thoát ra ngoài như exception khác.
     """
-    del self, job_id
-    raise NotImplementedError
+    from worker.content_engine_factory import content_engine_scope
+
+    async def _run() -> None:
+        async with content_engine_scope() as engine:
+            await engine.generate_drafts(
+                workspace_id=UUID(workspace_id), job_id=UUID(job_id)
+            )
+
+    try:
+        asyncio.run(_run())
+    except GenerationFailed:
+        return
 
 
 @celery_app.task(name="havi.listening.classify", bind=True)

@@ -67,8 +67,9 @@ cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat
 
 ## Trạng thái hiện tại
 
-`/auth/*`, `/workspaces/*`, `/brand-profile` và `/media` chạy thật (Postgres +
-MinIO). 8 router domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
+`/auth/*`, `/workspaces/*`, `/brand-profile`, `/media` và `/content` (tạo/đọc job
++ list item) chạy thật (Postgres + MinIO + Redis/Celery). Phần approve/reject/
+versions của `/content` và 7 router domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
 trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
 
 Đã có thật:
@@ -92,8 +93,15 @@ trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trư
   `media_service.py` (upload ticket, xác nhận upload, tag). Exception thuần (không
   phụ thuộc FastAPI), router dịch sang HTTP status.
 - `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`,
-  `workspaces.py`, `brand_profile.py`, `media.py` đã nối DB/storage thật, 8 domain
-  router khác còn `501`.
+  `workspaces.py`, `brand_profile.py`, `media.py`, `content.py` (một phần) đã nối
+  DB/storage/queue thật, 7 domain router khác còn `501`.
+- `domain/ports/llm.py` + `domain/policies/provider_router.py` — multi-provider LLM:
+  Gemini ưu tiên, fallback Anthropic/OpenAI khi lỗi/quota/output không đạt.
+- `adapters/llm/` — Gemini/Anthropic/OpenAI qua REST (httpx, không SDK riêng cho
+  từng provider) + `fake.py` để test không cần API key.
+- `application/services/content_engine.py` — một job = một lần gọi LLM sinh nhiều
+  bản theo kênh; validate schema + banned claims trước khi lưu draft.
+- `worker/tasks.py:generate_drafts` — Celery job thật chạy Content Engine.
 - `api/deps.py:PathWorkspaceMemberDep` — chặn 403 khi JWT hợp lệ nhưng không
   phải thành viên của `{workspace_id}` trong path (khác `WorkspaceDep`, đọc từ JWT).
 - `tests/test_auth_flow.py`, `test_workspace_flow.py`, `test_brand_profile_flow.py`,
@@ -102,10 +110,16 @@ trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trư
   **không** rollback (storage không có transaction), nên test media để lại object
   rác trong bucket dev.
 
-Chưa có: OAuth nền tảng, LLM call, adapter kênh, email provider thật (dùng
+Chưa có: OAuth nền tảng, adapter publish kênh, email provider thật (dùng
 `debug_code` tạm), endpoint logout/revoke session, cache brand profile cho worker,
-lifecycle/cleanup cho asset `pending` bị bỏ dở, và repository cho các domain còn
-lại (content, calendar, inbox, leads…).
+lifecycle/cleanup cho asset `pending` bị bỏ dở, quota LLM theo workspace, approve/
+reject/version cho content item, và repository cho các domain còn lại (calendar,
+inbox, leads, analytics, billing, connections).
+
+**LLM chưa verify được với provider thật** — chưa có API key nào trong `.env`, nên
+`ProviderRouter` bỏ qua cả ba provider và job sẽ `failed` với reason "không có
+provider nào được cấu hình". Toàn bộ luồng đã test bằng `adapters/llm/fake.py`;
+điền `HAVI_GEMINI_API_KEY` là chạy thật được.
 
 ## Ràng buộc không được phá
 

@@ -8,10 +8,11 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, status
 
-from api.deps import AuthDep, WorkspaceDep
+from api.deps import AuthDep, ContentServiceDep, WorkspaceDep
 from api.errors import NotImplementedEndpoint
+from application.services.content_service import ContentJobNotFound
 from core.enums import Channel, ContentStatus
 from core.schemas import (
     ApproveRequest,
@@ -28,40 +29,87 @@ from core.schemas import (
 router = APIRouter(prefix="/content", tags=["content"])
 
 
+def _job_to_schema(job, item_ids: list[UUID]) -> ContentJob:
+    return ContentJob(
+        id=job.id,
+        workspace_id=job.workspace_id,
+        status=job.status,
+        raw_inputs=job.raw_inputs,
+        content_item_ids=item_ids,
+        created_at=job.created_at,
+    )
+
+
 @router.post("/jobs", response_model=ContentJob, status_code=status.HTTP_202_ACCEPTED)
-def create_content_job(payload: ContentJobCreate, auth: AuthDep) -> ContentJob:
+async def create_content_job(
+    payload: ContentJobCreate,
+    workspace_id: WorkspaceDep,
+    content_service: ContentServiceDep,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+) -> ContentJob:
     """Nút "Để Havi viết cho chị".
 
-    Đẩy 1 job vào hàng đợi; worker gọi LLM đúng 1 lần và sinh 4-5 bản theo kênh.
+    Đẩy 1 job vào hàng đợi; worker gọi LLM đúng 1 lần và sinh nhiều bản theo kênh.
     API trả ngay `queued`, frontend poll `GET /content/jobs/{id}` cho tới `drafts_ready`.
+
+    Gửi header `Idempotency-Key` để bấm hai lần không tốn hai lần tiền LLM — cùng
+    key trong cùng workspace luôn trả về job đầu tiên và không enqueue lần nữa.
     """
-    del payload, auth
-    raise NotImplementedEndpoint()
+    created = await content_service.create_job(
+        workspace_id=workspace_id,
+        raw_inputs=[item.model_dump(mode="json") for item in payload.raw_inputs],
+        idempotency_key=idempotency_key,
+    )
+    item_ids = [i.id for i in await content_service.list_items_for_job(created.job.id)]
+    return _job_to_schema(created.job, item_ids)
 
 
 @router.get("/jobs/{job_id}", response_model=ContentJob)
-def get_content_job(job_id: UUID, workspace_id: WorkspaceDep) -> ContentJob:
-    del job_id, workspace_id
-    raise NotImplementedEndpoint()
+async def get_content_job(
+    job_id: UUID, workspace_id: WorkspaceDep, content_service: ContentServiceDep
+) -> ContentJob:
+    try:
+        job = await content_service.get_job(workspace_id=workspace_id, job_id=job_id)
+    except ContentJobNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy content job") from exc
+    item_ids = [i.id for i in await content_service.list_items_for_job(job.id)]
+    return _job_to_schema(job, item_ids)
 
 
 @router.get("", response_model=Page[ContentItem])
-def list_content(
+async def list_content(
     workspace_id: WorkspaceDep,
+    content_service: ContentServiceDep,
     status: ContentStatus | None = None,
     channel: Channel | None = None,
     limit: int = Query(default=50, le=200),
     offset: int = 0,
 ) -> Page[ContentItem]:
     """`status=pending_approval` chính là màn Hàng chờ duyệt."""
-    del workspace_id, status, channel, limit, offset
-    raise NotImplementedEndpoint()
+    items, total = await content_service.list_items(
+        workspace_id=workspace_id,
+        status=status,
+        channel=channel,
+        limit=limit,
+        offset=offset,
+    )
+    return Page(
+        items=[ContentItem.model_validate(i) for i in items],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{content_id}", response_model=ContentItem)
-def get_content(content_id: UUID, workspace_id: WorkspaceDep) -> ContentItem:
-    del content_id, workspace_id
-    raise NotImplementedEndpoint()
+async def get_content(
+    content_id: UUID, workspace_id: WorkspaceDep, content_service: ContentServiceDep
+) -> ContentItem:
+    try:
+        item = await content_service.get_item(workspace_id=workspace_id, item_id=content_id)
+    except ContentJobNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy content item") from exc
+    return ContentItem.model_validate(item)
 
 
 @router.patch("/{content_id}", response_model=ContentItem)

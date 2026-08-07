@@ -1,7 +1,11 @@
 """event_log — mọi job ghi lại input/output/token/thời gian.
 
-Mục tiêu vận hành: debug 1 dòng, tính tiền 1 query. Chưa nối DB nên tạm log ra stdout;
-khi có Postgres thì thay `record_event` bằng insert vào bảng `event_log`.
+Mục tiêu vận hành: debug 1 dòng, tính tiền 1 query.
+
+`EventLogEntry` là contract; `record_event` chỉ log ra stdout. Việc insert vào
+bảng `event_log` nằm ở `adapters/persistence/event_log_repository.py` — file này
+không được import SQLAlchemy (domain không phụ thuộc framework, xem
+SYSTEM_ARCHITECTURE.md §0).
 """
 
 import logging
@@ -27,5 +31,5 @@ class EventLogEntry(BaseModel):
 
 
 def record_event(entry: EventLogEntry) -> None:
-    # TODO(db): insert vào bảng event_log thay vì log ra stdout.
+    """Log ra stdout. Muốn lưu vào DB thì dùng `EventLogRepository.record`."""
     logger.info("event_log %s", entry.model_dump_json())

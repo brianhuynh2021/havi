@@ -1,6 +1,7 @@
 """Async engine + session factory — nguồn kết nối Postgres duy nhất cho API/worker."""
 
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends
@@ -29,3 +30,18 @@ async def get_db_session() -> AsyncGenerator[AsyncSession]:
 
 
 DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+
+
+@asynccontextmanager
+async def session_scope() -> AsyncGenerator[AsyncSession]:
+    """Cho worker/scheduler — chỗ không có FastAPI dependency injection.
+
+    Cùng semantics commit/rollback như `get_db_session`, chỉ khác cách gọi.
+    """
+    async with _session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
