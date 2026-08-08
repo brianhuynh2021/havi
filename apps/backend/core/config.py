@@ -66,6 +66,15 @@ class Settings(BaseSettings):
 
     facebook_client_id: str = ""
     facebook_client_secret: str = ""
+    # Redirect URI phải khớp TỪNG KÝ TỰ với giá trị khai trong Facebook App
+    # Settings, kể cả dấu `/` cuối. Lệch một ký tự thì Facebook trả
+    # `redirect_uri_isn't an absolute URI` ở bước đổi code — nên đọc từ config
+    # chứ không dựng từ request host: sau reverse proxy, host thấy được là host
+    # nội bộ, không phải domain người dùng bấm vào.
+    facebook_redirect_uri: str = "http://localhost:8000/connections/facebook/callback"
+    # Người dùng được đưa về đây sau callback. Callback là điều hướng của trình
+    # duyệt (không phải fetch), nên nó phải trả redirect về app chứ không trả JSON.
+    oauth_success_redirect_url: str = "http://localhost:3000/cai-dat/ket-noi"
     google_client_id: str = ""
     google_client_secret: str = ""
     zalo_client_id: str = ""
