@@ -1,0 +1,199 @@
+import { apiClient } from "@/lib/api-client/client";
+import { NETWORK_ERROR_MESSAGE } from "@/features/auth/auth.api";
+import type { components } from "@/lib/api-client/schema";
+
+export type ContentItem = components["schemas"]["ContentItem"];
+export type ContentJob = components["schemas"]["ContentJob"];
+export type JobStatus = components["schemas"]["ContentJobStatus"];
+export type RawInput = components["schemas"]["RawInput"];
+
+export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
+
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+
+/**
+ * Upload ảnh: xin ticket → POST thẳng lên object storage → báo API đã xong.
+ *
+ * Ba lượt chứ không một, và bytes không đi qua API: presigned POST cho client
+ * bắn thẳng lên storage, nên API không phải gánh băng thông ảnh và không giữ
+ * file tạm (ROADMAP §3 "Không lưu file upload trong database hoặc filesystem
+ * tạm của API"). Giới hạn dung lượng do storage tự chặn bằng
+ * `content-length-range` trong ticket — không tin client tự khai.
+ */
+export async function uploadImage(file: File): Promise<Result<string>> {
+  try {
+    const ticket = await apiClient.POST("/media/upload-ticket", {
+      body: {
+        filename: file.name,
+        content_type: file.type,
+        type: "image",
+      },
+    });
+    if (ticket.error || !ticket.data) {
+      return {
+        ok: false,
+        message:
+          ticket.response?.status === 415
+            ? `Havi chưa nhận được định dạng ảnh này (${file.type || "không rõ"})`
+            : "Chưa tải được ảnh lên, thử lại giúp chị nhé.",
+      };
+    }
+
+    // Presigned POST: mọi field trong ticket phải đi kèm và `file` phải nằm
+    // CUỐI form — S3/MinIO bỏ qua mọi field đứng sau phần file.
+    const form = new FormData();
+    for (const [key, value] of Object.entries(ticket.data.fields ?? {})) {
+      form.append(key, value);
+    }
+    form.append("file", file);
+
+    const uploaded = await fetch(ticket.data.upload_url, {
+      method: "POST",
+      body: form,
+    });
+    if (!uploaded.ok) {
+      return {
+        ok: false,
+        message:
+          uploaded.status === 400
+            ? "Ảnh quá nặng hoặc sai định dạng — chọn ảnh khác giúp chị nhé."
+            : "Tải ảnh lên chưa xong, thử lại giúp chị nhé.",
+      };
+    }
+
+    // Storage nhận rồi không có nghĩa là xong: phải để API xác nhận object có
+    // thật (và đúng magic bytes) rồi mới chuyển pending → raw.
+    const completed = await apiClient.POST("/media/{asset_id}/complete", {
+      params: { path: { asset_id: ticket.data.asset_id } },
+    });
+    if (completed.error || !completed.data) {
+      return { ok: false, message: "Ảnh tải lên chưa hợp lệ, thử ảnh khác nhé." };
+    }
+
+    return { ok: true, data: ticket.data.asset_id };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/**
+ * Tạo content job.
+ *
+ * `Idempotency-Key` là bắt buộc chứ không tuỳ chọn: mỗi job là một lần gọi LLM
+ * tốn tiền thật, và mạng 4G chập chờn khiến "bấm lại vì tưởng chưa ăn" là
+ * chuyện thường. Cùng key trong cùng workspace luôn trả về job đầu tiên.
+ */
+export async function createJob(
+  rawInputs: RawInput[],
+  idempotencyKey: string,
+): Promise<Result<ContentJob>> {
+  try {
+    const { data, error, response } = await apiClient.POST("/content/jobs", {
+      body: { raw_inputs: rawInputs },
+      headers: { "Idempotency-Key": idempotencyKey },
+    });
+    if (error || !data) {
+      return {
+        ok: false,
+        message:
+          response?.status === 409
+            ? "Chưa hoàn thành onboarding nên chưa tạo bài được."
+            : GENERIC_ERROR,
+      };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function getJob(jobId: string): Promise<Result<ContentJob>> {
+  try {
+    const { data, error } = await apiClient.GET("/content/jobs/{job_id}", {
+      params: { path: { job_id: jobId } },
+    });
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/** Bản nháp chờ duyệt — màn này mở ra là thấy ngay, không cần vừa tạo job. */
+export async function listPendingItems(): Promise<Result<ContentItem[]>> {
+  try {
+    const { data, error } = await apiClient.GET("/content", {
+      params: { query: { status: "pending_approval" } },
+    });
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data: data.items };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function approveItem(itemId: string): Promise<Result<ContentItem>> {
+  try {
+    const { data, error, response } = await apiClient.POST(
+      "/content/{content_id}/approve",
+      { params: { path: { content_id: itemId } }, body: {} },
+    );
+    if (error || !data) {
+      return {
+        ok: false,
+        message:
+          response?.status === 409
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            : GENERIC_ERROR,
+      };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function rejectItem(itemId: string): Promise<Result<ContentItem>> {
+  try {
+    const { data, error, response } = await apiClient.POST(
+      "/content/{content_id}/reject",
+      { params: { path: { content_id: itemId } } },
+    );
+    if (error || !data) {
+      return {
+        ok: false,
+        message:
+          response?.status === 409
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            : GENERIC_ERROR,
+      };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export type BulkApproveOutcome = {
+  approved: string[];
+  rejected: { content_item_id: string; reason: string }[];
+};
+
+/** "Duyệt & đăng hết". Backend không fail cả lô khi một bài hỏng — nó trả về
+ * danh sách bài không duyệt được kèm lý do, và UI phải nói ra điều đó. */
+export async function approveAll(
+  itemIds: string[],
+): Promise<Result<BulkApproveOutcome>> {
+  try {
+    const { data, error } = await apiClient.POST("/content/approve-all", {
+      body: { content_item_ids: itemIds },
+    });
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    return {
+      ok: true,
+      data: { approved: data.approved ?? [], rejected: data.rejected ?? [] },
+    };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}

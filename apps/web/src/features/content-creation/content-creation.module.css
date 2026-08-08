@@ -67,6 +67,56 @@
   text-transform: uppercase;
 }
 
+.chipRemove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chipRemove:hover {
+  background: var(--color-border);
+  color: var(--color-ink);
+}
+
+.noteBox {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.noteLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.generateRow {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notice {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-body);
+  font-size: 13px;
+}
+
 .modeToggle {
   margin-top: 20px;
   padding: 16px 18px;
