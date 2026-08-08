@@ -78,6 +78,23 @@ class ContentJobStatus(StrEnum):
     FAILED = "failed"
 
 
+class PublishStatus(StrEnum):
+    """Vòng đời một publish job.
+
+    Tách khỏi `ContentStatus`: một content item có thể sinh nhiều publish job
+    (đăng lại sau khi sửa, đăng nhiều kênh), và job có vòng đời riêng với retry
+    và dead-letter mà content item không cần biết.
+    """
+
+    PENDING = "pending"
+    IN_FLIGHT = "in_flight"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    # Hết số lần thử hoặc lỗi không thể tự sửa. Không retry tự động nữa — chờ
+    # người bấm thử lại, để một bài hỏng không đập API nền tảng mãi.
+    DEAD_LETTER = "dead_letter"
+
+
 class PublishFailureKind(StrEnum):
     """Phân loại lỗi publish để quyết định có retry hay không."""
 
