@@ -634,7 +634,14 @@ Backend/platform:
 - [ ] Facebook OAuth start/callback với signed state và CSRF protection.
 - [ ] Lưu token mã hóa; không trả token về frontend.
 - [ ] Connection status: connected, expired, revoked; reconnect flow.
-- [ ] Facebook adapter mapping text/media và normalize platform errors.
+- [x] Facebook adapter (`adapters/publishers/facebook.py`) — Graph API v21.0,
+  /feed cho bài chữ và /photos cho bài ảnh, map lỗi Graph sang 3 loại
+  (18 test). Ưu tiên `code` của Graph hơn HTTP status vì Graph trả 400 cho cả
+  token hết hạn lẫn nội dung bị từ chối.
+  **Beta test được mà chưa cần App Review:** Development mode cho người có vai
+  trò Tester nối Page của chính họ và đăng thật — đủ cho closed beta 5-10 tiệm,
+  thêm thủ công từng người. App Review + Business Verification (cần pháp nhân)
+  chỉ bắt buộc khi mở public signup.
 - [x] Scheduler tạo publish job đến hạn (`PublishService.dispatch_due`) — quét
   bài `scheduled` tới giờ, idempotent nên beat chạy mỗi 5 phút không sinh job
   trùng. **Chưa xong:** nối vào Celery beat task thật.
