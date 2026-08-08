@@ -96,7 +96,7 @@ landing page public.
 | MVP App — Báo cáo | Stats, attribution bars, weekly chart, nhận xét bằng ngôn ngữ đời thường | Tuần 2 | Tuần 8, với dữ liệu MVP tối thiểu |
 | Đăng nhập / Đăng ký | Email + mật khẩu, signup, forgot/reset password qua email, success states | Tuần 3 | Tuần 4 |
 | Onboarding | Chọn ngành, nối kênh, learning state, first draft | Tuần 3 | Tuần 7 |
-| Landing Page | Hero, 4 trạm, ngành, pricing, CTA | Tuần 3 | Tuần 12 sau khi rà soát claim |
+| Landing Page | Hero, cách hoạt động, ngành, nguyên tắc, CTA | Đã code (`/gioi-thieu`) | Tuần 12 — cần rà soát claim lần cuối + chốt pricing |
 | AI Marketing | Demo 4 trạm theo persona, progress/log/result | Tuần 3 | Internal sales demo; không phải core app |
 | Kiến Trúc Hệ Thống | Spec nội bộ cho queue, adapters, quota và event log | Đã có | Được hiện thực dần Tuần 4–9 |
 
@@ -132,9 +132,9 @@ Architecture/docs:
 ### Chưa hoàn thành
 
 - [ ] Frontend routes, interaction thật và visual regression tests. Auth,
-  onboarding, Tạo nội dung và Lịch đăng đã nối API thật (51 test web pass);
-  Tổng quan, Khách tiềm năng, Báo cáo và quên mật khẩu vẫn fixture. Chưa có
-  visual regression.
+  onboarding, Tạo nội dung và Lịch đăng đã nối API thật, Landing Page đã dựng
+  (57 test web pass); Tổng quan, Khách tiềm năng, Báo cáo và quên mật khẩu vẫn
+  fixture. Chưa có visual regression.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -292,8 +292,7 @@ sau đó đi qua cùng một quality gate.
 
 Frontend:
 
-- [x] Chốt route groups: `(app)`, `(auth)`, `(onboarding)`. **Chưa có** group
-  `public` vì Landing Page chưa dựng.
+- [x] Chốt route groups: `(app)`, `(auth)`, `(onboarding)`, `(public)`.
 - [x] Chuyển App Shell thành layout dùng chung cho 5 tab (`app/(app)/layout.tsx`).
 - [x] Tạo primitives tối thiểu: Button, Card, Badge, Input/Textarea, OtpInput,
   Empty/Error/Loading state (`components/ui/`).
@@ -371,7 +370,12 @@ Mục tiêu: hoàn thành toàn bộ bề mặt thiết kế trước khi nối 
 
 Frontend:
 
-- [ ] Landing Page responsive, anchor navigation, pricing và CTA.
+- [x] Landing Page responsive (`/gioi-thieu`), anchor navigation và CTA dẫn tới
+  `/dang-ky`. **Cố ý khác prototype:** claim đã viết lại theo capability thật —
+  bỏ "tự động đăng 4 kênh" (publish là Tuần 7), bỏ săn khách hội nhóm/CRM/làm
+  đẹp ảnh (P2), bỏ Maps/LinkedIn/YouTube khỏi danh sách kênh. **Chưa có bảng
+  giá:** §12 chốt chỉ public sau khi đo cost trên khách Việt thật, nên thay bằng
+  lời mời beta. `landing-screen.test.tsx` có test chặn regression claim.
 - [x] Auth flows: email login, signup (tên + email + mật khẩu), forgot/reset
   password qua mã 6 số trong email, resend countdown và success routes.
 - [x] Onboarding 3 bước: industry, connections, learning state và first draft.
@@ -773,8 +777,8 @@ Exit criteria:
 
 ### Gate B — Design-complete
 
-- [ ] Tất cả prototype có implementation code-native. **Còn thiếu:** Landing Page
-  và AI Marketing demo (4/6 prototype đã có code).
+- [ ] Tất cả prototype có implementation code-native. **Còn thiếu:** AI Marketing
+  demo (5/6 prototype đã có code — demo này là sales-only, không phải core app).
 - [ ] Desktop/mobile fidelity được design sign-off. *(Cần founder/QA — không tự tick.)*
 - [ ] Keyboard, focus, loading, empty, error và reduced-motion states có đủ.
   Focus outline, reduced-motion, empty/error/loading component đã có; **còn thiếu**
@@ -923,8 +927,8 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   có domain model/table nghiệp vụ nào — `target_metadata` vẫn `None` chờ Tuần 4).
 - [x] Dựng Auth và Onboarding design-complete (đăng nhập email+mật khẩu, đăng ký,
   quên/đặt lại mật khẩu, onboarding 3 bước) bằng fixture, chưa nối API thật.
-  **Chưa làm:** Landing Page và demo AI Marketing (sales-only, không phải core
-  app — để P1/P2), route guards mock, keyboard/focus walkthrough thủ công,
+  **Chưa làm:** demo AI Marketing (sales-only, không phải core app — để P1/P2),
+  keyboard/focus walkthrough thủ công,
   design sign-off (cần founder/QA, không tự tick được).
 - [x] Nối onboarding và tab Tạo nội dung vào API thật — vòng nạp liệu → sinh
   bài → duyệt đã chạy thật từ trình duyệt, không còn fixture.
@@ -933,6 +937,7 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Nối editor + version history và Lịch đăng vào API thật — **Gate C đóng**:
   vòng nạp liệu → sinh bài → sửa → duyệt → lên lịch chạy thật từ trình duyệt.
   **Việc tiếp theo:** Facebook OAuth + adapter publish (Tuần 7, Gate D).
+- [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
   — Gate B cần design review của founder/QA, xem §6.
