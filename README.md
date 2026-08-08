@@ -63,10 +63,19 @@ Scheduler (chỉ cần khi làm publish theo lịch, Tuần 7):
 cd apps/backend && uv run celery -A scheduler.beat:celery_app beat -l info
 ```
 
-**Chưa có API key LLM** thì job sẽ chuyển sang `failed` với lý do "không có
-provider nào được cấu hình", và UI hiện lỗi kèm nút thử lại — đúng như thiết kế,
-không phải hỏng. Điền `HAVI_GEMINI_API_KEY` trong `apps/backend/.env` để sinh
-bài thật.
+**Local mặc định dùng mock LLM** (`HAVI_USE_MOCK_LLM=true`): bấm "Để Havi viết"
+bao nhiêu lần cũng không tốn tiền API, và không cần API key để chạy được app.
+Draft là văn mẫu ghép từ liệu thô, đủ để test luồng và UI.
+
+Muốn test bằng model thật: điền `HAVI_GEMINI_API_KEY` rồi đặt
+`HAVI_USE_MOCK_LLM=false`, khởi động lại worker.
+
+Mock chỉ sống ở local. Đặt `HAVI_USE_MOCK_LLM=true` khi `HAVI_ENV` là `staging`
+hoặc `production` sẽ làm backend **không khởi động được** — chặn ngay ở deploy,
+vì để lọt thì chủ tiệm đăng văn mẫu lên Facebook thật mà tưởng AI viết.
+
+Nếu tắt mock mà chưa có key nào, job chuyển sang `failed` kèm lý do và UI hiện
+nút thử lại — đúng thiết kế, không phải hỏng.
 
 ### 3. Frontend — Next.js
 
