@@ -1,83 +1,32 @@
-export type PublishStatus = "scheduled" | "publishing" | "published" | "failed";
+import type { components } from "@/lib/api-client/schema";
 
-export type ScheduledPost = {
-  id: string;
-  time: string;
-  channel: "Facebook" | "Zalo OA" | "Google Business" | "Reels" | "TikTok";
-  excerpt: string;
-  status: PublishStatus;
+export type PublishStatus = components["schemas"]["ContentStatus"];
+
+/** Nhãn tiếng Việt cho trạng thái bài. Bao đủ mọi giá trị `ContentStatus` của
+ * backend — thiếu một cái là UI hiện enum thô cho chủ tiệm đọc. */
+export const statusLabel: Record<PublishStatus, string> = {
+  draft: "Bản nháp",
+  pending_approval: "Chờ duyệt",
+  approved: "Đã duyệt",
+  scheduled: "Đã lên lịch",
+  publishing: "Đang đăng",
+  published: "Đã đăng",
+  failed: "Đăng lỗi",
+  dead_letter: "Cần xem lại",
 };
 
-export type CalendarDay = {
-  label: string;
-  dateLine: string;
-  isToday?: boolean;
-  posts: ScheduledPost[];
+export const statusTone: Record<
+  PublishStatus,
+  "success" | "info" | "warning" | "neutral"
+> = {
+  draft: "neutral",
+  pending_approval: "neutral",
+  approved: "info",
+  scheduled: "info",
+  publishing: "neutral",
+  published: "success",
+  failed: "warning",
+  dead_letter: "warning",
 };
 
-// Đồng bộ từ content_item.scheduled_at của các bài đã duyệt (roadmap §5, Tuần 6).
-export const calendarFixture: CalendarDay[] = [
-  { label: "Th 2", dateLine: "27/07", posts: [] },
-  {
-    label: "Th 3",
-    dateLine: "28/07",
-    posts: [
-      {
-        id: "post-1",
-        time: "09:00",
-        channel: "Facebook",
-        excerpt: "Ưu đãi gội đầu thảo dược cuối tuần",
-        status: "published",
-      },
-    ],
-  },
-  { label: "Th 4", dateLine: "29/07", posts: [] },
-  {
-    label: "Th 5",
-    dateLine: "30/07",
-    isToday: true,
-    posts: [
-      {
-        id: "post-2",
-        time: "10:30",
-        channel: "Zalo OA",
-        excerpt: "Nhắc khách quen đặt lịch tuần này",
-        status: "scheduled",
-      },
-      {
-        id: "post-3",
-        time: "19:30",
-        channel: "Facebook",
-        excerpt: "Bài chăm sóc da mùa ẩm",
-        status: "scheduled",
-      },
-    ],
-  },
-  {
-    label: "Th 6",
-    dateLine: "31/07",
-    posts: [
-      {
-        id: "post-4",
-        time: "08:00",
-        channel: "Google Business",
-        excerpt: "Cập nhật giờ mở cửa mới",
-        status: "failed",
-      },
-    ],
-  },
-  { label: "Th 7", dateLine: "01/08", posts: [] },
-  {
-    label: "CN",
-    dateLine: "02/08",
-    posts: [
-      {
-        id: "post-5",
-        time: "17:00",
-        channel: "Reels",
-        excerpt: "Video before/after gội đầu thảo dược",
-        status: "scheduled",
-      },
-    ],
-  },
-];
+export const weekdayLabels = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];

@@ -1,23 +1,73 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/state-views";
-import { calendarFixture, type PublishStatus } from "./calendar.fixture";
+import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
+import { channelLabels } from "@/features/content-creation/content-creation.fixture";
+import {
+  addDays,
+  fetchCalendar,
+  startOfVnWeek,
+  toVnDateString,
+  type CalendarDay,
+} from "./calendar.api";
+import { statusLabel, statusTone, weekdayLabels } from "./calendar.fixture";
 import styles from "./calendar.module.css";
 
-const statusLabel: Record<PublishStatus, string> = {
-  scheduled: "Đã lên lịch",
-  publishing: "Đang đăng",
-  published: "Đã đăng",
-  failed: "Đăng lỗi",
-};
+/** Giờ đăng hiện theo giờ VN, không theo giờ máy — chủ tiệm ở VN và backend
+ * cũng gom nhóm theo múi giờ đó. Máy đặt lệch múi giờ vẫn phải thấy đúng giờ. */
+const vnTime = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
 
-const statusTone: Record<PublishStatus, "success" | "info" | "warning" | "neutral"> = {
-  scheduled: "info",
-  publishing: "neutral",
-  published: "success",
-  failed: "warning",
-};
+function dayLabel(iso: string): string {
+  const [, month, day] = iso.split("-");
+  return `${day}/${month}`;
+}
 
 export function CalendarScreen() {
+  const [weekStart, setWeekStart] = useState(() => startOfVnWeek(new Date()));
+  const [days, setDays] = useState<CalendarDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const today = toVnDateString(new Date());
+
+  // `reloadKey` để nút "Thử lại" nạp lại đúng tuần đang xem mà không phải nhân
+  // đôi logic fetch ra ngoài effect.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      const result = await fetchCalendar(
+        toVnDateString(weekStart),
+        toVnDateString(addDays(weekStart, 6)),
+      );
+      if (cancelled) return;
+      if (result.ok) {
+        setDays(result.data);
+        setError(null);
+      } else {
+        setError(result.message);
+      }
+      setLoading(false);
+    }
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [weekStart, reloadKey]);
+
+  const empty = days.every((day) => day.items.length === 0);
+  const rangeLabel = days.length
+    ? `${dayLabel(days[0].date)} – ${dayLabel(days[days.length - 1].date)}`
+    : "";
+
   return (
     <>
       <header className={styles.header}>
@@ -27,45 +77,94 @@ export function CalendarScreen() {
         </p>
       </header>
 
-      <section className={styles.grid} aria-label="Lịch đăng theo tuần">
-        {calendarFixture.map((day) => (
-          <div
-            key={day.label}
-            className={`${styles.dayColumn} ${day.isToday ? styles.dayColumnToday : ""}`}
+      <div className={styles.weekBar}>
+        <Button
+          variant="outline"
+          onClick={() => setWeekStart((w) => addDays(w, -7))}
+        >
+          ← Tuần trước
+        </Button>
+        <span className={styles.weekRange}>{rangeLabel}</span>
+        <div className={styles.weekActions}>
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(startOfVnWeek(new Date()))}
           >
-            <div className={styles.dayHeader}>
-              <span className={styles.dayLabel}>{day.label}</span>
-              <span className={styles.dayDate}>{day.dateLine}</span>
-            </div>
+            Tuần này
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart((w) => addDays(w, 7))}
+          >
+            Tuần sau →
+          </Button>
+        </div>
+      </div>
 
-            {day.posts.length === 0 ? (
-              <p className={styles.dayEmpty}>Chưa có bài</p>
-            ) : (
-              <div className={styles.postList}>
-                {day.posts.map((post) => (
-                  <article key={post.id} className={styles.postCard}>
-                    <div className={styles.postMeta}>
-                      <span className={styles.postTime}>{post.time}</span>
-                      <span className={styles.postChannel}>{post.channel}</span>
-                    </div>
-                    <p className={styles.postExcerpt}>{post.excerpt}</p>
-                    <Badge tone={statusTone[post.status]}>
-                      {statusLabel[post.status]}
-                    </Badge>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
-
-      {calendarFixture.every((day) => day.posts.length === 0) ? (
-        <EmptyState
-          title="Chưa có bài nào được lên lịch"
-          body="Duyệt một bản nháp ở tab Tạo nội dung để thấy bài xuất hiện ở đây."
+      {error ? (
+        <ErrorState
+          title={error}
+          action={
+            <Button variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
+              Thử lại
+            </Button>
+          }
         />
-      ) : null}
+      ) : loading ? (
+        <LoadingState title="Đang tải lịch…" />
+      ) : (
+        <>
+          <section className={styles.grid} aria-label="Lịch đăng theo tuần">
+            {days.map((day, index) => (
+              <div
+                key={day.date}
+                className={`${styles.dayColumn} ${
+                  day.date === today ? styles.dayColumnToday : ""
+                }`}
+              >
+                <div className={styles.dayHeader}>
+                  <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
+                  <span className={styles.dayDate}>{dayLabel(day.date)}</span>
+                </div>
+
+                {day.items.length === 0 ? (
+                  <p className={styles.dayEmpty}>Chưa có bài</p>
+                ) : (
+                  <div className={styles.postList}>
+                    {day.items.map((item) => (
+                      <article key={item.id} className={styles.postCard}>
+                        <div className={styles.postMeta}>
+                          <span className={styles.postTime}>
+                            {item.scheduled_at
+                              ? vnTime.format(new Date(item.scheduled_at))
+                              : "--:--"}
+                          </span>
+                          <span className={styles.postChannel}>
+                            {channelLabels[
+                              item.channel as keyof typeof channelLabels
+                            ] ?? item.channel}
+                          </span>
+                        </div>
+                        <p className={styles.postExcerpt}>{item.text}</p>
+                        <Badge tone={statusTone[item.status]}>
+                          {statusLabel[item.status]}
+                        </Badge>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+
+          {empty ? (
+            <EmptyState
+              title="Chưa có bài nào được lên lịch tuần này"
+              body="Duyệt một bản nháp ở tab Tạo nội dung để thấy bài xuất hiện ở đây."
+            />
+          ) : null}
+        </>
+      )}
     </>
   );
 }

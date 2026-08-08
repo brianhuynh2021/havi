@@ -35,6 +35,8 @@ type Routes = {
   approve?: () => Response;
   reject?: () => Response;
   approveAll?: () => Response;
+  patch?: () => Response;
+  versions?: () => Response;
 };
 
 function mockApi(routes: Routes = {}) {
@@ -63,6 +65,17 @@ function mockApi(routes: Routes = {}) {
       }
       if (url.startsWith("http://storage.local")) {
         return routes.storage?.() ?? new Response(null, { status: 204 });
+      }
+      if (url.includes("/versions")) {
+        return (
+          routes.versions?.() ??
+          jsonResponse([
+            { content_item_id: "c1", version_no: 1, text: "Bản gốc", edited_by: null, edited_at: "2026-08-08T02:00:00Z" },
+          ])
+        );
+      }
+      if (method === "PATCH") {
+        return routes.patch?.() ?? jsonResponse({ ...pendingItem("c1"), text: "Đã sửa", version_no: 2 });
       }
       if (url.includes("/content/approve-all")) {
         return (
@@ -293,5 +306,78 @@ describe("ContentCreationScreen", () => {
 
     const toggle = screen.getByLabelText("Chế độ đăng bài");
     expect(within(toggle).getByText(/đang khoá trong bản pilot/i)).toBeInTheDocument();
+  });
+});
+
+describe("DraftEditor trong màn Tạo nội dung", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    writeTokens({
+      accessToken: "a",
+      refreshToken: "r",
+      activeWorkspaceId: "w1",
+      needsOnboarding: false,
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function moEditor() {
+    mockApi({
+      list: () =>
+        jsonResponse({ items: [pendingItem("c1")], total: 1, limit: 50, offset: 0 }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Nội dung c1");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /^sửa$/i }));
+    return user;
+  }
+
+  it("sửa text rồi lưu thì gọi PATCH và hiện bản mới", async () => {
+    const user = await moEditor();
+    const box = await screen.findByLabelText("Nội dung bài");
+
+    await user.clear(box);
+    await user.type(box, "Đã sửa");
+    await user.click(screen.getByRole("button", { name: /lưu bản sửa/i }));
+
+    expect(await screen.findByText(/đã lưu bản sửa/i)).toBeInTheDocument();
+  });
+
+  it("chưa sửa gì thì nút Lưu bị khoá — không tạo version rác", async () => {
+    await moEditor();
+    expect(
+      await screen.findByRole("button", { name: /lưu bản sửa/i }),
+    ).toBeDisabled();
+  });
+
+  it("bài đang đăng thì backend trả 409 và UI nói rõ", async () => {
+    const user = await moEditor();
+    // Ghi đè route PATCH sau khi editor đã mở.
+    vi.restoreAllMocks();
+    mockApi({
+      list: () =>
+        jsonResponse({ items: [pendingItem("c1")], total: 1, limit: 50, offset: 0 }),
+      patch: () => jsonResponse({ detail: "conflict" }, 409),
+    });
+
+    const box = await screen.findByLabelText("Nội dung bài");
+    await user.type(box, " thêm chữ");
+    await user.click(screen.getByRole("button", { name: /lưu bản sửa/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /không sửa được nữa/i,
+    );
+  });
+
+  it("mở lịch sử thì hiện các bản đã sửa", async () => {
+    const user = await moEditor();
+    await user.click(await screen.findByRole("button", { name: /lịch sử/i }));
+
+    expect(await screen.findByText("Bản gốc")).toBeInTheDocument();
+    expect(screen.getByText(/bản 1/i)).toBeInTheDocument();
   });
 });

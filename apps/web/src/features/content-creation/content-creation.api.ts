@@ -174,6 +174,49 @@ export async function rejectItem(itemId: string): Promise<Result<ContentItem>> {
   }
 }
 
+export type ContentItemVersion = components["schemas"]["ContentItemVersion"];
+
+/** Sửa text bài. Backend tạo version mới thay vì ghi đè, và chỉ tăng
+ * `version_no` khi text thật sự đổi — bấm Lưu mà không sửa gì không tạo rác. */
+export async function updateItemText(
+  itemId: string,
+  text: string,
+): Promise<Result<ContentItem>> {
+  try {
+    const { data, error, response } = await apiClient.PATCH(
+      "/content/{content_id}",
+      { params: { path: { content_id: itemId } }, body: { text } },
+    );
+    if (error || !data) {
+      return {
+        ok: false,
+        message:
+          response?.status === 409
+            ? "Bài đang đăng hoặc đã đăng rồi nên không sửa được nữa."
+            : "Chưa lưu được, thử lại giúp chị nhé.",
+      };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/** Lịch sử phiên bản — trả lời "ai sửa gì, lúc nào" (ROADMAP §5 Tuần 6). */
+export async function listVersions(
+  itemId: string,
+): Promise<Result<ContentItemVersion[]>> {
+  try {
+    const { data, error } = await apiClient.GET("/content/{content_id}/versions", {
+      params: { path: { content_id: itemId } },
+    });
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
 export type BulkApproveOutcome = {
   approved: string[];
   rejected: { content_item_id: string; reason: string }[];
