@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth/session";
 import { createWorkspace, fetchDefaultShopName } from "./onboarding.api";
 import { industryOptions, type IndustryOption } from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
+import { Logo } from "@/components/ui/logo";
 
 type Step = 1 | 2 | 3;
 
@@ -64,7 +65,7 @@ export function OnboardingScreen() {
   return (
     <div className={styles.wizard}>
       <div className={styles.brand}>
-        <div className={styles.brandMark}>Ha</div>
+        <Logo size={44} />
         <div className={styles.brandText}>Havi</div>
       </div>
 

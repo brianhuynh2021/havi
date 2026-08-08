@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 import { CONTACT_EMAIL, LAST_UPDATED, type Section } from "./legal.content";
 import styles from "./legal.module.css";
 
@@ -14,9 +15,7 @@ export function LegalPage({ title, intro, sections }: Props) {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link href="/gioi-thieu" className={styles.brand}>
-            <span className={styles.brandMark} aria-hidden="true">
-              Ha
-            </span>
+            <Logo size={34} />
             <span className={styles.brandText}>Havi</span>
           </Link>
           <Link href="/gioi-thieu" className={styles.backLink}>

@@ -25,19 +25,6 @@
   padding: 6px 10px 20px;
 }
 
-.brandMark {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: var(--color-primary);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 900;
-}
-
 .brandText {
   font-family: var(--font-display);
   font-size: 18px;

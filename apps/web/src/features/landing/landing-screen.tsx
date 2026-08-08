@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/ui/logo";
 import {
   heroChannels,
   heroStats,
@@ -14,9 +15,7 @@ export function LandingScreen() {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link href="/gioi-thieu" className={styles.brand}>
-            <span className={styles.brandMark} aria-hidden="true">
-              Ha
-            </span>
+            <Logo size={36} />
             <span className={styles.brandText}>Havi</span>
           </Link>
 
@@ -208,9 +207,7 @@ export function LandingScreen() {
         <div className={styles.footerInner}>
           <div>
             <div className={styles.brand}>
-              <span className={styles.brandMark} aria-hidden="true">
-                Ha
-              </span>
+              <Logo size={34} tone="dark" />
               <span className={styles.footerBrandText}>Havi</span>
             </div>
             <p className={styles.footerBlurb}>
