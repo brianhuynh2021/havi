@@ -222,6 +222,8 @@ export function LandingScreen() {
             <a href="#cach-hoat-dong">Cách hoạt động</a>
             <a href="#nganh">Cho ngành của bạn</a>
             <Link href="/dang-nhap">Đăng nhập</Link>
+            <Link href="/dieu-khoan">Điều khoản sử dụng</Link>
+            <Link href="/bao-mat">Chính sách bảo mật</Link>
           </nav>
         </div>
         <p className={styles.footerNote}>

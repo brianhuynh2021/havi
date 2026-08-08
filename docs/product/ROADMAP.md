@@ -132,9 +132,9 @@ Architecture/docs:
 ### Chưa hoàn thành
 
 - [ ] Frontend routes, interaction thật và visual regression tests. Auth,
-  onboarding, Tạo nội dung và Lịch đăng đã nối API thật, Landing Page đã dựng
-  (57 test web pass); Tổng quan, Khách tiềm năng, Báo cáo và quên mật khẩu vẫn
-  fixture. Chưa có visual regression.
+  onboarding, Tạo nội dung và Lịch đăng đã nối API thật; Landing Page,
+  Terms/Privacy đã dựng (70 test web pass). Tổng quan, Khách tiềm năng, Báo cáo
+  và quên mật khẩu vẫn fixture. Chưa có visual regression.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -276,7 +276,11 @@ dịch chữ lại. Mọi quyết định sản phẩm phải ưu tiên bối c�
 - [ ] Onboarding bắt đầu bằng một ngành cụ thể và ví dụ Việt Nam thật, đề xuất Spa/Tiệm nhỏ.
 - [ ] Brand voice hiểu cách xưng hô `chị/em`, `anh/em`, tên tiệm và vùng miền; user luôn sửa được.
 - [ ] Banned claims theo ngành phải chặn các câu cam kết quá mức, đặc biệt làm đẹp, tài chính và bất động sản.
-- [ ] Consent, quyền xóa dữ liệu, opt-out và chính sách lưu dữ liệu phải phù hợp quy định Việt Nam hiện hành.
+- [ ] Consent, quyền xóa dữ liệu, opt-out và chính sách lưu dữ liệu phải phù hợp
+  quy định Việt Nam hiện hành. **Đã có:** trang Privacy nêu đủ quyền chủ thể dữ
+  liệu và thời hạn xoá 30 ngày; màn đăng ký có link consent thật. **Chưa có:**
+  endpoint xoá tài khoản và xuất dữ liệu (hiện xử lý thủ công qua email), và
+  chưa qua thẩm định pháp lý.
 - [ ] Support beta dùng kênh quen thuộc với cohort, ưu tiên Zalo/điện thoại thay vì chỉ email ticket.
 - [ ] Pricing hiển thị bằng VND và chỉ public sau khi đo được chi phí AI/hạ tầng trên khách Việt thật.
 
@@ -389,7 +393,13 @@ Product/legal:
 
 - [ ] Rà soát landing claims: số kênh, tự động đăng, social listening, giá và trial.
 - [ ] Ẩn hoặc đổi copy với capability chưa production-ready.
-- [ ] Chốt Terms, Privacy và data retention placeholder trước closed beta.
+- [x] Terms (`/dieu-khoan`) và Privacy (`/bao-mat`) đã dựng, link từ footer
+  landing và màn đăng ký. Nội dung bám đúng dữ liệu hệ thống thật xử lý (email,
+  mật khẩu Argon2id, ảnh trên object storage, event_log không chứa nội dung
+  bài), nói rõ liệu thô được gửi cho Gemini/Anthropic/OpenAI, và nêu đủ quyền
+  chủ thể dữ liệu theo luật VN. `legal-page.test.tsx` (13 test) chặn regression
+  claim hai chiều. **Chưa xong:** cần luật sư rà trước khi mời khách beta —
+  đây là bản nháp kỹ thuật, không phải văn bản đã thẩm định.
 
 QA:
 
@@ -953,7 +963,7 @@ Các quyết định này có deadline để không chặn roadmap:
 | [ ] | Cloud region, Postgres, Redis, object storage | Cuối Tuần 1 | Engineering |
 | [ ] | Facebook developer app + quyền cần xin | Trong Tuần 1 | Product/Backend |
 | [ ] | Web responsive breakpoint support chính thức | Cuối Tuần 2 | Frontend/Design |
-| [ ] | Data retention và media deletion policy | Cuối Tuần 3 | Product/Legal |
+| [~] | Data retention và media deletion policy — Privacy đã ghi 30 ngày; cần Legal thẩm định + code endpoint xoá | Cuối Tuần 3 | Product/Legal |
 | [ ] | `full_auto` có xuất hiện trong pilot hay bị khóa | Cuối Tuần 3 | Product/Security |
 | [ ] | Engagement metrics nào Facebook cho phép lấy | Trước Tuần 8 | Backend/Product |
 | [ ] | Pricing/trial claim được public | Trước Tuần 12 | Product/Finance |

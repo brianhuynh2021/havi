@@ -104,8 +104,10 @@ export function SignupScreen() {
         </Button>
 
         <p className={styles.consentText}>
-          Bấm nút là chị/anh đồng ý với Điều khoản &amp; Bảo mật của Havi. Số
-          điện thoại thêm sau trong Cài đặt nếu muốn nhận bản nháp qua Zalo.
+          Bấm nút là chị/anh đồng ý với{" "}
+          <Link href="/dieu-khoan">Điều khoản</Link> &amp;{" "}
+          <Link href="/bao-mat">Bảo mật</Link> của Havi. Số điện thoại thêm sau
+          trong Cài đặt nếu muốn nhận bản nháp qua Zalo.
         </p>
       </div>
 
