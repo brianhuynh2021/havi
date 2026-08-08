@@ -132,8 +132,9 @@ Architecture/docs:
 ### Chưa hoàn thành
 
 - [ ] Frontend routes, interaction thật và visual regression tests. Auth,
-  onboarding và tab Tạo nội dung đã nối API thật (41 test web pass); 4 tab còn
-  lại và quên mật khẩu vẫn fixture. Chưa có visual regression.
+  onboarding, Tạo nội dung và Lịch đăng đã nối API thật (51 test web pass);
+  Tổng quan, Khách tiềm năng, Báo cáo và quên mật khẩu vẫn fixture. Chưa có
+  visual regression.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -217,9 +218,11 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [x] Một content job sinh nhiều draft theo kênh bằng structured output —
   backend và frontend đều đã nối; job chạy thật cần worker + API key LLM.
 - [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
-  đã chạy thật. **Chưa xong:** frontend còn dùng fixture, chưa nối API.
+  và frontend đều đã nối API thật.
 - [ ] Facebook Page OAuth + publish bằng API chính thức.
-- [ ] Calendar và trạng thái publish đầy đủ.
+- [x] Calendar hiển thị đúng ngày/giờ VN và trạng thái publish đầy đủ.
+  **Chưa xong:** `publishing`/`published`/`failed` mới có nhãn, chưa có bài thật
+  ở trạng thái đó vì chưa có adapter publish (Tuần 7).
 - [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement snapshot nếu API cho phép.
 - [ ] Audit/event log, token usage, quota, retry và idempotency.
 - [ ] Responsive web cho desktop, tablet và mobile phổ biến.
@@ -559,15 +562,24 @@ Backend:
 
 Frontend:
 
-- [ ] Nối approve/reject và bulk approve — **đã xong** ở tab Tạo nội dung, bao
-  gồm partial failure của "Duyệt & đăng hết" (nói rõ bài nào chưa duyệt được kèm
-  lý do, không im lặng). **Chưa xong:** draft editor và version history.
+- [x] Nối draft editor, version history, approve/reject và bulk approve. Editor
+  sửa text → `PATCH /content/{id}` tạo version mới; nút Lưu khoá khi chưa sửa gì
+  nên không tạo version rác. "Lịch sử" đọc `GET /content/{id}/versions`. Bulk
+  approve báo rõ bài nào chưa duyệt được kèm lý do, không im lặng.
 - [ ] Optimistic UI có rollback + toast khi backend từ chối. Hiện đang làm ngược
   lại: chờ backend trả lời rồi mới bỏ bài khỏi hàng chờ, 409 thì hiện lỗi và nạp
   lại danh sách. An toàn hơn nhưng chậm hơn một nhịp trên 4G — đổi sang
   optimistic khi có toast component.
-- [ ] Nối calendar, timezone Asia/Ho_Chi_Minh và reschedule.
-- [ ] Hiển thị rõ pending, approved, scheduled, publishing, published và failed.
+- [x] Nối calendar và timezone Asia/Ho_Chi_Minh: lưới tuần đọc `GET /calendar`,
+  chuyển tuần trước/sau/tuần này. Ngày gửi lên tính bằng `Intl` theo giờ VN chứ
+  không `toISOString()` — hàm đó đổi sang UTC trước nên 6h sáng thứ Ba VN thành
+  23h thứ Hai UTC và cả tuần lệch một ngày. Giờ hiển thị cũng ép về VN để máy
+  đặt lệch múi giờ vẫn thấy đúng. Verify thật: duyệt bài lúc 20:00 VN → rơi
+  đúng ô hôm nay, giờ hiện 20:00. **Chưa xong:** reschedule mới có ở tầng API
+  (`rescheduleItem`), UI chưa có kéo-thả hay nút đổi giờ.
+- [x] Hiển thị rõ pending, approved, scheduled, publishing, published và failed
+  — `statusLabel`/`statusTone` bao đủ 8 giá trị `ContentStatus`, thiếu một cái
+  là chủ tiệm phải đọc enum thô.
 - [ ] `full_auto` chỉ hiện như controlled setting; chưa mở cho pilot user nếu policy chưa chốt.
 
 Tests:
@@ -770,9 +782,12 @@ Exit criteria:
 
 ### Gate C — Core value loop
 
-- [ ] User thật tạo workspace, upload và nhận draft từ worker.
-- [ ] Draft sửa/duyệt/lên lịch đúng state machine.
-- [ ] Tenant isolation và audit tests pass.
+- [x] User thật tạo workspace, upload và nhận draft từ worker — verify tay:
+  signup → onboarding → upload ảnh lên MinIO → job `drafts_ready` → 3 draft.
+- [x] Draft sửa/duyệt/lên lịch đúng state machine — sửa tạo version mới, duyệt
+  lúc 20:00 VN rơi đúng ô hôm nay trên lịch, duyệt lại trả 409.
+- [x] Tenant isolation và audit tests pass (128 test backend). **Lưu ý:** pass
+  khi chạy tay, chưa có CI tự động — xem Gate A.
 
 ### Gate D — Safe publishing
 
@@ -914,7 +929,10 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Nối onboarding và tab Tạo nội dung vào API thật — vòng nạp liệu → sinh
   bài → duyệt đã chạy thật từ trình duyệt, không còn fixture.
   **Việc tiếp theo:** editor + version history, rồi nối Lịch đăng (Tuần 6), sau
-  đó Facebook OAuth/publish (Tuần 7) để đóng Gate C và D.
+  đó Facebook OAuth/publish (Tuần 7) để đóng Gate D.
+- [x] Nối editor + version history và Lịch đăng vào API thật — **Gate C đóng**:
+  vòng nạp liệu → sinh bài → sửa → duyệt → lên lịch chạy thật từ trình duyệt.
+  **Việc tiếp theo:** Facebook OAuth + adapter publish (Tuần 7, Gate D).
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
   — Gate B cần design review của founder/QA, xem §6.

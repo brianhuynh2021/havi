@@ -16,6 +16,7 @@ import {
   type RawInput,
 } from "./content-creation.api";
 import { channelLabels, type PublishMode } from "./content-creation.fixture";
+import { DraftEditor } from "./draft-editor";
 import { useJobPolling } from "./use-job-polling";
 import styles from "./content-creation.module.css";
 
@@ -43,6 +44,7 @@ export function ContentCreationScreen() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /** `keepError` cho lượt nạp lại *sau khi* một hành động thất bại: nạp lại
@@ -394,7 +396,20 @@ export function ContentCreationScreen() {
                     </Badge>
                     <span className={styles.draftKind}>{item.kind}</span>
                   </div>
-                  <p className={styles.draftBody}>{item.text}</p>
+                  {editingId === item.id ? (
+                    <DraftEditor
+                      item={item}
+                      onClose={() => setEditingId(null)}
+                      onSaved={(saved) => {
+                        setItems((prev) =>
+                          prev.map((i) => (i.id === saved.id ? saved : i)),
+                        );
+                        setNotice("Đã lưu bản sửa — bài vẫn đang chờ chị duyệt.");
+                      }}
+                    />
+                  ) : (
+                    <p className={styles.draftBody}>{item.text}</p>
+                  )}
                   <div className={styles.draftFooter}>
                     <div className={styles.draftActions}>
                       <Button
@@ -403,6 +418,15 @@ export function ContentCreationScreen() {
                         onClick={() => onApprove(item.id)}
                       >
                         Duyệt
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          setEditingId(editingId === item.id ? null : item.id)
+                        }
+                      >
+                        {editingId === item.id ? "Đang sửa" : "Sửa"}
                       </Button>
                       <Button
                         variant="outline"

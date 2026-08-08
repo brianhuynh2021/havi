@@ -16,8 +16,27 @@
   font-size: 14px;
 }
 
-.grid {
+.weekBar {
   margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.weekRange {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.weekActions {
+  display: flex;
+  gap: 8px;
+}
+
+.grid {
+  margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
