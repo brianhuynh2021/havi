@@ -7,8 +7,10 @@ quota, state transition) nằm ở application/domain service, không nằm tron
 
 from domain.models.audit import EventLog
 from domain.models.base import Base
+from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
 from domain.models.media import MediaAsset
+from domain.models.publish import PublishJob
 from domain.models.user import OtpChallenge, RefreshSession, User
 from domain.models.workspace import BrandProfile, Workspace, WorkspaceMember
 
@@ -25,4 +27,6 @@ __all__ = [
     "ContentItem",
     "ContentItemVersion",
     "EventLog",
+    "PlatformConnection",
+    "PublishJob",
 ]

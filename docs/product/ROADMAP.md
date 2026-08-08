@@ -149,7 +149,10 @@ Architecture/docs:
 - [x] LLM content pipeline (multi-provider, Gemini ưu tiên) + structured output
   validation + ghi token vào `event_log`. **Chưa có:** quota chặn theo workspace,
   và cost tính bằng tiền.
-- [ ] OAuth/token encryption và adapter publish Facebook.
+- [ ] OAuth/token encryption và adapter publish Facebook. **Đã có:** lớp mã hoá
+  token (Fernet) + signed OAuth state chống CSRF + bảng `platform_connections`
+  và `publish_jobs` với unique constraint chống đăng trùng (migration
+  `b7f77094b946`). **Chưa có:** router OAuth thật, adapter Facebook, scheduler.
 - [ ] Scheduler/retry/idempotency/dead-letter production behavior.
 - [ ] CI/CD, staging, observability, alerting và runbook.
 - [ ] E2E test cho hành trình signup → draft → approve → publish → report.
@@ -169,11 +172,14 @@ PostgreSQL:
   `eb7685b1cb83` đổi email thành danh tính chính và SĐT thành tuỳ chọn).
 - [x] `workspaces`, `workspace_members`, `brand_profiles` — có repository + router
   thật (`/workspaces/*`, `/brand-profile`), test chạy trên Postgres.
-- [ ] `platform_connections` với token mã hóa.
+- [x] `platform_connections` với token mã hóa (migration `b7f77094b946`,
+  unique `(workspace_id, platform)` — nối lại thì cập nhật chứ không tạo bản
+  ghi thứ hai).
 - [x] `media_assets`, `content_jobs`, `content_items`, `content_item_versions`
   (migration `a974c194ff2c`, `32712ea2080b`).
 - [x] `event_log` — insert thật qua `EventLogRepository`. **Chưa có:**
-  `publish_jobs`, `engagement_snapshots`.
+  `engagement_snapshots`. `publish_jobs` đã có với unique constraint trên
+  `idempotency_key` — chốt chặn chống đăng trùng ở tầng Postgres.
 - [x] Alembic migrations, indexes, foreign keys cho các bảng auth/workspace ở
   trên (`alembic check` sạch). **Chưa xong:** tenant-scoped repository cho các
   domain còn lại, và test tenant isolation.
@@ -456,7 +462,11 @@ Backend:
   — `tests/test_brand_profile_flow.py`, 7 case chạy thật. **Chưa xong:** chưa có
   cache profile cho worker (worker sẽ đọc trực tiếp DB), và PUT hành xử như PATCH
   nên không xoá được `logo_url` về null.
-- [ ] Encrypt sensitive fields bằng application key management.
+- [x] Encrypt sensitive fields bằng application key management — token nền tảng
+  mã hoá bằng Fernet (`core/token_crypto.py`), khoá đọc từ
+  `HAVI_TOKEN_ENCRYPTION_KEY`. Thiếu khoá thì ném lỗi chứ không lưu plaintext.
+  14 test gồm: bản mã không chứa token gốc, mã hoá hai lần ra hai bản khác
+  nhau, sai khoá/bản mã bị sửa đều bị từ chối.
 
 Frontend:
 

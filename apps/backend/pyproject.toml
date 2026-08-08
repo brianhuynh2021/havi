@@ -14,6 +14,10 @@ dependencies = [
     # Python 3.13+, và bcrypt truncate âm thầm ở 72 bytes — mật khẩu tiếng Việt
     # có dấu ăn ~3 bytes/ký tự nên chạm giới hạn đó chỉ sau ~24 ký tự.
     "argon2-cffi>=23.1",
+    # Fernet (AES-128-CBC + HMAC) để mã hoá token OAuth nền tảng trước khi lưu
+    # DB. Không tự ghép AES: Fernet đã gói sẵn IV ngẫu nhiên, HMAC chống sửa và
+    # timestamp — ba thứ dễ làm sai nhất khi tự cuộn.
+    "cryptography>=44.0",
 ]
 
 [project.optional-dependencies]
