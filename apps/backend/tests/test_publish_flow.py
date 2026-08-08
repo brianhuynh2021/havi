@@ -52,7 +52,9 @@ async def _item(session: AsyncSession, workspace_id: uuid.UUID) -> uuid.UUID:
         channel=Channel.FACEBOOK_PAGE,
         kind="Bài ảnh",
         text="Ưu đãi gội đầu thảo dược",
-        status=ContentStatus.SCHEDULED,
+        # DRAFT chứ không SCHEDULED: helper này chỉ để thoả FK cho test
+        # repository, không được lọt vào lượt quét của scheduler.
+        status=ContentStatus.DRAFT,
     )
     session.add(item)
     await session.flush()
@@ -410,3 +412,190 @@ class TestConnectionRepository:
 
         assert await repo.get(workspace_id=b.id, platform=Platform.FACEBOOK) is None
         assert await repo.list_for_workspace(b.id) == []
+
+
+class TestPublishServiceEndToEnd:
+    """Vòng đầy đủ: bài đã duyệt → scheduler → worker → đăng, với fake adapter."""
+
+    async def _service(self, session: AsyncSession, publisher: FakePublisher):
+        from adapters.persistence.connection_repository import ConnectionRepository
+        from adapters.persistence.content_repository import ContentRepository
+        from application.services.publish_service import PublishService
+
+        return PublishService(
+            content=ContentRepository(session),
+            connections=ConnectionRepository(session),
+            publishes=PublishRepository(session),
+            publishers={Channel.FACEBOOK_PAGE: publisher},
+        )
+
+    async def _ready(self, session: AsyncSession, *, at: datetime):
+        """Workspace đã nối Facebook + một bài đã duyệt tới giờ đăng."""
+        from adapters.persistence.connection_repository import ConnectionRepository
+        from core.enums import ContentStatus
+        from domain.models.content import ContentItem
+
+        ws = await _workspace(session)
+        await ConnectionRepository(session).upsert(
+            workspace_id=ws.id, platform=Platform.FACEBOOK,
+            access_token="page-token", external_account_id="page_1",
+        )
+        item = ContentItem(
+            workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
+            kind="Bài ảnh", text="Ưu đãi gội đầu thảo dược",
+            status=ContentStatus.SCHEDULED, scheduled_at=at,
+        )
+        session.add(item)
+        await session.flush()
+        return ws, item
+
+    async def test_bai_da_duyet_toi_gio_thi_dang_duoc(self, db_session: AsyncSession):
+        from core.enums import ContentStatus
+
+        publisher = FakePublisher()
+        ws, item = await self._ready(db_session, at=_at(20))
+        service = await self._service(db_session, publisher)
+
+        await service.dispatch_due(now=_at(21))
+        # Đếm theo workspace của test: DB dev có thể còn bài scheduled từ lần
+        # chạy tay trước, và scheduler cố ý quét mọi workspace.
+        mine = await PublishRepository(db_session).list_for_workspace(workspace_id=ws.id)
+        assert len(mine) == 1
+
+        await service.run_due(now=_at(21))
+        jobs = await PublishRepository(db_session).list_for_workspace(workspace_id=ws.id)
+        assert jobs[0].status is PublishStatus.SUCCEEDED
+        assert jobs[0].external_post_id
+        assert item.status is ContentStatus.PUBLISHED
+        assert len(publisher.calls) == 1
+
+    async def test_scheduler_chay_lai_khong_dang_hai_lan(self, db_session: AsyncSession):
+        """Beat quét mỗi 5 phút — chạy lại không được sinh job trùng."""
+        publisher = FakePublisher()
+        ws, _ = await self._ready(db_session, at=_at(20))
+        service = await self._service(db_session, publisher)
+
+        await service.dispatch_due(now=_at(21))
+        repo = PublishRepository(db_session)
+        after_first = len(await repo.list_for_workspace(workspace_id=ws.id))
+        await service.dispatch_due(now=_at(21))
+        after_second = len(await repo.list_for_workspace(workspace_id=ws.id))
+
+        assert after_first == 1
+        assert after_second == 1, "lần quét thứ hai không được tạo job mới"
+
+    async def test_bai_chua_duyet_khong_bao_gio_dang(self, db_session: AsyncSession):
+        """Chốt chặn nguyên tắc #1 — không bài nào lên mạng khi chưa duyệt."""
+        from core.enums import ContentStatus
+        from domain.models.content import ContentItem
+
+        publisher = FakePublisher()
+        ws = await _workspace(db_session)
+        db_session.add(
+            ContentItem(
+                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh", text="Chưa duyệt",
+                status=ContentStatus.PENDING_APPROVAL, scheduled_at=_at(20),
+            )
+        )
+        await db_session.flush()
+        service = await self._service(db_session, publisher)
+
+        await service.dispatch_due(now=_at(21))
+
+        mine = await PublishRepository(db_session).list_for_workspace(workspace_id=ws.id)
+        assert mine == [], "bài chưa duyệt không được xếp vào hàng đợi"
+        assert publisher.calls == []
+
+    async def test_chua_noi_kenh_thi_bao_loi_noi_lai(self, db_session: AsyncSession):
+        from core.enums import ContentStatus
+        from domain.models.content import ContentItem
+
+        publisher = FakePublisher()
+        ws = await _workspace(db_session)
+        db_session.add(
+            ContentItem(
+                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh", text="x",
+                status=ContentStatus.SCHEDULED, scheduled_at=_at(20),
+            )
+        )
+        await db_session.flush()
+        service = await self._service(db_session, publisher)
+        await service.dispatch_due(now=_at(21))
+
+        repo = PublishRepository(db_session)
+        job = (await repo.list_for_workspace(workspace_id=ws.id))[0]
+        job.status = PublishStatus.IN_FLIGHT
+        job.attempt_count = 1
+        await db_session.flush()
+        await service.run_job(job)
+
+        assert job.status is PublishStatus.DEAD_LETTER
+        assert job.failure_kind is PublishFailureKind.AUTH_PERMISSION
+        assert "nối lại" in job.failure_detail
+
+    async def test_mat_quyen_thi_danh_dau_luon_ket_noi(self, db_session: AsyncSession):
+        """Không đánh dấu thì mọi bài sau cũng hỏng mà UI vẫn hiện chấm xanh."""
+        from adapters.persistence.connection_repository import ConnectionRepository
+
+        publisher = FakePublisher(error=auth_error())
+        ws, _ = await self._ready(db_session, at=_at(20))
+        service = await self._service(db_session, publisher)
+        await service.dispatch_due(now=_at(21))
+
+        await service.run_due(now=_at(21))
+
+        conn = await ConnectionRepository(db_session).get(
+            workspace_id=ws.id, platform=Platform.FACEBOOK
+        )
+        assert conn.status is ConnectionStatus.EXPIRED
+        assert conn.failure_reason
+
+    async def test_loi_tam_thoi_thi_thu_lai_va_dang_duoc(self, db_session: AsyncSession):
+        """Rate limit lần đầu, lần sau thành công — và chỉ ra đúng MỘT bài."""
+        publisher = FakePublisher(fail_times=1)
+        ws, _ = await self._ready(db_session, at=_at(20))
+        service = await self._service(db_session, publisher)
+        await service.dispatch_due(now=_at(21))
+        repo = PublishRepository(db_session)
+        job = (await repo.list_for_workspace(workspace_id=ws.id))[0]
+
+        job.status, job.attempt_count = PublishStatus.IN_FLIGHT, 1
+        await db_session.flush()
+        await service.run_job(job)
+        assert job.status is PublishStatus.PENDING, "lỗi tạm thời phải được thử lại"
+
+        job.status, job.attempt_count = PublishStatus.IN_FLIGHT, 2
+        await db_session.flush()
+        await service.run_job(job)
+
+        assert job.status is PublishStatus.SUCCEEDED
+        assert len(publisher.calls) == 2, "gọi hai lần nhưng chỉ một bài lên"
+
+    async def test_mot_job_hong_khong_lam_hong_ca_lo(self, db_session: AsyncSession):
+        publisher = FakePublisher(error=validation_error())
+        ws, _ = await self._ready(db_session, at=_at(20))
+        # Bài thứ hai cùng workspace: một bài hỏng không được chặn bài kia.
+        from core.enums import ContentStatus
+        from domain.models.content import ContentItem
+        db_session.add(
+            ContentItem(
+                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh", text="Bài thứ hai",
+                status=ContentStatus.SCHEDULED, scheduled_at=_at(20),
+            )
+        )
+        await db_session.flush()
+        service = await self._service(db_session, publisher)
+        await service.dispatch_due(now=_at(21))
+
+        repo = PublishRepository(db_session)
+        mine = await repo.list_for_workspace(workspace_id=ws.id)
+        assert len(mine) == 2
+        for job in mine:
+            job.status, job.attempt_count = PublishStatus.IN_FLIGHT, 1
+            await db_session.flush()
+            await service.run_job(job)
+
+        assert all(j.status is PublishStatus.DEAD_LETTER for j in mine)

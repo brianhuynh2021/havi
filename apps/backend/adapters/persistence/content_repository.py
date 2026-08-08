@@ -175,6 +175,38 @@ class ContentRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_scheduled_due(
+        self, *, now: datetime, limit: int = 200
+    ) -> list[ContentItem]:
+        """Bài đã duyệt tới giờ đăng, MỌI workspace — cho scheduler.
+
+        Cố ý không scope theo workspace: scheduler là tiến trình nền của hệ
+        thống, không chạy dưới danh nghĩa người dùng nào. Mọi đường đi từ HTTP
+        vẫn phải qua `list_items` có `workspace_id` bắt buộc.
+
+        Chỉ lấy `scheduled` — bài chưa duyệt không có đường nào lọt xuống
+        publish, đây là chốt chặn trùng lặp cố ý sau state machine.
+        """
+        result = await self._session.execute(
+            select(ContentItem)
+            .where(
+                ContentItem.status == ContentStatus.SCHEDULED,
+                ContentItem.scheduled_at.is_not(None),
+                ContentItem.scheduled_at <= now,
+            )
+            .order_by(ContentItem.scheduled_at)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def mark_published(
+        self, item: ContentItem, *, published_at: datetime
+    ) -> ContentItem:
+        item.status = ContentStatus.PUBLISHED
+        item.published_at = published_at
+        await self._session.flush()
+        return item
+
     async def list_items_in_range(
         self, *, workspace_id: UUID, start: datetime, end: datetime
     ) -> list[ContentItem]:
