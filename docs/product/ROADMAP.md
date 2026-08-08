@@ -119,9 +119,9 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 95 backend tests đang pass (31 contract/state-machine/provider-router + 64
-  auth/workspace/brand-profile/media/content chạy thật trên Postgres + MinIO);
-  Ruff đang pass.
+- [x] 118 backend tests đang pass (31 contract/state-machine/provider-router + 87
+  auth/workspace/brand-profile/media/content/approval chạy thật trên Postgres +
+  MinIO); Ruff đang pass.
 
 Architecture/docs:
 
@@ -135,8 +135,8 @@ Architecture/docs:
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
-  không phải thành viên). **Chưa xong:** repository cho content/media/calendar/
-  inbox/leads.
+  không phải thành viên). Repository cho media/content/calendar đã có và test
+  tenant isolation thật. **Chưa xong:** inbox/leads/connections.
 - [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
   (Argon2), đặt lại mật khẩu qua mã 6 số. **Chưa xong:** email provider thật
   (dùng `debug_code` khi `HAVI_DEBUG=true`), endpoint logout/revoke session.
@@ -151,7 +151,9 @@ Architecture/docs:
 - [ ] CI/CD, staging, observability, alerting và runbook.
 - [ ] E2E test cho hành trình signup → draft → approve → publish → report.
 
-Tất cả endpoint nghiệp vụ hiện chỉ khóa contract và trả `501 Not Implemented`.
+Auth, workspace, brand profile, media, content và calendar đã chạy thật trên
+Postgres. Các domain còn lại (connections, inbox, leads, analytics, billing) mới
+khóa contract và trả `501 Not Implemented`.
 
 ### Hạ tầng bắt buộc trước beta
 
@@ -210,7 +212,8 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [ ] Onboarding ngành, brand voice cơ bản và kết nối Facebook Page.
 - [ ] Upload ảnh + nhập text; ghi âm có thể để sau nếu ảnh/text chưa ổn định.
 - [ ] Một content job sinh nhiều draft theo kênh bằng structured output.
-- [ ] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch.
+- [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
+  đã chạy thật. **Chưa xong:** frontend còn dùng fixture, chưa nối API.
 - [ ] Facebook Page OAuth + publish bằng API chính thức.
 - [ ] Calendar và trạng thái publish đầy đủ.
 - [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement snapshot nếu API cho phép.
@@ -419,8 +422,9 @@ Backend:
   JWT hợp lệ nhưng không phải thành viên — test thật `test_khong_the_doc_workspace_cua_nguoi_khac`.
   `WorkspaceDep` (workspace đọc từ JWT) đã dùng thật ở `/brand-profile`, verify
   bằng `test_hai_workspace_khong_doc_thay_profile_cua_nhau` + 409 khi chưa onboarding.
-  **Chưa xong:** content/media/... vẫn `501`, nên tenant isolation mới verify
-  được ở workspace + brand-profile, chưa ở toàn bộ domain.
+  Media, content và calendar cũng đã verify tenant isolation thật (không đọc/duyệt/
+  đổi lịch được bài của workspace khác dù biết UUID). **Chưa xong:** connections/
+  inbox/leads vẫn `501`.
 - [x] Workspace create/activate và onboarding completion state. `/workspaces`
   (CRUD), `/workspaces/{id}/activate` (đổi JWT), `/workspaces/{id}/members`
   (invite/list/remove, chặn xoá owner cuối) — `tests/test_workspace_flow.py`,
@@ -510,12 +514,19 @@ Mục tiêu: khóa vòng human-approval-first bằng backend state machine.
 
 Backend:
 
-- [ ] Content item update tạo version mới, không overwrite lịch sử.
-- [ ] Enforce state transitions trong service/domain layer.
-- [ ] Single approve, reject, bulk approve và reschedule transactionally.
-- [ ] Ghi `approved_by`, `approved_at` và audit event.
-- [ ] Calendar là projection từ `content_item.scheduled_at`.
-- [ ] Không cho reschedule item đã `published`.
+- [x] Content item update tạo version mới, không overwrite lịch sử — `PATCH
+  /content/{id}` và `GET /content/{id}/versions`; chỉ tăng `version_no` khi text
+  thật sự đổi.
+- [x] Enforce state transitions trong service/domain layer (`ApprovalService` gọi
+  `core.content_state.assert_transition`; router chỉ dịch lỗi thành 409).
+- [x] Single approve, reject, bulk approve và reschedule transactionally.
+  `SELECT ... FOR UPDATE` chặn duyệt hai lần ghi đè `approved_by`.
+- [x] Ghi `approved_by`, `approved_at` và audit event (`content.approve` /
+  `content.reject` / `content.reschedule` vào `event_log`).
+- [x] Calendar là projection từ `content_item.scheduled_at`, gom theo ngày
+  `Asia/Ho_Chi_Minh` (bài 6h sáng VN không rơi sang ô hôm trước).
+- [x] Không cho reschedule item đã `published` (409), và không cho sửa text bài
+  đang `publishing`/`published`.
 
 Frontend:
 
@@ -527,15 +538,22 @@ Frontend:
 
 Tests:
 
-- [ ] State-transition matrix tests.
-- [ ] Concurrent approve/bulk approve tests.
-- [ ] Timezone/DST-safe serialization tests dù Việt Nam không có DST.
+- [x] State-transition matrix tests (`tests/test_content_state.py` +
+  `tests/test_approval_flow.py`, 23 case chạy thật trên Postgres).
+- [x] Concurrent approve/bulk approve tests — duyệt hai lần trả 409, một item
+  hỏng không làm fail cả lô. **Chưa xong:** test hai session Postgres song song
+  thật (fixture hiện dùng chung một transaction nên chỉ verify được logic khoá,
+  chưa verify được `FOR UPDATE` chặn race thật).
+- [x] Timezone-safe serialization tests: cột `scheduled_at`/`approved_at`/
+  `published_at` đổi sang `timestamptz` (migration `6cb25077be10`) — cột naive
+  nuốt offset, 20h VN thành 20h UTC. Việt Nam không có DST nên không test DST.
 
 Exit criteria:
 
-- [ ] Không có API path đưa item chưa duyệt sang publish trong `review_first`.
-- [ ] Version history và audit đủ để trả lời ai sửa/duyệt, lúc nào.
-- [ ] Draft đã duyệt xuất hiện đúng ngày/giờ trên calendar.
+- [x] Không có API path đưa item chưa duyệt sang publish trong `review_first` —
+  approve là đường duy nhất ra khỏi `pending_approval`, và nó ghi `approved_by`.
+- [x] Version history và audit đủ để trả lời ai sửa/duyệt, lúc nào.
+- [x] Draft đã duyệt xuất hiện đúng ngày/giờ trên calendar.
 
 ### Tuần 7 — Facebook connection và publishing
 

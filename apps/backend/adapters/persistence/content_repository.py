@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import Channel, ContentJobStatus, ContentStatus
-from domain.models.content import ContentItem, ContentJob
+from domain.models.content import ContentItem, ContentItemVersion, ContentJob
 
 
 class ContentRepository:
@@ -151,3 +151,99 @@ class ContentRepository:
             .offset(offset)
         )
         return list(rows.scalars().all()), total.scalar_one()
+
+    async def get_item_for_update(
+        self, *, workspace_id: UUID, item_id: UUID
+    ) -> ContentItem | None:
+        """Như `get_item` nhưng khoá hàng (`SELECT ... FOR UPDATE`).
+
+        Duyệt lẻ và "Duyệt & đăng hết" có thể chạy song song trên cùng một item
+        (user bấm hai lần, hai tab). Không có row lock thì cả hai cùng đọc
+        `pending_approval`, cùng thấy transition hợp lệ và cùng ghi `approved_by`
+        — người duyệt cuối ghi đè người trước. Lock giữ cho lần thứ hai phải đọc
+        lại trạng thái đã đổi và trả 409.
+        """
+        result = await self._session.execute(
+            select(ContentItem)
+            .where(ContentItem.id == item_id, ContentItem.workspace_id == workspace_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    async def list_items_in_range(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> list[ContentItem]:
+        """Lịch đăng — projection trên `scheduled_at`, không phải bảng riêng.
+
+        `start` inclusive, `end` exclusive: caller truyền nguyên ngày kế tiếp nên
+        bài đăng lúc 23:59:59 của ngày cuối vẫn nằm trong khoảng.
+        """
+        result = await self._session.execute(
+            select(ContentItem)
+            .where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.scheduled_at.is_not(None),
+                ContentItem.scheduled_at >= start,
+                ContentItem.scheduled_at < end,
+            )
+            .order_by(ContentItem.scheduled_at)
+        )
+        return list(result.scalars().all())
+
+    async def update_item(
+        self,
+        item: ContentItem,
+        *,
+        text: str | None,
+        media_note: str | None,
+        scheduled_at: datetime | None,
+        edited_by: UUID,
+    ) -> ContentItem:
+        """PATCH: field `None` nghĩa là không đổi, không phải xoá về null.
+
+        Đổi `text` thì tạo `content_item_versions` mới và tăng `version_no` —
+        lịch sử phải trả lời được "ai sửa gì, lúc nào", nên không update tại chỗ.
+        """
+        if text is not None and text != item.text:
+            item.version_no += 1
+            item.text = text
+            self._session.add(
+                ContentItemVersion(
+                    content_item_id=item.id,
+                    version_no=item.version_no,
+                    text=text,
+                    edited_by=edited_by,
+                    edited_at=datetime.now(UTC),
+                )
+            )
+        if media_note is not None:
+            item.media_note = media_note
+        if scheduled_at is not None:
+            item.scheduled_at = scheduled_at
+        await self._session.flush()
+        return item
+
+    async def list_versions(self, item_id: UUID) -> list[ContentItemVersion]:
+        result = await self._session.execute(
+            select(ContentItemVersion)
+            .where(ContentItemVersion.content_item_id == item_id)
+            .order_by(ContentItemVersion.version_no)
+        )
+        return list(result.scalars().all())
+
+    async def set_item_status(
+        self,
+        item: ContentItem,
+        *,
+        status: ContentStatus,
+        approved_by: UUID | None = None,
+        scheduled_at: datetime | None = None,
+    ) -> ContentItem:
+        item.status = status
+        if approved_by is not None:
+            item.approved_by = approved_by
+            item.approved_at = datetime.now(UTC)
+        if scheduled_at is not None:
+            item.scheduled_at = scheduled_at
+        await self._session.flush()
+        return item

@@ -7,7 +7,7 @@ Một content job = một lần gọi LLM, sinh nhiều content item theo kênh 
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index, UniqueConstraint
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,7 +32,9 @@ class ContentJob(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     raw_inputs: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     idempotency_key: Mapped[str]
     failure_reason: Mapped[str | None] = mapped_column(default=None)
-    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
 
 class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
@@ -54,10 +56,19 @@ class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         Enum(ContentStatus, native_enum=False), default=ContentStatus.PENDING_APPROVAL
     )
     version_no: Mapped[int] = mapped_column(default=1)
-    scheduled_at: Mapped[datetime | None] = mapped_column(default=None)
-    published_at: Mapped[datetime | None] = mapped_column(default=None)
+    # timezone=True bắt buộc: sản phẩm chạy ở Asia/Ho_Chi_Minh nhưng lưu UTC. Cột
+    # naive sẽ nuốt offset khi ghi datetime aware — bài hẹn 20h VN thành 20h UTC,
+    # tức 3h sáng hôm sau, và không có cách nào phát hiện sau khi đã ghi.
+    scheduled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
     approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), default=None)
-    approved_at: Mapped[datetime | None] = mapped_column(default=None)
+    approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
 
 
 class ContentItemVersion(UUIDPrimaryKeyMixin, Base):
@@ -74,4 +85,4 @@ class ContentItemVersion(UUIDPrimaryKeyMixin, Base):
     version_no: Mapped[int]
     text: Mapped[str]
     edited_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), default=None)
-    edited_at: Mapped[datetime] = mapped_column()
+    edited_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

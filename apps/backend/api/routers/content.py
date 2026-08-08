@@ -10,12 +10,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
-from api.deps import AuthDep, ContentServiceDep, WorkspaceDep
-from api.errors import NotImplementedEndpoint
+from api.deps import ApprovalServiceDep, AuthDep, ContentServiceDep, WorkspaceDep
+from api.errors import transition_conflict
+from application.services.approval_service import ContentItemNotFound, NotReschedulable
 from application.services.content_service import ContentJobNotFound
+from core.content_state import InvalidTransitionError
 from core.enums import Channel, ContentStatus
 from core.schemas import (
     ApproveRequest,
+    BulkApproveFailure,
     BulkApproveRequest,
     BulkApproveResult,
     ContentItem,
@@ -27,6 +30,10 @@ from core.schemas import (
 )
 
 router = APIRouter(prefix="/content", tags=["content"])
+
+
+def _not_found() -> HTTPException:
+    return HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy content item")
 
 
 def _job_to_schema(job, item_ids: list[UUID]) -> ContentJob:
@@ -113,37 +120,110 @@ async def get_content(
 
 
 @router.patch("/{content_id}", response_model=ContentItem)
-def update_content(content_id: UUID, payload: ContentItemUpdate, auth: AuthDep) -> ContentItem:
-    """Sửa text tạo `content_item_version` mới, không ghi đè bản cũ."""
-    del content_id, payload, auth
-    raise NotImplementedEndpoint()
+async def update_content(
+    content_id: UUID,
+    payload: ContentItemUpdate,
+    auth: AuthDep,
+    workspace_id: WorkspaceDep,
+    approvals: ApprovalServiceDep,
+) -> ContentItem:
+    """Sửa text tạo `content_item_version` mới, không ghi đè bản cũ.
+
+    Field bỏ trống nghĩa là không đổi. Bài đang `publishing`/`published` trả 409:
+    sửa lúc đó sẽ làm bản trên Facebook khác bản trong DB.
+    """
+    try:
+        item = await approvals.update_item(
+            workspace_id=workspace_id,
+            item_id=content_id,
+            user_id=auth.user_id,
+            text=payload.text,
+            media_note=payload.media_note,
+            scheduled_at=payload.scheduled_at,
+        )
+    except ContentItemNotFound as exc:
+        raise _not_found() from exc
+    except NotReschedulable as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    return ContentItem.model_validate(item)
 
 
 @router.get("/{content_id}/versions", response_model=list[ContentItemVersion])
-def list_versions(content_id: UUID, workspace_id: WorkspaceDep) -> list[ContentItemVersion]:
-    del content_id, workspace_id
-    raise NotImplementedEndpoint()
-
-
-@router.post("/{content_id}/approve", response_model=ContentItem)
-def approve_content(content_id: UUID, payload: ApproveRequest, auth: AuthDep) -> ContentItem:
-    """Duyệt lẻ 1 bài: pending_approval → approved → scheduled.
-
-    Trả 409 nếu trạng thái hiện tại không cho phép (xem core.content_state).
-    """
-    del content_id, payload, auth
-    raise NotImplementedEndpoint()
-
-
-@router.post("/{content_id}/reject", response_model=ContentItem)
-def reject_content(content_id: UUID, auth: AuthDep) -> ContentItem:
-    """Từ chối: pending_approval → draft."""
-    del content_id, auth
-    raise NotImplementedEndpoint()
+async def list_versions(
+    content_id: UUID, workspace_id: WorkspaceDep, approvals: ApprovalServiceDep
+) -> list[ContentItemVersion]:
+    try:
+        versions = await approvals.list_versions(
+            workspace_id=workspace_id, item_id=content_id
+        )
+    except ContentItemNotFound as exc:
+        raise _not_found() from exc
+    return [ContentItemVersion.model_validate(v) for v in versions]
 
 
 @router.post("/approve-all", response_model=BulkApproveResult)
-def approve_all(payload: BulkApproveRequest, auth: AuthDep) -> BulkApproveResult:
+async def approve_all(
+    payload: BulkApproveRequest,
+    auth: AuthDep,
+    workspace_id: WorkspaceDep,
+    approvals: ApprovalServiceDep,
+) -> BulkApproveResult:
     """Nút "Duyệt & đăng hết" — bài nào không duyệt được thì báo lý do, không fail cả lô."""
-    del payload, auth
-    raise NotImplementedEndpoint()
+    outcome = await approvals.approve_many(
+        workspace_id=workspace_id,
+        item_ids=payload.content_item_ids,
+        user_id=auth.user_id,
+    )
+    return BulkApproveResult(
+        approved=outcome.approved,
+        rejected=[
+            BulkApproveFailure(content_item_id=item_id, reason=reason)
+            for item_id, reason in outcome.failures
+        ],
+    )
+
+
+@router.post("/{content_id}/approve", response_model=ContentItem)
+async def approve_content(
+    content_id: UUID,
+    payload: ApproveRequest,
+    auth: AuthDep,
+    workspace_id: WorkspaceDep,
+    approvals: ApprovalServiceDep,
+) -> ContentItem:
+    """Duyệt lẻ 1 bài: pending_approval → approved → scheduled.
+
+    Bỏ trống `scheduled_at` thì Havi chọn khung giờ vàng gần nhất theo giờ VN.
+    Trả 409 nếu trạng thái hiện tại không cho phép (xem core.content_state).
+    """
+    try:
+        item = await approvals.approve(
+            workspace_id=workspace_id,
+            item_id=content_id,
+            user_id=auth.user_id,
+            scheduled_at=payload.scheduled_at,
+        )
+    except ContentItemNotFound as exc:
+        raise _not_found() from exc
+    except InvalidTransitionError as exc:
+        raise transition_conflict(exc) from exc
+    return ContentItem.model_validate(item)
+
+
+@router.post("/{content_id}/reject", response_model=ContentItem)
+async def reject_content(
+    content_id: UUID,
+    auth: AuthDep,
+    workspace_id: WorkspaceDep,
+    approvals: ApprovalServiceDep,
+) -> ContentItem:
+    """Từ chối: pending_approval → draft."""
+    try:
+        item = await approvals.reject(
+            workspace_id=workspace_id, item_id=content_id, user_id=auth.user_id
+        )
+    except ContentItemNotFound as exc:
+        raise _not_found() from exc
+    except InvalidTransitionError as exc:
+        raise transition_conflict(exc) from exc
+    return ContentItem.model_validate(item)

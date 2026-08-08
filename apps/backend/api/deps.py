@@ -15,6 +15,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
@@ -22,6 +23,7 @@ from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.storage.object_storage import ObjectStorage
+from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
 from application.services.brand_profile_service import BrandProfileService
 from application.services.content_service import ContentService
@@ -100,6 +102,15 @@ def get_content_service(session: DbSessionDep, queue: JobQueueDep) -> ContentSer
 
 
 ContentServiceDep = Annotated[ContentService, Depends(get_content_service)]
+
+
+def get_approval_service(session: DbSessionDep) -> ApprovalService:
+    return ApprovalService(
+        content=ContentRepository(session), events=EventLogRepository(session)
+    )
+
+
+ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
 
 
 class AuthContext:
