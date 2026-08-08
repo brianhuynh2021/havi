@@ -52,31 +52,36 @@ export function ForgotPasswordScreen() {
   return (
     <>
       <h1 className={styles.title}>Quên mật khẩu</h1>
-      <p className={styles.subtitle}>Havi gửi mã xác nhận qua email để đặt lại mật khẩu.</p>
+      <p className={styles.subtitle}>
+        Không sao cả — nhập email, Havi gửi mã để chị/anh đặt lại.
+      </p>
 
       {step === "email" ? (
         <div className={styles.form}>
-          <label className={styles.label} htmlFor="fp-email">
-            Email đã đăng ký
+          <label className={styles.field}>
+            <span className={styles.label}>Email đã đăng ký</span>
+            <Input
+              scale="large"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="tencuaban@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </label>
-          <Input
-            scale="large"
-            id="fp-email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="huong@spaannhien.vn"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          {error ? <p className={styles.error}>{error}</p> : null}
+          {error ? (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          ) : null}
 
-          <Button variant="primary" onClick={requestCode}>
-            Gửi mã xác nhận
+          <Button variant="primary" scale="large" onClick={requestCode}>
+            Gửi mã đặt lại
           </Button>
 
           <p className={styles.footerText}>
-            <Link href="/dang-nhap">← Về đăng nhập</Link>
+            <Link href="/dang-nhap">← Quay lại đăng nhập</Link>
           </p>
         </div>
       ) : step === "otp" ? (
@@ -86,22 +91,25 @@ export function ForgotPasswordScreen() {
           </p>
           <OtpInput value={code} onChange={setCode} />
 
-          <label className={styles.label} htmlFor="new-password">
-            Mật khẩu mới
+          <label className={styles.field}>
+            <span className={styles.label}>Mật khẩu mới</span>
+            <Input
+              scale="large"
+              type="password"
+              autoComplete="new-password"
+              placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </label>
-          <Input
-            scale="large"
-            id="new-password"
-            type="password"
-            autoComplete="new-password"
-            placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          {error ? <p className={styles.error}>{error}</p> : null}
+          {error ? (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          ) : null}
 
-          <Button variant="primary" onClick={submitNewPassword}>
-            Đặt lại mật khẩu
+          <Button variant="primary" scale="large" onClick={submitNewPassword}>
+            Lưu &amp; đăng nhập
           </Button>
 
           <button
@@ -118,7 +126,11 @@ export function ForgotPasswordScreen() {
           <p className={styles.successText}>
             Mật khẩu đã đổi thành công. Chị/anh đăng nhập lại bằng mật khẩu mới.
           </p>
-          <Button variant="primary" onClick={() => router.push("/dang-nhap")}>
+          <Button
+            variant="primary"
+            scale="large"
+            onClick={() => router.push("/dang-nhap")}
+          >
             Về đăng nhập
           </Button>
         </div>

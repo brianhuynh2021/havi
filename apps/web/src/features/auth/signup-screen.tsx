@@ -47,64 +47,70 @@ export function SignupScreen() {
 
   return (
     <>
-      <h1 className={styles.title}>Đăng ký</h1>
-      <p className={styles.subtitle}>Havi cần vài thông tin để bắt đầu.</p>
+      <h1 className={styles.title}>Tạo tài khoản Havi</h1>
+      <p className={styles.subtitle}>
+        Chỉ cần tên, email và mật khẩu — 30 giây là xong.
+      </p>
 
       <div className={styles.form}>
-        <label className={styles.label} htmlFor="name">
-          Tên chị/anh hoặc tên tiệm
+        <label className={styles.field}>
+          <span className={styles.label}>Tên của bạn</span>
+          <Input
+            scale="large"
+            placeholder="Ví dụ: Chị Hương"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </label>
-        <Input
-          scale="large"
-          id="name"
-          placeholder="Chị Hương / Spa An Nhiên"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
 
-        <label className={styles.label} htmlFor="signup-email">
-          Email
+        <label className={styles.field}>
+          <span className={styles.label}>Email</span>
+          <Input
+            scale="large"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="tencuaban@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </label>
-        <Input
-          scale="large"
-          id="signup-email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="huong@spaannhien.vn"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
 
-        <label className={styles.label} htmlFor="signup-password">
-          Mật khẩu
+        <label className={styles.field}>
+          <span className={styles.label}>Mật khẩu</span>
+          <Input
+            scale="large"
+            type="password"
+            autoComplete="new-password"
+            placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </label>
-        <Input
-          scale="large"
-          id="signup-password"
-          type="password"
-          autoComplete="new-password"
-          placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+
         {error ? (
           <p className={styles.error} role="alert">
             {error}
           </p>
         ) : null}
 
-        <p className={styles.consentText}>
-          Bấm tiếp tục là chị/anh đồng ý với Điều khoản sử dụng và Chính sách
-          bảo mật của Havi. Số điện thoại thêm sau trong Cài đặt nếu chị/anh muốn
-          nhận bản nháp qua Zalo.
-        </p>
-
-        <Button variant="primary" onClick={submit} disabled={submitting}>
-          {submitting ? "Đang tạo tài khoản…" : "Tiếp tục"}
+        <Button
+          variant="primary"
+          scale="large"
+          onClick={submit}
+          disabled={submitting}
+        >
+          {submitting ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
         </Button>
 
-        <p className={styles.footerText}>
+        <p className={styles.consentText}>
+          Bấm nút là chị/anh đồng ý với Điều khoản &amp; Bảo mật của Havi. Số
+          điện thoại thêm sau trong Cài đặt nếu muốn nhận bản nháp qua Zalo.
+        </p>
+      </div>
+
+      <div className={styles.footerBlock}>
+        <p>
           Đã có tài khoản? <Link href="/dang-nhap">Đăng nhập</Link>
         </p>
       </div>

@@ -42,53 +42,65 @@ export function LoginScreen() {
 
   return (
     <>
-      <h1 className={styles.title}>Đăng nhập</h1>
-      <p className={styles.subtitle}>Vào Havi bằng email của chị/anh.</p>
+      <h1 className={styles.title}>Chào bạn trở lại</h1>
+      <p className={styles.subtitle}>Đăng nhập để tiếp tục với Havi.</p>
 
       <div className={styles.form}>
-        <label className={styles.label} htmlFor="email">
-          Email
+        <label className={styles.field}>
+          <span className={styles.label}>Email</span>
+          <Input
+            scale="large"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="tencuaban@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </label>
-        <Input
-          scale="large"
-          id="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="huong@spaannhien.vn"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
 
-        <label className={styles.label} htmlFor="password">
-          Mật khẩu
+        <label className={styles.field}>
+          <span className={styles.label}>Mật khẩu</span>
+          <Input
+            scale="large"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </label>
-        <Input
-          scale="large"
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+
+        <Link href="/quen-mat-khau" className={styles.inlineLink}>
+          Quên mật khẩu?
+        </Link>
+
         {error ? (
           <p className={styles.error} role="alert">
             {error}
           </p>
         ) : null}
 
-        <Button variant="primary" onClick={submit} disabled={submitting}>
+        <Button
+          variant="primary"
+          scale="large"
+          onClick={submit}
+          disabled={submitting}
+        >
           {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
-
-        <p className={styles.footerText}>
-          Chưa có tài khoản? <Link href="/dang-ky">Đăng ký</Link>
-        </p>
       </div>
 
-      <p className={styles.footerText}>
-        <Link href="/quen-mat-khau">Quên mật khẩu?</Link>
-      </p>
+      {/* Prototype có "Tiếp tục với Google" nhưng đăng nhập Google là P1 chưa
+          làm (ROADMAP §4). Không dựng nút bấm vào không chạy — thà thiếu còn
+          hơn hứa capability chưa có (§2). */}
+
+      <div className={styles.footerBlock}>
+        <p>
+          Lần đầu dùng Havi?{" "}
+          <Link href="/dang-ky">Tạo tài khoản miễn phí</Link>
+        </p>
+      </div>
     </>
   );
 }
