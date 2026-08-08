@@ -131,8 +131,9 @@ Architecture/docs:
 
 ### Chưa hoàn thành
 
-- [ ] Frontend routes, interaction thật và visual regression tests. Auth đã nối
-  API thật (26 test web pass); 5 tab app, onboarding và quên mật khẩu vẫn fixture.
+- [ ] Frontend routes, interaction thật và visual regression tests. Auth và
+  onboarding đã nối API thật (31 test web pass); 5 tab app và quên mật khẩu vẫn
+  fixture.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -210,7 +211,8 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 
 - [x] Email + mật khẩu login/signup, refresh token xoay vòng. **Chưa xong:** logout/revoke chủ động.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
-- [ ] Onboarding ngành, brand voice cơ bản và kết nối Facebook Page.
+- [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app).
+  **Chưa xong:** brand voice cơ bản và kết nối Facebook Page.
 - [ ] Upload ảnh + nhập text; ghi âm có thể để sau nếu ảnh/text chưa ổn định.
 - [ ] Một content job sinh nhiều draft theo kênh bằng structured output.
 - [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
@@ -447,9 +449,14 @@ Frontend:
   đọc/ghi, để đổi sang httpOnly cookie sau chỉ phải sửa một file.
 - [x] Route guards thật cho guest/onboarding/app (`lib/auth/route-guard.tsx`,
   6 test). Là guard UX — dữ liệu thật vẫn do backend chặn bằng JWT + tenant scope.
-- [ ] Nối industry/brand profile onboarding. **Chưa làm** — màn onboarding vẫn
-  chạy fixture, chưa gọi `POST /workspaces` nên `needs_onboarding` không bao giờ
-  chuyển sang false.
+- [x] Nối industry onboarding: bước 1 gọi `POST /workspaces` rồi
+  `POST /workspaces/{id}/activate` để lấy token mới — phải hai lượt vì JWT sau
+  đăng ký được ký trước khi có workspace, thiếu bước activate thì route guard đá
+  ngược về `/onboarding` thành vòng lặp kín. Tên tiệm điền sẵn từ `/auth/me`.
+  `tests/onboarding-screen.test.tsx` 5 case; verify thật trên Postgres:
+  `/brand-profile` trả 409 với token sau signup và 200 với token sau activate.
+  **Chưa xong:** bước 2 (nối Facebook Page) vẫn fixture vì `/connections` còn
+  501, và chưa có màn sửa brand voice/tone.
 - [x] Xử lý loading, sai mật khẩu và network failure ở màn đăng nhập/đăng ký
   (nút disable khi đang gửi, lỗi hiện qua `role="alert"`, mất mạng có copy tiếng
   Việt riêng). **Chưa xong:** mã hết hạn và throttled ở màn quên mật khẩu.
@@ -464,7 +471,10 @@ Tests/security:
 
 Exit criteria:
 
-- [ ] Signup (email) → onboarding → app chạy end-to-end với DB thật.
+- [x] Signup (email) → onboarding → app chạy end-to-end với DB thật (verify tay
+  trên Postgres: `/brand-profile` 409 với token sau signup, 200 với token sau
+  activate, `industry` mang đúng ngành đã chọn). **Chưa có** E2E tự động —
+  bằng chứng hiện là test frontend + verify tay, xem Tuần 9.
 - [ ] Tenant isolation tests bắt buộc pass trong CI.
 - [ ] Restart API không làm mất user/workspace/session hợp lệ.
 

@@ -1,6 +1,12 @@
 :root {
   --color-primary: #d4956f;
   --color-primary-dark: #b8744d;
+  /* Màu nút hành động chính, lấy từ prototype. Khác --color-primary (dùng cho
+     logo/nhấn nhẹ): nút cần tương phản đủ với chữ trắng. */
+  --color-action: #a85b33;
+  --color-action-hover: #8f4c2a;
+  --color-action-disabled: #dcc9bb;
+  --color-placeholder: #b5aca4;
   --color-background: #f5f1ed;
   --color-paper: #f5f1ed;
   --color-ink: #2c2c2c;

@@ -60,6 +60,7 @@ export function ForgotPasswordScreen() {
             Email đã đăng ký
           </label>
           <Input
+            scale="large"
             id="fp-email"
             type="email"
             inputMode="email"
@@ -89,6 +90,7 @@ export function ForgotPasswordScreen() {
             Mật khẩu mới
           </label>
           <Input
+            scale="large"
             id="new-password"
             type="password"
             autoComplete="new-password"

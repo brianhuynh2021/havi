@@ -55,6 +55,7 @@ export function SignupScreen() {
           Tên chị/anh hoặc tên tiệm
         </label>
         <Input
+          scale="large"
           id="name"
           placeholder="Chị Hương / Spa An Nhiên"
           value={name}
@@ -65,6 +66,7 @@ export function SignupScreen() {
           Email
         </label>
         <Input
+          scale="large"
           id="signup-email"
           type="email"
           inputMode="email"
@@ -78,6 +80,7 @@ export function SignupScreen() {
           Mật khẩu
         </label>
         <Input
+          scale="large"
           id="signup-password"
           type="password"
           autoComplete="new-password"

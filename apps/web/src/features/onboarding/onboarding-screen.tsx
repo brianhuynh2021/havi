@@ -1,8 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useSession } from "@/lib/auth/session";
+import { createWorkspace, fetchDefaultShopName } from "./onboarding.api";
 import { industryOptions, type IndustryOption } from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
 
@@ -12,13 +15,50 @@ const stepLabels = ["Chọn ngành", "Nối kênh", "Havi bắt đầu học"];
 
 export function OnboardingScreen() {
   const router = useRouter();
+  const { signIn } = useSession();
   const [step, setStep] = useState<Step>(1);
+  const [shopName, setShopName] = useState("");
   const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
   const [learning, setLearning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Tên đã nhập lúc đăng ký thường chính là tên tiệm — điền sẵn để chủ tiệm
+  // không phải gõ lại. Vẫn sửa được: nhiều người đăng ký bằng tên riêng.
+  useEffect(() => {
+    let cancelled = false;
+    fetchDefaultShopName().then((name) => {
+      if (!cancelled && name) setShopName((current) => current || name);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Tạo tiệm thật ở cuối bước 1 — từ đây trở đi user đã có workspace, nên bước
+   * 2 và 3 có hỏng thì cũng không kẹt: token mới đã hết `needs_onboarding`. */
+  async function submitIndustry() {
+    if (!shopName.trim()) {
+      setError("Nhập tên tiệm để Havi gọi đúng tên trong bài viết");
+      return;
+    }
+    if (!industry) return;
+
+    setError(null);
+    setSubmitting(true);
+    const result = await createWorkspace(shopName.trim(), industry);
+    setSubmitting(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    signIn(result.tokens);
+    setStep(2);
+  }
 
   function goToApp() {
-    router.push("/");
+    router.replace("/");
   }
 
   return (
@@ -48,15 +88,27 @@ export function OnboardingScreen() {
       <div className={styles.panel}>
         {step === 1 ? (
           <>
-            <h1 className={styles.title}>Tiệm của chị/anh thuộc ngành nào?</h1>
+            <h1 className={styles.title}>Tiệm của chị/anh tên gì, ngành nào?</h1>
             <p className={styles.subtitle}>
               Havi sẽ dùng thông tin này để viết bài đúng giọng, đúng ngành.
             </p>
+
+            <label className={styles.label} htmlFor="shop-name">
+              Tên tiệm
+            </label>
+            <Input
+              id="shop-name"
+              placeholder="Spa An Nhiên"
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+            />
+
             <div className={styles.industryGrid}>
               {industryOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
+                  aria-pressed={industry === option.value}
                   className={`${styles.industryCard} ${
                     industry === option.value ? styles.industryCardActive : ""
                   }`}
@@ -69,12 +121,19 @@ export function OnboardingScreen() {
                 </button>
               ))}
             </div>
+
+            {error ? (
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
+            ) : null}
+
             <Button
               variant="primary"
-              disabled={!industry}
-              onClick={() => setStep(2)}
+              disabled={!industry || submitting}
+              onClick={submitIndustry}
             >
-              Tiếp tục
+              {submitting ? "Đang tạo tiệm…" : "Tiếp tục"}
             </Button>
           </>
         ) : step === 2 ? (
@@ -94,8 +153,10 @@ export function OnboardingScreen() {
               </Button>
             )}
             <div className={styles.stepActions}>
-              <Button variant="outline" onClick={() => setStep(1)}>
-                Quay lại
+              {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
+                  tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}
+              <Button variant="outline" onClick={() => setStep(3)}>
+                Để sau
               </Button>
               <Button
                 variant="primary"
@@ -121,8 +182,7 @@ export function OnboardingScreen() {
               <div className={styles.learningCard}>
                 <span className={styles.spinner} aria-hidden="true" />
                 <p className={styles.learningText}>
-                  Havi đã sẵn sàng — bản nháp đầu tiên đang chờ ở tab Tạo nội
-                  dung.
+                  Havi đã sẵn sàng — tạo bản nháp đầu tiên ở tab Tạo nội dung.
                 </p>
                 <Button variant="primary" onClick={goToApp}>
                   Vào app

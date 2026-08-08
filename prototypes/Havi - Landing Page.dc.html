@@ -16,19 +16,22 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
 </style>
 </helmet>
 <div style="min-height:100vh;background:#F5F1ED;color:#2C2C2C;font-family:Inter,sans-serif;">
-  <header style="background:#fff;border-bottom:1px solid #E0D9D3;padding:16px 32px;">
+  <header style="background:#fff;padding:14px 32px;position:sticky;top:0;z-index:30;box-shadow:0 1px 0 #E0D9D3,0 4px 14px rgba(44,44,44,0.05);">
     <div style="max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:40px;height:40px;border-radius:8px;background:#D4956F;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:18px;">Ha</div>
-        <span style="font-family:Merriweather,serif;font-weight:900;font-size:20px;">Havi</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <svg width="34" height="34" viewBox="0 0 40 40" style="display:block;"><rect width="40" height="40" rx="11" fill="#A85B33"></rect><path d="M13 11v18M27 11v18M13 20h14" stroke="#fff" stroke-width="3.4" stroke-linecap="round"></path><circle cx="27" cy="11" r="3.1" fill="#F0C9A8"></circle></svg>
+        <span style="font-family:Merriweather,serif;font-weight:900;font-size:20px;letter-spacing:-.02em;color:#2C2C2C;">Havi</span>
       </div>
-      <nav style="display:flex;align-items:center;gap:24px;font-size:14px;font-weight:500;">
-        <a href="#cach-hoat-dong" style="color:#4A4A4A;">Cách hoạt động</a>
-        <a href="#nganh" style="color:#4A4A4A;">Cho ngành của bạn</a>
-        <a href="#gia" style="color:#4A4A4A;">Bảng giá</a>
-        <a href="Havi - Đăng Nhập.dc.html" style="color:#4A4A4A;font-weight:600;">Đăng nhập</a>
-        <a href="Havi - Đăng Nhập.dc.html" style="background:#A85B33;color:#fff;border-radius:8px;padding:10px 18px;font-weight:600;" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Dùng thử miễn phí</a>
+      <nav style="display:flex;align-items:center;gap:28px;font-size:14px;font-weight:600;color:#5A5450;">
+        <a href="#ve-havi" style="color:#5A5450;padding:6px 0;border-bottom:2px solid transparent;" style-hover="color:#2C2C2C;border-color:#D4956F;text-decoration:none;">Về Havi</a>
+        <a href="#cach-hoat-dong" style="color:#5A5450;padding:6px 0;border-bottom:2px solid transparent;" style-hover="color:#2C2C2C;border-color:#D4956F;text-decoration:none;">Cách hoạt động</a>
+        <a href="#nganh" style="color:#5A5450;padding:6px 0;border-bottom:2px solid transparent;" style-hover="color:#2C2C2C;border-color:#D4956F;text-decoration:none;">Cho ngành của bạn</a>
+        <a href="#gia" style="color:#5A5450;padding:6px 0;border-bottom:2px solid transparent;" style-hover="color:#2C2C2C;border-color:#D4956F;text-decoration:none;">Bảng giá</a>
       </nav>
+      <div style="display:flex;align-items:center;gap:18px;">
+        <a href="Havi - Đăng Nhập.dc.html" style="color:#2C2C2C;font-size:14px;font-weight:600;" style-hover="color:#B8744D;text-decoration:none;">Đăng nhập</a>
+        <a href="Havi - Đăng Nhập.dc.html" style="background:#A85B33;color:#fff;border-radius:9px;padding:11px 20px;font-weight:700;font-size:14px;box-shadow:0 3px 8px rgba(168,91,51,0.28);" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Dùng thử miễn phí</a>
+      </div>
     </div>
   </header>
 
@@ -50,22 +53,131 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
         </sc-for>
       </div>
     </div>
-    <div style="background:#2C2C2C;border-radius:16px;padding:28px;color:#F5F1ED;box-shadow:0 8px 16px rgba(0,0,0,0.12);">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Bạn nạp vào</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
-        <sc-for list="{{ heroInputs }}" as="hi" hint-placeholder-count="3">
-          <div style="display:flex;gap:10px;align-items:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 14px;">
-            <span style="flex:none;font-size:10.5px;font-weight:700;text-transform:uppercase;color:#F5F1ED;background:rgba(212,149,111,0.35);border-radius:4px;padding:3px 7px;">{{ hi.k }}</span>
-            <span style="font-size:13.5px;color:#E8E1DA;">{{ hi.t }}</span>
+    <div style="position:relative;">
+      <div style="background:#fff;border:1px solid #E4DCD5;border-radius:18px;box-shadow:0 20px 44px rgba(44,32,24,0.14),0 3px 8px rgba(44,32,24,0.06);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #EFE8E2;background:#FBF8F5;">
+          <span style="width:9px;height:9px;border-radius:999px;background:#E5D5C8;"></span>
+          <span style="width:9px;height:9px;border-radius:999px;background:#E5D5C8;"></span>
+          <span style="width:9px;height:9px;border-radius:999px;background:#E5D5C8;"></span>
+          <span style="margin-left:8px;font-size:11.5px;font-weight:600;color:#8A817A;">Havi · Bản nháp chờ duyệt</span>
+        </div>
+        <div style="display:flex;gap:6px;padding:12px 16px 0;">
+          <sc-for list="{{ heroTabs }}" as="tb" hint-placeholder-count="4">
+            <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;border-radius:999px;padding:5px 11px;background:{{ tb.bg }};color:{{ tb.fg }};border:1px solid {{ tb.bd }};"><span style="width:6px;height:6px;border-radius:999px;background:{{ tb.dot }};"></span>{{ tb.n }}</span>
+          </sc-for>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex;gap:14px;">
+            <div style="flex:none;width:112px;height:112px;border-radius:10px;background:linear-gradient(150deg,#F2E4D8,#E7D3C3);border:1px solid #E4DCD5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#A9998B;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.6"></circle><path d="m4 17 5-4.5 3.5 3L16 12l4 3.6"></path></svg>
+              <span style="font-size:10.5px;font-weight:600;">Ảnh bạn chụp</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13.5px;line-height:1.55;color:#2C2C2C;">Tuần này bên mình có <strong>ưu đãi cho 30 khách đặt sớm</strong> — nhắn tin để giữ chỗ trước nha cả nhà. Ai ở gần khu này ghé cho tiện ạ.</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">
+                <sc-for list="{{ heroTags }}" as="tg" hint-placeholder-count="3">
+                  <span style="font-size:11px;font-weight:600;color:#B8744D;background:#F9EFE7;border-radius:5px;padding:3px 8px;">{{ tg }}</span>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:11px;">
+                <sc-for list="{{ heroPostChans }}" as="pc" hint-placeholder-count="3">
+                  <span style="width:22px;height:22px;border-radius:999px;background:{{ pc.c }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;">{{ pc.b }}</span>
+                </sc-for>
+              </div>
+            </div>
           </div>
-        </sc-for>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid #EFE8E2;">
+            <span style="font-size:12px;color:#8A817A;">Lên lịch <strong style="color:#2C2C2C;">19:30 tối nay</strong> · giờ vàng</span>
+            <div style="display:flex;gap:8px;">
+              <span style="font-size:12px;font-weight:600;color:#8A817A;border:1px solid #E4DCD5;border-radius:7px;padding:7px 12px;">Sửa</span>
+              <span style="font-size:12px;font-weight:700;color:#fff;background:#A85B33;border-radius:7px;padding:7px 14px;white-space:nowrap;">Duyệt &amp; đăng</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div style="text-align:center;margin:14px 0;color:#D4956F;font-size:20px;">↓</div>
-      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#D4956F;">Havi trả về</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
-        <sc-for list="{{ heroOutputs }}" as="ho" hint-placeholder-count="4">
-          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.45;color:#E8E1DA;">{{ ho }}</div>
-        </sc-for>
+      <div style="position:absolute;left:-22px;bottom:-20px;background:#fff;border:1px solid #E4DCD5;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(44,32,24,0.12);display:flex;align-items:center;gap:11px;">
+        <span style="width:30px;height:30px;border-radius:999px;background:#EDF6EE;color:#5FA76F;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">✓</span>
+        <div>
+          <div style="font-size:12.5px;font-weight:700;color:#2C2C2C;">Đã đăng lên 5 kênh</div>
+          <div style="font-size:11.5px;color:#8A817A;margin-top:1px;">9 khách nhắn tin hôm nay</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #E0D9D3;padding:64px 32px 72px;">
+    <div style="max-width:1120px;margin:0 auto;">
+      <div style="background:linear-gradient(180deg,#FBF7F3,#F6EFE8);border:1px solid #EFE8E2;border-radius:20px;position:relative;height:420px;overflow:hidden;">
+        <div style="position:absolute;left:9%;top:17%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:64px;height:64px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.6 4.5-4.6 1.3 0 2.6.23 2.6.23v2.9h-1.5c-1.4 0-1.9.9-1.9 1.8V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0 0 24 12Z"></path></svg></div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">Facebook</span>
+        </div>
+        <div style="position:absolute;left:11%;top:62%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:58px;height:58px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-weight:800;font-size:15px;color:#0068FF;">Zalo</div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">Zalo</span>
+        </div>
+        <div style="position:absolute;left:30%;top:76%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:54px;height:54px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="#111"><path d="M16.6 5.8a4.3 4.3 0 0 1-1-2.8h-3.4v13.6a2.5 2.5 0 1 1-2.5-2.5c.26 0 .5.04.75.11v-3.5a6 6 0 0 0-.75-.05A6 6 0 1 0 15.7 16.7V9.7a7.7 7.7 0 0 0 4.5 1.44V7.7a4.3 4.3 0 0 1-3.6-1.9Z"></path></svg></div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">TikTok</span>
+        </div>
+        <div style="position:absolute;left:80%;top:16%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:64px;height:64px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.5a3 3 0 0 0-2.1-2.1C19.5 3.9 12 3.9 12 3.9s-7.5 0-9.4.5A3 3 0 0 0 .5 6.5 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.5 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.5ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"></path></svg></div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">YouTube</span>
+        </div>
+        <div style="position:absolute;left:82%;top:60%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:56px;height:56px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Z" fill="#34A853"></path><circle cx="12" cy="9" r="2.6" fill="#fff"></circle></svg></div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">Google Maps</span>
+        </div>
+        <div style="position:absolute;left:60%;top:80%;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:50px;height:50px;border-radius:999px;background:#fff;box-shadow:0 8px 22px rgba(44,32,24,0.12);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.4 3H3.6A.6.6 0 0 0 3 3.6v16.8a.6.6 0 0 0 .6.6h16.8a.6.6 0 0 0 .6-.6V3.6a.6.6 0 0 0-.6-.6ZM8.3 18.3H5.6V9.7h2.7v8.6ZM7 8.5a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1Zm11.3 9.8h-2.7v-4.2c0-1-.02-2.3-1.4-2.3s-1.6 1.1-1.6 2.2v4.3H9.9V9.7h2.6v1.2h.03a2.85 2.85 0 0 1 2.6-1.4c2.7 0 3.2 1.8 3.2 4.1v4.7Z"></path></svg></div>
+          <span style="font-size:12px;font-weight:600;color:#6B635C;">LinkedIn</span>
+        </div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:100%;max-width:330px;">
+          <div style="width:92px;height:92px;border-radius:999px;margin:0 auto;background:linear-gradient(155deg,#E3A97D,#B8744D);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Merriweather,serif;font-weight:900;font-size:32px;box-shadow:0 14px 32px rgba(184,116,77,0.35);">Ha</div>
+          <h3 style="margin:22px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:22px;line-height:1.35;color:#2C2C2C;">Một chỗ duy nhất cho mọi kênh của bạn</h3>
+          <a href="Havi - Đăng Nhập.dc.html" style="display:inline-block;margin-top:18px;background:#A85B33;color:#fff;border-radius:10px;padding:12px 26px;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(168,91,51,0.28);" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">Nối kênh của bạn</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ve-havi" style="background:#fff;border-top:1px solid #E0D9D3;padding:72px 32px;">
+    <div style="max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;">
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#B8744D;">Về Havi</div>
+        <h2 style="margin:12px 0 0;font-family:Merriweather,serif;font-weight:900;font-size:30px;line-height:1.3;text-wrap:pretty;">Sinh ra vì những người vừa bán hàng, vừa tự làm marketing đến 11 giờ khuya</h2>
+        <p style="margin:16px 0 0;font-size:15px;line-height:1.7;color:#4A4A4A;">Nhóm sáng lập Havi từng làm marketing cho hàng chục chủ tiệm, môi giới và chuyên gia tự hành nghề. Ai cũng biết mình cần đăng bài đều, trả lời khách nhanh, chăm khách cũ — nhưng không có thời gian, không có người, và các công cụ AI marketing thì bắt học quá nhiều thứ.</p>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#4A4A4A;">Havi ra đời để làm thay phần việc lặp đi lặp lại đó: bạn đưa nguyên liệu thô — một tấm ảnh, một đoạn ghi âm — Havi lo phần viết, đăng và tìm khách, dù bạn ở ngành nào.</p>
+        <div style="display:flex;gap:32px;margin-top:26px;">
+          <div><div style="font-family:Merriweather,serif;font-weight:900;font-size:22px;color:#B8744D;">2024</div><div style="font-size:12.5px;color:#8A817A;margin-top:2px;">thành lập tại TP.HCM</div></div>
+          <div><div style="font-family:Merriweather,serif;font-weight:900;font-size:22px;color:#B8744D;">500+</div><div style="font-size:12.5px;color:#8A817A;margin-top:2px;">tiệm đang dùng Havi</div></div>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <div style="background:#fff;border:1px solid #E4DCD5;border-radius:16px;box-shadow:0 18px 40px rgba(44,32,24,0.12);overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;background:#3B6B9F;color:#fff;">
+            <span style="width:30px;height:30px;border-radius:999px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">Ha</span>
+            <div><div style="font-size:13px;font-weight:700;">Havi</div><div style="font-size:11px;opacity:.85;">đang hoạt động</div></div>
+          </div>
+          <div style="padding:16px 16px 62px;display:flex;flex-direction:column;gap:10px;background:#F7F4F1;">
+            <div style="align-self:flex-start;max-width:82%;background:#fff;border:1px solid #EFE8E2;border-radius:12px 12px 12px 4px;padding:11px 13px;font-size:12.5px;line-height:1.55;color:#2C2C2C;">Bài "Ưu đãi cho 30 khách đặt sớm" em viết xong rồi, anh/chị xem giúp em nha</div>
+            <div style="align-self:flex-start;max-width:88%;background:#fff;border:1px solid #EFE8E2;border-radius:12px;padding:11px;display:flex;gap:11px;">
+              <div style="flex:none;width:52px;height:52px;border-radius:8px;background:linear-gradient(150deg,#F2E4D8,#E7D3C3);border:1px solid #E4DCD5;"></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;line-height:1.5;color:#4A4A4A;">Lên lịch <strong style="color:#2C2C2C;">19:30 tối nay</strong> · Facebook, Zalo, TikTok</div>
+                <div style="display:flex;gap:7px;margin-top:8px;">
+                  <span style="font-size:11px;font-weight:700;color:#fff;background:#A85B33;border-radius:6px;padding:5px 12px;">Duyệt</span>
+                  <span style="font-size:11px;font-weight:600;color:#8A817A;border:1px solid #E4DCD5;border-radius:6px;padding:5px 12px;">Sửa lại</span>
+                </div>
+              </div>
+            </div>
+            <div style="align-self:flex-end;max-width:60%;background:#DCEBFB;border-radius:12px 12px 4px 12px;padding:10px 13px;font-size:12.5px;color:#2C2C2C;">Ok em, duyệt luôn nha 👍</div>
+          </div>
+        </div>
+        <div style="position:absolute;right:-18px;bottom:-18px;background:#fff;border:1px solid #E4DCD5;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(44,32,24,0.12);">
+          <div style="font-family:Merriweather,serif;font-weight:900;font-size:20px;color:#B8744D;">2 phút/ngày</div>
+          <div style="font-size:11.5px;color:#8A817A;margin-top:2px;">là đủ để tiệm luôn có bài mới</div>
+        </div>
       </div>
     </div>
   </section>
@@ -73,8 +185,8 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
   <section id="cach-hoat-dong" style="background:#fff;border-top:1px solid #E0D9D3;border-bottom:1px solid #E0D9D3;padding:72px 32px;">
     <div style="max-width:1120px;margin:0 auto;">
       <div style="text-align:center;max-width:640px;margin:0 auto;">
-        <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">4 trạm xử lý, chạy tuần tự bằng 1 nút</h2>
-        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4A4A;">Một luồng khép kín: từ dữ liệu thô đến lượt truy cập và khách hàng thực tế.</p>
+        <h2 style="margin:0;font-family:Merriweather,serif;font-weight:900;font-size:32px;">Bạn làm 1 việc, Havi lo phần còn lại</h2>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#4A4A4A;">Từ tấm ảnh chụp vội đến tin nhắn của khách — mọi thứ ở giữa Havi làm giùm bạn.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px;">
         <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
@@ -100,8 +212,17 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
             <span style="width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:{{ ind.bg }};">{{ ind.badge }}</span>
             <div style="font-family:Merriweather,serif;font-weight:700;font-size:17px;">{{ ind.name }}</div>
           </div>
-          <div style="margin-top:14px;height:120px;border-radius:8px;border:1px solid #E0D9D3;background:repeating-linear-gradient(45deg,#EFE7DF,#EFE7DF 9px,#F5EEE7 9px,#F5EEE7 18px);display:flex;align-items:flex-end;padding:8px;box-sizing:border-box;">
-            <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#8A817A;background:rgba(245,241,237,0.92);border-radius:4px;padding:3px 7px;">{{ ind.imgcap }}</span>
+          <div style="margin-top:16px;border:1px solid #EFE8E2;border-radius:10px;overflow:hidden;background:#FBF8F5;">
+            <div style="height:104px;background-image:{{ ind.img }};background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;padding:10px;box-sizing:border-box;">
+              <span style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,0.35);border-radius:999px;padding:3px 9px;">{{ ind.chan }}</span>
+              <span style="font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);">{{ ind.imgcap }}</span>
+            </div>
+            <div style="padding:11px 12px;">
+              <div style="font-size:12px;line-height:1.5;color:#2C2C2C;">{{ ind.caption }}</div>
+              <div style="display:flex;gap:14px;margin-top:9px;font-size:11px;color:#8A817A;">
+                <span>♡ {{ ind.likes }}</span><span>💬 {{ ind.msgs }} tin nhắn</span><span style="color:#5FA76F;font-weight:600;">Đã đăng</span>
+              </div>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
             <sc-for list="{{ ind.rows }}" as="r" hint-placeholder-count="3">
@@ -150,20 +271,145 @@ a{color:#B8744D;text-decoration:none;} a:hover{color:#D4956F;text-decoration:und
     </div>
   </section>
 
-  <footer style="max-width:1120px;margin:0 auto;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#8A817A;">
-    <span>© 2026 Havi — AI Marketing Đa Ngành</span>
-    <a href="Havi - AI Marketing.dc.html">Demo tương tác →</a>
+  <footer style="background:#231F1C;color:#C9C0B8;padding:56px 32px 0;">
+    <div style="max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:32px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <svg width="32" height="32" viewBox="0 0 40 40" style="display:block;"><rect width="40" height="40" rx="11" fill="#D4956F"></rect><path d="M13 11v18M27 11v18M13 20h14" stroke="#2C2C2C" stroke-width="3.4" stroke-linecap="round"></path><circle cx="27" cy="11" r="3.1" fill="#F5F1ED"></circle></svg>
+          <span style="font-family:Merriweather,serif;font-weight:900;font-size:18px;color:#F5F1ED;">Havi</span>
+        </div>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;max-width:280px;">Trợ lý marketing AI cho tiệm spa, môi giới, kỹ sư và chủ shop — chụp vội một tấm ảnh, Havi lo phần còn lại.</p>
+        <div style="display:flex;gap:10px;margin-top:18px;">
+          <sc-for list="{{ socials }}" as="sc" hint-placeholder-count="4">
+            <a href="{{ sc.href }}" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#F5F1ED;font-size:11px;font-weight:700;" style-hover="background:{{ sc.c }};text-decoration:none;color:#fff;">{{ sc.i }}</a>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#D4956F;">Công ty</div>
+        <div style="margin-top:14px;font-size:13.5px;line-height:1.7;">
+          <p style="margin:0;font-weight:600;color:#F5F1ED;">Công ty TNHH Công Nghệ Havi</p>
+          <p style="margin:8px 0 0;">GPKD số 0312xxxxxx do Sở KH&amp;ĐT TP.HCM cấp</p>
+          <p style="margin:8px 0 0;">Tầng 5, 26 Nguyễn Thị Minh Khai, P. Bến Nghé, Quận 1, TP.HCM</p>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#D4956F;">Liên hệ hỗ trợ</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13.5px;">
+          <a href="tel:19003456" style="display:flex;align-items:center;gap:9px;color:#C9C0B8;"><span style="width:26px;height:26px;border-radius:999px;background:#A85B33;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;">☎</span>Hotline 1900 3456</a>
+          <a href="https://zalo.me/havi" style="display:flex;align-items:center;gap:9px;color:#C9C0B8;"><span style="width:26px;height:26px;border-radius:999px;background:#3B6B9F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">Zalo</span>Chat Zalo OA</a>
+          <a href="https://m.me/havi.vn" style="display:flex;align-items:center;gap:9px;color:#C9C0B8;"><span style="width:26px;height:26px;border-radius:999px;background:#6B7FD7;color:#fff;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.15 2 11.5c0 3.06 1.5 5.78 3.84 7.6.2.16.32.4.33.65l.07 2.14a.9.9 0 0 0 1.27.79l2.39-1.05c.2-.09.43-.1.65-.05a11 11 0 0 0 3.05.42c5.52 0 10-4.15 10-9.5S17.52 2 12 2Zm-1.03 6.4 2.3 2.42 3.86-2.42-4.02 4.85-2.4-2.42-3.75 2.42 4.01-4.85Z"></path></svg></span>Messenger</a>
+          <a href="mailto:hi@havi.vn" style="display:flex;align-items:center;gap:9px;color:#C9C0B8;"><span style="width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,0.1);color:#F5F1ED;display:flex;align-items:center;justify-content:center;font-size:11px;">@</span>hi@havi.vn</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#D4956F;">Sản phẩm</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13.5px;">
+          <a href="#cach-hoat-dong" style="color:#C9C0B8;">Cách hoạt động</a>
+          <a href="#nganh" style="color:#C9C0B8;">Cho ngành của bạn</a>
+          <a href="#gia" style="color:#C9C0B8;">Bảng giá</a>
+          <a href="Havi - AI Marketing.dc.html" style="color:#C9C0B8;">Demo tương tác</a>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1120px;margin:40px auto 0;border-top:1px solid rgba(255,255,255,0.1);padding:20px 0;display:flex;justify-content:space-between;font-size:12.5px;color:#8A817A;">
+      <span>© 2026 Công ty TNHH Công Nghệ Havi. Đã đăng ký bản quyền.</span>
+      <div style="display:flex;gap:20px;"><a href="#" style="color:#8A817A;">Điều khoản</a><a href="#" style="color:#8A817A;">Bảo mật</a></div>
+    </div>
   </footer>
+
+  <div style="position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:40;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;transform:translateY(10px);" data-fab="1">
+    <a href="tel:19003456" style="width:52px;height:52px;border-radius:999px;background:#A85B33;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 14px rgba(0,0,0,0.25);" style-hover="background:#8F4C2A;text-decoration:none;color:#fff;">☎</a>
+    <a href="https://zalo.me/havi" style="width:52px;height:52px;border-radius:999px;background:#3B6B9F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 6px 14px rgba(0,0,0,0.25);" style-hover="opacity:.9;text-decoration:none;color:#fff;">Zalo</a>
+    <a href="https://m.me/havi.vn" style="width:52px;height:52px;border-radius:999px;background:#6B7FD7;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,0.25);" style-hover="opacity:.9;text-decoration:none;color:#fff;"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.15 2 11.5c0 3.06 1.5 5.78 3.84 7.6.2.16.32.4.33.65l.07 2.14a.9.9 0 0 0 1.27.79l2.39-1.05c.2-.09.43-.1.65-.05a11 11 0 0 0 3.05.42c5.52 0 10-4.15 10-9.5S17.52 2 12 2Zm-1.03 6.4 2.3 2.42 3.86-2.42-4.02 4.85-2.4-2.42-3.75 2.42 4.01-4.85Z"></path></svg></a>
+  </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
+  componentDidMount(){
+    const root = document;
+    const targets = [];
+    root.querySelectorAll('section').forEach(sec => {
+      const row = sec.querySelector(':scope > div');
+      const kids = row ? Array.from(row.children) : [];
+      const group = kids.length ? kids : [sec];
+      group.forEach((el, i) => targets.push([el, i]));
+    });
+    targets.forEach(([el, i]) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(26px)';
+      el.style.transition = 'opacity .7s cubic-bezier(.22,.8,.3,1) ' + (i * 70) + 'ms, transform .7s cubic-bezier(.22,.8,.3,1) ' + (i * 70) + 'ms';
+    });
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'none';
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    targets.forEach(([el]) => io.observe(el));
+    this._io = io;
+    if (!('IntersectionObserver' in window)) targets.forEach(([el]) => { el.style.opacity = '1'; el.style.transform = 'none'; });
+
+    const header = root.querySelector('header');
+    if (header) {
+      header.style.transition = 'box-shadow .25s ease, padding .25s ease';
+      this._onScroll = () => {
+        const y = window.scrollY || document.documentElement.scrollTop;
+        header.style.boxShadow = y > 12
+          ? '0 1px 0 #E0D9D3,0 10px 26px rgba(44,32,24,0.10)'
+          : '0 1px 0 #E0D9D3,0 4px 14px rgba(44,44,44,0.05)';
+        header.style.padding = y > 12 ? '10px 32px' : '14px 32px';
+        const fab = root.querySelector('[data-fab]');
+        if (fab) {
+          const show = y > window.innerHeight * 0.7;
+          fab.style.opacity = show ? '1' : '0';
+          fab.style.pointerEvents = show ? 'auto' : 'none';
+          fab.style.transform = show ? 'none' : 'translateY(10px)';
+        }
+      };
+      window.addEventListener('scroll', this._onScroll, { passive: true });
+      this._onScroll();
+    }
+  }
+  componentWillUnmount(){
+    if (this._io) this._io.disconnect();
+    if (this._onScroll) window.removeEventListener('scroll', this._onScroll);
+  }
   renderVals() {
     return {
+      socials: [
+        {i:'f', href:'https://facebook.com/havi.vn', c:'#3B6B9F'},
+        {i:'Zalo', href:'https://zalo.me/havi', c:'#3B6B9F'},
+        {i:'Msg', href:'https://m.me/havi.vn', c:'#6B7FD7'},
+        {i:'YT', href:'https://youtube.com/@havi.vn', c:'#C75B4A'}],
       heroStats: [
         {v:'< 30 giây', l:'nạp liệu thô'},
         {v:'1 nút', l:'chạy cả 4 trạm'},
         {v:'6+ kênh', l:'đăng tự động'}],
+      heroTabs: [
+        {n:'Facebook', bg:'#F0F5FA', fg:'#3B6B9F', bd:'#D6E3F0', dot:'#3B6B9F'},
+        {n:'Zalo', bg:'#FBF8F5', fg:'#8A817A', bd:'#EFE8E2', dot:'#3B6B9F'},
+        {n:'TikTok', bg:'#FBF8F5', fg:'#8A817A', bd:'#EFE8E2', dot:'#2C2C2C'},
+        {n:'YouTube', bg:'#FBF8F5', fg:'#8A817A', bd:'#EFE8E2', dot:'#C75B4A'}],
+      heroTags: ['#uudai','#quan7','#datsom'],
+      heroPostChans: [{b:'FB',c:'#3B6B9F'},{b:'Zalo',c:'#0068FF'},{b:'TT',c:'#111'}],
+      orbit: [
+        {b:'FB', n:'Facebook', c:'#3B6B9F', x:'9%', y:'17%', s:'62px', fs:'15px'},
+        {b:'Zalo', n:'Zalo', c:'#3B6B9F', x:'11%', y:'62%', s:'58px', fs:'12px'},
+        {b:'TT', n:'TikTok', c:'#2C2C2C', x:'30%', y:'76%', s:'54px', fs:'14px'},
+        {b:'YT', n:'YouTube', c:'#C75B4A', x:'80%', y:'16%', s:'62px', fs:'15px'},
+        {b:'GM', n:'Google Maps', c:'#5FA76F', x:'82%', y:'60%', s:'56px', fs:'14px'},
+        {b:'in', n:'LinkedIn', c:'#3B6B9F', x:'60%', y:'80%', s:'50px', fs:'15px'}],
+      channels: [
+        {n:'Facebook', b:'FB', c:'#3B6B9F'},
+        {n:'Zalo', b:'Zalo', c:'#3B6B9F'},
+        {n:'TikTok', b:'TT', c:'#2C2C2C'},
+        {n:'YouTube', b:'YT', c:'#C75B4A'},
+        {n:'Google Maps', b:'GM', c:'#5FA76F'},
+        {n:'LinkedIn', b:'in', c:'#3B6B9F'}],
       heroInputs: [
         {k:'Ảnh', t:'5 tấm ảnh chụp vội bằng điện thoại'},
         {k:'Ghi âm', t:'2 phút nói chuyện lủng củng'},
@@ -174,10 +420,10 @@ class Component extends DCLogic {
         'Kịch bản video Shorts / Reels có phụ đề',
         'Bài đánh giá Google Maps + lịch đăng giờ vàng'],
       steps: [
-        {n:'1', title:'Nạp Liệu Thô', desc:'Ném ảnh, dán link YouTube, ghi âm hoặc gõ 3 gạch đầu dòng. Không cần viết prompt.'},
-        {n:'2', title:'Lò Phản Ứng AI', desc:'Tự nhận diện ngành, xử lý ảnh/video và chế bản nội dung cho từng kênh.'},
-        {n:'3', title:'Tổng Đài Phân Phối', desc:'Đăng thẳng lên Facebook, Zalo, LinkedIn, TikTok, WordPress, Google Maps — đúng giờ vàng.'},
-        {n:'4', title:'Săn Mồi & Chăm Sóc', desc:'Lắng nghe hội nhóm quanh vùng, soạn sẵn câu tư vấn để bạn bấm gửi; CRM nhắc chăm khách cũ đúng lúc.'}],
+        {n:'1', title:'Đưa nguyên liệu thô', desc:'Vài tấm ảnh chụp bằng điện thoại, một đoạn ghi âm hay 3 gạch đầu dòng. Không cần viết prompt, không cần học gì.'},
+        {n:'2', title:'Nhận bài viết sẵn sàng', desc:'Havi hiểu ngành của bạn và viết đúng giọng cho từng kênh — bạn chỉ đọc lướt rồi duyệt.'},
+        {n:'3', title:'Bài tự lên đúng giờ vàng', desc:'Havi đăng giúp bạn lên các kênh đã nối, vào khung giờ khách hay lướt nhất.'},
+        {n:'4', title:'Khách nhắn, đã có câu trả lời', desc:'Có người hỏi mua, Havi báo ngay kèm câu tư vấn soạn sẵn; khách cũ sắp quên tiệm, Havi nhắc bạn.'}],
       pricing: [
         {name:'Dùng thử', price:'0đ', per:'14 ngày — không cần thẻ', cta:'Thử miễn phí',
          feats:['Đủ mọi tính năng','Kết nối 2 kênh','Hết 14 ngày mới quyết định'],
@@ -190,17 +436,17 @@ class Component extends DCLogic {
          bg:'#2C2C2C', bd:'#2C2C2C', fg:'#F5F1ED', sub:'#C9C0B8', accent:'#D4956F', btnBg:'#A85B33', btnFg:'#fff', btnBd:'#D4956F'}
       ],
       industries: [
-        {name:'Spa / Tiệm Nước', badge:'SP', bg:'#D4956F', imgcap:'ảnh thật · before/after của khách', rows:[
+        {name:'Spa / Tiệm Nước', badge:'SP', bg:'#D4956F', img:'linear-gradient(160deg,#E8C7AE,#B8744D)', chan:'Facebook', imgcap:'Trước / sau 6 buổi', caption:'Da mụn 3 năm, sau 6 buổi đã mịn lại — tuần này còn 3 suất soi da miễn phí.', likes:'214', msgs:'9', rows:[
           {k:'Nạp', t:'Bạn chỉ cần chụp 1 tấm ảnh khách trước/sau khi làm dịch vụ'},
           {k:'AI', t:'Havi làm đẹp ảnh, gắn logo tiệm và viết bài giới thiệu hấp dẫn'},
           {k:'Đăng', t:'Tự động đăng lên Fanpage và Google Maps của tiệm'},
           {k:'Săn', t:'Ai hỏi "chỗ nặn mụn uy tín" quanh vùng, Havi báo ngay và soạn sẵn câu trả lời — bạn ưng thì bấm gửi'}]},
-        {name:'Môi Giới / Tín Dụng', badge:'MG', bg:'#3B6B9F', imgcap:'ảnh thật · căn nhà / mặt bằng', rows:[
+        {name:'Môi Giới / Tín Dụng', badge:'MG', bg:'#3B6B9F', img:'linear-gradient(160deg,#9DB6D2,#3B6B9F)', chan:'Zalo', imgcap:'Nhà Q7 · 4 tỷ · sổ hồng riêng', caption:'Nhà 1 trệt 2 lầu hẻm xe hơi Q7, 4 tỷ TL, sổ hồng riêng — xem nhà trong hôm nay.', likes:'86', msgs:'14', rows:[
           {k:'Nạp', t:'Bạn chỉ cần gõ 3 dòng: vị trí, giá, pháp lý — kèm vài ảnh chụp vội'},
           {k:'AI', t:'Havi làm nét ảnh, gắn số điện thoại và viết tin rao hấp dẫn, dễ lên top tìm kiếm'},
           {k:'Đăng', t:'Tự động đăng lên Zalo, Fanpage và các trang rao vặt cùng lúc'},
           {k:'Săn', t:'Có người hỏi mua nhà hay vay vốn trong hội nhóm? Havi báo ngay kèm câu trả lời soạn sẵn — bạn bấm gửi là xong'}]},
-        {name:'Kỹ Sư / Chuyên Gia', badge:'KS', bg:'#4A4A4A', imgcap:'ảnh thật · sơ đồ / kết quả dự án', rows:[
+        {name:'Kỹ Sư / Chuyên Gia', badge:'KS', bg:'#4A4A4A', img:'linear-gradient(160deg,#9A9A9A,#4A4A4A)', chan:'YouTube', imgcap:'Case study · xử lý nứt sàn', caption:'Sàn nứt sau 2 năm — nguyên nhân và cách xử lý dứt điểm, kể lại từ công trình tuần rồi.', likes:'132', msgs:'7', rows:[
           {k:'Nạp', t:'Bạn chỉ cần ghi âm 2 phút kể lại vấn đề vừa xử lý trong ngày'},
           {k:'AI', t:'Havi viết lại thành bài chia sẻ kinh nghiệm chuyên nghiệp, dễ đọc'},
           {k:'Đăng', t:'Tự động đăng lên LinkedIn và YouTube của bạn, đúng giờ nhiều người xem'},
