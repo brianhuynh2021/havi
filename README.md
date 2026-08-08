@@ -50,13 +50,23 @@ npm run dev:api
 API ở <http://localhost:8000> (Swagger tại `/docs`, chỉ bật khi `HAVI_DEBUG=true`).
 Chi tiết: [`apps/backend/README.md`](apps/backend/README.md).
 
-Chạy worker/scheduler khi cần (cần Redis ở bước 1):
+Worker là bắt buộc nếu muốn thử tạo nội dung — `POST /content/jobs` chỉ đẩy job
+vào hàng đợi, không có worker thì job nằm mãi ở `queued`:
 
 ```bash
-cd apps/backend
-uv run celery -A worker.celery_app:celery_app worker -l info
-uv run celery -A scheduler.beat:celery_app beat -l info
+npm run dev:worker
 ```
+
+Scheduler (chỉ cần khi làm publish theo lịch, Tuần 7):
+
+```bash
+cd apps/backend && uv run celery -A scheduler.beat:celery_app beat -l info
+```
+
+**Chưa có API key LLM** thì job sẽ chuyển sang `failed` với lý do "không có
+provider nào được cấu hình", và UI hiện lỗi kèm nút thử lại — đúng như thiết kế,
+không phải hỏng. Điền `HAVI_GEMINI_API_KEY` trong `apps/backend/.env` để sinh
+bài thật.
 
 ### 3. Frontend — Next.js
 
@@ -86,6 +96,7 @@ cd apps/backend && uv run ruff check . && uv run pytest
 | `npm run infra:up` / `infra:down` | Bật/tắt Postgres, Redis, MinIO |
 | `npm run migrate` | `alembic upgrade head` |
 | `npm run dev:web` / `dev:api` | Chạy frontend / backend (dev, reload) |
+| `npm run dev:worker` | Chạy Celery worker (cần cho tạo nội dung) |
 | `npm run generate:api` | Sinh lại TypeScript client từ OpenAPI |
 | `npm run lint:web` / `lint:api` | Lint frontend / backend |
 | `npm run test:web` / `test:api` | Test frontend (Vitest) / backend (pytest) |

@@ -82,7 +82,12 @@ class ContentRepository:
         job.status = ContentJobStatus.FAILED
         job.failure_reason = reason[:500]
         job.finished_at = datetime.now(UTC)
-        await self._session.flush()
+        # Commit ngay, không chỉ flush: nơi gọi đánh dấu `failed` rồi ném
+        # `GenerationFailed` ngay sau đó, mà `session_scope` của worker rollback
+        # khi gặp exception — flush suông sẽ bị cuốn theo và job kẹt ở `queued`
+        # vĩnh viễn, frontend poll 3 phút rồi báo sai. Trạng thái thất bại là
+        # thứ phải sống sót đúng cái exception đang đẩy nó đi.
+        await self._session.commit()
         return job
 
     # --- items --------------------------------------------------------------

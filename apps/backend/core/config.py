@@ -13,6 +13,11 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Không để pydantic-settings tự parse field kiểu list/dict thành JSON.
+        # Mặc định nó parse TRƯỚC validator, nên `HAVI_CORS_ORIGINS=a,b` (đúng
+        # như .env.example ghi) ném SettingsError thay vì chạy `_split_origins`
+        # bên dưới — backend không khởi động nổi với file .env mẫu.
+        enable_decoding=False,
     )
 
     env: Literal["local", "staging", "production"] = "local"

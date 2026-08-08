@@ -105,7 +105,10 @@ class ContentEngine:
             )
         except AllProvidersFailed as exc:
             reason = str(exc)
-            await self._content.mark_job_failed(job, reason=reason)
+            # Ghi event TRƯỚC khi `mark_job_failed` commit: cả hai cùng nằm
+            # trong một transaction nên cùng sống sót. Đảo thứ tự thì event rơi
+            # vào transaction mới và bị rollback cuốn đi khi `GenerationFailed`
+            # ném ra.
             await self._events.record(
                 EventLogEntry(
                     workspace_id=workspace_id,
@@ -115,6 +118,7 @@ class ContentEngine:
                     error=reason,
                 )
             )
+            await self._content.mark_job_failed(job, reason=reason)
             raise GenerationFailed(reason) from exc
 
         status = initial_status(workspace.publish_mode)
