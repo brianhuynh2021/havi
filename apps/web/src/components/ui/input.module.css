@@ -16,7 +16,17 @@
 }
 
 .field::placeholder {
-  color: var(--color-muted);
+  color: var(--color-placeholder);
+}
+
+/* Ô nhập màn auth: to hơn hẳn ô trong app. Đây là màn đầu tiên người dùng gặp,
+   thường trên điện thoại — font 18px cũng tránh iOS Safari tự zoom khi focus
+   (Safari zoom mọi input dưới 16px). */
+.large {
+  padding: 16px;
+  border-width: 1.5px;
+  border-radius: 12px;
+  font-size: 18px;
 }
 
 .textarea {

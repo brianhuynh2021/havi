@@ -13,6 +13,7 @@ export function AuthShell({ children }: AuthShellProps) {
         <div className={styles.brandText}>Havi</div>
       </div>
       <div className={styles.card}>{children}</div>
+      <p className={styles.tagline}>Havi — trợ lý marketing cho tiệm của bạn</p>
     </div>
   );
 }

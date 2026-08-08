@@ -50,6 +50,7 @@ export function LoginScreen() {
           Email
         </label>
         <Input
+          scale="large"
           id="email"
           type="email"
           inputMode="email"
@@ -63,6 +64,7 @@ export function LoginScreen() {
           Mật khẩu
         </label>
         <Input
+          scale="large"
           id="password"
           type="password"
           autoComplete="current-password"
