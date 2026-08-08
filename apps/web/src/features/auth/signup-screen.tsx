@@ -5,17 +5,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/lib/auth/session";
+import { signUp } from "./auth.api";
 import { MIN_PASSWORD_LENGTH, isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
 
 export function SignupScreen() {
   const router = useRouter();
+  const { signIn } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function submit() {
+  async function submit() {
     if (!name.trim()) {
       setError("Nhập tên tiệm hoặc tên chị/anh để Havi xưng hô đúng");
       return;
@@ -29,7 +33,16 @@ export function SignupScreen() {
       return;
     }
     setError(null);
-    router.push("/onboarding");
+    setSubmitting(true);
+    const result = await signUp(name.trim(), email.trim(), password);
+    if (!result.ok) {
+      setError(result.message);
+      setSubmitting(false);
+      return;
+    }
+    // Đăng ký xong là đã đăng nhập luôn (backend trả token) — không bắt nhập lại.
+    signIn(result.tokens);
+    router.replace("/onboarding");
   }
 
   return (
@@ -72,7 +85,11 @@ export function SignupScreen() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {error ? (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        ) : null}
 
         <p className={styles.consentText}>
           Bấm tiếp tục là chị/anh đồng ý với Điều khoản sử dụng và Chính sách
@@ -80,8 +97,8 @@ export function SignupScreen() {
           nhận bản nháp qua Zalo.
         </p>
 
-        <Button variant="primary" onClick={submit}>
-          Tiếp tục
+        <Button variant="primary" onClick={submit} disabled={submitting}>
+          {submitting ? "Đang tạo tài khoản…" : "Tiếp tục"}
         </Button>
 
         <p className={styles.footerText}>

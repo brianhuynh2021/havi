@@ -1,18 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "@/lib/auth/session";
+import { login } from "./auth.api";
 import { isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
 
 export function LoginScreen() {
+  const router = useRouter();
+  const { signIn } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function submit() {
+  async function submit() {
     if (!isValidEmail(email)) {
       setError("Email chưa đúng — kiểm tra lại giúp chị nhé");
       return;
@@ -22,6 +28,16 @@ export function LoginScreen() {
       return;
     }
     setError(null);
+    setSubmitting(true);
+    const result = await login(email.trim(), password);
+    if (!result.ok) {
+      setError(result.message);
+      setSubmitting(false);
+      return;
+    }
+    signIn(result.tokens);
+    // Chưa có workspace thì phải đi onboarding trước, không thì app rỗng.
+    router.replace(result.tokens.needsOnboarding ? "/onboarding" : "/");
   }
 
   return (
@@ -53,10 +69,14 @@ export function LoginScreen() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {error ? (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        ) : null}
 
-        <Button variant="primary" onClick={submit}>
-          Đăng nhập
+        <Button variant="primary" onClick={submit} disabled={submitting}>
+          {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
         </Button>
 
         <p className={styles.footerText}>

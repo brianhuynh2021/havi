@@ -131,7 +131,8 @@ Architecture/docs:
 
 ### Chưa hoàn thành
 
-- [ ] Frontend routes, interaction thật và visual regression tests.
+- [ ] Frontend routes, interaction thật và visual regression tests. Auth đã nối
+  API thật (26 test web pass); 5 tab app, onboarding và quên mật khẩu vẫn fixture.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -371,7 +372,8 @@ Frontend:
 - [ ] AI Marketing demo theo persona cho sales/internal review.
 - [x] Thêm reduced-motion behavior cho progress animation
   (`@media (prefers-reduced-motion: reduce)` ở mọi spinner).
-- [ ] Tạo route guards mock: guest, needs onboarding và authenticated.
+- [x] Route guards cho guest, needs onboarding và authenticated — làm thẳng bản
+  thật ở Tuần 4 thay vì bản mock, xem `lib/auth/route-guard.tsx`.
 
 Product/legal:
 
@@ -438,10 +440,19 @@ Backend:
 
 Frontend:
 
-- [ ] Nối auth API, session bootstrap, refresh và logout.
-- [ ] Route guards thật cho guest/onboarding/app.
-- [ ] Nối industry/brand profile onboarding.
-- [ ] Xử lý loading, sai mật khẩu, mã hết hạn, throttled và network failure.
+- [x] Nối auth API, session bootstrap, refresh và logout. Đăng nhập/đăng ký gọi
+  API thật; `apiClient` tự refresh khi gặp 401 và gộp nhiều 401 song song thành
+  một lượt refresh (refresh token xoay vòng — gọi hai lần bằng token cũ sẽ bị
+  revoke cả session). Token nằm trong `lib/auth/token-store.ts`, là nơi duy nhất
+  đọc/ghi, để đổi sang httpOnly cookie sau chỉ phải sửa một file.
+- [x] Route guards thật cho guest/onboarding/app (`lib/auth/route-guard.tsx`,
+  6 test). Là guard UX — dữ liệu thật vẫn do backend chặn bằng JWT + tenant scope.
+- [ ] Nối industry/brand profile onboarding. **Chưa làm** — màn onboarding vẫn
+  chạy fixture, chưa gọi `POST /workspaces` nên `needs_onboarding` không bao giờ
+  chuyển sang false.
+- [x] Xử lý loading, sai mật khẩu và network failure ở màn đăng nhập/đăng ký
+  (nút disable khi đang gửi, lỗi hiện qua `role="alert"`, mất mạng có copy tiếng
+  Việt riêng). **Chưa xong:** mã hết hạn và throttled ở màn quên mật khẩu.
 - [ ] Thêm screen chọn workspace khi user có nhiều workspace.
 
 Tests/security:
@@ -782,8 +793,13 @@ Một feature chỉ được coi là hoàn thành khi:
 
 Frontend:
 
-- [ ] Component tests cho form, stateful controls và approval actions.
-- [ ] Integration tests cho feature với generated API client được mock ở transport layer.
+- [ ] Component tests cho form, stateful controls và approval actions. Form đăng
+  nhập đã có; approval actions chưa (chưa nối API).
+- [x] Integration tests cho feature với generated API client được mock ở transport
+  layer (`login-screen.test.tsx` mock `fetch`, không mock module app). Lưu ý:
+  `publicApiClient` phải gọi `globalThis.fetch` tại thời điểm request — mặc định
+  của openapi-fetch chốt `fetch` lúc tạo client, khiến mock không chặn được và
+  test lặng lẽ gọi backend thật.
 - [ ] Visual regression cho các viewport chuẩn và 6 prototype.
 - [ ] E2E bằng browser cho auth, onboarding và content lifecycle.
 - [ ] Automated accessibility check + keyboard walkthrough thủ công.
