@@ -119,9 +119,10 @@ Backend:
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
 - [x] Celery worker/Beat scaffold.
-- [x] 118 backend tests đang pass (31 contract/state-machine/provider-router + 87
-  auth/workspace/brand-profile/media/content/approval chạy thật trên Postgres +
-  MinIO); Ruff đang pass.
+- [x] 242 backend tests đang pass (contract/state-machine/provider-router +
+  auth/workspace/brand-profile/media/content/approval/publish/connections chạy
+  thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
+  mạng thật); Ruff đang pass. 70 web test pass.
 
 Architecture/docs:
 
@@ -631,13 +632,32 @@ Mục tiêu: đăng một bài đã duyệt lên Facebook Page đúng lịch và
 
 Backend/platform:
 
-- [ ] Facebook OAuth start/callback với signed state và CSRF protection.
-- [ ] Lưu token mã hóa; không trả token về frontend.
-- [ ] Connection status: connected, expired, revoked; reconnect flow.
+- [x] Facebook OAuth start/callback với signed state và CSRF protection —
+  `adapters/oauth/facebook.py` (3 bước Graph: code → user token ngắn hạn →
+  **user token dài hạn** → Page token qua `/me/accounts`). Bỏ bước đổi dài hạn
+  thì Page token cũng ngắn hạn theo và kênh chết sau vài giờ.
+  `/start` trả JSON cho frontend; `/callback` trả **302** về app (Facebook điều
+  hướng trình duyệt tới, không phải fetch) và `include_in_schema=False` để không
+  lọt vào TS client. `code`/`state` khai optional vì bấm "Huỷ" ở Facebook gọi
+  lại callback với `error=access_denied` mà không có `code` — khai bắt buộc thì
+  chủ tiệm rơi vào 422.
+- [x] Lưu token mã hóa; không trả token về frontend. `to_schema` liệt kê field
+  bằng tay thay vì `model_validate` — thêm field mới phải sửa có chủ đích, không
+  vô tình đẩy token ra response.
+- [x] Connection status: connected, expired, revoked; reconnect flow. Nối lại
+  cập nhật bản ghi cũ (unique `(workspace_id, platform)`) và xoá `failure_reason`.
+  Ngắt kênh xoá hẳn bản ghi kèm token.
 - [x] Facebook adapter (`adapters/publishers/facebook.py`) — Graph API v21.0,
-  /feed cho bài chữ và /photos cho bài ảnh, map lỗi Graph sang 3 loại
-  (18 test). Ưu tiên `code` của Graph hơn HTTP status vì Graph trả 400 cho cả
-  token hết hạn lẫn nội dung bị từ chối.
+  /feed cho bài chữ, /photos cho bài một ảnh, và bài nhiều ảnh upload từng ảnh
+  `published=false` lấy `media_fbid` rồi ghép qua `attached_media` (ảnh chưa
+  publish không hiện lên Trang nên bước cuối hỏng cũng không lọt gì ra ngoài).
+  Map lỗi Graph sang 3 loại. Ưu tiên `code` của Graph hơn HTTP status vì Graph
+  trả 400 cho cả token hết hạn lẫn nội dung bị từ chối.
+  Graph trả 2xx mà thiếu ID bài → `VALIDATION_PERMANENT` chứ không retry: bài
+  rất có thể ĐÃ lên Trang, retry là đường thẳng tới đăng trùng.
+- [x] `HAVI_USE_FAKE_PUBLISHER` + validator chặn ở staging/production (cùng khuôn
+  `HAVI_USE_MOCK_LLM`). Fake publisher lọt lên staging thì mọi bài báo "đã đăng",
+  dashboard xanh, mà Trang trống trơn — sai kiểu im lặng, phải chặn ở deploy.
   **Beta test được mà chưa cần App Review:** Development mode cho người có vai
   trò Tester nối Page của chính họ và đăng thật — đủ cho closed beta 5-10 tiệm,
   thêm thủ công từng người. App Review + Business Verification (cần pháp nhân)
@@ -650,7 +670,9 @@ Backend/platform:
   channel, scheduled_at) chuẩn hoá UTC — cùng mốc thời gian viết ở hai offset
   ra cùng khoá, nếu không reschedule về đúng giờ cũ lại đăng trùng.
   `PublishService.run_due`/`run_job` đã ghép adapter + repository và chạy
-  đầu-cuối với `FakePublisher`. **Chưa xong:** Celery task gọi service này.
+  đầu-cuối với `FakePublisher`. `worker/publish_service_factory.py` đã lắp sẵn
+  service với adapter thật/fake theo config. **Chưa xong:** Celery task gọi
+  factory này.
 - [x] Phân loại temporary / auth-permission / validation-permanent
   (`domain/ports/publisher.py`). Chỉ `temporary` được retry — hai loại kia đi
   thẳng dead-letter vì retry cũng hỏng y hệt.
@@ -672,7 +694,18 @@ Tests:
 - [x] Double-click và duplicate worker không đăng hai bài — 22 test chạy thật
   trên Postgres, gồm test xác nhận đúng `uq_publish_jobs_idempotency_key` chặn
   chứ không phải FK chặn nhầm.
-- [ ] Token redaction tests trong logs/errors.
+- [x] Token redaction tests trong logs/errors (`TestTokenRedaction`). Không rơi
+  về `response.text` khi thiếu `error.message`, không nội suy `httpx` exception
+  (message của nó mang cả URL), và `OAuthAccount.__repr__` che token — vì
+  `logger.exception` in cả local variable của frame.
+- [x] OAuth/CSRF tests (`test_connection_flow.py`, 39 test): state giả mạo, state
+  ký bằng khoá khác, state của Facebook dùng lại ở callback Zalo, và người đã bị
+  gỡ khỏi workspace trong 10 phút state còn sống. Graph API thay bằng
+  `httpx.MockTransport` nên adapter chạy nguyên vẹn, chỉ tầng socket là giả.
+- [x] Router tests (`test_connection_router.py`, 12 test): callback redirect chứ
+  không trả JSON, bấm "Huỷ" không rơi vào 422, cross-tenant không thấy kết nối
+  của nhau, response không bao giờ chứa token, 501 (chưa có adapter) khác 503
+  (thiếu env).
 
 Exit criteria:
 
@@ -978,6 +1011,13 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Nối editor + version history và Lịch đăng vào API thật — **Gate C đóng**:
   vòng nạp liệu → sinh bài → sửa → duyệt → lên lịch chạy thật từ trình duyệt.
   **Việc tiếp theo:** Facebook OAuth + adapter publish (Tuần 7, Gate D).
+- [x] Facebook OAuth (`/connections/*`) + adapter Graph API publish — backend
+  Tuần 7 xong: nối/nối lại/ngắt kênh, token mã hoá không ra response, đăng bài
+  chữ/một ảnh/nhiều ảnh, phân loại lỗi và redaction token.
+  **Việc tiếp theo để đóng Gate D:** (1) Celery beat task gọi
+  `publish_service_factory` theo lịch, (2) Connection UI + reconnect CTA ở
+  frontend, (3) endpoint retry thủ công cho job dead-letter, (4) đăng thử một
+  bài thật lên Page pilot bằng Development mode.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

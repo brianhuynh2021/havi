@@ -12,7 +12,10 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from adapters.oauth.base import OAuthClientPort
+from adapters.oauth.facebook import FacebookOAuthClient
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
@@ -26,11 +29,13 @@ from adapters.storage.object_storage import ObjectStorage
 from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
 from application.services.brand_profile_service import BrandProfileService
+from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
 from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.media_service import MediaService
 from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
+from core.enums import Platform
 from core.security import decode_access_token
 
 bearer_scheme = HTTPBearer(auto_error=True)
@@ -111,6 +116,32 @@ def get_approval_service(session: DbSessionDep) -> ApprovalService:
 
 
 ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
+
+
+@lru_cache
+def _oauth_clients() -> dict[Platform, OAuthClientPort]:
+    """Chỉ Facebook có adapter ở pilot — Zalo/Google vắng mặt ở đây là cố ý.
+
+    `ConnectionService` sẽ ném `PlatformNotSupported` cho nền tảng không có
+    trong dict, và router dịch thành 501. Như vậy UI không bao giờ hiện
+    "đã nối" cho một kênh chưa có adapter thật (ROADMAP Tuần 7, mục frontend).
+
+    Cùng lý do lru_cache như `_object_storage`: không nhận `Settings` làm tham
+    số vì BaseSettings không hashable; `get_settings()` đã cache sẵn.
+    """
+    return {Platform.FACEBOOK: FacebookOAuthClient(get_settings())}
+
+
+def get_connection_service(session: DbSessionDep, settings: SettingsDep) -> ConnectionService:
+    return ConnectionService(
+        connections=ConnectionRepository(session),
+        members=WorkspaceMemberRepository(session),
+        oauth_clients=_oauth_clients(),
+        settings=settings,
+    )
+
+
+ConnectionServiceDep = Annotated[ConnectionService, Depends(get_connection_service)]
 
 
 class AuthContext:
