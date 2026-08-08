@@ -635,12 +635,15 @@ Backend/platform:
 - [ ] Lưu token mã hóa; không trả token về frontend.
 - [ ] Connection status: connected, expired, revoked; reconnect flow.
 - [ ] Facebook adapter mapping text/media và normalize platform errors.
-- [ ] Scheduler tạo publish job đến hạn.
+- [x] Scheduler tạo publish job đến hạn (`PublishService.dispatch_due`) — quét
+  bài `scheduled` tới giờ, idempotent nên beat chạy mỗi 5 phút không sinh job
+  trùng. **Chưa xong:** nối vào Celery beat task thật.
 - [x] Repository publish với unique idempotency key, row lock (`FOR UPDATE SKIP
   LOCKED`) và retry backoff 60s/300s/900s. Khoá dựng từ (content_item_id,
   channel, scheduled_at) chuẩn hoá UTC — cùng mốc thời gian viết ở hai offset
   ra cùng khoá, nếu không reschedule về đúng giờ cũ lại đăng trùng.
-  **Chưa xong:** worker Celery gọi repository này.
+  `PublishService.run_due`/`run_job` đã ghép adapter + repository và chạy
+  đầu-cuối với `FakePublisher`. **Chưa xong:** Celery task gọi service này.
 - [x] Phân loại temporary / auth-permission / validation-permanent
   (`domain/ports/publisher.py`). Chỉ `temporary` được retry — hai loại kia đi
   thẳng dead-letter vì retry cũng hỏng y hệt.
