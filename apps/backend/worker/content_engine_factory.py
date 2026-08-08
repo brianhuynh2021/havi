@@ -5,11 +5,13 @@ những repository/adapter mà API dùng, không nhân đôi business rule (nguy
 "API, worker và scheduler gọi cùng application service", SYSTEM_ARCHITECTURE.md §0).
 """
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from adapters.llm.anthropic import AnthropicProvider
 from adapters.llm.gemini import GeminiProvider
+from adapters.llm.mock import MockProvider
 from adapters.llm.openai import OpenAIProvider
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -22,9 +24,19 @@ from core.config import get_settings
 from domain.policies.provider_router import ProviderRouter
 from domain.ports.llm import LLMProvider
 
+logger = logging.getLogger(__name__)
+
 
 def build_provider_router() -> ProviderRouter:
     settings = get_settings()
+    if settings.use_mock_llm:
+        # Chỉ tới được đây khi HAVI_ENV=local — Settings ném lỗi lúc khởi động
+        # nếu bật mock ở staging/production.
+        logger.warning(
+            "LLM đang chạy MOCK (HAVI_USE_MOCK_LLM=true) — draft là văn mẫu, "
+            "không phải model thật. Đặt false để gọi LLM thật."
+        )
+        return ProviderRouter({LLMProvider.GEMINI: MockProvider()})
     return ProviderRouter(
         {
             LLMProvider.GEMINI: GeminiProvider(settings),

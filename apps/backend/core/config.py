@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,6 +49,11 @@ class Settings(BaseSettings):
 
     token_encryption_key: str = ""
 
+    # Dùng MockProvider thay vì gọi LLM thật. Mặc định bật ở local để chạy tay
+    # không tốn tiền; `_force_real_llm_outside_local` bên dưới chặn nó ở
+    # staging/production, nơi bắt buộc phải verify bằng model thật.
+    use_mock_llm: bool = True
+
     # Multi-provider LLM (SYSTEM_ARCHITECTURE.md §5.1) — Gemini ưu tiên, hai
     # provider còn lại là fallback khi Gemini lỗi/quota/output không đạt.
     # Provider thiếu key sẽ bị router bỏ qua, không gọi rồi lỗi.
@@ -72,6 +77,22 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @model_validator(mode="after")
+    def _force_real_llm_outside_local(self) -> "Settings":
+        """Mock LLM chỉ được sống ở local.
+
+        Ném lỗi lúc khởi động thay vì âm thầm tắt mock: staging/production mà
+        lỡ để `HAVI_USE_MOCK_LLM=true` thì mọi bản nháp là văn mẫu — chủ tiệm
+        đăng lên Facebook thật mà tưởng AI viết. Sai kiểu đó phải chặn ngay ở
+        deploy, không phải phát hiện sau khi bài đã lên mạng.
+        """
+        if self.use_mock_llm and self.env != "local":
+            raise ValueError(
+                f"HAVI_USE_MOCK_LLM=true không được phép khi HAVI_ENV={self.env}. "
+                "Mock LLM chỉ dùng ở local; staging/production phải gọi model thật."
+            )
+        return self
 
 
 @lru_cache
