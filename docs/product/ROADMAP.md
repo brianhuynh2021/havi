@@ -131,9 +131,9 @@ Architecture/docs:
 
 ### Chưa hoàn thành
 
-- [ ] Frontend routes, interaction thật và visual regression tests. Auth và
-  onboarding đã nối API thật (31 test web pass); 5 tab app và quên mật khẩu vẫn
-  fixture.
+- [ ] Frontend routes, interaction thật và visual regression tests. Auth,
+  onboarding và tab Tạo nội dung đã nối API thật (41 test web pass); 4 tab còn
+  lại và quên mật khẩu vẫn fixture. Chưa có visual regression.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -213,8 +213,9 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
 - [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app).
   **Chưa xong:** brand voice cơ bản và kết nối Facebook Page.
-- [ ] Upload ảnh + nhập text; ghi âm có thể để sau nếu ảnh/text chưa ổn định.
-- [ ] Một content job sinh nhiều draft theo kênh bằng structured output.
+- [x] Upload ảnh + nhập text đã chạy thật end-to-end. Ghi âm để sau (nút disable).
+- [x] Một content job sinh nhiều draft theo kênh bằng structured output —
+  backend và frontend đều đã nối; job chạy thật cần worker + API key LLM.
 - [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
   đã chạy thật. **Chưa xong:** frontend còn dùng fixture, chưa nối API.
 - [ ] Facebook Page OAuth + publish bằng API chính thức.
@@ -512,10 +513,17 @@ Backend/worker:
 
 Frontend:
 
-- [ ] Upload progress, cancel/retry và preview.
-- [ ] Tạo content job từ ảnh/text và poll job status.
-- [ ] Mapping queued/processing/drafts_ready/failed vào đúng UI prototype.
-- [ ] Không dùng timer 2.9s giả lập khi đã nối API thật.
+- [x] Upload ảnh thật: xin ticket → POST thẳng lên object storage → `/complete`.
+  Bytes không đi qua API. **Chưa xong:** progress %, cancel giữa chừng và
+  preview ảnh (hiện chỉ hiện tên file trong chip).
+- [x] Tạo content job từ ảnh/text và poll job status (`use-job-polling.ts`).
+  `Idempotency-Key` gắn theo bộ liệu thô — bấm hai lần không tốn hai lần tiền
+  LLM, verify thật: cùng key trả về cùng `job.id`.
+- [x] Mapping queued/processing/drafts_ready/failed vào UI: spinner khi
+  queued/processing, nạp lại hàng chờ khi `drafts_ready`, `failed` hiện lỗi kèm
+  nút thử lại. Poll giãn dần 1.5→5s, trần ~3 phút rồi báo thay vì quay vô tận.
+- [x] Không dùng timer 2.9s giả lập — fixture draft/generating đã xoá, màn đọc
+  `GET /content?status=pending_approval` thật.
 
 Tests:
 
@@ -551,8 +559,13 @@ Backend:
 
 Frontend:
 
-- [ ] Nối draft editor, version history, approve/reject và bulk approve.
-- [ ] Optimistic UI có rollback + toast khi backend từ chối.
+- [ ] Nối approve/reject và bulk approve — **đã xong** ở tab Tạo nội dung, bao
+  gồm partial failure của "Duyệt & đăng hết" (nói rõ bài nào chưa duyệt được kèm
+  lý do, không im lặng). **Chưa xong:** draft editor và version history.
+- [ ] Optimistic UI có rollback + toast khi backend từ chối. Hiện đang làm ngược
+  lại: chờ backend trả lời rồi mới bỏ bài khỏi hàng chờ, 409 thì hiện lỗi và nạp
+  lại danh sách. An toàn hơn nhưng chậm hơn một nhịp trên 4G — đổi sang
+  optimistic khi có toast component.
 - [ ] Nối calendar, timezone Asia/Ho_Chi_Minh và reschedule.
 - [ ] Hiển thị rõ pending, approved, scheduled, publishing, published và failed.
 - [ ] `full_auto` chỉ hiện như controlled setting; chưa mở cho pilot user nếu policy chưa chốt.
@@ -803,8 +816,9 @@ Một feature chỉ được coi là hoàn thành khi:
 
 Frontend:
 
-- [ ] Component tests cho form, stateful controls và approval actions. Form đăng
-  nhập đã có; approval actions chưa (chưa nối API).
+- [x] Component tests cho form, stateful controls và approval actions — form
+  đăng nhập, onboarding và approval (duyệt lẻ, duyệt hết, 409, partial failure)
+  đều có test chạy qua transport-layer mock.
 - [x] Integration tests cho feature với generated API client được mock ở transport
   layer (`login-screen.test.tsx` mock `fetch`, không mock module app). Lưu ý:
   `publicApiClient` phải gọi `globalThis.fetch` tại thời điểm request — mặc định
@@ -897,6 +911,10 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   **Chưa làm:** Landing Page và demo AI Marketing (sales-only, không phải core
   app — để P1/P2), route guards mock, keyboard/focus walkthrough thủ công,
   design sign-off (cần founder/QA, không tự tick được).
+- [x] Nối onboarding và tab Tạo nội dung vào API thật — vòng nạp liệu → sinh
+  bài → duyệt đã chạy thật từ trình duyệt, không còn fixture.
+  **Việc tiếp theo:** editor + version history, rồi nối Lịch đăng (Tuần 6), sau
+  đó Facebook OAuth/publish (Tuần 7) để đóng Gate C và D.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
   — Gate B cần design review của founder/QA, xem §6.
