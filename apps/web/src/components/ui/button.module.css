@@ -39,6 +39,29 @@
   background: var(--color-primary-dark);
 }
 
+/* Nút chính màn auth: to, đậm, dùng --color-action (#a85b33) chứ không phải
+   --color-primary (#d4956f). Primary quá nhạt để làm nút hành động — chữ trắng
+   trên nền đó không đạt tương phản, và prototype cũng dùng màu đậm. */
+.large {
+  width: 100%;
+  padding: 17px 0;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.primary.large {
+  background: var(--color-action);
+}
+
+.primary.large:hover:not(:disabled) {
+  background: var(--color-action-hover);
+}
+
+.primary.large:disabled {
+  background: var(--color-action-disabled);
+  opacity: 1;
+}
+
 .outline {
   background: #fff;
   border: 1px solid var(--color-border);
@@ -48,4 +71,16 @@
 .outline:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary-dark);
+}
+
+.outline.large {
+  padding: 14px 0;
+  border-width: 1.5px;
+  font-size: 15px;
+}
+
+.outline.large:hover:not(:disabled) {
+  border-color: var(--color-border);
+  background: var(--color-background);
+  color: var(--color-ink);
 }

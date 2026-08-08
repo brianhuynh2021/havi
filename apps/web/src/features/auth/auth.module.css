@@ -1,38 +1,104 @@
+/* Không dùng var(--font-display): prototype để tiêu đề màn auth ở font body
+   (Inter) weight 700. Merriweather chỉ dành cho logo và tiêu đề trong app. */
 .title {
-  font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-ink);
+  text-align: center;
 }
 
 .subtitle {
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--color-muted);
-  font-size: 13.5px;
+  font-size: 15px;
+  text-align: center;
 }
 
 .form {
-  margin-top: 22px;
+  margin-top: 26px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+}
+
+/* Label bọc luôn input (prototype dùng <label> làm khối): click chữ là focus
+   được ô, không cần htmlFor, và khoảng cách label–ô luôn dính 7px kể cả khi
+   form đổi `gap`. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 .label {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--color-ink);
+  color: var(--color-body);
 }
 
 .error {
-  color: #b8744d;
+  color: #c0564a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* "Quên mật khẩu?" nằm trong form, nép phải ngay trên nút — đúng chỗ người
+   dùng nhớ ra là mình quên, không phải cuối trang. */
+.inlineLink {
+  align-self: flex-end;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--color-primary-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inlineLink:hover {
+  color: var(--color-primary);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--color-muted);
   font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.footerBlock {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid #f0eae4;
+  text-align: center;
+}
+
+.footerBlock p {
+  color: var(--color-body);
+  font-size: 15px;
+}
+
+.footerBlock a {
+  color: var(--color-primary-dark);
+  font-weight: 700;
 }
 
 .consentText {
   color: var(--color-muted);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
+  text-align: center;
 }
 
 .otpHint {
@@ -42,7 +108,7 @@
 
 .resendLink,
 .backLink {
-  align-self: flex-start;
+  align-self: center;
   border: 0;
   background: none;
   padding: 0;
