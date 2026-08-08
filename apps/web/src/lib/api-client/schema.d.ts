@@ -442,6 +442,9 @@ export interface paths {
         /**
          * Update Content
          * @description Sửa text tạo `content_item_version` mới, không ghi đè bản cũ.
+         *
+         *     Field bỏ trống nghĩa là không đổi. Bài đang `publishing`/`published` trả 409:
+         *     sửa lúc đó sẽ làm bản trên Facebook khác bản trong DB.
          */
         patch: operations["update_content_content__content_id__patch"];
         trace?: never;
@@ -463,6 +466,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/approve-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve All
+         * @description Nút "Duyệt & đăng hết" — bài nào không duyệt được thì báo lý do, không fail cả lô.
+         */
+        post: operations["approve_all_content_approve_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/{content_id}/approve": {
         parameters: {
             query?: never;
@@ -476,6 +499,7 @@ export interface paths {
          * Approve Content
          * @description Duyệt lẻ 1 bài: pending_approval → approved → scheduled.
          *
+         *     Bỏ trống `scheduled_at` thì Havi chọn khung giờ vàng gần nhất theo giờ VN.
          *     Trả 409 nếu trạng thái hiện tại không cho phép (xem core.content_state).
          */
         post: operations["approve_content_content__content_id__approve_post"];
@@ -505,26 +529,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/content/approve-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Approve All
-         * @description Nút "Duyệt & đăng hết" — bài nào không duyệt được thì báo lý do, không fail cả lô.
-         */
-        post: operations["approve_all_content_approve_all_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/calendar": {
         parameters: {
             query?: never;
@@ -532,7 +536,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Calendar */
+        /**
+         * Get Calendar
+         * @description `start`/`end` là ngày theo giờ Việt Nam, cả hai đầu inclusive.
+         *
+         *     Gom nhóm theo ngày VN chứ không theo ngày UTC: bài hẹn 8h sáng thứ Ba giờ VN
+         *     là 1h sáng thứ Ba UTC — cùng ngày ở đây, nhưng bài 6h sáng thứ Ba VN lại là
+         *     23h thứ Hai UTC, và chủ tiệm sẽ thấy nó nhảy sang ô sai trên lịch tuần.
+         */
         get: operations["get_calendar_calendar_get"];
         put?: never;
         post?: never;
@@ -2695,6 +2706,39 @@ export interface operations {
             };
         };
     };
+    approve_all_content_approve_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkApproveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkApproveResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     approve_content_content__content_id__approve_post: {
         parameters: {
             query?: never;
@@ -2748,39 +2792,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentItem"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    approve_all_content_approve_all_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BulkApproveRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BulkApproveResult"];
                 };
             };
             /** @description Validation Error */
