@@ -99,4 +99,24 @@ def test_local_van_bat_mock_duoc():
 
 
 def test_staging_tat_mock_thi_khoi_dong_binh_thuong():
-    assert Settings(env="staging", use_mock_llm=False).use_mock_llm is False
+    """Staging thật phải tắt CẢ mock LLM lẫn fake publisher — đây là config đúng."""
+    settings = Settings(env="staging", use_mock_llm=False, use_fake_publisher=False)
+    assert settings.use_mock_llm is False
+    assert settings.use_fake_publisher is False
+
+
+def test_bat_fake_publisher_o_staging_thi_khong_khoi_dong_duoc():
+    """Sai kiểu này im lặng và tệ hơn mock LLM.
+
+    Mọi bài đều báo "đã đăng", dashboard xanh, chủ tiệm tin là Facebook đã có
+    bài — trong khi Trang trống trơn. Phát hiện ra thì đã mất mấy ngày nội dung.
+    """
+    with pytest.raises(ValidationError, match="không được phép khi HAVI_ENV"):
+        Settings(env="staging", use_mock_llm=False, use_fake_publisher=True)
+
+    with pytest.raises(ValidationError, match="không được phép khi HAVI_ENV"):
+        Settings(env="production", use_mock_llm=False, use_fake_publisher=True)
+
+
+def test_local_van_bat_fake_publisher_duoc():
+    assert Settings(env="local", use_fake_publisher=True).use_fake_publisher is True

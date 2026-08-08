@@ -583,6 +583,10 @@ export interface paths {
         /**
          * List Connections
          * @description Bước 2 Onboarding + trang Cài đặt: chấm xanh/đỏ theo `status`.
+         *
+         *     Chỉ trả kênh đã thật sự nối. Kênh chưa nối vắng mặt khỏi danh sách chứ
+         *     không trả về kèm status giả — UI không được hiện TikTok/Zalo là "đã nối"
+         *     khi đó chỉ là fixture.
          */
         get: operations["list_connections_connections_get"];
         put?: never;
@@ -602,25 +606,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start Oauth */
+        /**
+         * Start Oauth
+         * @description Phát URL cấp quyền kèm `state` đã ký.
+         *
+         *     Trả `state` về cho frontend để nó đối chiếu khi người dùng quay lại — lớp
+         *     kiểm tra thứ hai bên cạnh chữ ký mà backend tự verify ở `/callback`.
+         */
         post: operations["start_oauth_connections__platform__start_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/connections/{platform}/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Oauth Callback */
-        get: operations["oauth_callback_connections__platform__callback_get"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -637,7 +630,15 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Disconnect */
+        /**
+         * Disconnect
+         * @description Ngắt kênh — xoá hẳn bản ghi kèm token đã mã hoá.
+         *
+         *     Bài đang `scheduled` trên kênh này sẽ hỏng ở bước publish với
+         *     `AUTH_PERMISSION` (`PublishService.run_job` kiểm tra connection trước khi
+         *     gọi adapter) và không retry vô ích. Cố ý không tự huỷ lịch ở đây: chủ tiệm
+         *     nối lại kênh trong ngày thì bài vẫn đăng đúng như đã duyệt.
+         */
         delete: operations["disconnect_connections__platform__delete"];
         options?: never;
         head?: never;
@@ -2910,40 +2911,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OAuthStartResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    oauth_callback_connections__platform__callback_get: {
-        parameters: {
-            query: {
-                code: string;
-                state: string;
-            };
-            header?: never;
-            path: {
-                platform: components["schemas"]["Platform"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PlatformConnection"];
                 };
             };
             /** @description Validation Error */

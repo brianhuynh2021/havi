@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # staging/production, nơi bắt buộc phải verify bằng model thật.
     use_mock_llm: bool = True
 
+    # Dùng FakePublisher thay vì gọi Graph API thật. Mặc định bật ở local để
+    # chạy tay không đăng nhầm lên Trang thật; `_force_real_publisher_outside_local`
+    # bên dưới chặn nó ở staging/production.
+    use_fake_publisher: bool = True
+
     # Multi-provider LLM (SYSTEM_ARCHITECTURE.md §5.1) — Gemini ưu tiên, hai
     # provider còn lại là fallback khi Gemini lỗi/quota/output không đạt.
     # Provider thiếu key sẽ bị router bỏ qua, không gọi rồi lỗi.
@@ -100,6 +105,21 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"HAVI_USE_MOCK_LLM=true không được phép khi HAVI_ENV={self.env}. "
                 "Mock LLM chỉ dùng ở local; staging/production phải gọi model thật."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _force_real_publisher_outside_local(self) -> "Settings":
+        """FakePublisher chỉ được sống ở local.
+
+        Sai kiểu này im lặng và tệ hơn mock LLM: mọi bài đều báo "đã đăng",
+        dashboard xanh, chủ tiệm tin là Facebook đã có bài — trong khi Trang
+        trống trơn. Phát hiện ra thì đã mất mấy ngày nội dung. Chặn ở deploy.
+        """
+        if self.use_fake_publisher and self.env != "local":
+            raise ValueError(
+                f"HAVI_USE_FAKE_PUBLISHER=true không được phép khi HAVI_ENV={self.env}. "
+                "Fake publisher chỉ dùng ở local; staging/production phải đăng thật."
             )
         return self
 
