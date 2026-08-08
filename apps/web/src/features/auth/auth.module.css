@@ -101,6 +101,14 @@
   text-align: center;
 }
 
+/* Gạch chân thay vì chỉ đổi màu: đây là link pháp lý người dùng phải nhận ra
+   được là bấm được, và cỡ chữ 12px thì màu thôi chưa đủ tương phản. */
+.consentText a {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .otpHint {
   font-size: 13px;
   color: var(--color-body);
