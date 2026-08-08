@@ -403,3 +403,53 @@ async def test_prompt_chua_brand_voice_va_banned_claims(
     assert "vui vẻ, gọi khách là chị" in system_prompt
     assert "cam kết 100%" in system_prompt
     assert "Ưu đãi gội đầu" in provider.calls[0].user_prompt
+
+
+async def test_job_failed_song_sot_khi_worker_rollback(
+    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
+):
+    """Trạng thái `failed` phải sống sót đúng cái exception đang đẩy nó đi.
+
+    Worker chạy engine trong `session_scope`, mà scope đó rollback khi gặp
+    exception — và engine ném `GenerationFailed` ngay sau khi đánh dấu failed.
+    Nếu `mark_job_failed` chỉ flush chứ không commit, bản ghi bị rollback cuốn
+    theo và job kẹt ở `queued` vĩnh viễn: frontend poll 3 phút rồi báo sai, chủ
+    tiệm không biết là phải bấm tạo lại.
+
+    Các test khác đọc lại bằng chính session đã ghi nên không thấy lỗi này —
+    flush chưa commit vẫn hiện trong cùng session. Test này mô phỏng đúng ranh
+    giới transaction của worker: bọc trong một transaction ngoài, rollback nó,
+    rồi đọc lại bằng connection khác.
+    """
+    token_pair = await _onboard(client, email="c15@havi.vn")
+    job = (
+        await client.post(
+            "/content/jobs",
+            json={"raw_inputs": [{"kind": "text", "text": "x"}]},
+            headers=_headers(token_pair),
+        )
+    ).json()
+    workspace_id, job_id = UUID(job["workspace_id"]), UUID(job["id"])
+
+    engine = _engine(
+        db_session,
+        FakeProvider(
+            provider=LLMProvider.GEMINI,
+            error=LLMTransientError(LLMProvider.GEMINI, "HTTP 429"),
+        ),
+    )
+    with pytest.raises(GenerationFailed):
+        await engine.generate_drafts(workspace_id=workspace_id, job_id=job_id)
+
+    # Đúng việc `session_scope` làm khi thấy exception.
+    await db_session.rollback()
+
+    stored = await ContentRepository(db_session).get_job(
+        workspace_id=workspace_id, job_id=job_id
+    )
+    assert stored is not None
+    assert stored.status == ContentJobStatus.FAILED, (
+        "job phải còn `failed` sau rollback — nếu là `queued` thì mark_job_failed "
+        "chỉ flush chứ chưa commit"
+    )
+    assert stored.failure_reason and "429" in stored.failure_reason
