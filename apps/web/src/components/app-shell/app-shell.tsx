@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AppNav } from "./app-nav";
 import styles from "./app-shell.module.css";
 import { SignOutButton } from "./sign-out-button";
+import { Logo } from "@/components/ui/logo";
 
 const connectedChannels = ["Facebook", "TikTok", "Zalo", "Maps"] as const;
 
@@ -14,7 +15,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <div className={styles.brandMark}>Ha</div>
+          <Logo size={36} />
           <div className={styles.brandText}>Havi</div>
         </div>
 
