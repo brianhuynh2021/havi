@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AppNav } from "./app-nav";
 import styles from "./app-shell.module.css";
+import { SignOutButton } from "./sign-out-button";
 
 const connectedChannels = ["Facebook", "TikTok", "Zalo", "Maps"] as const;
 
@@ -29,6 +30,7 @@ export function AppShell({ children }: AppShellProps) {
               </span>
             ))}
           </div>
+          <SignOutButton />
         </section>
       </aside>
 
