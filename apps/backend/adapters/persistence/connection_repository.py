@@ -1,0 +1,119 @@
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.enums import ConnectionStatus, Platform
+from core.token_crypto import decrypt_token, encrypt_token
+from domain.models.connection import PlatformConnection
+
+
+class ConnectionRepository:
+    """Kết nối OAuth nền tảng. Token vào/ra qua đây đều đi kèm mã hoá/giải mã.
+
+    Cố ý gói mã hoá vào repository thay vì để service tự làm: chỗ nào chạm
+    plaintext token là đếm được, và không ai lỡ tay lưu token trần.
+    """
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get(
+        self, *, workspace_id: UUID, platform: Platform
+    ) -> PlatformConnection | None:
+        result = await self._session.execute(
+            select(PlatformConnection).where(
+                PlatformConnection.workspace_id == workspace_id,
+                PlatformConnection.platform == platform,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def list_for_workspace(self, workspace_id: UUID) -> list[PlatformConnection]:
+        result = await self._session.execute(
+            select(PlatformConnection)
+            .where(PlatformConnection.workspace_id == workspace_id)
+            .order_by(PlatformConnection.platform)
+        )
+        return list(result.scalars().all())
+
+    async def upsert(
+        self,
+        *,
+        workspace_id: UUID,
+        platform: Platform,
+        access_token: str,
+        refresh_token: str | None = None,
+        expires_at: datetime | None = None,
+        account_name: str | None = None,
+        external_account_id: str | None = None,
+        connected_by: UUID | None = None,
+    ) -> PlatformConnection:
+        """Nối kênh, hoặc nối lại kênh đã có.
+
+        Cập nhật bản ghi cũ chứ không tạo bản thứ hai — unique constraint
+        `(workspace_id, platform)` cũng không cho phép. Nối lại cũng xoá
+        `failure_reason` và đưa status về `connected`: chủ tiệm vừa cấp quyền
+        mới, giữ lại lý do hỏng cũ chỉ làm UI hiện cảnh báo sai.
+        """
+        existing = await self.get(workspace_id=workspace_id, platform=platform)
+        encrypted = encrypt_token(access_token)
+        encrypted_refresh = encrypt_token(refresh_token) if refresh_token else None
+
+        if existing is not None:
+            existing.access_token_encrypted = encrypted
+            existing.refresh_token_encrypted = encrypted_refresh
+            existing.expires_at = expires_at
+            existing.account_name = account_name
+            existing.external_account_id = external_account_id
+            existing.connected_by = connected_by
+            existing.status = ConnectionStatus.CONNECTED
+            existing.failure_reason = None
+            await self._session.flush()
+            return existing
+
+        connection = PlatformConnection(
+            workspace_id=workspace_id,
+            platform=platform,
+            access_token_encrypted=encrypted,
+            refresh_token_encrypted=encrypted_refresh,
+            expires_at=expires_at,
+            account_name=account_name,
+            external_account_id=external_account_id,
+            connected_by=connected_by,
+            status=ConnectionStatus.CONNECTED,
+        )
+        self._session.add(connection)
+        await self._session.flush()
+        return connection
+
+    def read_access_token(self, connection: PlatformConnection) -> str:
+        """Giải mã token để đưa cho adapter.
+
+        Không async vì không chạm DB — tách hẳn ra để chỗ gọi thấy rõ đây là
+        lúc plaintext token tồn tại trong bộ nhớ.
+        """
+        return decrypt_token(connection.access_token_encrypted)
+
+    async def mark_unusable(
+        self,
+        connection: PlatformConnection,
+        *,
+        status: ConnectionStatus,
+        reason: str,
+    ) -> PlatformConnection:
+        """Đánh dấu kết nối không dùng được nữa (token hết hạn, bị gỡ quyền).
+
+        Giữ lại bản ghi thay vì xoá: UI cần biết kênh nào từng nối và vì sao
+        hỏng để hiện đúng nút "Nối lại" kèm lý do.
+        """
+        connection.status = status
+        connection.failure_reason = reason[:500]
+        await self._session.flush()
+        return connection
+
+    async def delete(self, connection: PlatformConnection) -> None:
+        """Chủ tiệm chủ động ngắt kết nối — xoá hẳn cả token đã mã hoá."""
+        await self._session.delete(connection)
+        await self._session.flush()

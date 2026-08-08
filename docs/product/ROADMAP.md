@@ -636,9 +636,16 @@ Backend/platform:
 - [ ] Connection status: connected, expired, revoked; reconnect flow.
 - [ ] Facebook adapter mapping text/media và normalize platform errors.
 - [ ] Scheduler tạo publish job đến hạn.
-- [ ] Worker publish với unique idempotency key, row lock và retry backoff.
-- [ ] Phân loại temporary, auth-permission và validation-permanent errors.
-- [ ] Dead-letter state + manual retry endpoint có guard.
+- [x] Repository publish với unique idempotency key, row lock (`FOR UPDATE SKIP
+  LOCKED`) và retry backoff 60s/300s/900s. Khoá dựng từ (content_item_id,
+  channel, scheduled_at) chuẩn hoá UTC — cùng mốc thời gian viết ở hai offset
+  ra cùng khoá, nếu không reschedule về đúng giờ cũ lại đăng trùng.
+  **Chưa xong:** worker Celery gọi repository này.
+- [x] Phân loại temporary / auth-permission / validation-permanent
+  (`domain/ports/publisher.py`). Chỉ `temporary` được retry — hai loại kia đi
+  thẳng dead-letter vì retry cũng hỏng y hệt.
+- [x] Dead-letter state + `reset_for_manual_retry` (đặt lại attempt_count vì
+  người đã sửa nguyên nhân). **Chưa xong:** endpoint HTTP có guard.
 
 Frontend:
 
@@ -649,8 +656,12 @@ Frontend:
 
 Tests:
 
-- [ ] Adapter tests với recorded/sandbox responses hợp lệ.
-- [ ] Double-click, duplicate worker và retry không đăng hai bài.
+- [x] Adapter tests với `FakePublisher` — làm được toàn bộ phần khó (idempotency,
+  row lock, retry, dead-letter) trước khi có quyền Facebook thật.
+  **Chưa xong:** recorded/sandbox response từ Graph API thật.
+- [x] Double-click và duplicate worker không đăng hai bài — 22 test chạy thật
+  trên Postgres, gồm test xác nhận đúng `uq_publish_jobs_idempotency_key` chặn
+  chứ không phải FK chặn nhầm.
 - [ ] Token redaction tests trong logs/errors.
 
 Exit criteria:
