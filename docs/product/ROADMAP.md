@@ -122,10 +122,10 @@ Backend:
   `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
   Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
   vẫn là khung `NotImplementedError` cho Tuần 8+.
-- [x] 263 backend tests đang pass (contract/state-machine/provider-router +
+- [x] 269 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
-  mạng thật); Ruff đang pass. 82 web test pass.
+  mạng thật); Ruff đang pass. 93 web test pass.
 
 Architecture/docs:
 
@@ -721,10 +721,17 @@ Frontend:
   Facebook là một page load mới nên mọi `useState` trước đó đã mất. Onboarding
   đọc `?ket_noi` để resume ở bước 2 — không thì chủ tiệm rơi về bước 1 và bấm
   "Tiếp tục" là tạo tiệm thứ hai trùng tên.
-- [ ] Scheduled/publishing/published/failed states và hướng xử lý theo error class.
-  **Đã có:** nhãn đủ 8 `ContentStatus` trên Lịch đăng (Tuần 6) và API
-  `/content/publish-jobs` để đọc `failure_kind`. **Chưa có:** UI đọc API đó —
-  nút "Thử lại" cho bài dead-letter chưa có trên màn nào.
+- [x] Scheduled/publishing/published/failed states và hướng xử lý theo error class
+  — nhãn đủ 8 `ContentStatus` trên Lịch đăng (Tuần 6), và `FailedPostsPanel`
+  (`features/publish-jobs/`) đọc `/content/publish-jobs?status=dead_letter`, hiện
+  ngay trên lưới lịch. Ba loại lỗi ba hướng xử lý khác nhau:
+  `auth_permission` **không** có nút thử lại mà dẫn sang `/cai-dat` để nối lại
+  kênh (thử lại khi token đã hỏng thì vẫn hỏng y hệt — đưa nút vào đó là mời chủ
+  tiệm bấm mười lần rồi kết luận Havi hỏng); `validation_permanent` **vẫn** cho
+  thử lại vì `run_job` đọc lại `content_item` mỗi lượt nên sửa text xong đăng lại
+  được — ẩn nút ở đây là chặn đúng con đường khắc phục duy nhất có tác dụng;
+  `temporary` cho thử lại thẳng. Panel ẩn hoàn toàn khi không có bài lỗi, và
+  không thuộc tuần nào nên bài lỗi tuần trước vẫn thấy khi đang xem tuần này.
 - [x] Reconnect CTA khi token hết hạn hoặc mất quyền — `expired` và `revoked`
   đều hiện nút "Nối lại", nhưng nói lý do khác nhau: hết hạn là chuyện bình
   thường theo thời gian, còn mất quyền thường do ai đó đổi vai trò trên Page nên
@@ -951,9 +958,15 @@ Exit criteria:
   `dead_letter`, 50 test cho riêng phần này.
 - [ ] **Chưa đóng Gate:** một bài thật lên Facebook Page pilot. Toàn bộ đường đi
   đã chạy đầu-cuối với `FakePublisher` và Graph API giả ở tầng socket
-  (`httpx.MockTransport`); phần chưa kiểm là Graph API thật, cần Facebook app +
-  Page pilot (§12). Không tick Gate D trước khi có bài thật — đúng tinh thần
-  "không tích vì đã scaffold" ở §Quy ước theo dõi.
+  (`httpx.MockTransport`); phần chưa kiểm là Graph API thật. Không tick Gate D
+  trước khi có bài thật — đúng tinh thần "không tích vì đã scaffold" ở
+  §Quy ước theo dõi.
+  **Không còn chờ ai:** App ID + Secret đã có trong `.env`. Còn đúng hai bước:
+  (1) thêm `HAVI_USE_FAKE_PUBLISHER=false` vào `.env` — biến này không có mặt
+  nên đang lấy default `True` trong `core/config.py`, tức mọi lần "đăng" hiện chỉ
+  là adapter giả; (2) khai Redirect URI
+  `http://localhost:8000/connections/facebook/callback` trong Facebook App
+  Settings, khớp từng ký tự với `facebook_redirect_uri`.
 
 ### Gate E — Founder internal beta
 
@@ -1105,11 +1118,23 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   (2) Connection UI + reconnect CTA — `features/connections/` dùng chung cho
   onboarding bước 2 và tab Cài đặt mới, đồng thời bỏ chip kênh giả và tên tiệm
   hardcode trong sidebar; (3) `POST /content/publish-jobs/{id}/retry` có guard
-  chỉ nhận `dead_letter`. Backend 263 test, web 82 test.
-  **Việc tiếp theo (việc thứ 4, chặn Gate D):** đăng thử một bài thật lên Page
-  pilot bằng Development mode — cần Facebook app + Page, xem §12. Sau đó là UI
-  đọc `/content/publish-jobs` để chủ tiệm thấy bài lỗi và bấm "Thử lại" (hiện
-  endpoint đã có nhưng chưa màn nào gọi), rồi Dashboard thật (Tuần 8).
+  chỉ nhận `dead_letter`.
+- [x] UI cho bài đăng lỗi + sửa đường về sau OAuth. `FailedPostsPanel` trên Lịch
+  đăng đọc `/content/publish-jobs?status=dead_letter`, hiện lý do theo từng loại
+  lỗi và nút "Thử lại" — trước đó bài lỗi biến mất trong im lặng, chủ tiệm chỉ
+  còn cách gọi API bằng tay.
+  Đồng thời sửa một bug thật: callback OAuth **luôn** redirect `/onboarding`, nên
+  chủ tiệm dùng app hàng tháng bấm "Nối lại" ở Cài đặt xong bị đá vào wizard
+  onboarding. Nay đường về đi trong state đã ký (`return_key`) theo *khoá* trong
+  allow-list, không phải URL — nhận URL từ client là mở đường cho open redirect,
+  có test dựng state mang URL của kẻ tấn công để chốt điều đó. Cũng xoá
+  `oauth_success_redirect_url` (config chết, không nơi nào dùng) và thôi lấy
+  `cors_origins[0]` làm base URL của web — hai thứ đó chỉ tình cờ giống nhau ở
+  local. Backend 269 test, web 93 test.
+  **Việc tiếp theo (chặn Gate D):** đăng thử một bài thật lên Page pilot —
+  `.env` đã có App ID + Secret, chỉ cần thêm `HAVI_USE_FAKE_PUBLISHER=false` và
+  khai Redirect URI `http://localhost:8000/connections/facebook/callback` trong
+  Facebook App Settings. Sau đó là Dashboard thật (Tuần 8).
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
@@ -1124,7 +1149,7 @@ Các quyết định này có deadline để không chặn roadmap:
 | [ ] | Ngành pilot đầu tiên | Trước Tuần 1 | Product |
 | [ ] | Email provider gửi mã đặt lại mật khẩu và chi phí | Trước Tuần 9 | Backend/Product |
 | [ ] | Cloud region, Postgres, Redis, object storage | Cuối Tuần 1 | Engineering |
-| [ ] | Facebook developer app + quyền cần xin | Trong Tuần 1 | Product/Backend |
+| [~] | Facebook developer app + quyền cần xin — App ID/Secret đã có trong `.env`; còn khai Redirect URI trong App Settings và bật `HAVI_USE_FAKE_PUBLISHER=false` | Trong Tuần 1 | Product/Backend |
 | [ ] | Web responsive breakpoint support chính thức | Cuối Tuần 2 | Frontend/Design |
 | [~] | Data retention và media deletion policy — Privacy đã ghi 30 ngày; cần Legal thẩm định + code endpoint xoá | Cuối Tuần 3 | Product/Legal |
 | [ ] | `full_auto` có xuất hiện trong pilot hay bị khóa | Cuối Tuần 3 | Product/Security |

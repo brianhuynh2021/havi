@@ -195,3 +195,15 @@ class SubscriptionStatus(StrEnum):
     ACTIVE = "active"
     PAST_DUE = "past_due"
     CANCELED = "canceled"
+
+
+class OAuthReturnTarget(StrEnum):
+    """Màn hình đưa người dùng về sau khi cấp quyền OAuth xong.
+
+    Enum chứ không phải URL: giá trị lạ bị chặn ngay ở 422, và callback không bao
+    giờ redirect ra ngoài domain của Havi được. Giá trị phải khớp khoá trong
+    `core.oauth_state.RETURN_PATHS`.
+    """
+
+    ONBOARDING = "onboarding"
+    SETTINGS = "settings"

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { channelLabels } from "@/features/content-creation/content-creation.fixture";
+import { FailedPostsPanel } from "@/features/publish-jobs/failed-posts-panel";
 import {
   addDays,
   fetchCalendar,
@@ -76,6 +77,11 @@ export function CalendarScreen() {
           Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh.
         </p>
       </header>
+
+      {/* Trên thanh chọn tuần: bài không đăng được là việc gấp hơn xem lịch, và
+          nó không thuộc tuần nào cả — bài lỗi từ tuần trước vẫn phải thấy khi
+          đang xem tuần này. Đăng lại xong thì nạp lại lịch để bài hiện đúng. */}
+      <FailedPostsPanel onPublished={() => setReloadKey((k) => k + 1)} />
 
       <div className={styles.weekBar}>
         <Button

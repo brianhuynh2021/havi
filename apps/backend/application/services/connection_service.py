@@ -20,7 +20,13 @@ from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from core.config import Settings
 from core.enums import Platform
-from core.oauth_state import InvalidOAuthState, create_oauth_state, verify_oauth_state
+from core.oauth_state import (
+    DEFAULT_RETURN_KEY,
+    RETURN_PATHS,
+    InvalidOAuthState,
+    create_oauth_state,
+    verify_oauth_state,
+)
 from core.schemas import PlatformConnection as PlatformConnectionSchema
 from core.token_crypto import TokenEncryptionUnavailable
 from domain.models.connection import PlatformConnection
@@ -75,12 +81,21 @@ class ConnectionService:
     # --- Nối kênh ------------------------------------------------------------
 
     def start(
-        self, *, workspace_id: UUID, user_id: UUID, platform: Platform
+        self,
+        *,
+        workspace_id: UUID,
+        user_id: UUID,
+        platform: Platform,
+        return_key: str = DEFAULT_RETURN_KEY,
     ) -> tuple[str, str]:
         """Trả `(authorization_url, state)`.
 
         Không ghi gì vào DB: state đã ký nên không cần bảng lưu phiên, và bấm
         "Nối kênh" rồi bỏ giữa chừng không để lại rác.
+
+        `return_key` đi *trong state đã ký* chứ không qua query param của
+        callback: query param do client kiểm soát, nên dùng nó để chọn nơi
+        redirect là mở đường cho open redirect.
         """
         client = self._client_for(platform)
         state = create_oauth_state(
@@ -88,8 +103,24 @@ class ConnectionService:
             user_id=user_id,
             platform=platform,
             settings=self._settings,
+            return_key=return_key,
         )
         return client.authorization_url(state=state), state
+
+    def return_path_for(self, state: str, *, platform: Platform) -> str:
+        """Nơi đưa người dùng về, đọc từ state đã ký.
+
+        Tách riêng khỏi `complete` vì router cần biết đường về **cả khi
+        `complete` ném lỗi** — báo lỗi xong vẫn phải đưa chủ tiệm về đúng trang
+        họ bấm từ đó. State hỏng thì về mặc định, không ném thêm lỗi ở đây.
+        """
+        try:
+            payload = verify_oauth_state(
+                state, platform=platform, settings=self._settings
+            )
+        except InvalidOAuthState:
+            return RETURN_PATHS[DEFAULT_RETURN_KEY]
+        return payload.return_path
 
     async def complete(
         self, *, platform: Platform, code: str, state: str

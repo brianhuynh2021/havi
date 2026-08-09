@@ -154,7 +154,7 @@ export function OnboardingScreen() {
             <p className={styles.subtitle}>
               Havi cần quyền đăng bài trên Page để giúp chị/anh đăng đúng lịch.
             </p>
-            <ConnectionList onUsableChange={setConnected} />
+            <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
             <div className={styles.stepActions}>
               {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
                   tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}

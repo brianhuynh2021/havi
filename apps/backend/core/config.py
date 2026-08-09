@@ -77,9 +77,15 @@ class Settings(BaseSettings):
     # chứ không dựng từ request host: sau reverse proxy, host thấy được là host
     # nội bộ, không phải domain người dùng bấm vào.
     facebook_redirect_uri: str = "http://localhost:8000/connections/facebook/callback"
-    # Người dùng được đưa về đây sau callback. Callback là điều hướng của trình
-    # duyệt (không phải fetch), nên nó phải trả redirect về app chứ không trả JSON.
-    oauth_success_redirect_url: str = "http://localhost:3000/cai-dat/ket-noi"
+    # Gốc URL của apps/web — callback OAuth ghép đường về vào đây. Callback là
+    # điều hướng của trình duyệt (không phải fetch), nên phải trả redirect về app
+    # chứ không trả JSON.
+    #
+    # Biến riêng chứ không lấy `cors_origins[0]`: hai thứ tình cờ giống nhau ở
+    # local nhưng khác hẳn khi lên production (CORS có thể có nhiều origin, và
+    # thứ tự trong danh sách không phải hợp đồng gì cả). Dùng phần tử đầu của
+    # CORS làm base URL là loại lỗi chỉ lộ ra sau khi deploy.
+    web_base_url: str = "http://localhost:3000"
     google_client_id: str = ""
     google_client_secret: str = ""
     zalo_client_id: str = ""

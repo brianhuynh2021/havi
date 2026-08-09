@@ -20,7 +20,7 @@ from application.services.connection_service import (
     PlatformNotSupported,
 )
 from core.config import get_settings
-from core.enums import Platform
+from core.enums import OAuthReturnTarget, Platform
 from core.oauth_state import InvalidOAuthState
 from core.schemas import OAuthStartResponse, PlatformConnection
 from core.token_crypto import TokenEncryptionUnavailable
@@ -59,16 +59,24 @@ async def start_oauth(
     auth: AuthDep,
     workspace_id: WorkspaceDep,
     connections: ConnectionServiceDep,
+    tro_ve: OAuthReturnTarget = OAuthReturnTarget.ONBOARDING,
 ) -> OAuthStartResponse:
     """Trả URL màn hình cấp quyền của nền tảng, kèm `state` đã ký.
 
     Frontend điều hướng trình duyệt tới `authorization_url`. `state` sống 10
     phút — đủ để bấm qua màn hình Facebook, nhưng một link bị chụp lại thì hết
     hạn nhanh.
+
+    `tro_ve` nói nơi đưa người dùng về sau khi cấp quyền xong (onboarding hay
+    Cài đặt). Là enum chứ không phải URL: enum thì giá trị lạ bị FastAPI chặn ở
+    422, còn nhận URL là mở đường cho open redirect.
     """
     try:
         url, state = connections.start(
-            workspace_id=workspace_id, user_id=auth.user_id, platform=platform
+            workspace_id=workspace_id,
+            user_id=auth.user_id,
+            platform=platform,
+            return_key=tro_ve.value,
         )
     except PlatformNotSupported as exc:
         raise _unsupported(exc) from exc
@@ -94,41 +102,48 @@ async def oauth_callback(
     `error` có giá trị khi chủ tiệm bấm Huỷ ở màn hình Facebook — đó là lựa
     chọn hợp lệ, không phải lỗi hệ thống, nên đưa về UI với thông báo nhẹ nhàng.
     """
-    web_base = get_settings().cors_origins[0] if get_settings().cors_origins else ""
-    settings_url = f"{web_base}/onboarding"
+    settings = get_settings()
+    web_base = settings.web_base_url
+
+    # Đường về nằm trong state đã ký (`return_key`), không phải hằng số:
+    # chủ tiệm bấm "Nối lại" từ trang Cài đặt phải quay về Cài đặt. Hardcode
+    # `/onboarding` là đá người đã dùng app hàng tháng vào lại wizard onboarding.
+    # State thiếu/hỏng thì `return_path_for` trả mặc định, không ném.
+    return_path = (
+        connections.return_path_for(state, platform=platform) if state else "/onboarding"
+    )
+    return_url = f"{web_base}{return_path}"
 
     if error:
         # Không đưa `error_description` thô của nền tảng vào URL — nó là chuỗi
         # do bên thứ ba kiểm soát, đi thẳng vào trang của mình là mở đường cho
         # nội dung lạ hiển thị trên UI Havi.
-        return RedirectResponse(
-            f"{settings_url}?ket_noi=loi&ly_do=huy", status_code=302
-        )
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=huy", status_code=302)
 
     # Thiếu `state` cũng phải xử như lỗi thường: đây là endpoint public, ai
     # cũng gọi được, và trả 422 vào mặt trình duyệt là hiện JSON thô cho chủ tiệm.
     if not code or not state:
         return RedirectResponse(
-            f"{settings_url}?ket_noi=loi&ly_do=thieu_thong_tin", status_code=302
+            f"{return_url}?ket_noi=loi&ly_do=thieu_thong_tin", status_code=302
         )
 
     try:
         await connections.complete(platform=platform, code=code, state=state)
     except InvalidOAuthState:
         return RedirectResponse(
-            f"{settings_url}?ket_noi=loi&ly_do=het_han", status_code=302
+            f"{return_url}?ket_noi=loi&ly_do=het_han", status_code=302
         )
     except (PlatformNotSupported, PlatformNotConfigured, TokenEncryptionUnavailable):
         return RedirectResponse(
-            f"{settings_url}?ket_noi=loi&ly_do=chua_cau_hinh", status_code=302
+            f"{return_url}?ket_noi=loi&ly_do=chua_cau_hinh", status_code=302
         )
     except Exception:  # noqa: BLE001 — callback không được trả 500 vào mặt user
         logger.exception("OAuth callback %s lỗi ngoài dự kiến", platform.value)
         return RedirectResponse(
-            f"{settings_url}?ket_noi=loi&ly_do=he_thong", status_code=302
+            f"{return_url}?ket_noi=loi&ly_do=he_thong", status_code=302
         )
 
-    return RedirectResponse(f"{settings_url}?ket_noi=ok", status_code=302)
+    return RedirectResponse(f"{return_url}?ket_noi=ok", status_code=302)
 
 
 @router.delete("/{platform}", status_code=status.HTTP_204_NO_CONTENT)

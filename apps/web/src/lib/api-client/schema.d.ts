@@ -659,6 +659,10 @@ export interface paths {
          *     Frontend điều hướng trình duyệt tới `authorization_url`. `state` sống 10
          *     phút — đủ để bấm qua màn hình Facebook, nhưng một link bị chụp lại thì hết
          *     hạn nhanh.
+         *
+         *     `tro_ve` nói nơi đưa người dùng về sau khi cấp quyền xong (onboarding hay
+         *     Cài đặt). Là enum chứ không phải URL: enum thì giá trị lạ bị FastAPI chặn ở
+         *     422, còn nhận URL là mở đường cho open redirect.
          */
         post: operations["start_oauth_connections__platform__start_post"];
         delete?: never;
@@ -1509,6 +1513,16 @@ export interface components {
              */
             expires_at: string;
         };
+        /**
+         * OAuthReturnTarget
+         * @description Màn hình đưa người dùng về sau khi cấp quyền OAuth xong.
+         *
+         *     Enum chứ không phải URL: giá trị lạ bị chặn ngay ở 422, và callback không bao
+         *     giờ redirect ra ngoài domain của Havi được. Giá trị phải khớp khoá trong
+         *     `core.oauth_state.RETURN_PATHS`.
+         * @enum {string}
+         */
+        OAuthReturnTarget: "onboarding" | "settings";
         /** OAuthStartResponse */
         OAuthStartResponse: {
             /** Authorization Url */
@@ -3057,7 +3071,9 @@ export interface operations {
     };
     start_oauth_connections__platform__start_post: {
         parameters: {
-            query?: never;
+            query?: {
+                tro_ve?: components["schemas"]["OAuthReturnTarget"];
+            };
             header?: never;
             path: {
                 platform: components["schemas"]["Platform"];

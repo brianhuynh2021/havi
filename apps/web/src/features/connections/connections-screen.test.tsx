@@ -166,6 +166,36 @@ describe("ConnectionsScreen", () => {
     );
   });
 
+  it("nối từ Cài đặt thì xin backend đưa về Cài đặt, không về onboarding", async () => {
+    // Đây là mấu chốt của cả bản sửa: thiếu `tro_ve=settings` thì chủ tiệm dùng
+    // app hàng tháng bấm "Nối lại" xong bị đá vào wizard onboarding.
+    const assign = stubAssign();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input: RequestInfo | URL) => {
+        const url = input instanceof Request ? input.url : String(input);
+        if (url.includes("/start")) {
+          return jsonResponse({
+            authorization_url: "https://www.facebook.com/dialog/oauth?state=s1",
+            state: "s1",
+          });
+        }
+        return jsonResponse([]);
+      });
+
+    render(<ConnectionsScreen />);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: /kết nối facebook page/i }),
+    );
+
+    await waitFor(() => expect(assign).toHaveBeenCalled());
+    const startUrl = fetchSpy.mock.calls
+      .map(([input]) => (input instanceof Request ? input.url : String(input)))
+      .find((u) => u.includes("/start"));
+    expect(startUrl).toContain("tro_ve=settings");
+  });
+
   it("kênh chưa có adapter (501) báo chưa hỗ trợ, không im lặng", async () => {
     stubAssign();
     vi.spyOn(globalThis, "fetch").mockImplementation(

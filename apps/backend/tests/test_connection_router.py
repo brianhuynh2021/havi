@@ -184,6 +184,133 @@ class TestCallback:
         assert "/connections/{platform}/callback" not in schema["paths"]
 
 
+class TestDuongVeSauCallback:
+    """Nối kênh từ đâu thì quay về đó.
+
+    Trước đây callback luôn redirect `/onboarding`, nên chủ tiệm dùng app hàng
+    tháng bấm "Nối lại" ở Cài đặt xong bị đá vào wizard onboarding — một luồng
+    họ đã làm xong từ lâu.
+    """
+
+    async def _state(self, client: AsyncClient, token: dict, tro_ve: str | None) -> str:
+        params = {"tro_ve": tro_ve} if tro_ve else None
+        start = await client.post(
+            "/connections/facebook/start", params=params, headers=_headers(token)
+        )
+        assert start.status_code == 200, start.text
+        return start.json()["state"]
+
+    async def test_noi_tu_cai_dat_thi_quay_ve_cai_dat(
+        self, client: AsyncClient, db_session
+    ):
+        token = await _onboard(client, email="conn0020@havi.vn")
+        _override(client, db_session)
+        state = await self._state(client, token, "settings")
+
+        response = await client.get(
+            "/connections/facebook/callback",
+            params={"code": "code-tu-facebook", "state": state},
+        )
+
+        location = response.headers["location"]
+        assert "/cai-dat?ket_noi=ok" in location
+        assert "/onboarding" not in location
+
+    async def test_noi_tu_onboarding_thi_quay_ve_onboarding(
+        self, client: AsyncClient, db_session
+    ):
+        token = await _onboard(client, email="conn0021@havi.vn")
+        _override(client, db_session)
+        state = await self._state(client, token, "onboarding")
+
+        response = await client.get(
+            "/connections/facebook/callback",
+            params={"code": "code-tu-facebook", "state": state},
+        )
+
+        assert "/onboarding?ket_noi=ok" in response.headers["location"]
+
+    async def test_khong_khai_tro_ve_thi_mac_dinh_onboarding(
+        self, client: AsyncClient, db_session
+    ):
+        """Giữ hành vi cũ cho mọi caller chưa truyền tham số này."""
+        token = await _onboard(client, email="conn0022@havi.vn")
+        _override(client, db_session)
+        state = await self._state(client, token, None)
+
+        response = await client.get(
+            "/connections/facebook/callback",
+            params={"code": "code-tu-facebook", "state": state},
+        )
+
+        assert "/onboarding?ket_noi=ok" in response.headers["location"]
+
+    async def test_loi_cung_quay_ve_dung_trang(self, client: AsyncClient, db_session):
+        """Báo lỗi xong vẫn phải đưa chủ tiệm về đúng nơi họ bấm — báo lỗi ở một
+        trang họ không mở là mất dấu hoàn toàn."""
+        token = await _onboard(client, email="conn0023@havi.vn")
+        _override(client, db_session)
+        state = await self._state(client, token, "settings")
+
+        # Thiếu `code` = một lỗi thật (Facebook trả về thiếu tham số).
+        response = await client.get(
+            "/connections/facebook/callback", params={"state": state}
+        )
+
+        location = response.headers["location"]
+        assert "/cai-dat?ket_noi=loi" in location
+
+    async def test_tro_ve_gia_mao_bi_chan_o_422(self, client: AsyncClient, db_session):
+        """`tro_ve` là enum nên URL lạ bị chặn ngay, không lọt tới state."""
+        token = await _onboard(client, email="conn0024@havi.vn")
+        _override(client, db_session)
+
+        response = await client.post(
+            "/connections/facebook/start",
+            params={"tro_ve": "https://ke-tan-cong.example.com"},
+            headers=_headers(token),
+        )
+
+        assert response.status_code == 422, response.text
+
+    async def test_state_bi_sua_khong_doi_duoc_duong_ve(
+        self, client: AsyncClient, db_session
+    ):
+        """Chốt chặn cuối cho open redirect: kể cả khi ai đó dựng được state
+        mang `ret` là một URL đầy đủ, callback vẫn chỉ ghép đường trong
+        allow-list — không bao giờ redirect ra ngoài domain Havi."""
+        import jwt
+
+        from core.config import get_settings
+        from core.enums import Platform
+        from core.oauth_state import _STATE_AUDIENCE  # noqa: PLC2701
+
+        _override(client, db_session)
+        settings = get_settings()
+        # State ký bằng đúng khoá của hệ thống, nhưng `ret` là URL của kẻ tấn công.
+        forged = jwt.encode(
+            {
+                "aud": _STATE_AUDIENCE,
+                "ws": "00000000-0000-0000-0000-000000000001",
+                "sub": "00000000-0000-0000-0000-000000000002",
+                "plt": Platform.FACEBOOK.value,
+                "ret": "https://ke-tan-cong.example.com",
+                "exp": 9999999999,
+            },
+            settings.jwt_secret,
+            algorithm=settings.jwt_algorithm,
+        )
+
+        response = await client.get(
+            "/connections/facebook/callback",
+            params={"code": "code", "state": forged},
+        )
+
+        location = response.headers["location"]
+        assert "ke-tan-cong.example.com" not in location
+        assert location.startswith(settings.web_base_url)
+
+
 class TestListAndDisconnect:
     async def test_list_chi_thay_ket_noi_cua_workspace_minh(
         self, client: AsyncClient, db_session

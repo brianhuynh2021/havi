@@ -7,6 +7,7 @@ import {
   disconnect,
   startConnect,
   statusCopy,
+  type OAuthReturnTarget,
   type Platform,
   type PlatformConnection,
 } from "./connections.api";
@@ -18,6 +19,8 @@ type Props = {
   /** `undefined` = chưa nối bao giờ. Khác `revoked` (đã nối rồi mất quyền) — hai
    * trạng thái này cần hai câu khác nhau, nên không gộp thành boolean. */
   connection: PlatformConnection | undefined;
+  /** Màn đang đứng, để cấp quyền xong quay về đúng đây. */
+  returnTo: OAuthReturnTarget;
   onChanged: () => void;
 };
 
@@ -28,7 +31,13 @@ type Props = {
  * hiện hai kiểu ở hai chỗ, nhất là khi một chỗ nói "Đã nối" mà chỗ kia nói "Hết
  * hạn".
  */
-export function ConnectionCard({ platform, label, connection, onChanged }: Props) {
+export function ConnectionCard({
+  platform,
+  label,
+  connection,
+  returnTo,
+  onChanged,
+}: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +46,7 @@ export function ConnectionCard({ platform, label, connection, onChanged }: Props
   async function connect() {
     setError(null);
     setBusy(true);
-    const result = await startConnect(platform);
+    const result = await startConnect(platform, returnTo);
     // Thành công thì trang đang điều hướng sang Facebook — giữ `busy` để chủ
     // tiệm không bấm lần nữa trong lúc chờ chuyển trang.
     if (!result.ok) {

@@ -8,11 +8,14 @@ import {
   PILOT_PLATFORMS,
   readCallbackOutcome,
   type CallbackOutcome,
+  type OAuthReturnTarget,
   type PlatformConnection,
 } from "./connections.api";
 import styles from "./connections.module.css";
 
 type Props = {
+  /** Màn đang đứng, để cấp quyền xong backend đưa về đúng đây. */
+  returnTo: OAuthReturnTarget;
   /** Gọi mỗi khi danh sách đổi, để màn ngoài biết đã có ≥1 kênh dùng được
    * (onboarding bước 2 mở nút "Tiếp tục" theo cái này). */
   onUsableChange?: (hasUsable: boolean) => void;
@@ -25,7 +28,7 @@ type Props = {
  * rời khỏi trang sang Facebook rồi quay lại bằng một page load mới, nên mọi
  * `useState` trước đó đã mất. Nối thành công hay không chỉ đọc được từ backend.
  */
-export function ConnectionList({ onUsableChange }: Props) {
+export function ConnectionList({ returnTo, onUsableChange }: Props) {
   const [connections, setConnections] = useState<PlatformConnection[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,6 +112,7 @@ export function ConnectionList({ onUsableChange }: Props) {
             platform={platform}
             label={label}
             connection={byPlatform.get(platform)}
+            returnTo={returnTo}
             onChanged={load}
           />
         ))}

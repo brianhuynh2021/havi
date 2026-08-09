@@ -6,6 +6,10 @@ export type PlatformConnection = components["schemas"]["PlatformConnection"];
 export type Platform = components["schemas"]["Platform"];
 export type ConnectionStatus = components["schemas"]["ConnectionStatus"];
 
+/** Nơi backend đưa người dùng về sau khi cấp quyền xong. Nối kênh từ Cài đặt
+ * phải quay về Cài đặt, không bị đá vào wizard onboarding. */
+export type OAuthReturnTarget = components["schemas"]["OAuthReturnTarget"];
+
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
 const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
@@ -42,11 +46,14 @@ export async function listConnections(): Promise<Result<PlatformConnection[]>> {
  * Hàm này không trả về khi thành công (trang đã chuyển đi). Backend redirect
  * ngược lại `/onboarding?ket_noi=ok|loi` sau khi xong.
  */
-export async function startConnect(platform: Platform): Promise<Result<null>> {
+export async function startConnect(
+  platform: Platform,
+  returnTo: OAuthReturnTarget,
+): Promise<Result<null>> {
   try {
     const { data, error, response } = await apiClient.POST(
       "/connections/{platform}/start",
-      { params: { path: { platform } } },
+      { params: { path: { platform }, query: { tro_ve: returnTo } } },
     );
     if (error || !data) {
       if (response?.status === 501) return { ok: false, message: NOT_SUPPORTED };

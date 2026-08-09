@@ -19,7 +19,7 @@ export function ConnectionsScreen() {
         Havi chỉ đăng bài qua API chính thức của nền tảng. Kênh nào hết hạn hoặc
         mất quyền, chị nối lại ở đây để lịch đăng chạy tiếp.
       </p>
-      <ConnectionList />
+      <ConnectionList returnTo="settings" />
     </div>
   );
 }

@@ -35,12 +35,22 @@ function item(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Trả về mọi `start`/`end` mà màn đã hỏi, để verify khoảng ngày gửi lên. */
-function mockCalendar(daysFor: (start: string) => unknown[]) {
+/** Trả về mọi `start`/`end` mà màn đã hỏi, để verify khoảng ngày gửi lên.
+ *
+ * Route theo URL chứ không trả cùng một body cho mọi lời gọi: màn Lịch đăng còn
+ * gắn `FailedPostsPanel`, panel đó gọi `/content/publish-jobs`. Ghi cả lời gọi
+ * đó vào `asked` thì `asked[0]` không còn chắc là request lịch nữa. */
+function mockCalendar(
+  daysFor: (start: string) => unknown[],
+  deadLetterJobs: unknown[] = [],
+) {
   const asked: { start: string; end: string }[] = [];
   vi.spyOn(globalThis, "fetch").mockImplementation(
     async (input: RequestInfo | URL) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname.includes("/publish-jobs")) {
+        return jsonResponse(deadLetterJobs);
+      }
       const start = url.searchParams.get("start") ?? "";
       const end = url.searchParams.get("end") ?? "";
       asked.push({ start, end });
@@ -141,9 +151,37 @@ describe("CalendarScreen", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fail"));
     render(<CalendarScreen />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      /không kết nối được/i,
-    );
-    expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
+    // Mất mạng thì cả lịch và FailedPostsPanel đều báo lỗi — đúng, vì cả hai đều
+    // hỏng thật. Nên tìm theo nội dung thay vì giả định chỉ có một alert.
+    const alerts = await screen.findAllByRole("alert");
+    expect(
+      alerts.some((el) => /không kết nối được/i.test(el.textContent ?? "")),
+    ).toBe(true);
+    expect(
+      screen.getByRole("button", { name: /thử lại/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("có bài đăng lỗi thì hiện panel ngay trên lịch", async () => {
+    mockCalendar((start) => emptyWeek(start), [
+      {
+        id: "job-1",
+        workspace_id: "w1",
+        content_item_id: "c1",
+        channel: "facebook_page",
+        status: "dead_letter",
+        scheduled_at: "2026-08-09T13:00:00Z",
+        attempt_count: 4,
+        next_attempt_at: null,
+        external_post_id: null,
+        published_at: null,
+        failure_kind: "temporary",
+        failure_detail: "Rate limit",
+      },
+    ]);
+    render(<CalendarScreen />);
+
+    // Bài lỗi không thuộc tuần nào — phải thấy được kể cả khi đang xem tuần khác.
+    expect(await screen.findByText(/1 bài chưa đăng được/)).toBeInTheDocument();
   });
 });

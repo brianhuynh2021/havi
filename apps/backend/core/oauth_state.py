@@ -38,15 +38,41 @@ class InvalidOAuthState(Exception):
     """State sai chữ ký, hết hạn, hoặc không khớp platform đang callback."""
 
 
+#: Nơi đưa người dùng về sau callback, theo *khoá* chứ không theo URL.
+#:
+#: Cố ý không nhận URL từ client — kể cả URL đã ký. Nhận URL là mở đường cho
+#: open redirect: chỉ cần một lần khoá ký bị lộ, hoặc một chỗ nào đó quên kiểm,
+#: là callback của Havi đẩy chủ tiệm sang domain của kẻ tấn công với vẻ ngoài
+#: hợp lệ. Khoá tra trong dict cố định thì giá trị lạ chỉ rơi về mặc định.
+RETURN_PATHS: dict[str, str] = {
+    "onboarding": "/onboarding",
+    "settings": "/cai-dat",
+}
+
+DEFAULT_RETURN_KEY = "onboarding"
+
+
 @dataclass(frozen=True)
 class OAuthStatePayload:
     workspace_id: UUID
     user_id: UUID
     platform: Platform
+    #: Khoá trong `RETURN_PATHS`. Chủ tiệm nối lại kênh từ Cài đặt phải quay về
+    #: Cài đặt — đá họ vào wizard onboarding là bắt làm lại một luồng đã xong.
+    return_key: str = DEFAULT_RETURN_KEY
+
+    @property
+    def return_path(self) -> str:
+        return RETURN_PATHS.get(self.return_key, RETURN_PATHS[DEFAULT_RETURN_KEY])
 
 
 def create_oauth_state(
-    *, workspace_id: UUID, user_id: UUID, platform: Platform, settings: Settings
+    *,
+    workspace_id: UUID,
+    user_id: UUID,
+    platform: Platform,
+    settings: Settings,
+    return_key: str = DEFAULT_RETURN_KEY,
 ) -> str:
     now = datetime.now(UTC)
     return jwt.encode(
@@ -55,6 +81,9 @@ def create_oauth_state(
             "ws": str(workspace_id),
             "sub": str(user_id),
             "plt": platform.value,
+            # Chuẩn hoá ngay lúc ký: khoá lạ thành mặc định, nên không có đường
+            # nào để một giá trị không nằm trong allow-list sống tới callback.
+            "ret": return_key if return_key in RETURN_PATHS else DEFAULT_RETURN_KEY,
             "nonce": secrets.token_urlsafe(8),
             "iat": now,
             "exp": now + timedelta(minutes=STATE_TTL_MINUTES),
@@ -95,6 +124,10 @@ def verify_oauth_state(
             workspace_id=UUID(claims["ws"]),
             user_id=UUID(claims["sub"]),
             platform=platform,
+            # State cũ (ký trước khi có `ret`) vẫn giải mã được, về mặc định.
+            # Không ném lỗi: state sống 10 phút, nên lúc deploy vẫn còn state cũ
+            # đang bay — làm chúng hỏng là chủ tiệm đang nối kênh bị đá ra.
+            return_key=claims.get("ret", DEFAULT_RETURN_KEY),
         )
     except (KeyError, ValueError) as exc:
         raise InvalidOAuthState("Yêu cầu nối kênh không hợp lệ") from exc
