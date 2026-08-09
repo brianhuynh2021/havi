@@ -59,3 +59,41 @@ class EventLogRepository:
             )
         )
         return int(result.scalar() or 0)
+
+    async def list_for_workspace(
+        self,
+        *,
+        workspace_id: UUID,
+        job_id: UUID | None = None,
+        job_kind: str | None = None,
+        provider: str | None = None,
+        error_only: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[EventLog], int]:
+        """Tra event log đã scope theo workspace.
+
+        Đây là query hỗ trợ vận hành, không phải analytics public. Chỉ lọc trên
+        cột có cấu trúc (`job_id`, `job_kind`, `provider`, `error`), tránh parse
+        `input_summary`/`output_summary` tự do rồi tạo cảm giác tìm kiếm chính
+        xác trong khi thực ra phụ thuộc format câu chữ.
+        """
+        filters = [EventLog.workspace_id == workspace_id]
+        if job_id is not None:
+            filters.append(EventLog.job_id == job_id)
+        if job_kind is not None:
+            filters.append(EventLog.job_kind == job_kind)
+        if provider is not None:
+            filters.append(EventLog.provider == provider)
+        if error_only:
+            filters.append(EventLog.error.is_not(None))
+
+        total = await self._session.execute(select(func.count()).where(*filters))
+        rows = await self._session.execute(
+            select(EventLog)
+            .where(*filters)
+            .order_by(EventLog.created_at.desc(), EventLog.id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(rows.scalars().all()), total.scalar_one()

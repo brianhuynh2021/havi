@@ -451,6 +451,33 @@ class AnalyticsSummary(HaviModel):
     change_vs_previous_period: dict[str, float] = Field(default_factory=dict)
 
 
+class DashboardContentSummary(HaviModel):
+    """Số liệu tối thiểu cho tab Tổng quan trước khi có engagement snapshot."""
+
+    drafts: int
+    pending_approval: int
+    scheduled: int
+    published: int
+    failed: int
+
+
+class EventLogRecord(HaviModel):
+    """Dòng event_log đã được scope theo workspace để support debug."""
+
+    id: UUID
+    workspace_id: UUID | None
+    job_id: UUID | None
+    job_kind: str
+    input_summary: str
+    output_summary: str
+    tokens_in: int
+    tokens_out: int
+    provider: str | None = None
+    duration_ms: int
+    error: str | None = None
+    created_at: datetime
+
+
 class ChannelAttribution(HaviModel):
     channel: Channel
     customers: int

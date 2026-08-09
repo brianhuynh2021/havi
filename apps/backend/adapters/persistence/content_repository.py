@@ -157,6 +157,50 @@ class ContentRepository:
         )
         return list(rows.scalars().all()), total.scalar_one()
 
+    async def count_items_by_status(self, *, workspace_id: UUID) -> dict[ContentStatus, int]:
+        """Đếm content item theo trạng thái trong đúng workspace.
+
+        Dashboard P0 chỉ được hiện dữ liệu thật đã có. Không tự cộng fixture hay
+        số từ domain chưa persist như leads/inbox, vì workspace mới phải thấy
+        rỗng thay vì một tiệm mẫu.
+        """
+        rows = await self._session.execute(
+            select(ContentItem.status, func.count())
+            .where(ContentItem.workspace_id == workspace_id)
+            .group_by(ContentItem.status)
+        )
+        return {status: count for status, count in rows.all()}
+
+    async def count_published_by_channel(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> dict[Channel, int]:
+        rows = await self._session.execute(
+            select(ContentItem.channel, func.count())
+            .where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.status == ContentStatus.PUBLISHED,
+                ContentItem.published_at.is_not(None),
+                ContentItem.published_at >= start,
+                ContentItem.published_at < end,
+            )
+            .group_by(ContentItem.channel)
+        )
+        return {channel: count for channel, count in rows.all()}
+
+    async def count_published_posts(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> int:
+        result = await self._session.execute(
+            select(func.count()).where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.status == ContentStatus.PUBLISHED,
+                ContentItem.published_at.is_not(None),
+                ContentItem.published_at >= start,
+                ContentItem.published_at < end,
+            )
+        )
+        return result.scalar_one()
+
     async def get_item_for_update(
         self, *, workspace_id: UUID, item_id: UUID
     ) -> ContentItem | None:

@@ -85,7 +85,7 @@
 .chartBars {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   align-items: end;
   gap: 10px;
   height: 140px;
@@ -157,6 +157,13 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--color-primary-dark);
+}
+
+.dataNote {
+  margin-top: 14px;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 @media (max-width: 1080px) {

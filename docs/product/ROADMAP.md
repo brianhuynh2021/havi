@@ -109,7 +109,8 @@ Frontend:
 - [x] Next.js 16 App Router + TypeScript, lint và production build chạy được.
 - [x] Design tokens Havi và font Merriweather + Inter.
 - [x] App Shell với sidebar 232px và responsive navigation.
-- [x] Tab Tổng quan được tách thành feature, dùng fixture riêng và bám prototype.
+- [x] Tab Tổng quan được tách thành feature; ban đầu bám prototype bằng fixture,
+  nay đã nối summary thật từ `/analytics/dashboard`.
 - [x] Route `/` hiện là static page; chưa có routing cho các màn còn lại.
 
 Backend:
@@ -122,10 +123,10 @@ Backend:
   `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
   Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
   vẫn là khung `NotImplementedError` cho Tuần 8+.
-- [x] 313 backend tests đang pass (contract/state-machine/provider-router +
+- [x] 318 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
-  mạng thật); Ruff đang pass. 99 web test pass.
+  mạng thật); Ruff đang pass. 105 web test pass.
 
 Architecture/docs:
 
@@ -137,8 +138,11 @@ Architecture/docs:
 
 - [ ] Frontend routes, interaction thật và visual regression tests. Auth,
   onboarding, Tạo nội dung và Lịch đăng đã nối API thật; Landing Page,
-  Terms/Privacy đã dựng (70 test web pass). Tổng quan, Khách tiềm năng, Báo cáo
-  và quên mật khẩu vẫn fixture. Chưa có visual regression.
+  Terms/Privacy đã dựng. Tổng quan đã nối summary thật từ `/analytics/dashboard`
+  và bỏ activity/Zalo fixture gây hiểu nhầm. Báo cáo đã nối `/analytics/summary`,
+  `/analytics/timeseries` và `/analytics/attribution` cho số liệu publish tối
+  thiểu, không còn claim reach/Google Maps giả. Khách tiềm năng và quên mật khẩu
+  vẫn fixture/chưa đủ state thật. Chưa có visual regression.
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
@@ -247,7 +251,10 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [x] Calendar hiển thị đúng ngày/giờ VN và trạng thái publish đầy đủ.
   **Chưa xong:** `publishing`/`published`/`failed` mới có nhãn, chưa có bài thật
   ở trạng thái đó vì chưa đăng thử lên Page thật.
-- [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement snapshot nếu API cho phép.
+- [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement
+  snapshot nếu API cho phép. **Đã có:** `/analytics/dashboard` trả số thật theo
+  workspace cho draft/chờ duyệt/lên lịch/đã đăng/lỗi, tab Tổng quan đã nối API
+  và workspace rỗng không render fixture. **Chưa có:** engagement snapshot.
 - [x] Audit/event log, token usage, quota, retry và idempotency — `event_log` ghi
   token + provider mỗi lượt LLM, quota tháng theo gói chặn ở `create_job`, retry
   backoff + dead-letter cho publish job, idempotency key cho cả content job và
@@ -801,9 +808,15 @@ Mục tiêu: thay fixture Tổng quan/Báo cáo bằng dữ liệu thật và v�
 
 Backend:
 
-- [ ] Dashboard summary cho draft/pending/scheduled/published/failed.
+- [x] Dashboard summary cho draft/pending/scheduled/published/failed —
+  `/analytics/dashboard` đếm từ `content_items`, scope theo workspace và có test
+  workspace rỗng/cross-tenant.
 - [ ] Engagement snapshot tối thiểu nếu quyền Facebook cho phép.
-- [ ] Event log query nội bộ theo workspace/job/request.
+- [ ] Event log query nội bộ theo workspace/job/request. **Đã có:**
+  `/analytics/events` query `event_log` theo workspace, `job_id`, `job_kind`,
+  `provider`, `error_only`, có phân trang và test tenant isolation. **Chưa có:**
+  `request_id` vì API/worker chưa gắn request id vào log context hoặc bảng
+  `event_log`.
 - [x] Monthly token quota — `domain/policies/quota.py`, trần theo gói
   (Trial 100k / Tiệm Nhỏ 500k / Toàn Diện 2M token/tháng), reset theo mốc dương
   lịch **giờ VN** (tính theo UTC thì 7 tiếng đầu mỗi tháng bị tính vào tháng
@@ -834,8 +847,12 @@ Backend:
 
 Frontend:
 
-- [ ] Nối Tổng quan và Báo cáo vào API.
-- [ ] Empty state cho workspace mới; không render số liệu giả.
+- [x] Nối Tổng quan và Báo cáo vào API cho dữ liệu MVP tối thiểu. Tổng quan đọc
+  `/analytics/dashboard`, có loading/error/empty và không còn activity fixture
+  hay nhãn Zalo "Đã bật". Báo cáo đọc `/analytics/summary`,
+  `/analytics/timeseries` và `/analytics/attribution`, chỉ hiện số thật hiện có;
+  lead/engagement chưa nối thì ghi rõ thay vì render fixture.
+- [x] Empty state cho workspace mới; không render số liệu giả ở Tổng quan/Báo cáo.
 - [ ] Failed/reconnect/quota-exceeded states có next action rõ.
 - [ ] Activity feed lấy từ audit/event projection phù hợp cho người dùng.
 
@@ -847,7 +864,10 @@ Platform:
 Exit criteria:
 
 - [ ] Có thể truy một hành động từ web → API → queue → worker → adapter.
-- [ ] Dashboard không lẫn fixture khi chạy production mode.
+  **Đã có một nửa:** tra được event theo `job_id`/workspace qua
+  `/analytics/events`. **Chưa có:** request/correlation ID xuyên HTTP → Celery →
+  adapter.
+- [x] Dashboard/Báo cáo không lẫn fixture khi chạy production mode cho metric đã nối.
 - [x] Quota chặn job mới có thông báo rõ, không âm thầm vượt chi phí — 429 kèm số
   liệu thật và `Retry-After`, banner cảnh báo từ mốc 80% (nói bằng *số bài* chứ
   không bằng token: chủ tiệm spa không biết "480.000 token" là nhiều hay ít), và
@@ -1199,10 +1219,30 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   locale `vi-VN` format ngày ra `01-09` (gạch ngang) trong khi §4 chốt `dd/MM` —
   giờ ghép tay từ `formatToParts`, vẫn để `Intl` lo múi giờ.
   Backend 313 test, web 99 test.
-  **Việc tiếp theo:** phần còn lại của Tuần 8 — nối tab Tổng quan/Báo cáo vào API
-  (hiện vẫn fixture, anh đã chốt giữ nguyên), structured logging, và alerting cho
-  vận hành: job dead-letter tăng, Redis chết (vì rate limit fail-open thì Redis
-  chết là mất giới hạn mà không có dấu hiệu gì), và workspace chạm trần quota.
+  **Việc tiếp theo:** phần còn lại của Tuần 8 — dashboard/reporting production,
+  structured logging, và alerting cho vận hành: job dead-letter tăng, Redis chết
+  (vì rate limit fail-open thì Redis chết là mất giới hạn mà không có dấu hiệu
+  gì), và workspace chạm trần quota.
+- [x] **Nối Tổng quan vào API thật** (Tuần 8, phần dashboard tối thiểu).
+  Backend thêm `/analytics/dashboard` đếm `content_items` theo workspace cho
+  draft/chờ duyệt/lên lịch/đã đăng/lỗi, đồng thời `/analytics/summary` và
+  `/analytics/attribution` thôi ném 501 cho dữ liệu publish tối thiểu. Frontend
+  tab Tổng quan đọc API thật, có loading/error/empty, bỏ activity fixture và đổi
+  Zalo từ "Đã bật" sang "Sắp có" để không hứa P1. Backend 317 test, web 102 test.
+- [x] **Nối Báo cáo vào API thật** (Tuần 8, dữ liệu MVP tối thiểu). Tab Báo cáo
+  đọc `/analytics/summary`, `/analytics/timeseries?metric=published_posts` và
+  `/analytics/attribution`, đổi chart từ ngày fixture sang 4 tuần thật, đổi
+  attribution từ "khách đến từ đâu" sang "bài đã đăng theo kênh", và không hiện
+  claim reach/Google Maps khi chưa có engagement snapshot. Web 105 test.
+  **Việc tiếp theo:** engagement snapshot nếu Facebook cho phép, request/correlation
+  ID xuyên HTTP → Celery → adapter, structured logging, và alerting
+  dead-letter/Redis/quota.
+- [x] **Event-log query nội bộ** (Tuần 8 observability tối thiểu). Thêm
+  `/analytics/events` trả `Page[EventLogRecord]`, lọc theo `job_id`, `job_kind`,
+  `provider`, `error_only`, scope theo active workspace và không parse chuỗi
+  summary tự do. Test xác nhận workspace A không thấy event của workspace B.
+  **Chưa tick request-id/correlation-id:** hiện chưa có middleware/log context
+  ghi request id vào DB. Backend 318 test.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

@@ -865,6 +865,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description Số liệu thật tối thiểu cho tab Tổng quan.
+         */
+        get: operations["dashboard_analytics_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Events
+         * @description Event log đã scope theo workspace để support debug.
+         *
+         *     Chưa có `request_id`: code hiện tại chưa gắn request id vào log context hoặc
+         *     bảng `event_log`, nên endpoint này chỉ expose các khoá thật đang được lưu.
+         */
+        get: operations["events_analytics_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/analytics/summary": {
         parameters: {
             query?: never;
@@ -1275,6 +1318,22 @@ export interface components {
             /** Active Workspace Id */
             active_workspace_id?: string | null;
         };
+        /**
+         * DashboardContentSummary
+         * @description Số liệu tối thiểu cho tab Tổng quan trước khi có engagement snapshot.
+         */
+        DashboardContentSummary: {
+            /** Drafts */
+            drafts: number;
+            /** Pending Approval */
+            pending_approval: number;
+            /** Scheduled */
+            scheduled: number;
+            /** Published */
+            published: number;
+            /** Failed */
+            failed: number;
+        };
         /** EmailLoginRequest */
         EmailLoginRequest: {
             /**
@@ -1284,6 +1343,42 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /**
+         * EventLogRecord
+         * @description Dòng event_log đã được scope theo workspace để support debug.
+         */
+        EventLogRecord: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Workspace Id */
+            workspace_id: string | null;
+            /** Job Id */
+            job_id: string | null;
+            /** Job Kind */
+            job_kind: string;
+            /** Input Summary */
+            input_summary: string;
+            /** Output Summary */
+            output_summary: string;
+            /** Tokens In */
+            tokens_in: number;
+            /** Tokens Out */
+            tokens_out: number;
+            /** Provider */
+            provider?: string | null;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Error */
+            error?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /**
          * FaqEntry
@@ -1590,6 +1685,23 @@ export interface components {
         Page_CrmMessage_: {
             /** Items */
             items: components["schemas"]["CrmMessage"][];
+            /** Total */
+            total: number;
+            /**
+             * Limit
+             * @default 50
+             */
+            limit: number;
+            /**
+             * Offset
+             * @default 0
+             */
+            offset: number;
+        };
+        /** Page[EventLogRecord] */
+        Page_EventLogRecord_: {
+            /** Items */
+            items: components["schemas"]["EventLogRecord"][];
             /** Total */
             total: number;
             /**
@@ -3512,6 +3624,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CrmMessage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_analytics_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardContentSummary"];
+                };
+            };
+        };
+    };
+    events_analytics_events_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                job_kind?: string | null;
+                provider?: string | null;
+                error_only?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_EventLogRecord_"];
                 };
             };
             /** @description Validation Error */
