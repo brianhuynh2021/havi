@@ -114,6 +114,10 @@ cd apps/backend && uv run ruff check . && uv run pytest
 ### Tài liệu chính
 
 - [docs/README.md](docs/README.md) — index tài liệu theo từng nhóm
+- [docs/handoff/DEPLOYMENT.md](docs/handoff/DEPLOYMENT.md) — **cấu hình & triển khai**:
+  ba cờ "chỉ dành cho local", các bước bấm trên Facebook Developers, quota/rate
+  limit, 4 process phải chạy, checklist trước khi mở cho khách. Đọc file này khi
+  dựng staging/production.
 - [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — mô tả chi tiết từng màn hình, fidelity, luồng duyệt bài
 - [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — lộ trình sản phẩm
 - [docs/architecture/SYSTEM_ARCHITECTURE.md](docs/architecture/SYSTEM_ARCHITECTURE.md) — sơ đồ hệ thống, frontend và state nội dung

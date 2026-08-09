@@ -116,10 +116,20 @@ lifecycle/cleanup cho asset `pending` bị bỏ dở, quota LLM theo workspace, 
 reject/version cho content item, và repository cho các domain còn lại (calendar,
 inbox, leads, analytics, billing, connections).
 
-**LLM chưa verify được với provider thật** — chưa có API key nào trong `.env`, nên
-`ProviderRouter` bỏ qua cả ba provider và job sẽ `failed` với reason "không có
-provider nào được cấu hình". Toàn bộ luồng đã test bằng `adapters/llm/fake.py`;
-điền `HAVI_GEMINI_API_KEY` là chạy thật được.
+**LLM: đã có key cả ba provider, nhưng `HAVI_USE_MOCK_LLM=true` nên draft vẫn là
+văn mẫu.** Đặt `false` để gọi model thật (tốn tiền theo token). Toàn bộ luồng cũng
+test được bằng `adapters/llm/fake.py` mà không cần key.
+
+## Triển khai staging/production
+
+Xem [docs/handoff/DEPLOYMENT.md](../../docs/handoff/DEPLOYMENT.md). Ba thứ hay quên
+nhất, và cả ba đều sai *im lặng*:
+
+1. **Beat không chạy** → bài đã duyệt nằm mãi ở `scheduled`, không có lỗi nào.
+2. **Không có reverse proxy ghi đè `X-Forwarded-For`** → rate limit theo IP vô nghĩa
+   (client tự khai header được).
+3. **Không có alert cho Redis** → rate limit fail-open, Redis chết là mất giới hạn
+   mà UI không hiện gì.
 
 ## Ràng buộc không được phá
 
