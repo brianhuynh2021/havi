@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     # chứ không dựng từ request host: sau reverse proxy, host thấy được là host
     # nội bộ, không phải domain người dùng bấm vào.
     facebook_redirect_uri: str = "http://localhost:8000/connections/facebook/callback"
+    # ID của một "Configuration" trong Facebook Login for Business. Loại app này
+    # khai quyền sẵn trong configuration thay vì nhận `scope` trên URL — gửi
+    # `scope` là Facebook trả `Invalid Scopes` ở callback. Để trống nếu app dùng
+    # Facebook Login thường (khi đó adapter gửi `scope` như cũ).
+    facebook_config_id: str = ""
     # Gốc URL của apps/web — callback OAuth ghép đường về vào đây. Callback là
     # điều hướng của trình duyệt (không phải fetch), nên phải trả redirect về app
     # chứ không trả JSON.

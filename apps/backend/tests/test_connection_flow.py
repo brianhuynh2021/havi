@@ -52,10 +52,14 @@ USER_TOKEN = "EAAG-user-token-bi-mat"
 
 
 def _settings(**overrides) -> Settings:
+    # `facebook_config_id` khai tường minh là "" chứ không bỏ trống: Settings đọc
+    # cả `.env` thật, nên máy dev đã cấu hình Login for Business sẽ khiến test
+    # nhánh "Login thường" chạy sai nhánh và đỏ — test phải độc lập với môi trường.
     base = {
         "facebook_client_id": "app-123",
         "facebook_client_secret": "secret-456",
         "facebook_redirect_uri": "https://api.havi.vn/connections/facebook/callback",
+        "facebook_config_id": "",
         "jwt_secret": "test-secret-du-dai-de-ky",
         "token_encryption_key": "3Vn8Qm2xLp7YtZa1Rk4Wc6Bd9Ef0Gh5Jj2Kl3Mn4Op8=",
     }
@@ -151,6 +155,47 @@ def _service(session: AsyncSession, monkeypatch, *, transport=None, settings=Non
         oauth_clients={Platform.FACEBOOK: client},
         settings=settings,
     )
+
+
+class TestAuthorizationUrl:
+    """Hai kiểu app Facebook khai quyền theo hai cách khác nhau.
+
+    Chọn sai không lộ ra lúc dựng URL — Facebook nhận request, hiện màn cấp
+    quyền, rồi mới trả `Invalid Scopes` ở bước callback. Nên phải chốt bằng test
+    thay vì thử tay từng lần.
+    """
+
+    def _params(self, url: str) -> dict[str, str]:
+        from urllib.parse import parse_qs, urlparse
+
+        return {k: v[0] for k, v in parse_qs(urlparse(url).query).items()}
+
+    def test_login_for_business_gui_config_id_khong_gui_scope(self):
+        """Facebook Login for Business: quyền nằm trong Configuration trên
+        dashboard. Gửi kèm `scope` là bị từ chối."""
+        client = FacebookOAuthClient(_settings(facebook_config_id="cfg-789"))
+        params = self._params(client.authorization_url(state="st"))
+
+        assert params["config_id"] == "cfg-789"
+        assert "scope" not in params
+
+    def test_login_thuong_gui_scope_khi_khong_co_config_id(self):
+        """App dùng Facebook Login thường vẫn phải chạy được — giữ đường cũ."""
+        client = FacebookOAuthClient(_settings())
+        params = self._params(client.authorization_url(state="st"))
+
+        assert "config_id" not in params
+        assert params["scope"] == "pages_show_list,pages_read_engagement,pages_manage_posts"
+
+    def test_luon_kem_state_va_redirect_uri(self):
+        """Hai nhánh đều phải mang `state` (chống CSRF) và đúng redirect URI."""
+        for settings in (_settings(), _settings(facebook_config_id="cfg-789")):
+            params = self._params(
+                FacebookOAuthClient(settings).authorization_url(state="st-abc")
+            )
+            assert params["state"] == "st-abc"
+            assert params["redirect_uri"] == settings.facebook_redirect_uri
+            assert params["response_type"] == "code"
 
 
 # --- OAuth state: chống CSRF -------------------------------------------------

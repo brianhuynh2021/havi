@@ -59,6 +59,7 @@ class FacebookOAuthClient(OAuthClientPort):
         self._client_id = settings.facebook_client_id
         self._client_secret = settings.facebook_client_secret
         self._redirect_uri = settings.facebook_redirect_uri
+        self._config_id = settings.facebook_config_id
         self._timeout = timeout_seconds
 
     @property
@@ -70,15 +71,30 @@ class FacebookOAuthClient(OAuthClientPort):
         return bool(self._client_id and self._client_secret)
 
     def authorization_url(self, *, state: str) -> str:
-        return f"{_DIALOG_URL}?" + urlencode(
-            {
-                "client_id": self._client_id,
-                "redirect_uri": self._redirect_uri,
-                "state": state,
-                "scope": ",".join(SCOPES),
-                "response_type": "code",
-            }
-        )
+        """URL màn hình cấp quyền.
+
+        Hai kiểu app, hai cách khai quyền — và chọn sai thì Facebook trả
+        `Invalid Scopes` ở bước callback chứ không báo lúc dựng URL:
+
+        - **Facebook Login for Business** (app tạo mới hiện nay): quyền khai sẵn
+          trong một *Configuration* trên dashboard, request chỉ gửi `config_id`.
+          Gửi kèm `scope` là bị từ chối.
+        - **Facebook Login** thường: gửi `scope` trực tiếp.
+
+        Nên `HAVI_FACEBOOK_CONFIG_ID` có thì đi đường Business, không có thì giữ
+        nguyên đường cũ — cùng một adapter chạy được cả hai.
+        """
+        params = {
+            "client_id": self._client_id,
+            "redirect_uri": self._redirect_uri,
+            "state": state,
+            "response_type": "code",
+        }
+        if self._config_id:
+            params["config_id"] = self._config_id
+        else:
+            params["scope"] = ",".join(SCOPES)
+        return f"{_DIALOG_URL}?" + urlencode(params)
 
     async def exchange_code(self, code: str) -> OAuthAccount:
         async with httpx.AsyncClient(timeout=self._timeout) as client:

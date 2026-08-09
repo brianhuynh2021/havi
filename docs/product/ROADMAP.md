@@ -122,7 +122,7 @@ Backend:
   `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
   Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
   vẫn là khung `NotImplementedError` cho Tuần 8+.
-- [x] 269 backend tests đang pass (contract/state-machine/provider-router +
+- [x] 272 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
   mạng thật); Ruff đang pass. 93 web test pass.
@@ -239,10 +239,9 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
   backend và frontend đều đã nối; job chạy thật cần worker + API key LLM.
 - [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
   và frontend đều đã nối API thật.
-- [ ] Facebook Page OAuth + publish bằng API chính thức. **Đã có:** OAuth thật,
-  adapter Graph API v21.0, scheduler + worker, UI nối/nối lại/ngắt kênh. **Chưa
-  có:** một bài thật lên Page thật — cần Facebook app pilot (§12), và đó là thứ
-  duy nhất còn thiếu để tick mục này.
+- [x] Facebook Page OAuth + publish bằng API chính thức — OAuth thật, adapter
+  Graph API v21.0, scheduler + worker, UI nối/nối lại/ngắt kênh, và **đã đăng một
+  bài thật lên Page** (2026-08-09). Chạy scheduler lần hai không đăng trùng.
 - [x] Calendar hiển thị đúng ngày/giờ VN và trạng thái publish đầy đủ.
   **Chưa xong:** `publishing`/`published`/`failed` mới có nhãn, chưa có bài thật
   ở trạng thái đó vì chưa đăng thử lên Page thật.
@@ -780,9 +779,9 @@ Tests:
 
 Exit criteria:
 
-- [ ] Bài đã duyệt được đăng đúng lịch lên Facebook Page pilot. **Chưa làm:** cần
-  Facebook app thật + Page pilot (xem §12) — toàn bộ đường đi đã chạy đầu-cuối
-  với `FakePublisher`, phần chưa kiểm là Graph API thật.
+- [x] Bài đã duyệt được đăng đúng lịch lên Facebook Page pilot — đăng thật
+  2026-08-09, `external_post_id` từ Graph API và verify lại bằng `GET /{post_id}`
+  (HTTP 200, đúng nội dung). Page "Havi Sandbox".
 - [x] Retry không tạo duplicate post — unique constraint ở Postgres + `FOR UPDATE
   SKIP LOCKED`, task không nhận `content_item_id` qua message, và retry thủ công
   chỉ nhận `dead_letter`. 50 test (29 publish flow + 13 router + 8 wiring).
@@ -956,17 +955,34 @@ Exit criteria:
 - [x] Error classification và manual recovery đã kiểm thử — ba loại lỗi đi ba
   đường khác nhau, `POST /content/publish-jobs/{id}/retry` có guard chỉ nhận
   `dead_letter`, 50 test cho riêng phần này.
-- [ ] **Chưa đóng Gate:** một bài thật lên Facebook Page pilot. Toàn bộ đường đi
-  đã chạy đầu-cuối với `FakePublisher` và Graph API giả ở tầng socket
-  (`httpx.MockTransport`); phần chưa kiểm là Graph API thật. Không tick Gate D
-  trước khi có bài thật — đúng tinh thần "không tích vì đã scaffold" ở
-  §Quy ước theo dõi.
-  **Không còn chờ ai:** App ID + Secret đã có trong `.env`. Còn đúng hai bước:
-  (1) thêm `HAVI_USE_FAKE_PUBLISHER=false` vào `.env` — biến này không có mặt
-  nên đang lấy default `True` trong `core/config.py`, tức mọi lần "đăng" hiện chỉ
-  là adapter giả; (2) khai Redirect URI
-  `http://localhost:8000/connections/facebook/callback` trong Facebook App
-  Settings, khớp từng ký tự với `facebook_redirect_uri`.
+- [x] **Đã đăng một bài THẬT lên Facebook Page** (2026-08-09). Không còn mock ở
+  bất cứ tầng nào: OAuth thật → Page token thật → Graph API thật →
+  `external_post_id` `1247446861786707_122095736007438979`, verify lại bằng
+  `GET /{post_id}` trả HTTP 200 đúng nội dung. Chạy `dispatch_due_posts` lần thứ
+  hai: vẫn đúng 1 publish job, `attempt_count` vẫn 1, không có bài thứ hai trên
+  Trang — chống đăng trùng đã chứng minh trên nền tảng thật, không chỉ trong test.
+  Page thử: "Havi Sandbox" (Page nháp, cố ý không dùng Page có khách thật).
+
+Những thứ phải cấu hình để tới được đây — ghi lại vì không có trong tài liệu nào
+và mỗi cái đều làm luồng chết theo một kiểu khó đoán:
+
+- `HAVI_USE_FAKE_PUBLISHER=false`. Biến này **không có** trong `.env` nên lấy
+  default `True` — mọi lần "đăng" chỉ là adapter giả, log báo thành công mà Trang
+  trống trơn.
+- **Meta đã khoá "Enforce HTTPS"** (công tắc bị mờ, không tắt được), nên
+  `http://localhost` không còn là redirect URI hợp lệ. Phải có URL `https://` —
+  dùng `cloudflared tunnel --url http://localhost:8000`. Đổi tunnel là phải khai
+  lại cả `HAVI_FACEBOOK_REDIRECT_URI`, App Domains và Valid OAuth Redirect URIs.
+- **App Domains** (App settings → Basic) là ô *khác* với Valid OAuth Redirect
+  URIs, và Facebook chặn lưu nó khi thiếu **Privacy Policy URL**. Thiếu App
+  Domains thì màn cấp quyền báo "Can't load URL" trước cả khi hỏi quyền.
+- **App dùng Facebook Login for Business** (mặc định cho app tạo mới): quyền khai
+  trong một *Configuration* trên dashboard, request gửi `config_id` và **không**
+  được gửi `scope` — gửi `scope` thì Facebook vẫn hiện màn cấp quyền rồi mới trả
+  `Invalid Scopes` ở callback. Ba quyền phải bật ở **Use cases** trước, mới hiện
+  ra để tick trong Configuration.
+- Không sửa được app settings qua Graph API (`(#10) Changing app settings through
+  API calls has been disabled`) — phải bấm trên dashboard.
 
 ### Gate E — Founder internal beta
 
@@ -1032,7 +1048,9 @@ Release:
 
 - [ ] Migration rehearsal trên snapshot staging.
 - [ ] Backup/restore rehearsal.
-- [ ] End-to-end publish trên tài khoản Facebook pilot.
+- [x] End-to-end publish trên tài khoản Facebook pilot — 2026-08-09, Page
+  "Havi Sandbox", verify bằng Graph API. **Lưu ý:** chạy bằng cloudflared tunnel
+  trên máy dev, chưa phải staging có domain riêng.
 - [ ] Smoke tests sau deploy cho web, API, worker và scheduler.
 
 ## 9. Chỉ số thành công
@@ -1066,7 +1084,7 @@ Economics:
 
 | Rủi ro | Tác động | Biện pháp |
 |---|---|---|
-| Facebook app review/quyền API chậm | Chặn publish pilot | Mở app review từ Tuần 1; có adapter sandbox/fake nhưng không gọi đó là production |
+| Facebook app review/quyền API chậm | Chặn publish pilot | **Đã giảm:** Development mode cho phép người có role trong app đăng thật — đã verify bằng một bài thật 2026-08-09, không cần App Review. App Review + Business Verification chỉ bắt buộc khi mở public signup, nên không còn chặn pilot 5-10 tiệm (thêm từng người làm Tester) |
 | Email provider chưa chốt | Chặn luồng đặt lại mật khẩu (đăng ký/đăng nhập không bị chặn) | Dùng `debug_code` khi debug; chốt vendor trước closed beta |
 | Landing hứa nhiều hơn sản phẩm | Mất niềm tin, rủi ro pháp lý | Capability flags cho copy; review claim ở Tuần 3 và Tuần 9 |
 | LLM output không ổn định | Draft lỗi hoặc claim nguy hiểm | Structured output, schema validation, banned claims, retry giới hạn và human approval |
@@ -1131,10 +1149,15 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   `oauth_success_redirect_url` (config chết, không nơi nào dùng) và thôi lấy
   `cors_origins[0]` làm base URL của web — hai thứ đó chỉ tình cờ giống nhau ở
   local. Backend 269 test, web 93 test.
-  **Việc tiếp theo (chặn Gate D):** đăng thử một bài thật lên Page pilot —
-  `.env` đã có App ID + Secret, chỉ cần thêm `HAVI_USE_FAKE_PUBLISHER=false` và
-  khai Redirect URI `http://localhost:8000/connections/facebook/callback` trong
-  Facebook App Settings. Sau đó là Dashboard thật (Tuần 8).
+- [x] **Đăng bài thật lên Facebook — Gate D đóng** (2026-08-09). Thêm
+  `facebook_config_id` để hỗ trợ Facebook Login for Business (loại app mặc định
+  hiện nay: gửi `config_id`, không gửi `scope`); app dùng Login thường vẫn chạy
+  đường cũ, có 3 test chốt cả hai nhánh. Cũng sửa một lỗi test: `_settings()`
+  trong `test_connection_flow.py` không khai `facebook_config_id=""` nên đọc lẫn
+  `.env` thật — máy dev đã cấu hình xong thì test nhánh "Login thường" chạy sai
+  nhánh và đỏ. Backend 272 test.
+  **Việc tiếp theo:** Dashboard thật + observability (Tuần 8) — nối tab Tổng quan
+  và Báo cáo vào API, quota token, rate limiting, alerting khi job dead-letter tăng.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
@@ -1149,7 +1172,7 @@ Các quyết định này có deadline để không chặn roadmap:
 | [ ] | Ngành pilot đầu tiên | Trước Tuần 1 | Product |
 | [ ] | Email provider gửi mã đặt lại mật khẩu và chi phí | Trước Tuần 9 | Backend/Product |
 | [ ] | Cloud region, Postgres, Redis, object storage | Cuối Tuần 1 | Engineering |
-| [~] | Facebook developer app + quyền cần xin — App ID/Secret đã có trong `.env`; còn khai Redirect URI trong App Settings và bật `HAVI_USE_FAKE_PUBLISHER=false` | Trong Tuần 1 | Product/Backend |
+| [x] | Facebook developer app + quyền cần xin — app "Havi" (Development mode), Login for Business + Configuration "Havi Page Publishing" với 3 quyền `pages_show_list`/`pages_read_engagement`/`pages_manage_posts` ở mức "Ready for testing". Đã đăng bài thật. **Còn lại:** App Review + Business Verification trước khi mở public signup | Trong Tuần 1 | Product/Backend |
 | [ ] | Web responsive breakpoint support chính thức | Cuối Tuần 2 | Frontend/Design |
 | [~] | Data retention và media deletion policy — Privacy đã ghi 30 ngày; cần Legal thẩm định + code endpoint xoá | Cuối Tuần 3 | Product/Legal |
 | [ ] | `full_auto` có xuất hiện trong pilot hay bị khóa | Cuối Tuần 3 | Product/Security |
