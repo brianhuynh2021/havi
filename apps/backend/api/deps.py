@@ -21,6 +21,7 @@ from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
+from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
@@ -33,6 +34,7 @@ from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
 from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.media_service import MediaService
+from application.services.publish_service import PublishService
 from application.services.workspace_service import WorkspaceService
 from core.config import Settings, get_settings
 from core.enums import Platform
@@ -142,6 +144,28 @@ def get_connection_service(session: DbSessionDep, settings: SettingsDep) -> Conn
 
 
 ConnectionServiceDep = Annotated[ConnectionService, Depends(get_connection_service)]
+
+
+def get_publish_service(session: DbSessionDep) -> PublishService:
+    """Dùng `build_publishers()` của worker, không dựng map riêng.
+
+    Hai map sẽ lệch nhau: thêm adapter Zalo vào worker mà quên ở đây thì "Thử
+    lại" trên API báo không hỗ trợ trong khi scheduler đăng được — hoặc ngược
+    lại, tệ hơn. Import trong hàm vì module `worker.*` cần extra `queue`, còn
+    `build_publishers` thì không — nhưng để import ở đầu file thì API phải cài cả
+    Celery mới khởi động được.
+    """
+    from worker.publish_service_factory import build_publishers
+
+    return PublishService(
+        content=ContentRepository(session),
+        connections=ConnectionRepository(session),
+        publishes=PublishRepository(session),
+        publishers=build_publishers(),
+    )
+
+
+PublishServiceDep = Annotated[PublishService, Depends(get_publish_service)]
 
 
 class AuthContext:

@@ -7,6 +7,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from uuid import UUID
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -16,6 +17,7 @@ from core.enums import (
     ConnectionStatus,
     Platform,
     PublishFailureKind,
+    PublishStatus,
 )
 from core.token_crypto import TokenDecryptionFailed
 from domain.models.publish import PublishJob
@@ -40,6 +42,19 @@ CHANNEL_TO_PLATFORM: dict[Channel, Platform] = {
 class DispatchResult:
     enqueued: int
     skipped: int
+
+
+class PublishJobNotFound(Exception):
+    """Không có job đó trong workspace này — cũng dùng cho job của tenant khác,
+    để không tiết lộ rằng UUID đó có tồn tại ở đâu đó."""
+
+
+class NotRetryable(Exception):
+    """Job không ở `dead_letter` nên không được thử lại thủ công."""
+
+
+class AlreadyRunning(Exception):
+    """Scheduler đã nhận job này — không chạy chồng."""
 
 
 class PublishService:
@@ -172,6 +187,47 @@ class PublishService:
             external_post_id=result.external_post_id,
             published_at=result.published_at,
         )
+
+    async def list_jobs(
+        self, *, workspace_id: UUID, status: PublishStatus | None = None
+    ) -> list[PublishJob]:
+        return await self._publishes.list_for_workspace(
+            workspace_id=workspace_id, status=status
+        )
+
+    async def retry_dead_letter(
+        self, *, workspace_id: UUID, job_id: UUID
+    ) -> PublishJob:
+        """Chủ tiệm bấm "Thử lại" trên một job đã dead-letter.
+
+        Reset rồi chạy ngay trong cùng transaction, không đẩy qua hàng đợi: người
+        vừa bấm nút cần thấy kết quả, và `claim_one` giữ khoá nên scheduler không
+        chen vào giữa.
+
+        Chỉ nhận job đang `dead_letter`. Job `pending` thì scheduler sẽ tự chạy —
+        bấm thêm chỉ tạo cơ hội cho hai lượt chạy song song. Job `succeeded` thì
+        bài đã lên Trang rồi, chạy lại là đăng trùng.
+        """
+        job = await self._publishes.get(job_id=job_id, workspace_id=workspace_id)
+        if job is None:
+            raise PublishJobNotFound()
+        if job.status is not PublishStatus.DEAD_LETTER:
+            raise NotRetryable(
+                f"Bài này đang ở trạng thái {job.status.value} — chỉ thử lại được "
+                "bài đã dừng hẳn sau nhiều lần lỗi"
+            )
+
+        await self._publishes.reset_for_manual_retry(job)
+        claimed = await self._publishes.claim_one(
+            job_id=job_id, workspace_id=workspace_id
+        )
+        if claimed is None:
+            # Scheduler nhận trước trong khoảnh khắc giữa reset và claim. Không
+            # phải lỗi: job sẽ chạy, chỉ là không phải ở lượt này.
+            raise AlreadyRunning(
+                "Havi đang thử đăng lại bài này — chị đợi chút rồi xem lại nhé"
+            )
+        return await self.run_job(claimed)
 
     async def run_due(self, *, now: datetime | None = None, limit: int = 20) -> list[PublishJob]:
         """Nhận job đến hạn rồi chạy từng cái. Một job hỏng không làm hỏng cả lô."""

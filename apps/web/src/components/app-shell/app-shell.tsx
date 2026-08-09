@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { AppNav } from "./app-nav";
 import styles from "./app-shell.module.css";
 import { SignOutButton } from "./sign-out-button";
+import { WorkspaceChannels } from "./workspace-channels";
+import { WorkspaceName } from "./workspace-name";
 import { Logo } from "@/components/ui/logo";
-
-const connectedChannels = ["Facebook", "TikTok", "Zalo", "Maps"] as const;
 
 type AppShellProps = {
   children: ReactNode;
@@ -23,14 +23,8 @@ export function AppShell({ children }: AppShellProps) {
 
         <section className={styles.workspaceCard}>
           <p className={styles.workspaceLabel}>Không gian làm việc</p>
-          <p className={styles.workspaceName}>Spa An Nhiên</p>
-          <div className={styles.workspaceChips}>
-            {connectedChannels.map((channel) => (
-              <span key={channel} className={styles.workspaceChip}>
-                {channel}
-              </span>
-            ))}
-          </div>
+          <WorkspaceName />
+          <WorkspaceChannels />
           <SignOutButton />
         </section>
       </aside>

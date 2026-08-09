@@ -112,6 +112,42 @@ class PublishRepository:
         await self._session.flush()
         return jobs
 
+    async def claim_one(self, *, job_id: UUID, workspace_id: UUID) -> PublishJob | None:
+        """Khoá đúng một job đang `pending` — dùng cho lượt thử lại thủ công.
+
+        Cùng `SKIP LOCKED` như `claim_due` và cùng lý do: nếu scheduler vừa nhận
+        job này thì trả `None` để người bấm "thử lại" không chạy song song với
+        worker và đăng hai lần. `workspace_id` nằm trong điều kiện WHERE chứ
+        không kiểm sau khi đọc — tenant scope phải ở tầng query.
+
+        Trả `None` cũng khi job không còn `pending` (đã chạy xong, hoặc vẫn ở
+        `dead_letter` vì chưa ai reset) — không ai được nhảy qua bước reset.
+        """
+        result = await self._session.execute(
+            select(PublishJob)
+            .where(
+                PublishJob.id == job_id,
+                PublishJob.workspace_id == workspace_id,
+                PublishJob.status == PublishStatus.PENDING,
+            )
+            .with_for_update(skip_locked=True)
+        )
+        job = result.scalar_one_or_none()
+        if job is None:
+            return None
+        job.status = PublishStatus.IN_FLIGHT
+        job.attempt_count += 1
+        await self._session.flush()
+        return job
+
+    async def get(self, *, job_id: UUID, workspace_id: UUID) -> PublishJob | None:
+        result = await self._session.execute(
+            select(PublishJob).where(
+                PublishJob.id == job_id, PublishJob.workspace_id == workspace_id
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def mark_succeeded(
         self, job: PublishJob, *, external_post_id: str, published_at: datetime
     ) -> PublishJob:

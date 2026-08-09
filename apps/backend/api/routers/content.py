@@ -10,12 +10,23 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
-from api.deps import ApprovalServiceDep, AuthDep, ContentServiceDep, WorkspaceDep
+from api.deps import (
+    ApprovalServiceDep,
+    AuthDep,
+    ContentServiceDep,
+    PublishServiceDep,
+    WorkspaceDep,
+)
 from api.errors import transition_conflict
 from application.services.approval_service import ContentItemNotFound, NotReschedulable
 from application.services.content_service import ContentJobNotFound
+from application.services.publish_service import (
+    AlreadyRunning,
+    NotRetryable,
+    PublishJobNotFound,
+)
 from core.content_state import InvalidTransitionError
-from core.enums import Channel, ContentStatus
+from core.enums import Channel, ContentStatus, PublishStatus
 from core.schemas import (
     ApproveRequest,
     BulkApproveFailure,
@@ -27,6 +38,7 @@ from core.schemas import (
     ContentJob,
     ContentJobCreate,
     Page,
+    PublishJob,
 )
 
 router = APIRouter(prefix="/content", tags=["content"])
@@ -106,6 +118,47 @@ async def list_content(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get("/publish-jobs", response_model=list[PublishJob])
+async def list_publish_jobs(
+    workspace_id: WorkspaceDep,
+    publishes: PublishServiceDep,
+    status: PublishStatus | None = None,
+) -> list[PublishJob]:
+    """Lượt đăng của tiệm này. `status=dead_letter` là danh sách bài cần chị xử lý.
+
+    Đặt trước `/{content_id}` trong file: FastAPI khớp route theo thứ tự khai
+    báo, nên nếu nằm sau thì "publish-jobs" bị đọc như một UUID và trả 422.
+    """
+    jobs = await publishes.list_jobs(workspace_id=workspace_id, status=status)
+    return [PublishJob.model_validate(job) for job in jobs]
+
+
+@router.post("/publish-jobs/{job_id}/retry", response_model=PublishJob)
+async def retry_publish_job(
+    job_id: UUID, workspace_id: WorkspaceDep, publishes: PublishServiceDep
+) -> PublishJob:
+    """Nút "Thử lại" cho bài đã dừng hẳn sau nhiều lần lỗi (`dead_letter`).
+
+    Chạy ngay và trả kết quả thật — người vừa bấm nút cần biết lần này được hay
+    không, chứ không phải một `202 Accepted` rồi tự đi tìm.
+
+    409 khi job không ở `dead_letter`: bài đang chờ scheduler chạy thì bấm thêm
+    chỉ tạo cơ hội hai lượt chạy song song, và bài đã đăng thành công thì chạy
+    lại là đăng trùng — đúng thứ cả tầng idempotency dựng ra để chặn.
+    """
+    try:
+        job = await publishes.retry_dead_letter(workspace_id=workspace_id, job_id=job_id)
+    except PublishJobNotFound as exc:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, "Không tìm thấy lượt đăng này"
+        ) from exc
+    except NotRetryable as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    except AlreadyRunning as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    return PublishJob.model_validate(job)
 
 
 @router.get("/{content_id}", response_model=ContentItem)

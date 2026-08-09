@@ -9,10 +9,18 @@ from celery.schedules import crontab
 from worker.celery_app import celery_app
 
 celery_app.conf.beat_schedule = {
-    # Quét content_item ở trạng thái scheduled tới giờ đăng
+    # Quét content_item ở trạng thái scheduled tới giờ đăng → tạo publish job
     "dispatch-due-posts": {
         "task": "havi.scheduler.dispatch_due_posts",
         "schedule": crontab(minute="*/5"),
+    },
+    # Chạy publish job đến hạn. `dispatch_due_posts` đã gọi task này sau mỗi lượt
+    # quét; lịch riêng ở đây là lưới an toàn cho job đang chờ backoff — backoff
+    # 60s không nên phải đợi tới lượt quét 5 phút kế tiếp. `claim_due` khoá row
+    # nên hai nguồn cùng gọi không đăng trùng.
+    "publish-due-jobs": {
+        "task": "havi.publish.run_due",
+        "schedule": crontab(minute="*"),
     },
     # Refresh access token nền tảng trước khi hết hạn
     "refresh-platform-tokens": {

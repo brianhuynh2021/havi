@@ -1,0 +1,149 @@
+import { apiClient } from "@/lib/api-client/client";
+import { NETWORK_ERROR_MESSAGE } from "@/features/auth/auth.api";
+import type { components } from "@/lib/api-client/schema";
+
+export type PlatformConnection = components["schemas"]["PlatformConnection"];
+export type Platform = components["schemas"]["Platform"];
+export type ConnectionStatus = components["schemas"]["ConnectionStatus"];
+
+export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
+
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+
+/** Kênh chưa có adapter thật thì backend trả 501 — UI phải nói "chưa hỗ trợ",
+ * không được hiện "đã nối" cho một kênh chỉ có trên giấy (ROADMAP Tuần 7). */
+const NOT_SUPPORTED = "Havi chưa nối được kênh này — sắp có ạ.";
+const NOT_CONFIGURED =
+  "Kênh này chưa được cấu hình trên hệ thống — chị báo Havi giúp em nhé.";
+
+export async function listConnections(): Promise<Result<PlatformConnection[]>> {
+  try {
+    const { data, error } = await apiClient.GET("/connections");
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    // Kiểm là mảng thật chứ không tin kiểu của generated client: kiểu đó mô tả
+    // hợp đồng, không phải thứ đã về trên dây. Một proxy trả HTML lỗi hay một
+    // API version lệch sẽ làm `.map` ném và đổ cả sidebar — trong khi thứ này
+    // chỉ là chip trang trí.
+    if (!Array.isArray(data)) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/**
+ * Bắt đầu nối kênh: xin URL cấp quyền rồi *điều hướng cả trang* sang nền tảng.
+ *
+ * Không mở popup và không `fetch` cái URL đó: màn hình cấp quyền của Facebook
+ * phải hiện trên thanh địa chỉ thật để chủ tiệm thấy được domain facebook.com —
+ * đó là cách duy nhất họ kiểm được mình không đang gõ mật khẩu vào trang giả.
+ * Popup còn bị chặn mặc định trên nhiều máy.
+ *
+ * Hàm này không trả về khi thành công (trang đã chuyển đi). Backend redirect
+ * ngược lại `/onboarding?ket_noi=ok|loi` sau khi xong.
+ */
+export async function startConnect(platform: Platform): Promise<Result<null>> {
+  try {
+    const { data, error, response } = await apiClient.POST(
+      "/connections/{platform}/start",
+      { params: { path: { platform } } },
+    );
+    if (error || !data) {
+      if (response?.status === 501) return { ok: false, message: NOT_SUPPORTED };
+      if (response?.status === 503) return { ok: false, message: NOT_CONFIGURED };
+      return { ok: false, message: "Chưa mở được trang cấp quyền, thử lại nhé." };
+    }
+    // `assign` bắt đầu điều hướng nhưng không dừng JS ngay, nên hàm vẫn trả
+    // một Result — caller dùng nó để biết có cần hiện lỗi hay không.
+    window.location.assign(data.authorization_url);
+    return { ok: true, data: null };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function disconnect(platform: Platform): Promise<Result<null>> {
+  try {
+    const { error, response } = await apiClient.DELETE("/connections/{platform}", {
+      params: { path: { platform } },
+    });
+    // 204 không có body nên `data` luôn undefined — chỉ được nhìn `error`.
+    if (error) {
+      return {
+        ok: false,
+        message:
+          response?.status === 404
+            ? "Kênh này chưa được nối."
+            : "Chưa ngắt được kênh, thử lại giúp chị nhé.",
+      };
+    }
+    return { ok: true, data: null };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/** Lý do lỗi mà backend gắn vào URL redirect sau callback OAuth.
+ *
+ * Backend cố ý KHÔNG đưa `error_description` thô của nền tảng vào URL (chuỗi do
+ * bên thứ ba kiểm soát), nên phía này dịch từ mã ngắn sang câu tiếng Việt. */
+const CALLBACK_ERRORS: Record<string, string> = {
+  huy: "Chị đã bấm Huỷ ở Facebook nên kênh chưa được nối.",
+  thieu_thong_tin: "Facebook trả về thiếu thông tin — chị thử nối lại nhé.",
+  het_han: "Lượt nối kênh đã hết hạn (quá 10 phút) — chị bấm nối lại nhé.",
+  chua_cau_hinh: NOT_CONFIGURED,
+  he_thong: "Havi gặp lỗi khi nối kênh — chị thử lại sau chút nhé.",
+};
+
+export type CallbackOutcome =
+  | { kind: "ok" }
+  | { kind: "error"; message: string }
+  | null;
+
+/** Đọc `?ket_noi=ok|loi&ly_do=...` mà backend gắn vào URL redirect. */
+export function readCallbackOutcome(search: string): CallbackOutcome {
+  const params = new URLSearchParams(search);
+  const ketNoi = params.get("ket_noi");
+  if (ketNoi === "ok") return { kind: "ok" };
+  if (ketNoi !== "loi") return null;
+  const lyDo = params.get("ly_do") ?? "";
+  return { kind: "error", message: CALLBACK_ERRORS[lyDo] ?? GENERIC_ERROR };
+}
+
+/** Kênh cần nối ở pilot. Chỉ Facebook Page — Zalo/Google là P1 và backend còn
+ * trả 501, nên không liệt kê ở đây để không hứa thứ chưa có. */
+export const PILOT_PLATFORMS: { platform: Platform; label: string }[] = [
+  { platform: "facebook", label: "Facebook Page" },
+];
+
+export function isUsable(connection: PlatformConnection | undefined): boolean {
+  return connection?.status === "connected";
+}
+
+/** Câu giải thích + hành động cho từng trạng thái kết nối.
+ *
+ * `expired` và `revoked` đều dẫn tới cùng một việc (nối lại), nhưng nói lý do
+ * khác nhau: token hết hạn là chuyện bình thường theo thời gian, còn mất quyền
+ * thường là do ai đó đổi vai trò trên Page — chủ tiệm cần biết để kiểm lại. */
+export function statusCopy(status: ConnectionStatus): {
+  label: string;
+  hint: string;
+  needsReconnect: boolean;
+} {
+  switch (status) {
+    case "connected":
+      return { label: "Đã nối", hint: "", needsReconnect: false };
+    case "expired":
+      return {
+        label: "Hết hạn",
+        hint: "Facebook đã hết hạn cấp quyền — chị nối lại để Havi đăng bài tiếp nhé.",
+        needsReconnect: true,
+      };
+    case "revoked":
+      return {
+        label: "Mất quyền",
+        hint: "Havi không còn quyền đăng trên Page này — chị kiểm lại quyền quản trị rồi nối lại nhé.",
+        needsReconnect: true,
+      };
+  }
+}

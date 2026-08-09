@@ -22,7 +22,9 @@ from core.enums import (
     MediaType,
     Plan,
     Platform,
+    PublishFailureKind,
     PublishMode,
+    PublishStatus,
     RawInputKind,
     SubscriptionStatus,
     WorkspaceRole,
@@ -324,6 +326,30 @@ class PlatformConnection(HaviModel):
 class OAuthStartResponse(HaviModel):
     authorization_url: str
     state: str
+
+
+# --- Publish jobs -----------------------------------------------------------
+
+
+class PublishJob(HaviModel):
+    """Một lượt đăng bài. Frontend đọc để hiện trạng thái và nút "Thử lại".
+
+    Không xuất `idempotency_key`: nó là chi tiết nội bộ, và cho phép người ngoài
+    đoán khoá là mở đường tự tạo job trùng key.
+    """
+
+    id: UUID
+    workspace_id: UUID
+    content_item_id: UUID
+    channel: Channel
+    status: PublishStatus
+    scheduled_at: datetime
+    attempt_count: int
+    next_attempt_at: datetime | None = None
+    external_post_id: str | None = None
+    published_at: datetime | None = None
+    failure_kind: PublishFailureKind | None = None
+    failure_detail: str | None = None
 
 
 # --- Inbox ------------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Havi — Product & Engineering Roadmap
 
-> Phiên bản: 2026-08-03
+> Phiên bản: 2026-08-09
 >
 > Trạng thái: execution-ready
 >
@@ -118,11 +118,14 @@ Backend:
 - [x] Pydantic contracts cho auth, workspace, brand profile, media, content,
   calendar, connections, inbox, leads, analytics và billing.
 - [x] Content state machine và event envelope ban đầu.
-- [x] Celery worker/Beat scaffold.
-- [x] 242 backend tests đang pass (contract/state-machine/provider-router +
+- [x] Celery worker/Beat — `havi.content.generate_drafts`,
+  `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
+  Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
+  vẫn là khung `NotImplementedError` cho Tuần 8+.
+- [x] 263 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
-  mạng thật); Ruff đang pass. 70 web test pass.
+  mạng thật); Ruff đang pass. 82 web test pass.
 
 Architecture/docs:
 
@@ -139,8 +142,8 @@ Architecture/docs:
 - [x] Generated TypeScript API client.
 - [x] PostgreSQL models/repositories cho auth, workspace/member và brand profile;
   Alembic migrations thật; tenant isolation có test (403 khi JWT hợp lệ nhưng
-  không phải thành viên). Repository cho media/content/calendar đã có và test
-  tenant isolation thật. **Chưa xong:** inbox/leads/connections.
+  không phải thành viên). Repository cho media/content/calendar/connections/
+  publish đã có và test tenant isolation thật. **Chưa xong:** inbox/leads.
 - [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
   (Argon2), đặt lại mật khẩu qua mã 6 số. **Chưa xong:** email provider thật
   (dùng `debug_code` khi `HAVI_DEBUG=true`), endpoint logout/revoke session.
@@ -150,17 +153,22 @@ Architecture/docs:
 - [x] LLM content pipeline (multi-provider, Gemini ưu tiên) + structured output
   validation + ghi token vào `event_log`. **Chưa có:** quota chặn theo workspace,
   và cost tính bằng tiền.
-- [ ] OAuth/token encryption và adapter publish Facebook. **Đã có:** lớp mã hoá
-  token (Fernet) + signed OAuth state chống CSRF + bảng `platform_connections`
-  và `publish_jobs` với unique constraint chống đăng trùng (migration
-  `b7f77094b946`). **Chưa có:** router OAuth thật, adapter Facebook, scheduler.
-- [ ] Scheduler/retry/idempotency/dead-letter production behavior.
+- [x] OAuth/token encryption và adapter publish Facebook — lớp mã hoá token
+  (Fernet) + signed OAuth state chống CSRF + bảng `platform_connections` và
+  `publish_jobs` với unique constraint chống đăng trùng (migration
+  `b7f77094b946`), router `/connections/*`, adapter Graph API v21.0, và Celery
+  beat gọi scheduler thật. **Chưa kiểm:** một bài thật lên Page thật (cần
+  Facebook app pilot).
+- [x] Scheduler/retry/idempotency/dead-letter production behavior — beat mỗi 5
+  phút tạo job, worker nhận bằng row lock, retry backoff 60/300/900s cho lỗi tạm
+  thời, hai loại lỗi kia đi thẳng dead-letter, và có endpoint thử lại thủ công có
+  guard. **Chưa có:** alerting khi số job dead-letter tăng (Tuần 8).
 - [ ] CI/CD, staging, observability, alerting và runbook.
 - [ ] E2E test cho hành trình signup → draft → approve → publish → report.
 
-Auth, workspace, brand profile, media, content và calendar đã chạy thật trên
-Postgres. Các domain còn lại (connections, inbox, leads, analytics, billing) mới
-khóa contract và trả `501 Not Implemented`.
+Auth, workspace, brand profile, media, content, calendar và connections/publish
+đã chạy thật trên Postgres. Các domain còn lại (inbox, leads, analytics, billing)
+mới khóa contract và trả `501 Not Implemented`.
 
 ### Hạ tầng bắt buộc trước beta
 
@@ -187,9 +195,13 @@ PostgreSQL:
 
 Redis/job queue:
 
-- [ ] Celery broker/result backend hoặc cơ chế tương đương.
+- [x] Celery broker/result backend — Redis, dùng thật cho content generation và
+  publish. Beat có lịch cho cả hai.
 - [ ] Rate limit OTP/content generation.
-- [ ] Job retry, lock ngắn hạn và dead-letter handling.
+- [x] Job retry, lock ngắn hạn và dead-letter handling — cho publish job:
+  `FOR UPDATE SKIP LOCKED`, backoff 60/300/900s, dead-letter sau 4 lần hoặc ngay
+  với lỗi không retry được. **Chưa có:** cùng cơ chế cho content job (hiện
+  `GenerationFailed` là dừng hẳn, không có dead-letter queue riêng).
 - [ ] Cache profile/quota có chiến lược invalidation rõ.
 
 Object storage:
@@ -219,17 +231,21 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 
 - [x] Email + mật khẩu login/signup, refresh token xoay vòng. **Chưa xong:** logout/revoke chủ động.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
-- [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app).
-  **Chưa xong:** brand voice cơ bản và kết nối Facebook Page.
+- [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app), và
+  bước 2 nối Facebook Page đã gọi `/connections` thật.
+  **Chưa xong:** màn sửa brand voice cơ bản.
 - [x] Upload ảnh + nhập text đã chạy thật end-to-end. Ghi âm để sau (nút disable).
 - [x] Một content job sinh nhiều draft theo kênh bằng structured output —
   backend và frontend đều đã nối; job chạy thật cần worker + API key LLM.
 - [x] Editor, version history, duyệt lẻ, duyệt hàng loạt và lên lịch — backend
   và frontend đều đã nối API thật.
-- [ ] Facebook Page OAuth + publish bằng API chính thức.
+- [ ] Facebook Page OAuth + publish bằng API chính thức. **Đã có:** OAuth thật,
+  adapter Graph API v21.0, scheduler + worker, UI nối/nối lại/ngắt kênh. **Chưa
+  có:** một bài thật lên Page thật — cần Facebook app pilot (§12), và đó là thứ
+  duy nhất còn thiếu để tick mục này.
 - [x] Calendar hiển thị đúng ngày/giờ VN và trạng thái publish đầy đủ.
   **Chưa xong:** `publishing`/`published`/`failed` mới có nhãn, chưa có bài thật
-  ở trạng thái đó vì chưa có adapter publish (Tuần 7).
+  ở trạng thái đó vì chưa đăng thử lên Page thật.
 - [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement snapshot nếu API cho phép.
 - [ ] Audit/event log, token usage, quota, retry và idempotency.
 - [ ] Responsive web cho desktop, tablet và mobile phổ biến.
@@ -484,8 +500,8 @@ Frontend:
   ngược về `/onboarding` thành vòng lặp kín. Tên tiệm điền sẵn từ `/auth/me`.
   `tests/onboarding-screen.test.tsx` 5 case; verify thật trên Postgres:
   `/brand-profile` trả 409 với token sau signup và 200 với token sau activate.
-  **Chưa xong:** bước 2 (nối Facebook Page) vẫn fixture vì `/connections` còn
-  501, và chưa có màn sửa brand voice/tone.
+  Bước 2 (nối Facebook Page) đã bỏ fixture, gọi `/connections` thật (Tuần 7).
+  **Chưa xong:** màn sửa brand voice/tone.
 - [x] Xử lý loading, sai mật khẩu và network failure ở màn đăng nhập/đăng ký
   (nút disable khi đang gửi, lỗi hiện qua `role="alert"`, mất mạng có copy tiếng
   Việt riêng). **Chưa xong:** mã hết hạn và throttled ở màn quên mật khẩu.
@@ -664,27 +680,62 @@ Backend/platform:
   chỉ bắt buộc khi mở public signup.
 - [x] Scheduler tạo publish job đến hạn (`PublishService.dispatch_due`) — quét
   bài `scheduled` tới giờ, idempotent nên beat chạy mỗi 5 phút không sinh job
-  trùng. **Chưa xong:** nối vào Celery beat task thật.
+  trùng. Đã nối vào Celery beat thật: `havi.scheduler.dispatch_due_posts` (mỗi 5
+  phút) chỉ *tạo* job rồi `delay()` sang `havi.publish.run_due`, không tự gọi
+  Graph API — một Page rate-limit giữ beat hàng chục giây thì mọi workspace khác
+  trễ theo. `havi.publish.run_due` có lịch riêng mỗi phút làm lưới an toàn cho
+  job đang chờ backoff 60s.
 - [x] Repository publish với unique idempotency key, row lock (`FOR UPDATE SKIP
   LOCKED`) và retry backoff 60s/300s/900s. Khoá dựng từ (content_item_id,
   channel, scheduled_at) chuẩn hoá UTC — cùng mốc thời gian viết ở hai offset
   ra cùng khoá, nếu không reschedule về đúng giờ cũ lại đăng trùng.
   `PublishService.run_due`/`run_job` đã ghép adapter + repository và chạy
   đầu-cuối với `FakePublisher`. `worker/publish_service_factory.py` đã lắp sẵn
-  service với adapter thật/fake theo config. **Chưa xong:** Celery task gọi
-  factory này.
+  service với adapter thật/fake theo config, và `havi.publish.run_due` gọi đúng
+  factory này. Task cố ý **không** nhận `content_item_id`: job được nhận bằng
+  `claim_due` (row lock ở Postgres) chứ không bằng tham số của message — Celery
+  được phép giao lại một message, nên id trong message là đường tới đăng trùng.
+  `max_retries=0` (mặc định Celery là 3) để chỉ có một cơ chế retry:
+  `mark_failed` xếp lịch theo `PublishFailureKind`.
 - [x] Phân loại temporary / auth-permission / validation-permanent
   (`domain/ports/publisher.py`). Chỉ `temporary` được retry — hai loại kia đi
   thẳng dead-letter vì retry cũng hỏng y hệt.
 - [x] Dead-letter state + `reset_for_manual_retry` (đặt lại attempt_count vì
-  người đã sửa nguyên nhân). **Chưa xong:** endpoint HTTP có guard.
+  người đã sửa nguyên nhân). Endpoint có guard đã xong:
+  `POST /content/publish-jobs/{job_id}/retry` chỉ nhận job đang `dead_letter` —
+  `pending` trả 409 vì scheduler sẽ tự chạy (bấm thêm là hai lượt song song),
+  `succeeded` trả 409 vì bài đã lên Trang (chạy lại là đăng trùng). Chạy đồng bộ
+  và trả kết quả thật thay vì 202: người vừa bấm nút cần biết lần này được hay
+  không. `GET /content/publish-jobs?status=dead_letter` là danh sách cần xử lý;
+  response không bao giờ chứa `idempotency_key`.
 
 Frontend:
 
-- [ ] Connection UI trong onboarding/settings.
+- [x] Connection UI trong onboarding/settings — `features/connections/`
+  (`ConnectionList` + `ConnectionCard`) dùng chung cho onboarding bước 2 và tab
+  Cài đặt mới (`/cai-dat`). Bước 2 đã bỏ fixture, gọi `GET /connections` thật.
+  **Cố ý thêm ngoài prototype:** prototype có 5 tab, đây là tab thứ 6 — token
+  Facebook hết hạn sau onboarding thì phải có chỗ thường trực để nối lại, không
+  thì lịch đăng chết mà chủ tiệm không có đường sửa.
+  Nguồn sự thật là `GET /connections`, không phải state React: quay về từ
+  Facebook là một page load mới nên mọi `useState` trước đó đã mất. Onboarding
+  đọc `?ket_noi` để resume ở bước 2 — không thì chủ tiệm rơi về bước 1 và bấm
+  "Tiếp tục" là tạo tiệm thứ hai trùng tên.
 - [ ] Scheduled/publishing/published/failed states và hướng xử lý theo error class.
-- [ ] Reconnect CTA khi token hết hạn hoặc mất quyền.
-- [ ] Không hiển thị TikTok/Zalo/Maps là “đã nối” nếu chỉ là fixture.
+  **Đã có:** nhãn đủ 8 `ContentStatus` trên Lịch đăng (Tuần 6) và API
+  `/content/publish-jobs` để đọc `failure_kind`. **Chưa có:** UI đọc API đó —
+  nút "Thử lại" cho bài dead-letter chưa có trên màn nào.
+- [x] Reconnect CTA khi token hết hạn hoặc mất quyền — `expired` và `revoked`
+  đều hiện nút "Nối lại", nhưng nói lý do khác nhau: hết hạn là chuyện bình
+  thường theo thời gian, còn mất quyền thường do ai đó đổi vai trò trên Page nên
+  chủ tiệm cần kiểm lại quyền quản trị. Kênh hết hạn **không** tính là "đã nối".
+- [x] Không hiển thị TikTok/Zalo/Maps là “đã nối” nếu chỉ là fixture — chip kênh
+  trong sidebar trước đây là mảng hằng `["Facebook", "TikTok", "Zalo", "Maps"]`,
+  tức mọi chủ tiệm đều thấy bốn kênh "đã nối" dù chưa nối gì và ba trong bốn kênh
+  đó còn chưa có adapter. Nay `WorkspaceChannels` đọc `GET /connections` và chỉ
+  hiện kênh `connected`. Tên tiệm cũng thôi hardcode "Spa An Nhiên"
+  (`WorkspaceName` đọc `GET /workspaces`). `PILOT_PLATFORMS` chỉ có Facebook, có
+  test chặn regression nếu ai thêm kênh chưa có adapter.
 
 Tests:
 
@@ -706,12 +757,32 @@ Tests:
   không trả JSON, bấm "Huỷ" không rơi vào 422, cross-tenant không thấy kết nối
   của nhau, response không bao giờ chứa token, 501 (chưa có adapter) khác 503
   (thiếu env).
+- [x] Retry thủ công qua HTTP (`test_publish_router.py`, 13 test): job của tiệm
+  khác trả 404 chứ không 403 (403 xác nhận UUID đó tồn tại), `pending` và
+  `succeeded` đều bị chặn 409 và adapter **không** được gọi, retry vẫn hỏng thì
+  về lại dead-letter kèm lý do mới, và `/content/publish-jobs` không lọt route
+  vào `/content/{content_id}`.
+- [x] Beat schedule ↔ task registry (`test_scheduler_wiring.py`, 8 test): mọi
+  task name trong `beat_schedule` phải tồn tại thật. Gõ sai một tên thì beat vẫn
+  khởi động, vẫn log "sending due task", worker âm thầm bỏ message — lịch đăng
+  chết hoàn toàn mà không có một dòng lỗi nào để lần ra.
+- [x] Frontend connections (`connections-screen.test.tsx`, 12 test):
+  `expired`/`revoked` ra hai câu khác nhau, 501 báo "chưa hỗ trợ" chứ không im
+  lặng, API trả về thứ không phải mảng thì báo lỗi chứ không đổ trang, và test
+  chặn regression nếu ai liệt kê TikTok/Zalo/Maps vào danh sách kênh.
 
 Exit criteria:
 
-- [ ] Bài đã duyệt được đăng đúng lịch lên Facebook Page pilot.
-- [ ] Retry không tạo duplicate post.
-- [ ] Auth failure dẫn người dùng về reconnect, không retry vô hạn.
+- [ ] Bài đã duyệt được đăng đúng lịch lên Facebook Page pilot. **Chưa làm:** cần
+  Facebook app thật + Page pilot (xem §12) — toàn bộ đường đi đã chạy đầu-cuối
+  với `FakePublisher`, phần chưa kiểm là Graph API thật.
+- [x] Retry không tạo duplicate post — unique constraint ở Postgres + `FOR UPDATE
+  SKIP LOCKED`, task không nhận `content_item_id` qua message, và retry thủ công
+  chỉ nhận `dead_letter`. 50 test (29 publish flow + 13 router + 8 wiring).
+- [x] Auth failure dẫn người dùng về reconnect, không retry vô hạn —
+  `AUTH_PERMISSION` đi thẳng dead-letter (không retry) và đánh dấu luôn
+  `platform_connections` thành `expired`, nên UI hiện CTA "Nối lại" thay vì chấm
+  xanh trong lúc mọi bài đang hỏng.
 
 ### Tuần 8 — Dashboard thật, observability và UX lỗi
 
@@ -869,9 +940,20 @@ Exit criteria:
 
 ### Gate D — Safe publishing
 
-- [ ] Facebook OAuth/token encryption/reconnect chạy thật.
-- [ ] Scheduler + worker + adapter publish không duplicate.
-- [ ] Error classification và manual recovery đã kiểm thử.
+- [x] Facebook OAuth/token encryption/reconnect chạy thật — `/connections/*` với
+  signed state chống CSRF, token mã hoá Fernet không bao giờ ra response, và UI
+  nối/nối lại/ngắt kênh ở onboarding bước 2 + `/cai-dat`.
+- [x] Scheduler + worker + adapter publish không duplicate — beat → `dispatch_due`
+  → `run_due`, chống trùng bằng unique constraint + `FOR UPDATE SKIP LOCKED`, và
+  task không nhận `content_item_id` qua message.
+- [x] Error classification và manual recovery đã kiểm thử — ba loại lỗi đi ba
+  đường khác nhau, `POST /content/publish-jobs/{id}/retry` có guard chỉ nhận
+  `dead_letter`, 50 test cho riêng phần này.
+- [ ] **Chưa đóng Gate:** một bài thật lên Facebook Page pilot. Toàn bộ đường đi
+  đã chạy đầu-cuối với `FakePublisher` và Graph API giả ở tầng socket
+  (`httpx.MockTransport`); phần chưa kiểm là Graph API thật, cần Facebook app +
+  Page pilot (§12). Không tick Gate D trước khi có bài thật — đúng tinh thần
+  "không tích vì đã scaffold" ở §Quy ước theo dõi.
 
 ### Gate E — Founder internal beta
 
@@ -927,7 +1009,10 @@ Backend:
 - [ ] Repository integration tests với PostgreSQL thật.
 - [ ] Contract tests cho OpenAPI/error envelope.
 - [ ] Tenant isolation tests bắt buộc ở mọi domain mới.
-- [ ] Worker/scheduler tests cho retry, idempotency, locking và dead-letter.
+- [x] Worker/scheduler tests cho retry, idempotency, locking và dead-letter —
+  `test_publish_flow.py` (29), `test_publish_router.py` (13),
+  `test_scheduler_wiring.py` (8). **Chưa xong:** test hai session Postgres song
+  song thật cho `SKIP LOCKED` (xem Tuần 6), và test cho retry của content job.
 - [ ] Security tests cho OTP, JWT refresh, OAuth state và token redaction.
 
 Release:
@@ -1014,10 +1099,17 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] Facebook OAuth (`/connections/*`) + adapter Graph API publish — backend
   Tuần 7 xong: nối/nối lại/ngắt kênh, token mã hoá không ra response, đăng bài
   chữ/một ảnh/nhiều ảnh, phân loại lỗi và redaction token.
-  **Việc tiếp theo để đóng Gate D:** (1) Celery beat task gọi
-  `publish_service_factory` theo lịch, (2) Connection UI + reconnect CTA ở
-  frontend, (3) endpoint retry thủ công cho job dead-letter, (4) đăng thử một
-  bài thật lên Page pilot bằng Development mode.
+- [x] Đóng ba trong bốn việc còn lại của Tuần 7: (1) Celery beat gọi
+  `publish_service_factory` theo lịch — `dispatch_due_posts` tạo job rồi giao
+  `publish.run_due` chạy, cộng lưới an toàn mỗi phút cho job đang chờ backoff;
+  (2) Connection UI + reconnect CTA — `features/connections/` dùng chung cho
+  onboarding bước 2 và tab Cài đặt mới, đồng thời bỏ chip kênh giả và tên tiệm
+  hardcode trong sidebar; (3) `POST /content/publish-jobs/{id}/retry` có guard
+  chỉ nhận `dead_letter`. Backend 263 test, web 82 test.
+  **Việc tiếp theo (việc thứ 4, chặn Gate D):** đăng thử một bài thật lên Page
+  pilot bằng Development mode — cần Facebook app + Page, xem §12. Sau đó là UI
+  đọc `/content/publish-jobs` để chủ tiệm thấy bài lỗi và bấm "Thử lại" (hiện
+  endpoint đã có nhưng chưa màn nào gọi), rồi Dashboard thật (Tuần 8).
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

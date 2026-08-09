@@ -30,8 +30,10 @@ function signedUpTokens() {
 }
 
 /** Route theo URL: `/auth/me` điền tên sẵn, `POST /workspaces` tạo tiệm,
- * `/activate` ký lại token. */
-function mockApi(overrides: { activate?: Response } = {}) {
+ * `/activate` ký lại token, `/connections` là danh sách kênh ở bước 2. */
+function mockApi(
+  overrides: { activate?: Response; connections?: unknown } = {},
+) {
   return vi
     .spyOn(globalThis, "fetch")
     .mockImplementation(async (input: RequestInfo | URL) => {
@@ -53,6 +55,11 @@ function mockApi(overrides: { activate?: Response } = {}) {
             needs_onboarding: false,
           })
         );
+      }
+      // Phải đứng TRƯỚC nhánh mặc định: `/connections` mà rơi vào nhánh tạo
+      // workspace sẽ trả một object thay vì mảng, và bước 2 đổ.
+      if (url.includes("/connections")) {
+        return jsonResponse(overrides.connections ?? []);
       }
       return jsonResponse({ id: "w1", name: "Spa An Nhiên" }, 201);
     });

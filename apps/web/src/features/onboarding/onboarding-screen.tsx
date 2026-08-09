@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConnectionList } from "@/features/connections/connection-list";
 import { useSession } from "@/lib/auth/session";
 import { createWorkspace, fetchDefaultShopName } from "./onboarding.api";
 import { industryOptions, type IndustryOption } from "./onboarding.fixture";
@@ -17,7 +18,17 @@ const stepLabels = ["Chọn ngành", "Nối kênh", "Havi bắt đầu học"];
 export function OnboardingScreen() {
   const router = useRouter();
   const { signIn } = useSession();
-  const [step, setStep] = useState<Step>(1);
+  // Quay về từ Facebook là một page load MỚI (backend redirect tới
+  // /onboarding?ket_noi=...), nên mọi state trước đó đã mất. Không đọc lại bước
+  // từ URL thì chủ tiệm rơi về bước 1 và bấm "Tiếp tục" là tạo tiệm thứ hai
+  // trùng tên. `useState` với initializer chứ không `useEffect`: sửa step sau
+  // lần render đầu sẽ nháy qua bước 1 một khung hình.
+  const [step, setStep] = useState<Step>(() =>
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("ket_noi")
+      ? 2
+      : 1,
+  );
   const [shopName, setShopName] = useState("");
   const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
@@ -143,16 +154,7 @@ export function OnboardingScreen() {
             <p className={styles.subtitle}>
               Havi cần quyền đăng bài trên Page để giúp chị/anh đăng đúng lịch.
             </p>
-            {connected ? (
-              <div className={styles.connectedCard}>
-                <span className={styles.connectedDot} aria-hidden="true" />
-                Đã kết nối Page &quot;Spa An Nhiên&quot;
-              </div>
-            ) : (
-              <Button variant="primary" onClick={() => setConnected(true)}>
-                Kết nối Facebook Page
-              </Button>
-            )}
+            <ConnectionList onUsableChange={setConnected} />
             <div className={styles.stepActions}>
               {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
                   tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}

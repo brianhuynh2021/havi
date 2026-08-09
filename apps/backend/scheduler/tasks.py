@@ -1,15 +1,39 @@
 """Job định kỳ do Celery Beat kích hoạt (xem scheduler/beat.py)."""
 
+import asyncio
+import logging
+
 from worker.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="havi.scheduler.dispatch_due_posts")
 def dispatch_due_posts() -> None:
-    """Tìm content_item `scheduled` tới giờ → enqueue `havi.publish.content_item`.
+    """Tìm content_item `scheduled` tới giờ → tạo publish job → gọi worker chạy.
 
-    Lấy row bằng lock + idempotency key để một bài chỉ vào hàng đợi đúng một lần.
+    Chỉ *tạo* job ở đây, việc gọi Graph API để `havi.publish.run_due` làm. Beat
+    phải quay lại đúng nhịp: một Page chậm hay rate-limit có thể giữ một lượt
+    đăng hàng chục giây, và nếu beat đứng chờ thì mọi workspace khác trễ theo.
+
+    `enqueue` idempotent theo `(content_item_id, channel, scheduled_at)` nên beat
+    chạy mỗi 5 phút, hai beat chạy chồng khi deploy, hay task bị giao lại đều
+    không sinh bài trùng. Gửi `run_due` kể cả khi lượt này không tạo job mới:
+    job đang chờ backoff từ lượt trước cũng cần được chạy.
     """
-    raise NotImplementedError
+    from worker.publish_service_factory import publish_service_scope
+    from worker.tasks import publish_run_due
+
+    async def _run() -> tuple[int, int]:
+        async with publish_service_scope() as service:
+            result = await service.dispatch_due()
+            return result.enqueued, result.skipped
+
+    enqueued, skipped = asyncio.run(_run())
+    logger.info(
+        "dispatch_due_posts: %d job mới, %d bỏ qua (đã có job)", enqueued, skipped
+    )
+    publish_run_due.delay()
 
 
 @celery_app.task(name="havi.scheduler.refresh_platform_tokens")

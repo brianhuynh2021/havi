@@ -51,13 +51,25 @@ def draft_reply(self, inbox_item_id: str) -> None:  # noqa: ANN001
     raise NotImplementedError
 
 
-@celery_app.task(name="havi.publish.content_item", bind=True, max_retries=3)
-def publish_content_item(self, content_item_id: str, idempotency_key: str) -> None:  # noqa: ANN001
-    """Đăng qua adapter của kênh.
+@celery_app.task(name="havi.publish.run_due", max_retries=0)
+def publish_run_due(limit: int = 20) -> int:
+    """Chạy các publish job đã đến hạn. Trả số job đã nhận trong lượt này.
 
-    `idempotency_key` có unique constraint để bài không bị đăng đúp khi user bấm 2 lần
-    hoặc 2 worker cùng nhận job. Lỗi phân loại theo `PublishFailureKind`:
-    temporary → retry backoff; auth_permission → báo chủ nối lại kênh; validation → không retry.
+    Không nhận `content_item_id`: job được nhận bằng `claim_due`
+    (`FOR UPDATE SKIP LOCKED`) chứ không bằng tham số của message. Đó là chủ ý —
+    nếu id nằm trong message thì Celery giao lại một message (điều nó *được phép*
+    làm với `task_acks_late`) là hai worker cùng đăng một bài. Khoá phải ở
+    Postgres, không ở hàng đợi.
+
+    Retry cũng không do Celery: `mark_failed` xếp lịch thử lại theo
+    `PublishFailureKind` (temporary → backoff 60/300/900s; auth_permission và
+    validation_permanent → dead-letter ngay). Thêm `max_retries` của Celery lên
+    trên là hai cơ chế retry lệch nhau trên cùng một job.
     """
-    del self, content_item_id, idempotency_key
-    raise NotImplementedError
+    from worker.publish_service_factory import publish_service_scope
+
+    async def _run() -> int:
+        async with publish_service_scope() as service:
+            return len(await service.run_due(limit=limit))
+
+    return asyncio.run(_run())

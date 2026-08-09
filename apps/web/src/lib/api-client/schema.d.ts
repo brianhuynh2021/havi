@@ -425,6 +425,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/publish-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Publish Jobs
+         * @description Lượt đăng của tiệm này. `status=dead_letter` là danh sách bài cần chị xử lý.
+         *
+         *     Đặt trước `/{content_id}` trong file: FastAPI khớp route theo thứ tự khai
+         *     báo, nên nếu nằm sau thì "publish-jobs" bị đọc như một UUID và trả 422.
+         */
+        get: operations["list_publish_jobs_content_publish_jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/publish-jobs/{job_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Publish Job
+         * @description Nút "Thử lại" cho bài đã dừng hẳn sau nhiều lần lỗi (`dead_letter`).
+         *
+         *     Chạy ngay và trả kết quả thật — người vừa bấm nút cần biết lần này được hay
+         *     không, chứ không phải một `202 Accepted` rồi tự đi tìm.
+         *
+         *     409 khi job không ở `dead_letter`: bài đang chờ scheduler chạy thì bấm thêm
+         *     chỉ tạo cơ hội hai lượt chạy song song, và bài đã đăng thành công thì chạy
+         *     lại là đăng trùng — đúng thứ cả tầng idempotency dựng ra để chặn.
+         */
+        post: operations["retry_publish_job_content_publish_jobs__job_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/{content_id}": {
         parameters: {
             query?: never;
@@ -583,10 +633,6 @@ export interface paths {
         /**
          * List Connections
          * @description Bước 2 Onboarding + trang Cài đặt: chấm xanh/đỏ theo `status`.
-         *
-         *     Chỉ trả kênh đã thật sự nối. Kênh chưa nối vắng mặt khỏi danh sách chứ
-         *     không trả về kèm status giả — UI không được hiện TikTok/Zalo là "đã nối"
-         *     khi đó chỉ là fixture.
          */
         get: operations["list_connections_connections_get"];
         put?: never;
@@ -608,10 +654,11 @@ export interface paths {
         put?: never;
         /**
          * Start Oauth
-         * @description Phát URL cấp quyền kèm `state` đã ký.
+         * @description Trả URL màn hình cấp quyền của nền tảng, kèm `state` đã ký.
          *
-         *     Trả `state` về cho frontend để nó đối chiếu khi người dùng quay lại — lớp
-         *     kiểm tra thứ hai bên cạnh chữ ký mà backend tự verify ở `/callback`.
+         *     Frontend điều hướng trình duyệt tới `authorization_url`. `state` sống 10
+         *     phút — đủ để bấm qua màn hình Facebook, nhưng một link bị chụp lại thì hết
+         *     hạn nhanh.
          */
         post: operations["start_oauth_connections__platform__start_post"];
         delete?: never;
@@ -632,12 +679,7 @@ export interface paths {
         post?: never;
         /**
          * Disconnect
-         * @description Ngắt kênh — xoá hẳn bản ghi kèm token đã mã hoá.
-         *
-         *     Bài đang `scheduled` trên kênh này sẽ hỏng ở bước publish với
-         *     `AUTH_PERMISSION` (`PublishService.run_job` kiểm tra connection trước khi
-         *     gọi adapter) và không retry vô ích. Cố ý không tự huỷ lịch ở đây: chủ tiệm
-         *     nối lại kênh trong ngày thì bài vẫn đăng đúng như đã duyệt.
+         * @description Chủ tiệm chủ động ngắt kênh — xoá hẳn cả token đã mã hoá.
          */
         delete: operations["disconnect_connections__platform__delete"];
         options?: never;
@@ -1646,11 +1688,69 @@ export interface components {
             connected_by?: string | null;
         };
         /**
+         * PublishFailureKind
+         * @description Phân loại lỗi publish để quyết định có retry hay không.
+         * @enum {string}
+         */
+        PublishFailureKind: "temporary" | "auth_permission" | "validation_permanent";
+        /**
+         * PublishJob
+         * @description Một lượt đăng bài. Frontend đọc để hiện trạng thái và nút "Thử lại".
+         *
+         *     Không xuất `idempotency_key`: nó là chi tiết nội bộ, và cho phép người ngoài
+         *     đoán khoá là mở đường tự tạo job trùng key.
+         */
+        PublishJob: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Content Item Id
+             * Format: uuid
+             */
+            content_item_id: string;
+            channel: components["schemas"]["Channel"];
+            status: components["schemas"]["PublishStatus"];
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            /** Attempt Count */
+            attempt_count: number;
+            /** Next Attempt At */
+            next_attempt_at?: string | null;
+            /** External Post Id */
+            external_post_id?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            failure_kind?: components["schemas"]["PublishFailureKind"] | null;
+            /** Failure Detail */
+            failure_detail?: string | null;
+        };
+        /**
          * PublishMode
          * @description Toggle "Chế độ đăng bài", lưu theo workspace. Không áp dụng cho reply khách.
          * @enum {string}
          */
         PublishMode: "review_first" | "full_auto";
+        /**
+         * PublishStatus
+         * @description Vòng đời một publish job.
+         *
+         *     Tách khỏi `ContentStatus`: một content item có thể sinh nhiều publish job
+         *     (đăng lại sau khi sửa, đăng nhiều kênh), và job có vòng đời riêng với retry
+         *     và dead-letter mà content item không cần biết.
+         * @enum {string}
+         */
+        PublishStatus: "pending" | "in_flight" | "succeeded" | "failed" | "dead_letter";
         /** RawInput */
         RawInput: {
             kind: components["schemas"]["RawInputKind"];
@@ -2597,6 +2697,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_ContentItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_publish_jobs_content_publish_jobs_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["PublishStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishJob"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_publish_job_content_publish_jobs__job_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishJob"];
                 };
             };
             /** @description Validation Error */
