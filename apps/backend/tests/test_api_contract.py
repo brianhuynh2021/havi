@@ -62,6 +62,7 @@ def test_http_request_log_la_json_va_khong_log_query(client: TestClient, caplog)
         "/leads",
         "/crm-messages",
         "/analytics/summary",
+        "/analytics/operations",
         "/billing/subscription",
     ],
 )

@@ -37,6 +37,7 @@ from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.workspace_service import WorkspaceService
+from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
 from core.enums import Platform
 from core.security import decode_access_token
@@ -83,6 +84,14 @@ BrandProfileServiceDep = Annotated[BrandProfileService, Depends(get_brand_profil
 
 
 @lru_cache
+def _alert_sink() -> AlertSink:
+    return LoggingAlertSink()
+
+
+AlertSinkDep = Annotated[AlertSink, Depends(_alert_sink)]
+
+
+@lru_cache
 def _object_storage() -> ObjectStorage:
     """Singleton — boto3 client giữ connection pool, tạo lại mỗi request là tốn vô
     ích. Không nhận `Settings` làm tham số vì Pydantic BaseSettings không hashable
@@ -106,7 +115,7 @@ def _rate_limiter() -> RedisRateLimiter | NullRateLimiter:
         return NullRateLimiter()
     from redis.asyncio import Redis
 
-    return RedisRateLimiter(Redis.from_url(settings.redis_url))
+    return RedisRateLimiter(Redis.from_url(settings.redis_url), alerts=_alert_sink())
 
 
 RateLimiterDep = Annotated[
@@ -128,12 +137,15 @@ def get_job_queue() -> JobQueue:
 JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]
 
 
-def get_content_service(session: DbSessionDep, queue: JobQueueDep) -> ContentService:
+def get_content_service(
+    session: DbSessionDep, queue: JobQueueDep, alerts: AlertSinkDep
+) -> ContentService:
     return ContentService(
         content=ContentRepository(session),
         queue=queue,
         workspaces=WorkspaceRepository(session),
         events=EventLogRepository(session),
+        alerts=alerts,
     )
 
 
@@ -191,6 +203,7 @@ def get_publish_service(session: DbSessionDep) -> PublishService:
         connections=ConnectionRepository(session),
         publishes=PublishRepository(session),
         events=EventLogRepository(session),
+        alerts=_alert_sink(),
         publishers=build_publishers(),
     )
 

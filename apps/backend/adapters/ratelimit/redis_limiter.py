@@ -17,6 +17,8 @@ from dataclasses import dataclass
 
 from redis.asyncio import Redis
 
+from core.alerts import Alert, AlertSink, LoggingAlertSink
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,9 +41,16 @@ class RateLimitVerdict:
 class RedisRateLimiter:
     """Fixed-window counter. Key gồm cả tên rule để hai rule không đè nhau."""
 
-    def __init__(self, redis: Redis, *, prefix: str = "havi:rl") -> None:
+    def __init__(
+        self,
+        redis: Redis,
+        *,
+        prefix: str = "havi:rl",
+        alerts: AlertSink | None = None,
+    ) -> None:
         self._redis = redis
         self._prefix = prefix
+        self._alerts = alerts or LoggingAlertSink()
 
     async def hit(self, *, rule_name: str, identity: str, rule: RateLimitRule) -> RateLimitVerdict:
         """Tính một lượt và trả phán quyết.
@@ -67,6 +76,14 @@ class RedisRateLimiter:
                 "rate limit: Redis không phản hồi, cho qua request (rule=%s)",
                 rule_name,
                 exc_info=True,
+            )
+            await self._alerts.send(
+                Alert(
+                    type="redis.rate_limit_fail_open",
+                    severity="critical",
+                    summary="Redis rate limiter không phản hồi; request được cho qua",
+                    fields={"rule": rule_name},
+                )
             )
             return RateLimitVerdict(allowed=True, remaining=rule.limit, retry_after=0)
 

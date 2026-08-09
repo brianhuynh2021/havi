@@ -14,6 +14,7 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.job_queue import JobQueue
+from core.alerts import Alert, AlertSink, LoggingAlertSink
 from core.enums import Channel, ContentStatus
 from core.request_context import get_request_id
 from domain.models.content import ContentItem, ContentJob
@@ -43,11 +44,13 @@ class ContentService:
         queue: JobQueue,
         workspaces: WorkspaceRepository,
         events: EventLogRepository,
+        alerts: AlertSink | None = None,
     ) -> None:
         self._content = content
         self._queue = queue
         self._workspaces = workspaces
         self._events = events
+        self._alerts = alerts or LoggingAlertSink()
 
     async def quota_status(
         self, *, workspace_id: UUID, now: datetime | None = None
@@ -79,8 +82,35 @@ class ContentService:
         """
         status = await self.quota_status(workspace_id=workspace_id, now=now)
         if status.exceeded:
+            await self._alerts.send(
+                Alert(
+                    type="quota.exceeded",
+                    severity="critical",
+                    summary="Workspace đã vượt quota token tháng",
+                    workspace_id=str(workspace_id),
+                    fields={
+                        "used": status.used,
+                        "limit": status.limit,
+                        "remaining": status.remaining,
+                    },
+                )
+            )
             raise quota.QuotaExceeded(
                 used=status.used, limit=status.limit, resets_at=status.resets_at
+            )
+        if status.near_limit:
+            await self._alerts.send(
+                Alert(
+                    type="quota.near_limit",
+                    severity="warning",
+                    summary="Workspace gần chạm quota token tháng",
+                    workspace_id=str(workspace_id),
+                    fields={
+                        "used": status.used,
+                        "limit": status.limit,
+                        "remaining": status.remaining,
+                    },
+                )
             )
 
         key = idempotency_key or str(uuid.uuid4())

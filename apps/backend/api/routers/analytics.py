@@ -12,14 +12,17 @@ from fastapi import APIRouter, HTTPException, Query, status
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.publish_repository import PublishRepository
 from api.deps import WorkspaceDep
-from core.enums import ContentStatus
+from core.enums import ContentStatus, PublishStatus
 from core.schemas import (
     AnalyticsSummary,
     AnalyticsTimeseries,
     ChannelAttribution,
     DashboardContentSummary,
     EventLogRecord,
+    OperationsMetrics,
+    OperationsPublishMetric,
     Page,
 )
 from domain.policies.scheduling import VIETNAM_TZ
@@ -85,6 +88,39 @@ async def events(
         total=total,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.get("/operations", response_model=OperationsMetrics)
+async def operations(
+    workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
+) -> OperationsMetrics:
+    """Dashboard nội bộ tối thiểu: latency, lỗi, token và publish health."""
+    range_start, range_end = _date_range(start, end)
+    event_metrics = await EventLogRepository(session).operations_metrics(
+        workspace_id=workspace_id, start=range_start, end=range_end
+    )
+    publish_counts = await PublishRepository(session).status_counts_for_window(
+        workspace_id=workspace_id, start=range_start, end=range_end
+    )
+    publish_total = sum(publish_counts.values())
+    publish_succeeded = publish_counts.get(PublishStatus.SUCCEEDED, 0)
+    publish_dead_letter = publish_counts.get(PublishStatus.DEAD_LETTER, 0)
+    return OperationsMetrics(
+        window_start=range_start,
+        window_end=range_end,
+        publish=OperationsPublishMetric(
+            total=publish_total,
+            succeeded=publish_succeeded,
+            dead_letter=publish_dead_letter,
+            success_rate=round(publish_succeeded / publish_total, 4)
+            if publish_total
+            else 0,
+            dead_letter_rate=round(publish_dead_letter / publish_total, 4)
+            if publish_total
+            else 0,
+        ),
+        **event_metrics,
     )
 
 

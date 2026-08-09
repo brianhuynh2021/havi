@@ -166,8 +166,13 @@ Architecture/docs:
 - [x] Scheduler/retry/idempotency/dead-letter production behavior — beat mỗi 5
   phút tạo job, worker nhận bằng row lock, retry backoff 60/300/900s cho lỗi tạm
   thời, hai loại lỗi kia đi thẳng dead-letter, và có endpoint thử lại thủ công có
-  guard. **Chưa có:** alerting khi số job dead-letter tăng (Tuần 8).
+  guard. **Đã có:** alert structured log khi job vào dead-letter. **Chưa có:**
+  aggregation/window alert kiểu "dead-letter tăng nhanh trong 10 phút".
 - [ ] CI/CD, staging, observability, alerting và runbook.
+- [x] Backend operations metrics tối thiểu — `/analytics/operations` gom
+  `event_log` và `publish_jobs` theo workspace/date window để trả event/error
+  count, error rate, avg/p95 latency, token totals, provider breakdown, publish
+  success/dead-letter rate.
 - [ ] E2E test cho hành trình signup → draft → approve → publish → report.
 
 Auth, workspace, brand profile, media, content, calendar và connections/publish
@@ -228,7 +233,9 @@ Vận hành dữ liệu:
 - [ ] Log/metrics/alerting, nhưng không ghi OTP, token hoặc PII nhạy cảm.
   **Đã có:** HTTP structured log dạng JSON một dòng (`havi.http`) với
   `request_id`, method, path không kèm query, status và duration; `event_log`
-  không chứa token. **Chưa có:** metrics/alerting thật.
+  không chứa token; alert structured log (`havi.alert`) cho Redis rate-limit
+  fail-open, quota near/exceeded và publish dead-letter. **Chưa có:** metrics
+  backend/vendor paging thật.
 - [ ] Staging tách production; demo data tách dữ liệu thật.
 
 Không được mời khách beta nếu chưa restore được backup, chưa test tenant
@@ -846,7 +853,8 @@ Backend:
   Counter ở Redis chứ không in-memory: 4 worker uvicorn đếm riêng là giới hạn thật
   gấp 4 lần khai báo, và restart là mất sạch. **Redis hỏng thì cho qua
   (fail-open)** — rate limit là lớp bảo vệ, fail-closed biến sự cố Redis thành
-  outage toàn phần; đánh đổi là cần alert cho Redis.
+  outage toàn phần; đánh đổi là cần alert cho Redis. **Đã có:** `havi.alert`
+  `redis.rate_limit_fail_open` khi Redis không phản hồi.
   `HAVI_DISABLE_RATE_LIMIT` có validator chặn ở staging/production, cùng khuôn với
   `HAVI_USE_MOCK_LLM`/`HAVI_USE_FAKE_PUBLISHER` — tắt rate limit ở production là
   sai kiểu im lặng nhất trong ba cờ: không có gì hiện ra, chỉ là brute force không
@@ -865,8 +873,11 @@ Frontend:
 
 Platform:
 
-- [ ] Structured logging, error monitoring, metrics và alerts.
+- [ ] Structured logging, error monitoring, metrics và alerts. **Đã có:**
+  structured HTTP log, structured alert log và backend metrics endpoint nội bộ.
+  **Chưa có:** metrics backend/vendor paging thật.
 - [ ] Dashboard nội bộ: job latency, failure rate, publish success, token cost.
+  **Đã có backend:** `/analytics/operations`; **chưa có UI nội bộ**.
 
 Exit criteria:
 
@@ -1235,7 +1246,8 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   **Việc tiếp theo:** phần còn lại của Tuần 8 — dashboard/reporting production
   và alerting cho vận hành: job dead-letter tăng, Redis chết
   (vì rate limit fail-open thì Redis chết là mất giới hạn mà không có dấu hiệu
-  gì), và workspace chạm trần quota.
+  gì), và workspace chạm trần quota. **Đã có ở mức structured log:** Redis
+  fail-open, quota near/exceeded, publish dead-letter.
 - [x] **Nối Tổng quan vào API thật** (Tuần 8, phần dashboard tối thiểu).
   Backend thêm `/analytics/dashboard` đếm `content_items` theo workspace cho
   draft/chờ duyệt/lên lịch/đã đăng/lỗi, đồng thời `/analytics/summary` và
@@ -1247,8 +1259,8 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   `/analytics/attribution`, đổi chart từ ngày fixture sang 4 tuần thật, đổi
   attribution từ "khách đến từ đâu" sang "bài đã đăng theo kênh", và không hiện
   claim reach/Google Maps khi chưa có engagement snapshot. Web 105 test.
-  **Việc tiếp theo:** engagement snapshot nếu Facebook cho phép, metrics/alerting
-  dead-letter/Redis/quota.
+  **Việc tiếp theo:** engagement snapshot nếu Facebook cho phép, metrics backend
+  và alert aggregation/window cho dead-letter/Redis/quota.
 - [x] **Publish event log** (Tuần 8 observability). `PublishService.run_job` ghi
   `event_log` cho cả thành công và lỗi: `job_kind=publish.run_job`, `job_id` là
   publish job id, `provider=facebook`, input có content item/channel/attempt,
@@ -1266,6 +1278,16 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
 - [x] **Structured HTTP logging** (Tuần 8 observability). Mỗi request ghi một
   dòng JSON `havi.http` gồm `request_id`, method, path không kèm query, status và
   duration; test chốt query string nhạy cảm không lọt vào log. Backend 321 test.
+- [x] **Structured alert log** (Tuần 8 alerting tối thiểu). Thêm `core.alerts`
+  và logger `havi.alert`; emit alert cho `redis.rate_limit_fail_open`,
+  `quota.near_limit`, `quota.exceeded` và `publish.dead_letter`, chỉ chứa
+  metadata an toàn (`workspace_id`, `job_id`, `request_id`, kind/count), không
+  chứa token/body/query. Đây là adapter thay được bằng Sentry/Slack/PagerDuty sau.
+- [x] **Operations metrics endpoint** (Tuần 8 dashboard nội bộ tối thiểu).
+  `/analytics/operations` trả số theo workspace/date window: event/error count,
+  error rate, avg/p95 latency, tokens in/out/total, breakdown theo provider, và
+  publish success/dead-letter rate từ `publish_jobs`. Đây chưa phải vendor
+  metrics hay paging, nhưng đủ để debug pilot từ dữ liệu thật.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

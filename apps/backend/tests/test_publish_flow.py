@@ -22,12 +22,21 @@ from adapters.persistence.publish_repository import (
     build_idempotency_key,
 )
 from adapters.publishers.fake import FakePublisher, auth_error, validation_error
+from core.alerts import Alert, AlertSink
 from core.enums import Channel, ConnectionStatus, Platform, PublishFailureKind, PublishStatus
 from domain.models.audit import EventLog
 from domain.models.workspace import Workspace
 from domain.ports.publisher import PublishRequest, TemporaryPublishError
 
 pytestmark = pytest.mark.anyio
+
+
+class RecordingAlerts(AlertSink):
+    def __init__(self) -> None:
+        self.sent: list[Alert] = []
+
+    async def send(self, alert: Alert) -> None:
+        self.sent.append(alert)
 
 
 async def _workspace(session: AsyncSession) -> Workspace:
@@ -420,7 +429,12 @@ class TestConnectionRepository:
 class TestPublishServiceEndToEnd:
     """Vòng đầy đủ: bài đã duyệt → scheduler → worker → đăng, với fake adapter."""
 
-    async def _service(self, session: AsyncSession, publisher: FakePublisher):
+    async def _service(
+        self,
+        session: AsyncSession,
+        publisher: FakePublisher,
+        alerts: AlertSink | None = None,
+    ):
         from adapters.persistence.connection_repository import ConnectionRepository
         from adapters.persistence.content_repository import ContentRepository
         from application.services.publish_service import PublishService
@@ -430,6 +444,7 @@ class TestPublishServiceEndToEnd:
             connections=ConnectionRepository(session),
             publishes=PublishRepository(session),
             events=EventLogRepository(session),
+            alerts=alerts,
             publishers={Channel.FACEBOOK_PAGE: publisher},
         )
 
@@ -458,7 +473,8 @@ class TestPublishServiceEndToEnd:
 
         publisher = FakePublisher()
         ws, item = await self._ready(db_session, at=_at(20))
-        service = await self._service(db_session, publisher)
+        alerts = RecordingAlerts()
+        service = await self._service(db_session, publisher, alerts=alerts)
 
         await service.dispatch_due(now=_at(21))
         # Đếm theo workspace của test: DB dev có thể còn bài scheduled từ lần
@@ -538,7 +554,8 @@ class TestPublishServiceEndToEnd:
             )
         )
         await db_session.flush()
-        service = await self._service(db_session, publisher)
+        alerts = RecordingAlerts()
+        service = await self._service(db_session, publisher, alerts=alerts)
         await service.dispatch_due(now=_at(21))
 
         repo = PublishRepository(db_session)
@@ -551,6 +568,9 @@ class TestPublishServiceEndToEnd:
         assert job.status is PublishStatus.DEAD_LETTER
         assert job.failure_kind is PublishFailureKind.AUTH_PERMISSION
         assert "nối lại" in job.failure_detail
+        assert alerts.sent[0].type == "publish.dead_letter"
+        assert alerts.sent[0].job_id == str(job.id)
+        assert alerts.sent[0].fields["failure_kind"] == "auth_permission"
         event = (
             await db_session.execute(
                 select(EventLog).where(

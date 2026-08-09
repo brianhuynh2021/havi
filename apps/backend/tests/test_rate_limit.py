@@ -16,6 +16,7 @@ import pytest
 from redis.asyncio import Redis
 
 from adapters.ratelimit import NullRateLimiter, RateLimitRule, RedisRateLimiter
+from core.alerts import Alert, AlertSink
 from core.config import get_settings
 from domain.policies import rate_limits
 
@@ -57,6 +58,14 @@ async def limiter_scope():
 
 def _identity() -> str:
     return uuid.uuid4().hex[:12]
+
+
+class RecordingAlerts(AlertSink):
+    def __init__(self) -> None:
+        self.sent: list[Alert] = []
+
+    async def send(self, alert: Alert) -> None:
+        self.sent.append(alert)
 
 
 class TestDemVaChan:
@@ -166,13 +175,18 @@ class TestRedisHongThiChoQua:
         cho Redis (ROADMAP Tuần 8).
         """
         # Cổng không có ai lắng nghe → mọi lệnh Redis ném.
-        broken = RedisRateLimiter(Redis.from_url("redis://127.0.0.1:1/0"))
+        alerts = RecordingAlerts()
+        broken = RedisRateLimiter(
+            Redis.from_url("redis://127.0.0.1:1/0"), alerts=alerts
+        )
 
         verdict = await broken.hit(
             rule_name="t", identity="x", rule=RateLimitRule(limit=1, window_seconds=60)
         )
 
         assert verdict.allowed is True
+        assert alerts.sent[0].type == "redis.rate_limit_fail_open"
+        assert alerts.sent[0].severity == "critical"
 
 
 class TestNullLimiter:

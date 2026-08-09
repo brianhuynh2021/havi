@@ -479,6 +479,38 @@ class EventLogRecord(HaviModel):
     created_at: datetime
 
 
+class OperationsProviderMetric(HaviModel):
+    provider: str
+    event_count: int
+    error_count: int
+    tokens_total: int
+
+
+class OperationsPublishMetric(HaviModel):
+    total: int
+    succeeded: int
+    dead_letter: int
+    success_rate: float
+    dead_letter_rate: float
+
+
+class OperationsMetrics(HaviModel):
+    """Số liệu nội bộ đủ để nhìn nhanh job có chậm/hỏng/tốn token không."""
+
+    window_start: datetime
+    window_end: datetime
+    event_count: int
+    error_count: int
+    error_rate: float
+    avg_duration_ms: int
+    p95_duration_ms: int
+    tokens_in: int
+    tokens_out: int
+    tokens_total: int
+    providers: list[OperationsProviderMetric]
+    publish: OperationsPublishMetric
+
+
 class ChannelAttribution(HaviModel):
     channel: Channel
     customers: int

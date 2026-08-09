@@ -13,6 +13,7 @@ from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import PublishRepository
+from core.alerts import Alert, AlertSink, LoggingAlertSink
 from core.enums import (
     Channel,
     ConnectionStatus,
@@ -67,12 +68,14 @@ class PublishService:
         connections: ConnectionRepository,
         publishes: PublishRepository,
         events: EventLogRepository,
+        alerts: AlertSink | None = None,
         publishers: dict[Channel, PublisherPort],
     ) -> None:
         self._content = content
         self._connections = connections
         self._publishes = publishes
         self._events = events
+        self._alerts = alerts or LoggingAlertSink()
         self._publishers = publishers
 
     async def dispatch_due(self, *, now: datetime | None = None) -> DispatchResult:
@@ -267,6 +270,21 @@ class PublishService:
             output_summary=f"status={failed.status.value} failure_kind={kind.value}",
             error=detail,
         )
+        if failed.status is PublishStatus.DEAD_LETTER:
+            await self._alerts.send(
+                Alert(
+                    type="publish.dead_letter",
+                    severity="error",
+                    summary="Publish job đã vào dead-letter",
+                    workspace_id=str(failed.workspace_id),
+                    job_id=str(failed.id),
+                    fields={
+                        "channel": failed.channel.value,
+                        "failure_kind": kind.value,
+                        "attempt_count": failed.attempt_count,
+                    },
+                )
+            )
         return failed
 
     async def _record_event(

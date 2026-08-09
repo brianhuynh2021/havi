@@ -908,6 +908,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Operations
+         * @description Dashboard nội bộ tối thiểu: latency, lỗi, token và publish health.
+         */
+        get: operations["operations_analytics_operations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/analytics/summary": {
         parameters: {
             query?: never;
@@ -1650,6 +1670,65 @@ export interface components {
             authorization_url: string;
             /** State */
             state: string;
+        };
+        /**
+         * OperationsMetrics
+         * @description Số liệu nội bộ đủ để nhìn nhanh job có chậm/hỏng/tốn token không.
+         */
+        OperationsMetrics: {
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /** Event Count */
+            event_count: number;
+            /** Error Count */
+            error_count: number;
+            /** Error Rate */
+            error_rate: number;
+            /** Avg Duration Ms */
+            avg_duration_ms: number;
+            /** P95 Duration Ms */
+            p95_duration_ms: number;
+            /** Tokens In */
+            tokens_in: number;
+            /** Tokens Out */
+            tokens_out: number;
+            /** Tokens Total */
+            tokens_total: number;
+            /** Providers */
+            providers: components["schemas"]["OperationsProviderMetric"][];
+            publish: components["schemas"]["OperationsPublishMetric"];
+        };
+        /** OperationsProviderMetric */
+        OperationsProviderMetric: {
+            /** Provider */
+            provider: string;
+            /** Event Count */
+            event_count: number;
+            /** Error Count */
+            error_count: number;
+            /** Tokens Total */
+            tokens_total: number;
+        };
+        /** OperationsPublishMetric */
+        OperationsPublishMetric: {
+            /** Total */
+            total: number;
+            /** Succeeded */
+            succeeded: number;
+            /** Dead Letter */
+            dead_letter: number;
+            /** Success Rate */
+            success_rate: number;
+            /** Dead Letter Rate */
+            dead_letter_rate: number;
         };
         /**
          * OtpChallenge
@@ -3683,6 +3762,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_EventLogRecord_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    operations_analytics_operations_get: {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationsMetrics"];
                 };
             };
             /** @description Validation Error */

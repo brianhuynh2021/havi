@@ -17,6 +17,7 @@ from adapters.persistence.publish_repository import PublishRepository
 from adapters.publishers.facebook import FacebookPublisher
 from adapters.publishers.fake import FakePublisher
 from application.services.publish_service import PublishService
+from core.alerts import LoggingAlertSink
 from core.config import get_settings
 from core.enums import Channel
 from domain.ports.publisher import PublisherPort
@@ -52,5 +53,6 @@ async def publish_service_scope() -> AsyncGenerator[PublishService]:
             connections=ConnectionRepository(session),
             publishes=PublishRepository(session),
             events=EventLogRepository(session),
+            alerts=LoggingAlertSink(),
             publishers=build_publishers(),
         )

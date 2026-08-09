@@ -9,6 +9,8 @@ Nhóm test quan trọng nhất là `TestChanTruocKhiTonTien`: kiểm rằng job 
 quota — vô nghĩa.
 """
 
+import json
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -224,7 +226,7 @@ class TestChanTruocKhiTonTien:
     """Nhóm quan trọng nhất: job phải bị chặn TRƯỚC khi vào hàng đợi."""
 
     async def test_vuot_tran_thi_khong_enqueue_job_nao(
-        self, client: AsyncClient, db_session: AsyncSession
+        self, client: AsyncClient, db_session: AsyncSession, caplog
     ):
         """Chặn sau khi enqueue thì worker đã gọi LLM và tiền đã tiêu — báo 'hết
         quota' lúc đó là vô nghĩa. Test này verify hàng đợi trống."""
@@ -238,6 +240,7 @@ class TestChanTruocKhiTonTien:
         token = await _onboard(client, email="quota0001@havi.vn")
         # Workspace mới là gói Trial (100k). Đốt hết.
         await _burn(db_session, _workspace_id(token), tokens=150_000)
+        caplog.set_level(logging.ERROR, logger="havi.alert")
 
         response = await client.post(
             "/content/jobs",
@@ -247,6 +250,13 @@ class TestChanTruocKhiTonTien:
 
         assert response.status_code == 429, response.text
         assert recorder.enqueued == [], "job đã lọt vào hàng đợi dù hết quota!"
+        alerts = [json.loads(record.message) for record in caplog.records]
+        assert any(
+            alert["event"] == "alert"
+            and alert["type"] == "quota.exceeded"
+            and alert["workspace_id"] == str(_workspace_id(token))
+            for alert in alerts
+        )
 
     async def test_429_kem_retry_after_va_so_lieu_that(
         self, client: AsyncClient, db_session: AsyncSession

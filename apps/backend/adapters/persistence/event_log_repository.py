@@ -6,6 +6,7 @@ SYSTEM_ARCHITECTURE.md §0). Repository này là chỗ duy nhất thực sự in
 """
 
 from datetime import datetime
+from math import ceil
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -105,3 +106,55 @@ class EventLogRepository:
             .offset(offset)
         )
         return list(rows.scalars().all()), total.scalar_one()
+
+    async def operations_metrics(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> dict:
+        """Aggregate event_log cho dashboard vận hành nội bộ.
+
+        Fetch các dòng trong cửa sổ rồi tính p95 ở Python để không khóa mình vào
+        hàm percentile riêng của một database. Pilot chưa có volume lớn; khi có
+        metrics backend thật thì adapter này sẽ được thay.
+        """
+        result = await self._session.execute(
+            select(EventLog).where(
+                EventLog.workspace_id == workspace_id,
+                EventLog.created_at >= start,
+                EventLog.created_at < end,
+            )
+        )
+        rows = list(result.scalars().all())
+        durations = sorted(row.duration_ms for row in rows)
+        p95_duration_ms = 0
+        if durations:
+            p95_duration_ms = durations[ceil(len(durations) * 0.95) - 1]
+
+        providers: dict[str, dict[str, int]] = {}
+        for row in rows:
+            provider = row.provider or "unknown"
+            bucket = providers.setdefault(
+                provider, {"event_count": 0, "error_count": 0, "tokens_total": 0}
+            )
+            bucket["event_count"] += 1
+            bucket["tokens_total"] += row.tokens_in + row.tokens_out
+            if row.error is not None:
+                bucket["error_count"] += 1
+
+        event_count = len(rows)
+        error_count = sum(1 for row in rows if row.error is not None)
+        tokens_in = sum(row.tokens_in for row in rows)
+        tokens_out = sum(row.tokens_out for row in rows)
+        return {
+            "event_count": event_count,
+            "error_count": error_count,
+            "error_rate": round(error_count / event_count, 4) if event_count else 0,
+            "avg_duration_ms": round(sum(durations) / event_count) if event_count else 0,
+            "p95_duration_ms": p95_duration_ms,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+            "tokens_total": tokens_in + tokens_out,
+            "providers": [
+                {"provider": provider, **metrics}
+                for provider, metrics in sorted(providers.items())
+            ],
+        }

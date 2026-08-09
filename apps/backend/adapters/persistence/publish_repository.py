@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -196,6 +196,21 @@ class PublishRepository:
             .order_by(PublishJob.scheduled_at.desc())
         )
         return list(result.scalars().all())
+
+    async def status_counts_for_window(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> dict[PublishStatus, int]:
+        """Đếm publish job đã được xử lý/cập nhật trong một cửa sổ vận hành."""
+        result = await self._session.execute(
+            select(PublishJob.status, func.count())
+            .where(
+                PublishJob.workspace_id == workspace_id,
+                PublishJob.updated_at >= start,
+                PublishJob.updated_at < end,
+            )
+            .group_by(PublishJob.status)
+        )
+        return {status: count for status, count in result.all()}
 
     async def reset_for_manual_retry(self, job: PublishJob) -> PublishJob:
         """Người bấm "thử lại" trên một job dead-letter.
