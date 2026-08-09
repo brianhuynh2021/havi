@@ -6,6 +6,9 @@ Chạy local:
 OpenAPI contract cho frontend: http://localhost:8000/openapi.json
 """
 
+import logging
+import time
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,6 +27,15 @@ from api.routers import (
     workspaces,
 )
 from core.config import get_settings
+from core.request_context import (
+    REQUEST_ID_HEADER,
+    reset_request_id,
+    sanitize_request_id,
+    set_request_id,
+)
+from core.structured_logging import log_json
+
+logger = logging.getLogger("havi.http")
 
 DESCRIPTION = """
 Backend của Havi — sở hữu database, secret, prompt production và approval state machine.
@@ -68,6 +80,42 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def request_id_middleware(request, call_next):  # noqa: ANN001
+        request_id = sanitize_request_id(request.headers.get(REQUEST_ID_HEADER))
+        started = time.perf_counter()
+        token = set_request_id(request_id)
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_ms = round((time.perf_counter() - started) * 1000)
+            log_json(
+                logger,
+                logging.ERROR,
+                "http.request",
+                request_id=request_id,
+                method=request.method,
+                path=request.url.path,
+                status_code=500,
+                duration_ms=duration_ms,
+            )
+            raise
+        finally:
+            reset_request_id(token)
+        response.headers[REQUEST_ID_HEADER] = request_id
+        duration_ms = round((time.perf_counter() - started) * 1000)
+        log_json(
+            logger,
+            logging.INFO,
+            "http.request",
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+        )
+        return response
 
     for router in ROUTERS:
         app.include_router(router)

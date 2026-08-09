@@ -467,6 +467,7 @@ class EventLogRecord(HaviModel):
     id: UUID
     workspace_id: UUID | None
     job_id: UUID | None
+    request_id: str | None = None
     job_kind: str
     input_summary: str
     output_summary: str

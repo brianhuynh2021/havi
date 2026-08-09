@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import session_scope
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.publishers.facebook import FacebookPublisher
 from adapters.publishers.fake import FakePublisher
@@ -50,5 +51,6 @@ async def publish_service_scope() -> AsyncGenerator[PublishService]:
             content=ContentRepository(session),
             connections=ConnectionRepository(session),
             publishes=PublishRepository(session),
+            events=EventLogRepository(session),
             publishers=build_publishers(),
         )

@@ -15,6 +15,7 @@ from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.job_queue import JobQueue
 from core.enums import Channel, ContentStatus
+from core.request_context import get_request_id
 from domain.models.content import ContentItem, ContentJob
 from domain.policies import quota
 
@@ -87,7 +88,9 @@ class ContentService:
             workspace_id=workspace_id, raw_inputs=raw_inputs, idempotency_key=key
         )
         if created:
-            self._queue.enqueue_generate_drafts(workspace_id=workspace_id, job_id=job.id)
+            self._queue.enqueue_generate_drafts(
+                workspace_id=workspace_id, job_id=job.id, request_id=get_request_id()
+            )
         return CreatedJob(job=job, created=created)
 
     async def get_job(self, *, workspace_id: UUID, job_id: UUID) -> ContentJob:

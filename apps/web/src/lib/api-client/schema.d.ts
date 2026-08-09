@@ -1358,6 +1358,8 @@ export interface components {
             workspace_id: string | null;
             /** Job Id */
             job_id: string | null;
+            /** Request Id */
+            request_id?: string | null;
             /** Job Kind */
             job_kind: string;
             /** Input Summary */
@@ -3661,6 +3663,7 @@ export interface operations {
         parameters: {
             query?: {
                 job_id?: string | null;
+                request_id?: string | null;
                 job_kind?: string | null;
                 provider?: string | null;
                 error_only?: boolean;

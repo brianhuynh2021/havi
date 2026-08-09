@@ -8,11 +8,14 @@ import asyncio
 from uuid import UUID
 
 from application.services.content_engine import GenerationFailed
+from core.request_context import reset_request_id, set_request_id
 from worker.celery_app import celery_app
 
 
 @celery_app.task(name="havi.content.generate_drafts", bind=True, max_retries=3)
-def generate_drafts(self, workspace_id: str, job_id: str) -> None:  # noqa: ANN001
+def generate_drafts(
+    self, workspace_id: str, job_id: str, request_id: str | None = None
+) -> None:  # noqa: ANN001
     """Ingest media → đọc brand profile → 1 lần gọi LLM sinh mọi kênh.
 
     Trạng thái draft khi sinh xong lấy từ `core.content_state.initial_status(publish_mode)`.
@@ -31,10 +34,15 @@ def generate_drafts(self, workspace_id: str, job_id: str) -> None:  # noqa: ANN0
                 workspace_id=UUID(workspace_id), job_id=UUID(job_id)
             )
 
+    token = set_request_id(request_id) if request_id else None
     try:
-        asyncio.run(_run())
-    except GenerationFailed:
-        return
+        try:
+            asyncio.run(_run())
+        except GenerationFailed:
+            return
+    finally:
+        if token is not None:
+            reset_request_id(token)
 
 
 @celery_app.task(name="havi.listening.classify", bind=True)

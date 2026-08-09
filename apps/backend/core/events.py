@@ -20,6 +20,7 @@ logger = logging.getLogger("havi.event_log")
 class EventLogEntry(BaseModel):
     workspace_id: UUID | None = None
     job_id: UUID | None = None
+    request_id: str | None = None
     job_kind: str
     input_summary: str = ""
     output_summary: str = ""

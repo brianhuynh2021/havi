@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.publishers.fake import FakePublisher, validation_error
 from api.deps import get_publish_service
@@ -66,6 +67,7 @@ def _override(
             content=ContentRepository(db_session),
             connections=ConnectionRepository(db_session),
             publishes=PublishRepository(db_session),
+            events=EventLogRepository(db_session),
             publishers={Channel.FACEBOOK_PAGE: publisher},
         )
 

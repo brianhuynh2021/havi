@@ -11,6 +11,7 @@ from uuid import UUID
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import PublishRepository
 from core.enums import (
     Channel,
@@ -19,6 +20,7 @@ from core.enums import (
     PublishFailureKind,
     PublishStatus,
 )
+from core.events import EventLogEntry
 from core.token_crypto import TokenDecryptionFailed
 from domain.models.publish import PublishJob
 from domain.ports.publisher import (
@@ -64,11 +66,13 @@ class PublishService:
         content: ContentRepository,
         connections: ConnectionRepository,
         publishes: PublishRepository,
+        events: EventLogRepository,
         publishers: dict[Channel, PublisherPort],
     ) -> None:
         self._content = content
         self._connections = connections
         self._publishes = publishes
+        self._events = events
         self._publishers = publishers
 
     async def dispatch_due(self, *, now: datetime | None = None) -> DispatchResult:
@@ -115,7 +119,7 @@ class PublishService:
             workspace_id=job.workspace_id, item_id=job.content_item_id
         )
         if item is None:
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job,
                 kind=PublishFailureKind.VALIDATION_PERMANENT,
                 detail="Không tìm thấy bài — có thể đã bị xoá",
@@ -123,7 +127,7 @@ class PublishService:
 
         publisher = self._publishers.get(job.channel)
         if publisher is None:
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job,
                 kind=PublishFailureKind.VALIDATION_PERMANENT,
                 detail=f"Chưa hỗ trợ đăng lên {job.channel.value}",
@@ -136,7 +140,7 @@ class PublishService:
             else None
         )
         if connection is None or connection.status is not ConnectionStatus.CONNECTED:
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job,
                 kind=PublishFailureKind.AUTH_PERMISSION,
                 detail="Kênh chưa nối hoặc đã mất kết nối — chị nối lại giúp em nhé",
@@ -152,7 +156,7 @@ class PublishService:
                 status=ConnectionStatus.REVOKED,
                 reason="Không giải mã được token — cần nối lại kênh",
             )
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job,
                 kind=PublishFailureKind.AUTH_PERMISSION,
                 detail="Không giải mã được token nền tảng",
@@ -173,20 +177,29 @@ class PublishService:
             await self._connections.mark_unusable(
                 connection, status=ConnectionStatus.EXPIRED, reason=exc.detail
             )
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job, kind=exc.kind, detail=exc.detail
             )
         except PublishError as exc:
-            return await self._publishes.mark_failed(
+            return await self._mark_failed_with_event(
                 job, kind=exc.kind, detail=exc.detail
             )
 
         await self._content.mark_published(item, published_at=result.published_at)
-        return await self._publishes.mark_succeeded(
+        succeeded = await self._publishes.mark_succeeded(
             job,
             external_post_id=result.external_post_id,
             published_at=result.published_at,
         )
+        summary = (
+            f"status={succeeded.status.value} "
+            f"external_post_id={result.external_post_id}"
+        )
+        await self._record_event(
+            succeeded,
+            output_summary=summary,
+        )
+        return succeeded
 
     async def list_jobs(
         self, *, workspace_id: UUID, status: PublishStatus | None = None
@@ -238,9 +251,43 @@ class PublishService:
                 await self.run_job(job)
             except Exception:
                 logger.exception("publish job %s lỗi ngoài dự kiến", job.id)
-                await self._publishes.mark_failed(
+                await self._mark_failed_with_event(
                     job,
                     kind=PublishFailureKind.TEMPORARY,
                     detail="Lỗi hệ thống ngoài dự kiến",
                 )
         return jobs
+
+    async def _mark_failed_with_event(
+        self, job: PublishJob, *, kind: PublishFailureKind, detail: str
+    ) -> PublishJob:
+        failed = await self._publishes.mark_failed(job, kind=kind, detail=detail)
+        await self._record_event(
+            failed,
+            output_summary=f"status={failed.status.value} failure_kind={kind.value}",
+            error=detail,
+        )
+        return failed
+
+    async def _record_event(
+        self,
+        job: PublishJob,
+        *,
+        output_summary: str,
+        error: str | None = None,
+    ) -> None:
+        platform = CHANNEL_TO_PLATFORM.get(job.channel)
+        await self._events.record(
+            EventLogEntry(
+                workspace_id=job.workspace_id,
+                job_id=job.id,
+                job_kind="publish.run_job",
+                input_summary=(
+                    f"content_item={job.content_item_id} channel={job.channel.value} "
+                    f"attempt={job.attempt_count}"
+                ),
+                output_summary=output_summary,
+                provider=platform.value if platform else None,
+                error=error,
+            )
+        )

@@ -12,8 +12,10 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import (
     MAX_ATTEMPTS,
     PublishRepository,
@@ -21,6 +23,7 @@ from adapters.persistence.publish_repository import (
 )
 from adapters.publishers.fake import FakePublisher, auth_error, validation_error
 from core.enums import Channel, ConnectionStatus, Platform, PublishFailureKind, PublishStatus
+from domain.models.audit import EventLog
 from domain.models.workspace import Workspace
 from domain.ports.publisher import PublishRequest, TemporaryPublishError
 
@@ -426,6 +429,7 @@ class TestPublishServiceEndToEnd:
             content=ContentRepository(session),
             connections=ConnectionRepository(session),
             publishes=PublishRepository(session),
+            events=EventLogRepository(session),
             publishers={Channel.FACEBOOK_PAGE: publisher},
         )
 
@@ -468,6 +472,19 @@ class TestPublishServiceEndToEnd:
         assert jobs[0].external_post_id
         assert item.status is ContentStatus.PUBLISHED
         assert len(publisher.calls) == 1
+
+        event = (
+            await db_session.execute(
+                select(EventLog).where(
+                    EventLog.job_id == jobs[0].id,
+                    EventLog.job_kind == "publish.run_job",
+                )
+            )
+        ).scalar_one()
+        assert event.workspace_id == ws.id
+        assert event.provider == "facebook"
+        assert event.error is None
+        assert jobs[0].external_post_id in event.output_summary
 
     async def test_scheduler_chay_lai_khong_dang_hai_lan(self, db_session: AsyncSession):
         """Beat quét mỗi 5 phút — chạy lại không được sinh job trùng."""
@@ -534,6 +551,16 @@ class TestPublishServiceEndToEnd:
         assert job.status is PublishStatus.DEAD_LETTER
         assert job.failure_kind is PublishFailureKind.AUTH_PERMISSION
         assert "nối lại" in job.failure_detail
+        event = (
+            await db_session.execute(
+                select(EventLog).where(
+                    EventLog.job_id == job.id,
+                    EventLog.job_kind == "publish.run_job",
+                )
+            )
+        ).scalar_one()
+        assert event.error == job.failure_detail
+        assert "auth_permission" in event.output_summary
 
     async def test_mat_quyen_thi_danh_dau_luon_ket_noi(self, db_session: AsyncSession):
         """Không đánh dấu thì mọi bài sau cũng hỏng mà UI vẫn hiện chấm xanh."""

@@ -190,6 +190,7 @@ def get_publish_service(session: DbSessionDep) -> PublishService:
         content=ContentRepository(session),
         connections=ConnectionRepository(session),
         publishes=PublishRepository(session),
+        events=EventLogRepository(session),
         publishers=build_publishers(),
     )
 

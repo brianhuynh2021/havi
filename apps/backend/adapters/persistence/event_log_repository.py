@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.events import EventLogEntry, record_event
+from core.request_context import get_request_id
 from domain.models.audit import EventLog
 
 
@@ -20,20 +21,24 @@ class EventLogRepository:
         self._session = session
 
     async def record(self, entry: EventLogEntry) -> EventLog:
+        effective_entry = entry.model_copy(
+            update={"request_id": entry.request_id or get_request_id()}
+        )
         # Log ra stdout luôn: nếu transaction rollback vì lỗi sau đó, ít nhất vẫn
         # còn dấu vết trong log để debug.
-        record_event(entry)
+        record_event(effective_entry)
         row = EventLog(
-            workspace_id=entry.workspace_id,
-            job_id=entry.job_id,
-            job_kind=entry.job_kind,
-            input_summary=entry.input_summary,
-            output_summary=entry.output_summary,
-            tokens_in=entry.tokens_in,
-            tokens_out=entry.tokens_out,
-            duration_ms=entry.duration_ms,
-            provider=entry.provider,
-            error=entry.error,
+            workspace_id=effective_entry.workspace_id,
+            job_id=effective_entry.job_id,
+            request_id=effective_entry.request_id,
+            job_kind=effective_entry.job_kind,
+            input_summary=effective_entry.input_summary,
+            output_summary=effective_entry.output_summary,
+            tokens_in=effective_entry.tokens_in,
+            tokens_out=effective_entry.tokens_out,
+            duration_ms=effective_entry.duration_ms,
+            provider=effective_entry.provider,
+            error=effective_entry.error,
         )
         self._session.add(row)
         await self._session.flush()
@@ -67,6 +72,7 @@ class EventLogRepository:
         job_id: UUID | None = None,
         job_kind: str | None = None,
         provider: str | None = None,
+        request_id: str | None = None,
         error_only: bool = False,
         limit: int = 50,
         offset: int = 0,
@@ -85,6 +91,8 @@ class EventLogRepository:
             filters.append(EventLog.job_kind == job_kind)
         if provider is not None:
             filters.append(EventLog.provider == provider)
+        if request_id is not None:
+            filters.append(EventLog.request_id == request_id)
         if error_only:
             filters.append(EventLog.error.is_not(None))
 

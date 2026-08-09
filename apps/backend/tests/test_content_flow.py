@@ -116,6 +116,21 @@ async def test_tao_job_tra_202_queued_va_day_vao_hang_doi(
     assert len(job_queue.enqueued) == 1
 
 
+async def test_tao_job_truyen_request_id_sang_hang_doi(
+    client: AsyncClient, job_queue: RecordingJobQueue
+):
+    token_pair = await _onboard(client, email="c1-request@havi.vn")
+    response = await client.post(
+        "/content/jobs",
+        json={"raw_inputs": [{"kind": "text", "text": "Tuần này giảm giá gội đầu"}]},
+        headers=_headers(token_pair) | {"X-Request-ID": "req_content_123"},
+    )
+
+    assert response.status_code == 202, response.text
+    assert response.headers["X-Request-ID"] == "req_content_123"
+    assert job_queue.enqueued[0][2] == "req_content_123"
+
+
 async def test_cung_idempotency_key_khong_tao_job_thu_hai(
     client: AsyncClient, job_queue: RecordingJobQueue
 ):

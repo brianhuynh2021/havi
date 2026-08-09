@@ -123,7 +123,7 @@ Backend:
   `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
   Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
   vẫn là khung `NotImplementedError` cho Tuần 8+.
-- [x] 318 backend tests đang pass (contract/state-machine/provider-router +
+- [x] 321 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
   mạng thật); Ruff đang pass. 105 web test pass.
@@ -226,6 +226,9 @@ Vận hành dữ liệu:
 - [ ] Migration forward/rollback strategy.
 - [ ] Secret management và token encryption key rotation plan.
 - [ ] Log/metrics/alerting, nhưng không ghi OTP, token hoặc PII nhạy cảm.
+  **Đã có:** HTTP structured log dạng JSON một dòng (`havi.http`) với
+  `request_id`, method, path không kèm query, status và duration; `event_log`
+  không chứa token. **Chưa có:** metrics/alerting thật.
 - [ ] Staging tách production; demo data tách dữ liệu thật.
 
 Không được mời khách beta nếu chưa restore được backup, chưa test tenant
@@ -351,7 +354,10 @@ Backend/platform:
 - [x] Tạo Docker Compose cho PostgreSQL, Redis và MinIO (`docker-compose.yml` ở root).
 - [x] Khởi tạo Alembic và migration smoke test (`alembic check` + round-trip up/down
   verify trên Postgres thật).
-- [ ] Thêm request ID/job ID vào log context.
+- [x] Thêm request ID/job ID vào log context — HTTP middleware nhận/tự phát
+  `X-Request-ID`, trả lại header này cho client, lưu vào `contextvars`, truyền
+  qua queue `havi.content.generate_drafts`, và `event_log.request_id` ghi lại để
+  query theo workspace/job/request. Alembic migration `1f2a7c8d9e10`.
 
 QA/product:
 
@@ -589,7 +595,10 @@ Tests:
 Exit criteria:
 
 - [ ] Upload → content job → nhiều draft chạy thật trên staging.
-- [ ] Job lỗi có thể retry và truy vết bằng một correlation ID.
+- [x] Job lỗi có thể retry và truy vết bằng một correlation ID cho content
+  generation — request id đi từ HTTP tạo job → Celery message → worker context →
+  `event_log`. Publish retry đã recovery được; event log riêng cho publish
+  adapter vẫn là phần observability cần làm tiếp nếu muốn đủ 100%.
 - [ ] Token/cost hiển thị được trong internal event log.
 
 ### Tuần 6 — Editor, approval và calendar
@@ -814,9 +823,7 @@ Backend:
 - [ ] Engagement snapshot tối thiểu nếu quyền Facebook cho phép.
 - [ ] Event log query nội bộ theo workspace/job/request. **Đã có:**
   `/analytics/events` query `event_log` theo workspace, `job_id`, `job_kind`,
-  `provider`, `error_only`, có phân trang và test tenant isolation. **Chưa có:**
-  `request_id` vì API/worker chưa gắn request id vào log context hoặc bảng
-  `event_log`.
+  `provider`, `request_id`, `error_only`, có phân trang và test tenant isolation.
 - [x] Monthly token quota — `domain/policies/quota.py`, trần theo gói
   (Trial 100k / Tiệm Nhỏ 500k / Toàn Diện 2M token/tháng), reset theo mốc dương
   lịch **giờ VN** (tính theo UTC thì 7 tiếng đầu mỗi tháng bị tính vào tháng
@@ -864,9 +871,11 @@ Platform:
 Exit criteria:
 
 - [ ] Có thể truy một hành động từ web → API → queue → worker → adapter.
-  **Đã có một nửa:** tra được event theo `job_id`/workspace qua
-  `/analytics/events`. **Chưa có:** request/correlation ID xuyên HTTP → Celery →
-  adapter.
+  **Đã có:** `X-Request-ID` xuyên HTTP → Celery content generation → worker →
+  `event_log`, và tra được qua `/analytics/events`. Publish job cũng ghi
+  `event_log` cho success/failure ở `publish.run_job`, gồm channel, attempt,
+  platform, external post id hoặc failure detail. **Chưa có:** structured log
+  JSON thống nhất ngoài stdout.
 - [x] Dashboard/Báo cáo không lẫn fixture khi chạy production mode cho metric đã nối.
 - [x] Quota chặn job mới có thông báo rõ, không âm thầm vượt chi phí — 429 kèm số
   liệu thật và `Retry-After`, banner cảnh báo từ mốc 80% (nói bằng *số bài* chứ
@@ -1126,7 +1135,11 @@ Reliability:
 - [ ] Publish success ≥95% cho job hợp lệ.
 - [ ] Duplicate publish = 0.
 - [ ] Cross-tenant data incident = 0.
-- [ ] Có thể truy vết 100% failed jobs bằng correlation ID.
+- [x] Có thể truy vết failed content/publish jobs bằng correlation ID hoặc job ID.
+  Content job failed ghi `event_log.request_id`; publish job success/failure ghi
+  `publish.run_job` với `job_id` là publish job id, platform, attempt và
+  `failure_detail`/external post id. Scheduler-run publish job có `job_id` nhưng
+  không có HTTP request id, đúng vì không xuất phát từ request người dùng.
 
 Economics:
 
@@ -1219,8 +1232,8 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   locale `vi-VN` format ngày ra `01-09` (gạch ngang) trong khi §4 chốt `dd/MM` —
   giờ ghép tay từ `formatToParts`, vẫn để `Intl` lo múi giờ.
   Backend 313 test, web 99 test.
-  **Việc tiếp theo:** phần còn lại của Tuần 8 — dashboard/reporting production,
-  structured logging, và alerting cho vận hành: job dead-letter tăng, Redis chết
+  **Việc tiếp theo:** phần còn lại của Tuần 8 — dashboard/reporting production
+  và alerting cho vận hành: job dead-letter tăng, Redis chết
   (vì rate limit fail-open thì Redis chết là mất giới hạn mà không có dấu hiệu
   gì), và workspace chạm trần quota.
 - [x] **Nối Tổng quan vào API thật** (Tuần 8, phần dashboard tối thiểu).
@@ -1234,15 +1247,25 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   `/analytics/attribution`, đổi chart từ ngày fixture sang 4 tuần thật, đổi
   attribution từ "khách đến từ đâu" sang "bài đã đăng theo kênh", và không hiện
   claim reach/Google Maps khi chưa có engagement snapshot. Web 105 test.
-  **Việc tiếp theo:** engagement snapshot nếu Facebook cho phép, request/correlation
-  ID xuyên HTTP → Celery → adapter, structured logging, và alerting
+  **Việc tiếp theo:** engagement snapshot nếu Facebook cho phép, metrics/alerting
   dead-letter/Redis/quota.
+- [x] **Publish event log** (Tuần 8 observability). `PublishService.run_job` ghi
+  `event_log` cho cả thành công và lỗi: `job_kind=publish.run_job`, `job_id` là
+  publish job id, `provider=facebook`, input có content item/channel/attempt,
+  output có `external_post_id` hoặc `failure_kind`, và `error` giữ detail đã
+  phân loại. Test chốt success và auth-permission failure đều có event.
 - [x] **Event-log query nội bộ** (Tuần 8 observability tối thiểu). Thêm
   `/analytics/events` trả `Page[EventLogRecord]`, lọc theo `job_id`, `job_kind`,
   `provider`, `error_only`, scope theo active workspace và không parse chuỗi
   summary tự do. Test xác nhận workspace A không thấy event của workspace B.
-  **Chưa tick request-id/correlation-id:** hiện chưa có middleware/log context
-  ghi request id vào DB. Backend 318 test.
+- [x] **Request/correlation ID nền tảng** (Tuần 8 observability). Middleware nhận
+  hoặc tự phát `X-Request-ID`, trả lại header cho client, lưu context bằng
+  `contextvars`; content job enqueue kèm request id và worker set lại context
+  trước khi ghi event. `event_log` có cột/index `request_id` và
+  `/analytics/events` filter được theo request này. Backend 320 test.
+- [x] **Structured HTTP logging** (Tuần 8 observability). Mỗi request ghi một
+  dòng JSON `havi.http` gồm `request_id`, method, path không kèm query, status và
+  duration; test chốt query string nhạy cảm không lọt vào log. Backend 321 test.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

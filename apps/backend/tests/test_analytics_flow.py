@@ -184,6 +184,7 @@ async def test_event_log_query_scope_theo_workspace_va_filter_duoc(
         EventLogEntry(
             workspace_id=UUID(token_a["active_workspace_id"]),
             job_id=job_id,
+            request_id="req_a_success",
             job_kind="content.generate",
             input_summary="1 raw input",
             output_summary="drafts=3",
@@ -197,6 +198,7 @@ async def test_event_log_query_scope_theo_workspace_va_filter_duoc(
         EventLogEntry(
             workspace_id=UUID(token_a["active_workspace_id"]),
             job_id=job_id,
+            request_id="req_a_error",
             job_kind="content.generate",
             input_summary="1 raw input",
             output_summary="schema failed",
@@ -211,6 +213,7 @@ async def test_event_log_query_scope_theo_workspace_va_filter_duoc(
         EventLogEntry(
             workspace_id=UUID(token_b["active_workspace_id"]),
             job_id=job_id,
+            request_id="req_b_hidden",
             job_kind="content.generate",
             input_summary="workspace B",
             output_summary="không được thấy",
@@ -228,6 +231,16 @@ async def test_event_log_query_scope_theo_workspace_va_filter_duoc(
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["workspace_id"] == token_a["active_workspace_id"]
+    assert body["items"][0]["request_id"] == "req_a_error"
     assert body["items"][0]["provider"] == "anthropic"
     assert body["items"][0]["error"] == "schema_error"
     assert "không được thấy" not in response.text
+
+    by_request = await client.get(
+        "/analytics/events",
+        params={"request_id": "req_a_success"},
+        headers=_headers(token_a),
+    )
+    assert by_request.status_code == 200, by_request.text
+    assert by_request.json()["total"] == 1
+    assert by_request.json()["items"][0]["provider"] == "gemini"

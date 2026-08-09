@@ -58,6 +58,7 @@ async def events(
     workspace_id: WorkspaceDep,
     session: DbSessionDep,
     job_id: UUID | None = None,
+    request_id: str | None = Query(default=None, max_length=80),
     job_kind: str | None = Query(default=None, max_length=80),
     provider: str | None = Query(default=None, max_length=80),
     error_only: bool = False,
@@ -72,6 +73,7 @@ async def events(
     rows, total = await EventLogRepository(session).list_for_workspace(
         workspace_id=workspace_id,
         job_id=job_id,
+        request_id=request_id,
         job_kind=job_kind,
         provider=provider,
         error_only=error_only,
