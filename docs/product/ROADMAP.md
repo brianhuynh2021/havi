@@ -122,10 +122,10 @@ Backend:
   `havi.scheduler.dispatch_due_posts` và `havi.publish.run_due` đã chạy thật.
   Ba task còn lại trong `beat_schedule` (refresh token, CRM nudge, engagement)
   vẫn là khung `NotImplementedError` cho Tuần 8+.
-- [x] 272 backend tests đang pass (contract/state-machine/provider-router +
+- [x] 313 backend tests đang pass (contract/state-machine/provider-router +
   auth/workspace/brand-profile/media/content/approval/publish/connections chạy
   thật trên Postgres + MinIO; Graph API dùng `httpx.MockTransport`, không gọi
-  mạng thật); Ruff đang pass. 93 web test pass.
+  mạng thật); Ruff đang pass. 99 web test pass.
 
 Architecture/docs:
 
@@ -197,7 +197,9 @@ Redis/job queue:
 
 - [x] Celery broker/result backend — Redis, dùng thật cho content generation và
   publish. Beat có lịch cho cả hai.
-- [ ] Rate limit OTP/content generation.
+- [x] Rate limit auth/upload/content generation — fixed-window trên Redis, xem
+  Tuần 8. **Chưa có:** rate limit riêng cho việc gửi lại mã OTP (hiện chỉ có
+  cooldown trong `AuthService`, chưa chặn theo IP như login).
 - [x] Job retry, lock ngắn hạn và dead-letter handling — cho publish job:
   `FOR UPDATE SKIP LOCKED`, backoff 60/300/900s, dead-letter sau 4 lần hoặc ngay
   với lỗi không retry được. **Chưa có:** cùng cơ chế cho content job (hiện
@@ -246,7 +248,10 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
   **Chưa xong:** `publishing`/`published`/`failed` mới có nhãn, chưa có bài thật
   ở trạng thái đó vì chưa đăng thử lên Page thật.
 - [ ] Dashboard tối thiểu: draft, scheduled, published, failed và engagement snapshot nếu API cho phép.
-- [ ] Audit/event log, token usage, quota, retry và idempotency.
+- [x] Audit/event log, token usage, quota, retry và idempotency — `event_log` ghi
+  token + provider mỗi lượt LLM, quota tháng theo gói chặn ở `create_job`, retry
+  backoff + dead-letter cho publish job, idempotency key cho cả content job và
+  publish job. **Chưa có:** threshold alert phía vận hành.
 - [ ] Responsive web cho desktop, tablet và mobile phổ biến.
 
 ### P1 — Chỉ làm khi P0 đã qua release gate
@@ -799,8 +804,33 @@ Backend:
 - [ ] Dashboard summary cho draft/pending/scheduled/published/failed.
 - [ ] Engagement snapshot tối thiểu nếu quyền Facebook cho phép.
 - [ ] Event log query nội bộ theo workspace/job/request.
-- [ ] Monthly token quota và threshold alerts.
-- [ ] Rate limiting cho auth, upload và content generation.
+- [x] Monthly token quota — `domain/policies/quota.py`, trần theo gói
+  (Trial 100k / Tiệm Nhỏ 500k / Toàn Diện 2M token/tháng), reset theo mốc dương
+  lịch **giờ VN** (tính theo UTC thì 7 tiếng đầu mỗi tháng bị tính vào tháng
+  trước). Chặn trong `create_job` **trước khi** enqueue — chặn sau khi enqueue thì
+  worker đã gọi LLM và tiền đã tiêu rồi mới báo hết quota. Vượt trần trả **429 +
+  `Retry-After`** kèm số liệu thật ("đã dùng 480k/500k, mở lại 01/09").
+  `GET /content/quota` cho frontend cảnh báo trước.
+  **Đo bằng TOKEN, không bằng tiền** (quyết định cố ý): mỗi provider một đơn giá,
+  giá LLM đổi liên tục, nên bảng giá hardcode cho ra con số nhìn như đúng mà sai —
+  tệ hơn không có quota, vì tạo cảm giác đang kiểm soát chi phí trong khi không.
+  Số token là sự thật tuyệt đối trong `event_log`. Quy ra tiền làm ở chỗ định giá
+  gói. **Chưa có:** threshold alert gửi cho vận hành (frontend đã cảnh báo cho chủ
+  tiệm ở mốc 80%, nhưng chưa ai được thông báo ở phía Havi).
+- [x] Rate limiting cho auth, upload và content generation — `adapters/ratelimit/`
+  (fixed-window INCR+EXPIRE trên Redis) + `domain/policies/rate_limits.py`.
+  Auth login/sign-up 10 lượt/5 phút **theo IP** (theo email thì kẻ brute force đổi
+  email mỗi lượt là thoát); đặt lại mật khẩu chặt hơn (5/15 phút) vì mỗi lượt gửi
+  một email thật; upload ticket 60/5 phút và content job 10/5 phút **theo
+  workspace** (đổi 4G↔wifi không được reset hạn mức).
+  Counter ở Redis chứ không in-memory: 4 worker uvicorn đếm riêng là giới hạn thật
+  gấp 4 lần khai báo, và restart là mất sạch. **Redis hỏng thì cho qua
+  (fail-open)** — rate limit là lớp bảo vệ, fail-closed biến sự cố Redis thành
+  outage toàn phần; đánh đổi là cần alert cho Redis.
+  `HAVI_DISABLE_RATE_LIMIT` có validator chặn ở staging/production, cùng khuôn với
+  `HAVI_USE_MOCK_LLM`/`HAVI_USE_FAKE_PUBLISHER` — tắt rate limit ở production là
+  sai kiểu im lặng nhất trong ba cờ: không có gì hiện ra, chỉ là brute force không
+  còn bị chặn.
 
 Frontend:
 
@@ -818,7 +848,11 @@ Exit criteria:
 
 - [ ] Có thể truy một hành động từ web → API → queue → worker → adapter.
 - [ ] Dashboard không lẫn fixture khi chạy production mode.
-- [ ] Quota chặn job mới có thông báo rõ, không âm thầm vượt chi phí.
+- [x] Quota chặn job mới có thông báo rõ, không âm thầm vượt chi phí — 429 kèm số
+  liệu thật và `Retry-After`, banner cảnh báo từ mốc 80% (nói bằng *số bài* chứ
+  không bằng token: chủ tiệm spa không biết "480.000 token" là nhiều hay ít), và
+  nói rõ bài đã duyệt **vẫn đăng đúng lịch** — chủ tiệm sợ nhất là "hết quota =
+  mọi thứ dừng".
 
 ### Tuần 9 — Staging hardening và founder release candidate
 
@@ -1156,8 +1190,19 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   trong `test_connection_flow.py` không khai `facebook_config_id=""` nên đọc lẫn
   `.env` thật — máy dev đã cấu hình xong thì test nhánh "Login thường" chạy sai
   nhánh và đỏ. Backend 272 test.
-  **Việc tiếp theo:** Dashboard thật + observability (Tuần 8) — nối tab Tổng quan
-  và Báo cáo vào API, quota token, rate limiting, alerting khi job dead-letter tăng.
+- [x] **Quota token + rate limit** (Tuần 8, phần chặn chi phí). Làm trước Dashboard
+  vì đây là thứ chặn rủi ro mất tiền khi có khách thật, còn dashboard chỉ là hiển
+  thị. Quota đo bằng **token** chứ không bằng tiền — quyết định cố ý, xem Tuần 8.
+  Rate limit dùng Redis (fixed-window), fail-open khi Redis hỏng.
+  Mutation test lộ ra một khoảng trống thật: bỏ rate limit khỏi `/auth/sign-up` mà
+  cả suite vẫn xanh → đã thêm test cho nó. Cũng sửa một bug của chính banner:
+  locale `vi-VN` format ngày ra `01-09` (gạch ngang) trong khi §4 chốt `dd/MM` —
+  giờ ghép tay từ `formatToParts`, vẫn để `Intl` lo múi giờ.
+  Backend 313 test, web 99 test.
+  **Việc tiếp theo:** phần còn lại của Tuần 8 — nối tab Tổng quan/Báo cáo vào API
+  (hiện vẫn fixture, anh đã chốt giữ nguyên), structured logging, và alerting cho
+  vận hành: job dead-letter tăng, Redis chết (vì rate limit fail-open thì Redis
+  chết là mất giới hạn mà không có dấu hiệu gì), và workspace chạm trần quota.
 - [x] Dựng Landing Page ở `/gioi-thieu` với claim đã rà theo capability thật.
 - [x] Bắt đầu persistence/auth thật (`/auth/*`, `/workspaces/*`, `/brand-profile`
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức

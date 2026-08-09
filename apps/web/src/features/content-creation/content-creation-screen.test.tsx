@@ -37,6 +37,7 @@ type Routes = {
   approveAll?: () => Response;
   patch?: () => Response;
   versions?: () => Response;
+  quota?: () => Response;
 };
 
 function mockApi(routes: Routes = {}) {
@@ -46,6 +47,23 @@ function mockApi(routes: Routes = {}) {
       const req = input instanceof Request ? input : null;
       const url = req ? req.url : String(input);
       const method = req?.method ?? "GET";
+
+      // Phải đứng TRƯỚC nhánh `/content` chung: QuotaBanner gọi
+      // `/content/quota`, mà URL đó cũng khớp `includes("/content")` nên sẽ nhận
+      // nhầm body của danh sách bài. Mặc định là quota còn nhiều → banner ẩn.
+      if (url.includes("/content/quota")) {
+        return (
+          routes.quota?.() ??
+          jsonResponse({
+            used: 1_000,
+            limit: 100_000,
+            remaining: 99_000,
+            near_limit: false,
+            exceeded: false,
+            resets_at: "2026-09-01T00:00:00Z",
+          })
+        );
+      }
 
       if (url.includes("/media/upload-ticket")) {
         return (

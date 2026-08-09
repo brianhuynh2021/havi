@@ -26,6 +26,7 @@ from adapters.persistence.refresh_session_repository import RefreshSessionReposi
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
 from adapters.storage.object_storage import ObjectStorage
 from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
@@ -90,6 +91,29 @@ def _object_storage() -> ObjectStorage:
     return ObjectStorage(get_settings())
 
 
+@lru_cache
+def _rate_limiter() -> RedisRateLimiter | NullRateLimiter:
+    """Singleton — `redis.asyncio.Redis` giữ connection pool, tạo lại mỗi request
+    là mở socket mới liên tục.
+
+    `decode_responses=False` (mặc định): chỉ INCR/EXPIRE/TTL nên không cần decode
+    chuỗi, và bật decode chỉ thêm việc cho mỗi lượt.
+    """
+    settings = get_settings()
+    if settings.disable_rate_limit:
+        # Chỉ tới được đây khi HAVI_ENV=local — Settings ném lỗi lúc khởi động nếu
+        # tắt rate limit ở staging/production.
+        return NullRateLimiter()
+    from redis.asyncio import Redis
+
+    return RedisRateLimiter(Redis.from_url(settings.redis_url))
+
+
+RateLimiterDep = Annotated[
+    RedisRateLimiter | NullRateLimiter, Depends(_rate_limiter)
+]
+
+
 def get_media_service(session: DbSessionDep) -> MediaService:
     return MediaService(media=MediaRepository(session), storage=_object_storage())
 
@@ -105,7 +129,12 @@ JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]
 
 
 def get_content_service(session: DbSessionDep, queue: JobQueueDep) -> ContentService:
-    return ContentService(content=ContentRepository(session), queue=queue)
+    return ContentService(
+        content=ContentRepository(session),
+        queue=queue,
+        workspaces=WorkspaceRepository(session),
+        events=EventLogRepository(session),
+    )
 
 
 ContentServiceDep = Annotated[ContentService, Depends(get_content_service)]

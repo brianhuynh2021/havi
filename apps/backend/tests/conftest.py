@@ -2,12 +2,25 @@
 root repo), mỗi test chạy trong 1 transaction rồi rollback, không để lại dữ liệu.
 """
 
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+import os
 
-from adapters.persistence.db import _engine, get_db_session
-from api.main import create_app
+# Tắt rate limit cho toàn bộ test suite, TRƯỚC khi `core.config` được import lần
+# đầu (Settings đọc env lúc khởi tạo và `get_settings` có lru_cache).
+#
+# Lý do tắt: rate limit đếm trong Redis, mà test suite gọi `/auth/login` hàng
+# chục lần trong vài giây — thật hơn nhịp người dùng nhiều lần. Không tắt thì
+# test thứ 11 bắt đầu đỏ, và đỏ theo thứ tự chạy nên rất khó truy.
+#
+# Bản thân cơ chế rate limit vẫn được test — ở `test_rate_limit.py`, bằng cách
+# dựng limiter trực tiếp với Redis thật thay vì đi qua HTTP.
+os.environ.setdefault("HAVI_DISABLE_RATE_LIMIT", "true")
+
+import pytest_asyncio  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
+
+from adapters.persistence.db import _engine, get_db_session  # noqa: E402
+from api.main import create_app  # noqa: E402
 
 
 @pytest_asyncio.fixture

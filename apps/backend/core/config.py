@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     # bên dưới chặn nó ở staging/production.
     use_fake_publisher: bool = True
 
+    # Tắt rate limit (dùng NullRateLimiter). Chỉ cho test — validator bên dưới
+    # chặn ở staging/production, cùng khuôn với hai cờ trên: rate limit tắt âm
+    # thầm ở production là mở cửa cho brute force mà không có dấu hiệu gì.
+    disable_rate_limit: bool = False
+
     # Multi-provider LLM (SYSTEM_ARCHITECTURE.md §5.1) — Gemini ưu tiên, hai
     # provider còn lại là fallback khi Gemini lỗi/quota/output không đạt.
     # Provider thiếu key sẽ bị router bỏ qua, không gọi rồi lỗi.
@@ -131,6 +136,22 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"HAVI_USE_FAKE_PUBLISHER=true không được phép khi HAVI_ENV={self.env}. "
                 "Fake publisher chỉ dùng ở local; staging/production phải đăng thật."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _force_rate_limit_outside_local(self) -> "Settings":
+        """Rate limit chỉ được tắt ở local.
+
+        Sai kiểu im lặng nhất trong ba cờ này: không có gì hiện ra, app chạy y
+        như thường, chỉ là brute force mật khẩu không còn bị chặn và một script
+        lỗi đốt hết quota LLM trong vài phút. Không ai phát hiện cho tới khi có
+        sự cố. Chặn ở deploy.
+        """
+        if self.disable_rate_limit and self.env != "local":
+            raise ValueError(
+                f"HAVI_DISABLE_RATE_LIMIT=true không được phép khi HAVI_ENV={self.env}. "
+                "Tắt rate limit chỉ dùng cho test ở local."
             )
         return self
 

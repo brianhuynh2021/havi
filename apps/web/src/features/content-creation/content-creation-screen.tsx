@@ -18,6 +18,7 @@ import {
 import { channelLabels, type PublishMode } from "./content-creation.fixture";
 import { DraftEditor } from "./draft-editor";
 import { useJobPolling } from "./use-job-polling";
+import { QuotaBanner } from "./quota-banner";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -42,6 +43,8 @@ export function ContentCreationScreen() {
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Đổi giá trị này để QuotaBanner nạp lại số token còn lại.
+  const [quotaKey, setQuotaKey] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -152,9 +155,14 @@ export function ContentCreationScreen() {
     );
     if (!result.ok) {
       setError(result.message);
+      // Nạp lại quota: nếu vừa bị chặn vì hết lượt thì banner phải hiện ngay,
+      // đừng để chủ tiệm bấm lại lần nữa mới hiểu chuyện gì.
+      setQuotaKey((k) => k + 1);
       return;
     }
     setJobId(result.data.id);
+    // Job vừa tạo sẽ tiêu token — nạp lại số còn lại sau khi worker chạy xong.
+    setQuotaKey((k) => k + 1);
   }
 
   async function onApprove(id: string) {
@@ -214,6 +222,10 @@ export function ContentCreationScreen() {
           cần duyệt.
         </p>
       </header>
+
+      {/* Trên ô nạp liệu: chủ tiệm phải biết còn bao nhiêu lượt TRƯỚC khi bỏ công
+          nạp ảnh, không phải sau khi bấm "Để Havi viết" rồi bị chặn. */}
+      <QuotaBanner reloadKey={quotaKey} />
 
       <section className={styles.dropZone} aria-label="Nạp liệu mới">
         <p className={styles.dropTitle}>Thả ảnh vào đây, hoặc</p>

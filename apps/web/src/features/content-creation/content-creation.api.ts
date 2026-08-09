@@ -93,14 +93,44 @@ export async function createJob(
       headers: { "Idempotency-Key": idempotencyKey },
     });
     if (error || !data) {
-      return {
-        ok: false,
-        message:
-          response?.status === 409
-            ? "Chưa hoàn thành onboarding nên chưa tạo bài được."
-            : GENERIC_ERROR,
-      };
+      if (response?.status === 409) {
+        return {
+          ok: false,
+          message: "Chưa hoàn thành onboarding nên chưa tạo bài được.",
+        };
+      }
+      if (response?.status === 429) {
+        // Backend dùng 429 cho hai thứ khác nhau và câu trả lời cho chủ tiệm cũng
+        // khác: hết quota tháng thì chờ tới đầu tháng (hoặc nâng gói), còn bấm quá
+        // nhanh thì chờ vài phút. Phân biệt bằng `detail` vì đó là thứ backend đã
+        // viết sẵn bằng tiếng Việt cho từng trường hợp.
+        const detail =
+          typeof error === "object" && error && "detail" in error
+            ? String((error as { detail?: unknown }).detail ?? "")
+            : "";
+        return {
+          ok: false,
+          message: detail || "Chị thao tác hơi nhanh — đợi một chút rồi thử lại nhé.",
+        };
+      }
+      return { ok: false, message: GENERIC_ERROR };
     }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export type TokenQuota = components["schemas"]["TokenQuota"];
+
+/** Token đã dùng / trần tháng này.
+ *
+ * Đo bằng token, không bằng tiền — mỗi provider một đơn giá và giá LLM đổi liên
+ * tục, nên quy ra tiền ở đây là hiện một con số nhìn như đúng mà sai. */
+export async function fetchQuota(): Promise<Result<TokenQuota>> {
+  try {
+    const { data, error } = await apiClient.GET("/content/quota");
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
     return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };

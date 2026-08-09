@@ -388,6 +388,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/quota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Quota
+         * @description Token đã dùng / trần tháng này.
+         *
+         *     Frontend đọc để cảnh báo *trước* khi chủ tiệm bị chặn giữa lúc đang cần đăng
+         *     bài. Đặt trước `/{content_id}` vì FastAPI khớp route theo thứ tự khai báo —
+         *     nằm sau thì "quota" bị đọc như một UUID và trả 422.
+         */
+        get: operations["get_quota_content_quota_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/jobs/{job_id}": {
         parameters: {
             query?: never;
@@ -1870,6 +1894,31 @@ export interface components {
              */
             needs_onboarding: boolean;
         };
+        /**
+         * TokenQuota
+         * @description Token đã dùng / trần tháng này.
+         *
+         *     Đo bằng *token*, không bằng tiền: mỗi provider một đơn giá và giá LLM đổi
+         *     liên tục, nên một bảng giá hardcode cho ra số nhìn như đúng mà sai — tệ hơn
+         *     không có quota. Quy ra tiền làm ở chỗ định giá gói, không ở đây.
+         */
+        TokenQuota: {
+            /** Used */
+            used: number;
+            /** Limit */
+            limit: number;
+            /** Remaining */
+            remaining: number;
+            /** Near Limit */
+            near_limit: boolean;
+            /** Exceeded */
+            exceeded: boolean;
+            /**
+             * Resets At
+             * Format: date-time
+             */
+            resets_at: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -2655,6 +2704,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_quota_content_quota_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenQuota"];
                 };
             };
         };

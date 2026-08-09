@@ -99,10 +99,35 @@ def test_local_van_bat_mock_duoc():
 
 
 def test_staging_tat_mock_thi_khoi_dong_binh_thuong():
-    """Staging thật phải tắt CẢ mock LLM lẫn fake publisher — đây là config đúng."""
-    settings = Settings(env="staging", use_mock_llm=False, use_fake_publisher=False)
+    """Staging thật phải tắt cả ba cờ "chỉ dành cho local" — đây là config đúng.
+
+    `disable_rate_limit=False` khai tường minh: conftest set
+    `HAVI_DISABLE_RATE_LIMIT=true` cho cả suite, và Settings đọc env nên không
+    khai ở đây thì chính validator mới sẽ (đúng) chặn config staging này.
+    """
+    settings = Settings(
+        env="staging",
+        use_mock_llm=False,
+        use_fake_publisher=False,
+        disable_rate_limit=False,
+    )
     assert settings.use_mock_llm is False
     assert settings.use_fake_publisher is False
+    assert settings.disable_rate_limit is False
+
+
+def test_tat_rate_limit_o_staging_thi_khong_khoi_dong_duoc():
+    """Sai kiểu im lặng nhất trong ba cờ: không có gì hiện ra, app chạy y như
+    thường, chỉ là brute force mật khẩu không còn bị chặn và một script lỗi đốt
+    hết quota LLM trong vài phút."""
+    for env in ("staging", "production"):
+        with pytest.raises(ValidationError, match="không được phép khi HAVI_ENV"):
+            Settings(
+                env=env,
+                use_mock_llm=False,
+                use_fake_publisher=False,
+                disable_rate_limit=True,
+            )
 
 
 def test_bat_fake_publisher_o_staging_thi_khong_khoi_dong_duoc():

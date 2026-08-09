@@ -7,15 +7,23 @@ LLM, có thể mất hàng chục giây).
 
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
 from adapters.persistence.content_repository import ContentRepository
+from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.job_queue import JobQueue
 from core.enums import Channel, ContentStatus
 from domain.models.content import ContentItem, ContentJob
+from domain.policies import quota
 
 
 class ContentJobNotFound(Exception):
+    pass
+
+
+class WorkspaceNotFound(Exception):
     pass
 
 
@@ -27,9 +35,30 @@ class CreatedJob:
 
 
 class ContentService:
-    def __init__(self, *, content: ContentRepository, queue: JobQueue) -> None:
+    def __init__(
+        self,
+        *,
+        content: ContentRepository,
+        queue: JobQueue,
+        workspaces: WorkspaceRepository,
+        events: EventLogRepository,
+    ) -> None:
         self._content = content
         self._queue = queue
+        self._workspaces = workspaces
+        self._events = events
+
+    async def quota_status(
+        self, *, workspace_id: UUID, now: datetime | None = None
+    ) -> quota.QuotaStatus:
+        now = now or datetime.now(UTC)
+        workspace = await self._workspaces.get_by_id(workspace_id)
+        if workspace is None:
+            raise WorkspaceNotFound()
+        used = await self._events.tokens_used_since(
+            workspace_id=workspace_id, since=quota.month_start_utc(now)
+        )
+        return quota.evaluate(plan=workspace.plan, used=used, now=now)
 
     async def create_job(
         self,
@@ -37,12 +66,22 @@ class ContentService:
         workspace_id: UUID,
         raw_inputs: list[dict],
         idempotency_key: str | None,
+        now: datetime | None = None,
     ) -> CreatedJob:
         """`idempotency_key` từ header `Idempotency-Key`.
 
         Không có key thì mỗi request là một job mới — nghĩa là bấm hai lần sẽ tốn
         hai lần tiền LLM. Frontend nên luôn gửi key để chặn double-submit.
+
+        Quota kiểm **trước khi** tạo job và enqueue, tức trước khi worker gọi LLM.
+        Kiểm sau khi enqueue thì tiền đã tiêu rồi mới báo "hết quota" — vô nghĩa.
         """
+        status = await self.quota_status(workspace_id=workspace_id, now=now)
+        if status.exceeded:
+            raise quota.QuotaExceeded(
+                used=status.used, limit=status.limit, resets_at=status.resets_at
+            )
+
         key = idempotency_key or str(uuid.uuid4())
         job, created = await self._content.create_job(
             workspace_id=workspace_id, raw_inputs=raw_inputs, idempotency_key=key

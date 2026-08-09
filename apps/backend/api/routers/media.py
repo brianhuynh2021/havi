@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, status
 
 from api.deps import MediaServiceDep, WorkspaceDep
+from api.rate_limit import limit_by_workspace
 from application.services.media_service import (
     AlreadyCompleted,
     ContentDoesNotMatchType,
@@ -14,6 +15,7 @@ from application.services.media_service import (
 )
 from core.enums import MediaStatus, MediaType
 from core.schemas import MediaAsset, MediaUpdate, MediaUploadRequest, MediaUploadTicket, Page
+from domain.policies import rate_limits
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -60,7 +62,12 @@ async def list_media(
 
 
 @router.post(
-    "/upload-ticket", response_model=MediaUploadTicket, status_code=status.HTTP_201_CREATED
+    "/upload-ticket",
+    response_model=MediaUploadTicket,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[
+        limit_by_workspace("media_ticket", rate_limits.MEDIA_UPLOAD_TICKET)
+    ],
 )
 async def create_upload_ticket(
     payload: MediaUploadRequest, workspace_id: WorkspaceDep, media_service: MediaServiceDep

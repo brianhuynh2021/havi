@@ -328,6 +328,28 @@ class OAuthStartResponse(HaviModel):
     state: str
 
 
+# --- Quota ------------------------------------------------------------------
+
+
+class TokenQuota(HaviModel):
+    """Token đã dùng / trần tháng này.
+
+    Đo bằng *token*, không bằng tiền: mỗi provider một đơn giá và giá LLM đổi
+    liên tục, nên một bảng giá hardcode cho ra số nhìn như đúng mà sai — tệ hơn
+    không có quota. Quy ra tiền làm ở chỗ định giá gói, không ở đây.
+    """
+
+    used: int
+    limit: int
+    remaining: int
+    #: Đã qua 80% trần nhưng chưa bị chặn — UI cảnh báo trước, đừng để chủ tiệm
+    #: chỉ biết khi đang cần đăng bài thì bị chặn.
+    near_limit: bool
+    exceeded: bool
+    #: Mốc quota mở lại (đầu tháng sau theo giờ VN).
+    resets_at: datetime
+
+
 # --- Publish jobs -----------------------------------------------------------
 
 

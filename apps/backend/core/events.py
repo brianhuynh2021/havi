@@ -26,6 +26,9 @@ class EventLogEntry(BaseModel):
     tokens_in: int = 0
     tokens_out: int = 0
     duration_ms: int = 0
+    #: Provider phục vụ lượt này (`gemini`/`anthropic`/`openai`). Cần cho việc
+    #: tính tiền vì mỗi provider một đơn giá — xem `domain/policies/pricing.py`.
+    provider: str | None = None
     error: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

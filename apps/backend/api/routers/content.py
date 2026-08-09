@@ -6,6 +6,7 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 đăng đúp khi user bấm 2 lần hoặc 2 worker cùng nhận job.
 """
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
@@ -18,6 +19,7 @@ from api.deps import (
     WorkspaceDep,
 )
 from api.errors import transition_conflict
+from api.rate_limit import limit_by_workspace
 from application.services.approval_service import ContentItemNotFound, NotReschedulable
 from application.services.content_service import ContentJobNotFound
 from application.services.publish_service import (
@@ -39,7 +41,10 @@ from core.schemas import (
     ContentJobCreate,
     Page,
     PublishJob,
+    TokenQuota,
 )
+from domain.policies import rate_limits
+from domain.policies.quota import QuotaExceeded
 
 router = APIRouter(prefix="/content", tags=["content"])
 
@@ -59,7 +64,16 @@ def _job_to_schema(job, item_ids: list[UUID]) -> ContentJob:
     )
 
 
-@router.post("/jobs", response_model=ContentJob, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/jobs",
+    response_model=ContentJob,
+    status_code=status.HTTP_202_ACCEPTED,
+    # Ba lớp chặn khác nhau, không trùng nhau: `Idempotency-Key` chặn bấm hai lần,
+    # rate limit chặn *nhịp* (đốt hết quota tháng trong vài phút), quota chặn
+    # *tổng* tháng. Thiếu lớp giữa thì một script lỗi vẫn đúng quota mà cháy ngân
+    # sách trong buổi sáng.
+    dependencies=[limit_by_workspace("content_job", rate_limits.CONTENT_JOB)],
+)
 async def create_content_job(
     payload: ContentJobCreate,
     workspace_id: WorkspaceDep,
@@ -74,13 +88,46 @@ async def create_content_job(
     Gửi header `Idempotency-Key` để bấm hai lần không tốn hai lần tiền LLM — cùng
     key trong cùng workspace luôn trả về job đầu tiên và không enqueue lần nữa.
     """
-    created = await content_service.create_job(
-        workspace_id=workspace_id,
-        raw_inputs=[item.model_dump(mode="json") for item in payload.raw_inputs],
-        idempotency_key=idempotency_key,
-    )
+    try:
+        created = await content_service.create_job(
+            workspace_id=workspace_id,
+            raw_inputs=[item.model_dump(mode="json") for item in payload.raw_inputs],
+            idempotency_key=idempotency_key,
+        )
+    except QuotaExceeded as exc:
+        # 429 chứ không 402/403: đây là "vượt mức trong khoảng thời gian này", và
+        # nó tự hết khi sang tháng — cùng nghĩa với rate limit. 402 hàm ý phải trả
+        # tiền ngay mới dùng được, không đúng với gói tính theo tháng.
+        # `Retry-After` tính bằng giây theo chuẩn HTTP để client biết chờ tới khi nào.
+        retry_after = max(1, int((exc.resets_at - datetime.now(UTC)).total_seconds()))
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            str(exc),
+            headers={"Retry-After": str(retry_after)},
+        ) from exc
     item_ids = [i.id for i in await content_service.list_items_for_job(created.job.id)]
     return _job_to_schema(created.job, item_ids)
+
+
+@router.get("/quota", response_model=TokenQuota)
+async def get_quota(
+    workspace_id: WorkspaceDep, content_service: ContentServiceDep
+) -> TokenQuota:
+    """Token đã dùng / trần tháng này.
+
+    Frontend đọc để cảnh báo *trước* khi chủ tiệm bị chặn giữa lúc đang cần đăng
+    bài. Đặt trước `/{content_id}` vì FastAPI khớp route theo thứ tự khai báo —
+    nằm sau thì "quota" bị đọc như một UUID và trả 422.
+    """
+    status_ = await content_service.quota_status(workspace_id=workspace_id)
+    return TokenQuota(
+        used=status_.used,
+        limit=status_.limit,
+        remaining=status_.remaining,
+        near_limit=status_.near_limit,
+        exceeded=status_.exceeded,
+        resets_at=status_.resets_at,
+    )
 
 
 @router.get("/jobs/{job_id}", response_model=ContentJob)

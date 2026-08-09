@@ -11,6 +11,7 @@ SĐT (`PUT /auth/phone`) là tuỳ chọn, chỉ để nhận bản nháp/nhắc
 from fastapi import APIRouter, HTTPException, status
 
 from api.deps import AuthDep, AuthServiceDep
+from api.rate_limit import limit_by_ip
 from application.services.auth_service import (
     EmailAlreadyRegistered,
     InvalidCredentials,
@@ -32,6 +33,7 @@ from core.schemas import (
     SignUpRequest,
     TokenPair,
 )
+from domain.policies import rate_limits
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -57,7 +59,12 @@ def _to_token_pair(result) -> TokenPair:
     )
 
 
-@router.post("/sign-up", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sign-up",
+    response_model=TokenPair,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
+)
 async def sign_up(payload: SignUpRequest, auth_service: AuthServiceDep) -> TokenPair:
     """Đăng ký xong đăng nhập luôn — mật khẩu đã là bằng chứng sở hữu tài khoản."""
     try:
@@ -71,7 +78,11 @@ async def sign_up(payload: SignUpRequest, auth_service: AuthServiceDep) -> Token
     return _to_token_pair(result)
 
 
-@router.post("/login/email", response_model=TokenPair)
+@router.post(
+    "/login/email",
+    response_model=TokenPair,
+    dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
+)
 async def login_email(payload: EmailLoginRequest, auth_service: AuthServiceDep) -> TokenPair:
     try:
         result = await auth_service.login_with_email(
@@ -90,6 +101,7 @@ async def login_email(payload: EmailLoginRequest, auth_service: AuthServiceDep) 
     "/password-reset/request",
     response_model=OtpChallenge,
     status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[limit_by_ip("auth_reset", rate_limits.AUTH_PASSWORD_RESET)],
 )
 async def request_password_reset(
     payload: PasswordResetRequest, auth_service: AuthServiceDep
@@ -109,7 +121,11 @@ async def request_password_reset(
     )
 
 
-@router.post("/password-reset/confirm", response_model=TokenPair)
+@router.post(
+    "/password-reset/confirm",
+    response_model=TokenPair,
+    dependencies=[limit_by_ip("auth_reset", rate_limits.AUTH_PASSWORD_RESET)],
+)
 async def confirm_password_reset(
     payload: PasswordResetConfirm, auth_service: AuthServiceDep
 ) -> TokenPair:

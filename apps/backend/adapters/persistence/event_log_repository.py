@@ -5,6 +5,10 @@
 SYSTEM_ARCHITECTURE.md §0). Repository này là chỗ duy nhất thực sự insert.
 """
 
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.events import EventLogEntry, record_event
@@ -28,8 +32,30 @@ class EventLogRepository:
             tokens_in=entry.tokens_in,
             tokens_out=entry.tokens_out,
             duration_ms=entry.duration_ms,
+            provider=entry.provider,
             error=entry.error,
         )
         self._session.add(row)
         await self._session.flush()
         return row
+
+    async def tokens_used_since(self, *, workspace_id: UUID, since: datetime) -> int:
+        """Tổng token (in + out) của workspace từ `since`.
+
+        Cộng gộp `tokens_in` và `tokens_out` thành một số vì quota tính theo
+        token, không theo tiền — không cần biết đơn giá của provider nào, và số
+        token là sự thật tuyệt đối trong `event_log` chứ không phụ thuộc bảng giá
+        có thể lạc hậu.
+
+        Đếm cả dòng có `error`: provider trả lỗi vẫn tốn token đã gửi. Bỏ chúng ra
+        là mở đường cho một workspace liên tục gửi prompt lỗi mà không tính vào
+        quota.
+        """
+        result = await self._session.execute(
+            select(
+                func.coalesce(func.sum(EventLog.tokens_in + EventLog.tokens_out), 0)
+            ).where(
+                EventLog.workspace_id == workspace_id, EventLog.created_at >= since
+            )
+        )
+        return int(result.scalar() or 0)

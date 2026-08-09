@@ -21,6 +21,11 @@ dependencies = [
     # Gọi Graph API của Facebook. Là dependency chính chứ không phải dev: adapter
     # publish dùng ở runtime, để trong [dev] thì production crash lúc import.
     "httpx>=0.27",
+    # Rate limit dùng Redis, và nó chạy trong API process — không nằm trong extra
+    # `queue` (Celery) vì API không cần cài Celery mới khởi động được. Counter
+    # phải nằm ngoài process: in-memory thì mỗi worker uvicorn đếm riêng và
+    # restart là mất, tức không giới hạn được gì.
+    "redis>=5.2",
 ]
 
 [project.optional-dependencies]
