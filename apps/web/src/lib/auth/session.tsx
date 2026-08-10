@@ -34,7 +34,7 @@ export type Session = {
   activeWorkspaceId: string | null;
   needsOnboarding: boolean;
   signIn: (tokens: StoredTokens) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 };
 
 const SessionContext = createContext<Session | null>(null);
@@ -57,9 +57,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     writeTokens(next);
   }, []);
 
-  const signOut = useCallback(() => {
-    clearTokens();
-    router.replace("/dang-nhap");
+  const signOut = useCallback(async () => {
+    const currentTokens = readTokens();
+    try {
+      if (currentTokens?.refreshToken) {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+        await fetch(`${baseUrl}/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: currentTokens.refreshToken }),
+        });
+      }
+    } catch {
+      // Đăng xuất phía client vẫn phải hoàn tất nếu API/network đang lỗi.
+    } finally {
+      clearTokens();
+      router.replace("/dang-nhap");
+    }
   }, [router]);
 
   const value = useMemo<Session>(

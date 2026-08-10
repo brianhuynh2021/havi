@@ -98,6 +98,12 @@ npm run infra:up
 cd apps/backend && uv run ruff check . && uv run pytest
 ```
 
+### CI / GitHub Actions
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) tự động kiểm tra trên mọi Pull Request và Push vào `main` / `dev`:
+- **Web:** `npm run lint:web`, `npm run test:web`, `npm run build:web`
+- **Backend:** `ruff check .`, `alembic upgrade head` (migration), và `pytest` (với Postgres & Redis service containers)
+
 ### Tổng hợp lệnh
 
 | Lệnh | Việc gì |

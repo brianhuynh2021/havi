@@ -7,7 +7,7 @@ export function SignOutButton() {
   const { signOut } = useSession();
 
   return (
-    <button type="button" className={styles.signOut} onClick={signOut}>
+    <button type="button" className={styles.signOut} onClick={() => void signOut()}>
       Đăng xuất
     </button>
   );

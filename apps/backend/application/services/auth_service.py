@@ -201,6 +201,12 @@ class AuthService:
             raise RefreshTokenInvalid()
         return await self._issue_token_pair(user)
 
+    async def logout(self, *, refresh_token: str) -> None:
+        token_hash = hash_refresh_token(refresh_token)
+        session_row = await self._refresh_sessions.get_active_by_token_hash(token_hash)
+        if session_row is not None:
+            await self._refresh_sessions.revoke(session_row)
+
     async def issue_token_pair(self, user: User) -> TokenPairResult:
         """Public — WorkspaceService gọi lại khi activate workspace đổi active_workspace_id."""
         return await self._issue_token_pair(user)

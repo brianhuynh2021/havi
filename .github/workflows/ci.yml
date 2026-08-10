@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  web:
+    name: Web Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint Web
+        run: npm run lint:web
+
+      - name: Test Web
+        run: npm run test:web
+
+      - name: Build Web
+        run: npm run build:web
+
+  backend:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: havi
+          POSTGRES_PASSWORD: havi
+          POSTGRES_DB: havi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      HAVI_ENV: development
+      HAVI_DEBUG: "true"
+      HAVI_DATABASE_URL: postgresql+psycopg://havi:havi@localhost:5432/havi
+      HAVI_REDIS_URL: redis://localhost:6379/0
+      HAVI_JWT_SECRET: ci-jwt-secret-key-must-be-at-least-32-bytes-long
+      HAVI_FERNET_KEY: Z3A5T2I3NTRLN3Y4OTAxMjM0NTY3ODkwMTIzNDU2Nzg=
+      HAVI_USE_MOCK_LLM: "true"
+
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra db --extra queue --extra storage
+
+      - name: Ruff Check
+        run: uv run ruff check .
+
+      - name: Alembic Migration Check
+        run: uv run alembic upgrade head
+
+      - name: Run Pytest
+        run: uv run pytest

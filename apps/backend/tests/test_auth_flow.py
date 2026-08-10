@@ -124,6 +124,22 @@ async def test_refresh_xoay_vong_token_cu_khong_dung_lai_duoc(client: AsyncClien
     assert reused.status_code == 401
 
 
+async def test_logout_huy_refresh_token_hien_tai(client: AsyncClient):
+    token_pair = await _sign_up(client, email="a10@havi.vn")
+    refresh_token = token_pair["refresh_token"]
+
+    response = await client.post("/auth/logout", json={"refresh_token": refresh_token})
+    assert response.status_code == 204
+
+    reused = await client.post("/auth/refresh", json={"refresh_token": refresh_token})
+    assert reused.status_code == 401
+
+
+async def test_logout_token_khong_hop_le_van_tra_204(client: AsyncClient):
+    response = await client.post("/auth/logout", json={"refresh_token": "invalid-token"})
+    assert response.status_code == 204
+
+
 # --- Quên mật khẩu ----------------------------------------------------------
 
 

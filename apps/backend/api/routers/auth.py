@@ -172,6 +172,11 @@ async def refresh(payload: RefreshRequest, auth_service: AuthServiceDep) -> Toke
     return _to_token_pair(result)
 
 
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(payload: RefreshRequest, auth_service: AuthServiceDep) -> None:
+    await auth_service.logout(refresh_token=payload.refresh_token)
+
+
 @router.get("/me", response_model=CurrentUser)
 async def me(auth: AuthDep, auth_service: AuthServiceDep) -> CurrentUser:
     user = await auth_service.get_user_by_id(auth.user_id)

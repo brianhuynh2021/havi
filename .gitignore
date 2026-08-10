@@ -30,6 +30,9 @@ venv/
 .env
 .env.*
 !.env.example
+agent-loop/memory.json
+agent-loop/roadmap.json
+agent-loop/patches/
 
 # Generated OpenAPI artifact — nguồn sự thật là backend code, chỉ commit schema.d.ts
 apps/web/openapi.json

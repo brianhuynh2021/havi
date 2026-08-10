@@ -149,8 +149,8 @@ Architecture/docs:
   không phải thành viên). Repository cho media/content/calendar/connections/
   publish đã có và test tenant isolation thật. **Chưa xong:** inbox/leads.
 - [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
-  (Argon2), đặt lại mật khẩu qua mã 6 số. **Chưa xong:** email provider thật
-  (dùng `debug_code` khi `HAVI_DEBUG=true`), endpoint logout/revoke session.
+  (Argon2), đặt lại mật khẩu qua mã 6 số, và logout/revoke refresh session.
+  **Chưa xong:** email provider thật (dùng `debug_code` khi `HAVI_DEBUG=true`).
 - [x] Object storage (MinIO) đã dùng thật: signed upload + magic-byte validation
   ở `/media`. Redis + Celery đã dùng thật: `havi.content.generate_drafts` chạy
   Content Engine trong worker.
@@ -245,7 +245,7 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 
 ### P0 — Pilot MVP bắt buộc
 
-- [x] Email + mật khẩu login/signup, refresh token xoay vòng. **Chưa xong:** logout/revoke chủ động.
+- [x] Email + mật khẩu login/signup, refresh token xoay vòng, và logout/revoke chủ động.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
 - [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app), và
   bước 2 nối Facebook Page đã gọi `/connections` thật.
@@ -425,7 +425,7 @@ Frontend:
   `/dang-ky`. **Cố ý khác prototype:** claim đã viết lại theo capability thật —
   bỏ "tự động đăng 4 kênh" (publish là Tuần 7), bỏ săn khách hội nhóm/CRM/làm
   đẹp ảnh (P2), bỏ Maps/LinkedIn/YouTube khỏi danh sách kênh. **Chưa có bảng
-  giá:** §12 chốt chỉ public sau khi đo cost trên khách Việt thật, nên thay bằng
+  giá:** §13 chốt chỉ public sau khi đo cost trên khách Việt thật, nên thay bằng
   lời mời beta. `landing-screen.test.tsx` có test chặn regression claim.
 - [x] Auth flows: email login, signup (tên + email + mật khẩu), forgot/reset
   password qua mã 6 số trong email, resend countdown và success routes.
@@ -477,13 +477,13 @@ Backend:
 - [x] Email chuẩn hoá lowercase để không tạo 2 tài khoản từ `A@x.vn` và `a@x.vn`.
   Mã đặt lại mật khẩu có TTL, attempt limit và resend cooldown — test thật ở
   `tests/test_auth_flow.py`. **Chưa xong:** email provider thật (đang trả
-  `debug_code` khi `HAVI_DEBUG=true` — xem §12 "Quyết định cần chốt").
+  `debug_code` khi `HAVI_DEBUG=true` — xem §13 "Quyết định cần chốt").
 - [x] SĐT tuỳ chọn (`PUT /auth/phone`) cho Zalo OA, chuẩn hoá về `+84…`, unique
   để một số không gắn 2 tài khoản. Không dùng để đăng nhập.
 - [x] JWT access token + rotated refresh token (`/auth/sign-up`, `/auth/login/email`,
-  `/auth/password-reset/*`, `/auth/refresh`, `/auth/me` đều chạy thật trên Postgres).
-  **Chưa xong:** endpoint logout/revoke session theo yêu cầu (refresh token chỉ
-  bị revoke khi xoay vòng qua `/auth/refresh`, chưa có cách revoke chủ động).
+  `/auth/password-reset/*`, `/auth/refresh`, `/auth/logout`, `/auth/me` đều chạy
+  thật trên Postgres). `/auth/logout` revoke refresh token chủ động; token đã
+  revoke không đổi được access token mới.
 - [x] Không tiết lộ email nào đã đăng ký: sai mật khẩu và email không tồn tại trả
   cùng 401 + cùng message; `/auth/password-reset/request` luôn trả 202.
 - [x] Tenant-scoped repository/dependency; deny-by-default khi thiếu workspace.
@@ -535,7 +535,8 @@ Tests/security:
 
 - [ ] Integration test chứng minh workspace A không đọc/sửa workspace B.
 - [x] Tests cho brute force mã đặt lại mật khẩu, refresh token rotation + chặn tái
-  sử dụng. **Chưa xong:** logout revoke (chưa có endpoint).
+  sử dụng, và logout revoke. Verified 2026-08-10:
+  `cd apps/backend && uv run pytest tests/test_auth_flow.py` → 23 passed.
 - [x] Không log OTP, JWT, refresh token hoặc PII nhạy cảm (chỉ lưu hash trong DB).
 
 Exit criteria:
@@ -1173,7 +1174,60 @@ Economics:
 | Sản phẩm đúng kỹ thuật nhưng không hợp thói quen người Việt | Activation thấp | Founder dogfooding, cohort một ngành, tiếng Việt đời thường, mobile/mạng yếu và support qua kênh quen thuộc |
 | Một dev phải làm toàn bộ | Timeline 12 tuần không thực tế | Giữ dependency order, cắt P1 và đổi estimate thành 16–22 tuần |
 
-## 11. Backlog ưu tiên ngay
+## 11. Agent-loop execution plan
+
+`agent-loop/roadmap.example.json` is the machine-readable execution roadmap derived
+from this product roadmap. `agent-loop/roadmap.json` is local runtime state and is
+not committed; `agent-loop/memory.json` stores checkpoints and token usage.
+
+Sync rules:
+
+- `docs/product/ROADMAP.md` remains the source of truth for product status.
+- JSON is used only to split work into bounded batches and record checkpoints.
+- Do not mark `[x]` in Markdown if the loop only analyzed or proposed work without
+  completed code, tests, or documentation.
+- After an agent-loop batch, run `sync-product-roadmap` to update this Markdown
+  roadmap with real verification evidence.
+
+Common commands:
+
+```bash
+npm run loop:ai                         # run 1 task, then stop
+npm run loop:code                       # code, apply patch, run task verify_commands
+npm run loop:ai -- --task-limit 3       # run a bounded 3-task batch
+npm run loop:ai -- --provider gemini    # force a specific provider
+python3 -m json.tool agent-loop/roadmap.example.json
+```
+
+Current agent-loop priority tasks:
+
+1. Add CI for Gate A.
+2. Add an email-provider boundary.
+3. Wire a basic brand-voice settings UI.
+4. Improve upload UX with progress, cancel, and preview.
+5. Add Content Engine structured-output tests.
+6. Add calendar UI for rescheduling posts.
+7. Back the activity feed with real event/audit data.
+8. Create a minimal internal operations metrics UI.
+9. Add an E2E core flow.
+10. Write staging runbook and backup/restore rehearsal steps.
+11. Complete security review checklist.
+12. Set up visual regression and accessibility baseline.
+13. Design data deletion, account deletion, and consent records.
+14. Prepare a 7-day founder dogfooding plan.
+15. Sync the product roadmap after an agent-loop batch.
+
+Current executor note: `loop:code` codes, applies, and verifies while commit/push
+remain manual. The executor now asks providers for `unified_diff_lines`, recovers
+some malformed JSON/diff output, normalizes hunk counts, preflights patches with
+`git apply --check --recount --whitespace=fix`, and keeps non-applicable patches
+pending with diagnostics instead of marking feature work completed or failed
+incorrectly. Verified on 2026-08-10 with `python3 -m py_compile
+agent-loop/run_loop.py`, JSON validation for both roadmap files, a patch
+normalize/apply smoke test, a patch-failure diagnostic smoke test, and a dry-run
+CLI loop against temporary roadmap state.
+
+## 12. Backlog ưu tiên ngay
 
 Thứ tự triển khai tiếp theo từ code hiện tại:
 
@@ -1293,7 +1347,7 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   chạy thật trên Postgres). Lưu ý: làm trước khi Gate B được sign-off chính thức
   — Gate B cần design review của founder/QA, xem §6.
 
-## 12. Quyết định cần chốt
+## 13. Quyết định cần chốt
 
 Các quyết định này có deadline để không chặn roadmap:
 

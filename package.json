@@ -16,6 +16,13 @@
     "lint:api": "cd apps/backend && uv run ruff check .",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
-    "migrate": "cd apps/backend && uv run alembic upgrade head"
+    "migrate": "cd apps/backend && uv run alembic upgrade head",
+    "loop": "python3 agent-loop/run_loop.py",
+    "loop:ai": "python3 agent-loop/run_loop.py --execute",
+    "loop:ai:3": "python3 agent-loop/run_loop.py --execute --task-limit 3",
+    "loop:ai:5": "python3 agent-loop/run_loop.py --execute --task-limit 5",
+    "loop:patch": "python3 agent-loop/run_loop.py --execute --code",
+    "loop:code": "python3 agent-loop/run_loop.py --execute --code --apply-patch --verify",
+    "loop:code:no-verify": "python3 agent-loop/run_loop.py --execute --code --apply-patch --no-verify"
   }
 }
