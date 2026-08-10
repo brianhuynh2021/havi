@@ -28,6 +28,7 @@ from application.services.content_engine import ContentEngine, GenerationFailed
 from application.services.job_queue import RecordingJobQueue
 from core.enums import ContentJobStatus, ContentStatus, PublishMode
 from domain.models.audit import EventLog
+from domain.models.content import ContentItem
 from domain.policies.provider_router import ProviderRouter
 from domain.ports.llm import LLMProvider, LLMTransientError
 
@@ -284,7 +285,7 @@ async def test_banned_claim_bi_chan_va_fallback_provider_khac(
     token_pair = await _onboard(client, email="c11@havi.vn")
     await client.put(
         "/brand-profile",
-        json={"banned_claims": ["cam kết 100%"]},
+        json={"banned_claims": ["cam ket 100%"]},
         headers=_headers(token_pair),
     )
     job = (
@@ -308,7 +309,7 @@ async def test_banned_claim_bi_chan_va_fallback_provider_khac(
         workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
     )
 
-    # Viết hoa/khác dấu vẫn phải bị bắt — "Cam Kết 100%" vs "cam kết 100%".
+    # Viết hoa/khác dấu vẫn phải bị bắt — "Cam Kết 100%" vs "cam ket 100%".
     assert all("Cam Kết 100%" not in i.text for i in result.items)
     assert len(result.items) == 3
 
@@ -343,6 +344,62 @@ async def test_moi_provider_that_bai_thi_job_failed_co_reason(
     assert stored is not None
     assert stored.status == ContentJobStatus.FAILED
     assert stored.failure_reason and "429" in stored.failure_reason
+
+
+async def test_malformed_output_cua_moi_provider_khong_tao_draft_rac(
+    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
+):
+    """Contract test: output hỏng schema/JSON phải fail sạch, không lọt draft."""
+    token_pair = await _onboard(client, email="c12-contract@havi.vn")
+    job = (
+        await client.post(
+            "/content/jobs",
+            json={"raw_inputs": [{"kind": "text", "text": "x"}]},
+            headers=_headers(token_pair),
+        )
+    ).json()
+    workspace_id, job_id = UUID(job["workspace_id"]), UUID(job["id"])
+
+    engine = _engine(
+        db_session,
+        FakeProvider(provider=LLMProvider.GEMINI, response_text="không phải JSON"),
+        FakeProvider(provider=LLMProvider.ANTHROPIC, response_text='{"drafts": []}'),
+        FakeProvider(
+            provider=LLMProvider.OPENAI,
+            response_text=json.dumps(
+                    {
+                        "drafts": [
+                            {"channel": "threads", "kind": "Threads", "text": "x"},
+                            {"channel": "threads", "kind": "Threads", "text": "x"},
+                            {"channel": "threads", "kind": "Threads", "text": "x"},
+                        ]
+                    }
+                ),
+        ),
+    )
+
+    with pytest.raises(GenerationFailed):
+        await engine.generate_drafts(workspace_id=workspace_id, job_id=job_id)
+
+    stored = await ContentRepository(db_session).get_job(
+        workspace_id=workspace_id, job_id=job_id
+    )
+    assert stored is not None
+    assert stored.status == ContentJobStatus.FAILED
+    assert stored.failure_reason
+    assert "invalid_output" in stored.failure_reason
+    assert "output sai schema" in stored.failure_reason
+
+    items = (
+        await db_session.execute(select(ContentItem).where(ContentItem.job_id == job_id))
+    ).scalars().all()
+    assert items == []
+
+    events = (
+        await db_session.execute(select(EventLog).where(EventLog.job_id == job_id))
+    ).scalars().all()
+    assert len(events) == 1
+    assert events[0].error and "invalid_output" in events[0].error
 
 
 async def test_event_log_ghi_token_va_provider_vao_db(

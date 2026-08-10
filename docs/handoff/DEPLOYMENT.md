@@ -6,9 +6,9 @@
 > sách biến đầy đủ ở `apps/backend/.env.example`; cách chạy local ở `README.md`.
 > Đây là chỗ ghi các cái bẫy — thứ mà thiếu nó thì mọi thứ trông như đang chạy.
 
-## 1. Ba cờ "chỉ dành cho local"
+## 1. Cấu hình "chỉ dành cho local"
 
-Ba biến dưới đây làm Havi **giả lập** thay vì làm thật. Cả ba đều có validator
+Các biến dưới đây làm Havi **giả lập** thay vì làm thật. Chúng đều có validator
 ném lỗi lúc khởi động khi `HAVI_ENV != local`, nên không thể lỡ để sót lên staging
 — nhưng phải hiểu vì sao mới biết cần kiểm gì sau khi deploy.
 
@@ -17,6 +17,7 @@ ném lỗi lúc khởi động khi `HAVI_ENV != local`, nên không thể lỡ �
 | `HAVI_USE_MOCK_LLM` | `true` | Draft là văn mẫu, không gọi model | Chủ tiệm đăng văn mẫu lên Facebook thật mà tưởng AI viết |
 | `HAVI_USE_FAKE_PUBLISHER` | `true` | Không có bài nào lên Facebook | Mọi bài báo "đã đăng", dashboard xanh, **Trang trống trơn** |
 | `HAVI_DISABLE_RATE_LIMIT` | `false` | Không giới hạn gì | Không có dấu hiệu nào; brute force mật khẩu không bị chặn, script lỗi đốt hết quota LLM trong vài phút |
+| `HAVI_EMAIL_PROVIDER=debug` | `debug` | Reset password trả `debug_code`, không gửi email thật | User staging/production không nhận được mã đặt lại mật khẩu |
 
 **Mặc định của hai cờ đầu là `true`** — tức nếu chỉ copy `.env.example` rồi deploy
 thì backend sẽ **không khởi động** (validator chặn). Đó là chủ ý: thà không chạy
@@ -24,6 +25,23 @@ còn hơn chạy giả.
 
 Sau khi deploy, kiểm bằng log khởi động: nếu thấy dòng cảnh báo
 `Publish đang chạy FAKE` hoặc `LLM đang chạy MOCK` ở staging thì có gì đó sai.
+
+Email cũng theo cùng nguyên tắc: local dùng `HAVI_EMAIL_PROVIDER=debug` để test
+quên mật khẩu không cần vendor. Khi `HAVI_ENV=staging|production`, backend sẽ
+không khởi động nếu vẫn để debug. Cấu hình SMTP tối thiểu:
+
+```bash
+HAVI_EMAIL_PROVIDER=smtp
+HAVI_EMAIL_FROM=no-reply@domain-cua-anh.com
+HAVI_SMTP_HOST=smtp.domain-cua-anh.com
+HAVI_SMTP_PORT=465
+HAVI_SMTP_USERNAME=...
+HAVI_SMTP_PASSWORD=...
+HAVI_SMTP_USE_TLS=true
+```
+
+Ở staging/production, `/auth/password-reset/request` không bao giờ trả
+`debug_code`; mã chỉ đi qua email provider.
 
 ## 2. Facebook — bốn thứ phải khai, thiếu một cái là chết theo một kiểu khác
 
@@ -197,6 +215,7 @@ mục nào chưa xong**:
       có lên Trang không — không có lỗi nào để dựa vào)
 - [ ] Facebook: App Domains + Redirect URI + 3 quyền + Configuration ID
 - [ ] Reverse proxy ghi đè `X-Forwarded-For` (nếu không, rate limit theo IP vô nghĩa)
+- [ ] Email provider thật cho password reset; `HAVI_EMAIL_PROVIDER` không phải `debug`
 - [ ] **Alert cho Redis** — rate limit fail-open nên Redis chết là mất giới hạn mà
       không có dấu hiệu gì
 - [ ] Backup tự động **và** đã restore thử được (chưa làm)

@@ -11,6 +11,15 @@ export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
 const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
 
+type UploadImageOptions = {
+  signal?: AbortSignal;
+  onProgress?: (percent: number) => void;
+};
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 /**
  * Upload ảnh: xin ticket → POST thẳng lên object storage → báo API đã xong.
  *
@@ -20,8 +29,12 @@ const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
  * tạm của API"). Giới hạn dung lượng do storage tự chặn bằng
  * `content-length-range` trong ticket — không tin client tự khai.
  */
-export async function uploadImage(file: File): Promise<Result<string>> {
+export async function uploadImage(
+  file: File,
+  options: UploadImageOptions = {},
+): Promise<Result<string>> {
   try {
+    options.onProgress?.(5);
     const ticket = await apiClient.POST("/media/upload-ticket", {
       body: {
         filename: file.name,
@@ -38,6 +51,7 @@ export async function uploadImage(file: File): Promise<Result<string>> {
             : "Chưa tải được ảnh lên, thử lại giúp chị nhé.",
       };
     }
+    options.onProgress?.(20);
 
     // Presigned POST: mọi field trong ticket phải đi kèm và `file` phải nằm
     // CUỐI form — S3/MinIO bỏ qua mọi field đứng sau phần file.
@@ -50,6 +64,7 @@ export async function uploadImage(file: File): Promise<Result<string>> {
     const uploaded = await fetch(ticket.data.upload_url, {
       method: "POST",
       body: form,
+      signal: options.signal,
     });
     if (!uploaded.ok) {
       return {
@@ -60,6 +75,7 @@ export async function uploadImage(file: File): Promise<Result<string>> {
             : "Tải ảnh lên chưa xong, thử lại giúp chị nhé.",
       };
     }
+    options.onProgress?.(85);
 
     // Storage nhận rồi không có nghĩa là xong: phải để API xác nhận object có
     // thật (và đúng magic bytes) rồi mới chuyển pending → raw.
@@ -69,9 +85,13 @@ export async function uploadImage(file: File): Promise<Result<string>> {
     if (completed.error || !completed.data) {
       return { ok: false, message: "Ảnh tải lên chưa hợp lệ, thử ảnh khác nhé." };
     }
+    options.onProgress?.(100);
 
     return { ok: true, data: ticket.data.asset_id };
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) {
+      return { ok: false, message: "Đã huỷ tải ảnh." };
+    }
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }

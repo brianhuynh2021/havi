@@ -150,7 +150,9 @@ Architecture/docs:
   publish đã có và test tenant isolation thật. **Chưa xong:** inbox/leads.
 - [x] JWT access + refresh token xoay vòng, đăng ký/đăng nhập email + mật khẩu
   (Argon2), đặt lại mật khẩu qua mã 6 số, và logout/revoke refresh session.
-  **Chưa xong:** email provider thật (dùng `debug_code` khi `HAVI_DEBUG=true`).
+  Email sender boundary đã có debug adapter local + SMTP adapter/config guard;
+  staging/production không trả `debug_code` và không khởi động nếu vẫn dùng
+  provider debug. **Chưa xong:** chốt vendor/chi phí email thật.
 - [x] Object storage (MinIO) đã dùng thật: signed upload + magic-byte validation
   ở `/media`. Redis + Celery đã dùng thật: `havi.content.generate_drafts` chạy
   Content Engine trong worker.
@@ -249,7 +251,7 @@ isolation hoặc publish retry vẫn có thể đăng trùng.
 - [ ] Một workspace/user trong happy path; data model vẫn hỗ trợ multi-workspace.
 - [ ] Onboarding ngành đã chạy thật (chọn ngành → tạo workspace → vào app), và
   bước 2 nối Facebook Page đã gọi `/connections` thật.
-  **Chưa xong:** màn sửa brand voice cơ bản.
+  Màn Cài đặt đã sửa được tên tiệm, ngành, tone và banned claims.
 - [x] Upload ảnh + nhập text đã chạy thật end-to-end. Ghi âm để sau (nút disable).
 - [x] Một content job sinh nhiều draft theo kênh bằng structured output —
   backend và frontend đều đã nối; job chạy thật cần worker + API key LLM.
@@ -311,14 +313,16 @@ dịch chữ lại. Mọi quyết định sản phẩm phải ưu tiên bối c�
 
 - [ ] Tiếng Việt là ngôn ngữ mặc định; copy ngắn, đời thường, tránh jargon marketing/AI.
 - [ ] Hỗ trợ nhập số `0xxxxxxxxx`, normalize và lưu dạng `+84`; hiển thị lại theo format quen thuộc.
-- [ ] Email provider để gửi mã đặt lại mật khẩu (hiện trả `debug_code` khi `HAVI_DEBUG=true`).
+- [x] Email provider boundary cho mã đặt lại mật khẩu: local trả `debug_code`,
+  staging/production bắt buộc provider thật và không trả mã trong API response.
 - [ ] SĐT tuỳ chọn trong Cài đặt cho Zalo OA — không dùng để đăng nhập (xem §1).
 - [ ] Múi giờ mặc định `Asia/Ho_Chi_Minh`; ngày theo `dd/MM/yyyy`, giờ 24h, tiền tệ VND.
 - [ ] Thiết kế mobile-first cho Android phổ biến, màn hình 360px và mạng 4G không ổn định.
 - [ ] Upload phải resume/retry hợp lý, nén ảnh phía client khi phù hợp và không bắt user chờ vô nghĩa.
 - [ ] Facebook Page là kênh publish P0; Zalo OA là ưu tiên P1 sau khi xác nhận quyền/API thực tế.
 - [ ] Onboarding bắt đầu bằng một ngành cụ thể và ví dụ Việt Nam thật, đề xuất Spa/Tiệm nhỏ.
-- [ ] Brand voice hiểu cách xưng hô `chị/em`, `anh/em`, tên tiệm và vùng miền; user luôn sửa được.
+- [x] Brand voice cơ bản cho tên tiệm, ngành, cách xưng hô/tone và banned claims
+  luôn sửa được trong Cài đặt.
 - [ ] Banned claims theo ngành phải chặn các câu cam kết quá mức, đặc biệt làm đẹp, tài chính và bất động sản.
 - [ ] Consent, quyền xóa dữ liệu, opt-out và chính sách lưu dữ liệu phải phù hợp
   quy định Việt Nam hiện hành. **Đã có:** trang Privacy nêu đủ quyền chủ thể dữ
@@ -476,8 +480,10 @@ Backend:
   sau ~24 ký tự).
 - [x] Email chuẩn hoá lowercase để không tạo 2 tài khoản từ `A@x.vn` và `a@x.vn`.
   Mã đặt lại mật khẩu có TTL, attempt limit và resend cooldown — test thật ở
-  `tests/test_auth_flow.py`. **Chưa xong:** email provider thật (đang trả
-  `debug_code` khi `HAVI_DEBUG=true` — xem §13 "Quyết định cần chốt").
+  `tests/test_auth_flow.py`. Email sender boundary đã có `EmailSender` port,
+  debug adapter local và SMTP adapter; staging/production không trả `debug_code`.
+  Verified 2026-08-10: `cd apps/backend && uv run pytest tests/test_auth_flow.py`
+  → 25 passed. **Chưa xong:** chốt vendor/chi phí email thật — xem §13.
 - [x] SĐT tuỳ chọn (`PUT /auth/phone`) cho Zalo OA, chuẩn hoá về `+84…`, unique
   để một số không gắn 2 tài khoản. Không dùng để đăng nhập.
 - [x] JWT access token + rotated refresh token (`/auth/sign-up`, `/auth/login/email`,
@@ -525,7 +531,9 @@ Frontend:
   `tests/onboarding-screen.test.tsx` 5 case; verify thật trên Postgres:
   `/brand-profile` trả 409 với token sau signup và 200 với token sau activate.
   Bước 2 (nối Facebook Page) đã bỏ fixture, gọi `/connections` thật (Tuần 7).
-  **Chưa xong:** màn sửa brand voice/tone.
+- [x] Màn Cài đặt đã nối workspace + `/brand-profile` thật để sửa tên tiệm,
+  ngành, tone và banned claims; có loading/error/success states. Verified
+  2026-08-10: `npm run test:web` → 108 passed.
 - [x] Xử lý loading, sai mật khẩu và network failure ở màn đăng nhập/đăng ký
   (nút disable khi đang gửi, lỗi hiện qua `role="alert"`, mất mạng có copy tiếng
   Việt riêng). **Chưa xong:** mã hết hạn và throttled ở màn quên mật khẩu.
@@ -583,8 +591,8 @@ Backend/worker:
 Frontend:
 
 - [x] Upload ảnh thật: xin ticket → POST thẳng lên object storage → `/complete`.
-  Bytes không đi qua API. **Chưa xong:** progress %, cancel giữa chừng và
-  preview ảnh (hiện chỉ hiện tên file trong chip).
+  Bytes không đi qua API. UI hiện preview local, phần trăm tiến độ theo từng
+  chặng upload và cho huỷ giữa chừng bằng `AbortController`.
 - [x] Tạo content job từ ảnh/text và poll job status (`use-job-polling.ts`).
   `Idempotency-Key` gắn theo bộ liệu thô — bấm hai lần không tốn hai lần tiền
   LLM, verify thật: cùng key trả về cùng `job.id`.
@@ -596,9 +604,12 @@ Frontend:
 
 Tests:
 
-- [ ] Worker unit tests bằng fake model/provider.
-- [ ] Idempotency test: submit/retry không sinh hai content job logic.
-- [ ] Contract test cho malformed structured output.
+- [x] Worker/unit-path tests bằng `FakeProvider`, không gọi mạng/API key thật.
+- [x] Idempotency test: submit/retry không sinh hai content job logic.
+- [x] Contract test cho malformed structured output: JSON hỏng/schema hỏng/provider
+  trả channel không hỗ trợ đều fallback hoặc fail rõ, không tạo draft rác.
+- [x] Banned claims chặn uppercase + không dấu; token/event log cộng cả provider
+  trả output lỗi nhưng đã tiêu token.
 
 Exit criteria:
 
@@ -1201,21 +1212,16 @@ python3 -m json.tool agent-loop/roadmap.example.json
 
 Current agent-loop priority tasks:
 
-1. Add CI for Gate A.
-2. Add an email-provider boundary.
-3. Wire a basic brand-voice settings UI.
-4. Improve upload UX with progress, cancel, and preview.
-5. Add Content Engine structured-output tests.
-6. Add calendar UI for rescheduling posts.
-7. Back the activity feed with real event/audit data.
-8. Create a minimal internal operations metrics UI.
-9. Add an E2E core flow.
-10. Write staging runbook and backup/restore rehearsal steps.
-11. Complete security review checklist.
-12. Set up visual regression and accessibility baseline.
-13. Design data deletion, account deletion, and consent records.
-14. Prepare a 7-day founder dogfooding plan.
-15. Sync the product roadmap after an agent-loop batch.
+1. Add calendar UI for rescheduling posts.
+2. Back the activity feed with real event/audit data.
+3. Create a minimal internal operations metrics UI.
+4. Add an E2E core flow.
+5. Write staging runbook and backup/restore rehearsal steps.
+6. Complete security review checklist.
+7. Set up visual regression and accessibility baseline.
+8. Design data deletion, account deletion, and consent records.
+9. Prepare a 7-day founder dogfooding plan.
+10. Sync the product roadmap after an agent-loop batch.
 
 Current executor note: `loop:code` codes, applies, and verifies while commit/push
 remain manual. The executor now asks providers for `unified_diff_lines`, recovers
@@ -1273,6 +1279,9 @@ Thứ tự triển khai tiếp theo từ code hiện tại:
   đăng đọc `/content/publish-jobs?status=dead_letter`, hiện lý do theo từng loại
   lỗi và nút "Thử lại" — trước đó bài lỗi biến mất trong im lặng, chủ tiệm chỉ
   còn cách gọi API bằng tay.
+- [x] Thêm email-provider boundary cho password reset: `EmailSender` port,
+  debug adapter chỉ cho local, SMTP adapter cho staging/production, validator
+  chặn `HAVI_EMAIL_PROVIDER=debug` ngoài local và docs/env mẫu đã cập nhật.
   Đồng thời sửa một bug thật: callback OAuth **luôn** redirect `/onboarding`, nên
   chủ tiệm dùng app hàng tháng bấm "Nối lại" ở Cài đặt xong bị đá vào wizard
   onboarding. Nay đường về đi trong state đã ký (`return_key`) theo *khoá* trong

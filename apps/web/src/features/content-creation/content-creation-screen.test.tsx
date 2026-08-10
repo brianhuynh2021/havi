@@ -26,27 +26,26 @@ function pendingItem(id: string, channel = "facebook_page") {
 
 /** Router theo URL — mỗi test chỉ khai phần nó quan tâm. */
 type Routes = {
-  list?: () => Response;
-  ticket?: () => Response;
-  storage?: () => Response;
-  complete?: () => Response;
-  createJob?: () => Response;
-  getJob?: () => Response;
-  approve?: () => Response;
-  reject?: () => Response;
-  approveAll?: () => Response;
-  patch?: () => Response;
-  versions?: () => Response;
-  quota?: () => Response;
+  list?: () => Response | Promise<Response>;
+  ticket?: () => Response | Promise<Response>;
+  storage?: (request: Request) => Response | Promise<Response>;
+  complete?: () => Response | Promise<Response>;
+  createJob?: () => Response | Promise<Response>;
+  getJob?: () => Response | Promise<Response>;
+  approve?: () => Response | Promise<Response>;
+  reject?: () => Response | Promise<Response>;
+  approveAll?: () => Response | Promise<Response>;
+  patch?: () => Response | Promise<Response>;
+  versions?: () => Response | Promise<Response>;
+  quota?: () => Response | Promise<Response>;
 };
 
 function mockApi(routes: Routes = {}) {
   return vi
     .spyOn(globalThis, "fetch")
-    .mockImplementation(async (input: RequestInfo | URL) => {
-      const req = input instanceof Request ? input : null;
-      const url = req ? req.url : String(input);
-      const method = req?.method ?? "GET";
+    .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      const method = input instanceof Request ? input.method : (init?.method ?? "GET");
 
       // Phải đứng TRƯỚC nhánh `/content` chung: QuotaBanner gọi
       // `/content/quota`, mà URL đó cũng khớp `includes("/content")` nên sẽ nhận
@@ -82,7 +81,15 @@ function mockApi(routes: Routes = {}) {
         return routes.complete?.() ?? jsonResponse({ id: "asset-1" });
       }
       if (url.startsWith("http://storage.local")) {
-        return routes.storage?.() ?? new Response(null, { status: 204 });
+        const req =
+          input instanceof Request
+            ? input
+            : ({
+                url,
+                method,
+                signal: init?.signal ?? new AbortController().signal,
+              } as Request);
+        return routes.storage?.(req) ?? new Response(null, { status: 204 });
       }
       if (url.includes("/versions")) {
         return (
@@ -132,6 +139,14 @@ async function chonAnh() {
 describe("ContentCreationScreen", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:preview"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
     writeTokens({
       accessToken: "a",
       refreshToken: "r",
@@ -180,7 +195,7 @@ describe("ContentCreationScreen", () => {
     await chonAnh();
 
     // Chip xuất hiện nghĩa là cả 3 bước đã xong.
-    expect(await screen.findByText("goi-dau.jpg")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i })).toBeInTheDocument();
 
     const calls = fetchSpy.mock.calls.map(([input]) =>
       input instanceof Request ? input.url : String(input),
@@ -191,12 +206,52 @@ describe("ContentCreationScreen", () => {
     expect(calls.some((u) => u.includes("/complete"))).toBe(true);
   });
 
+  it("hiện preview và phần trăm tiến độ upload", async () => {
+    mockApi();
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonAnh();
+
+    expect(
+      await screen.findByRole("img", { name: /xem trước goi-dau.jpg/i }),
+    ).toHaveAttribute("src", "blob:preview");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("progressbar", { name: /tiến độ tải goi-dau.jpg/i }),
+      ).toHaveAttribute("aria-valuenow", "100"),
+    );
+    expect(screen.getByText("Xong")).toBeInTheDocument();
+  });
+
+  it("huỷ upload giữa chừng thì không tạo chip ảnh", async () => {
+    mockApi({
+      storage: (request) =>
+        new Promise<Response>((resolve, reject) => {
+          request.signal.addEventListener("abort", () => {
+            reject(new DOMException("Aborted", "AbortError"));
+          });
+          setTimeout(() => resolve(new Response(null, { status: 204 })), 500);
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonAnh();
+    await userEvent.click(await screen.findByRole("button", { name: "Huỷ" }));
+
+    expect(await screen.findByText("Đã huỷ")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /bỏ goi-dau.jpg/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("tạo job có gửi Idempotency-Key để bấm hai lần không tốn hai lần tiền LLM", async () => {
     const fetchSpy = mockApi();
     render(<ContentCreationScreen />);
     await screen.findByText(/chưa có bản nháp nào/i);
     await chonAnh();
-    await screen.findByText("goi-dau.jpg");
+    await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
@@ -217,7 +272,7 @@ describe("ContentCreationScreen", () => {
     render(<ContentCreationScreen />);
     await screen.findByText(/chưa có bản nháp nào/i);
     await chonAnh();
-    await screen.findByText("goi-dau.jpg");
+    await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
@@ -230,7 +285,7 @@ describe("ContentCreationScreen", () => {
     render(<ContentCreationScreen />);
     await screen.findByText(/chưa có bản nháp nào/i);
     await chonAnh();
-    await screen.findByText("goi-dau.jpg");
+    await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));

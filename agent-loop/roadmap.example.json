@@ -30,7 +30,7 @@
     {
       "id": "harden-agent-code-execution",
       "title": "Harden agent code execution and patch application",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "agent-loop",
       "why": "Real code-mode runs exposed two executor issues: malformed LLM diffs and valid diffs whose context does not apply to the current repo. The loop must be reliable before running larger feature batches.",
@@ -57,7 +57,7 @@
     {
       "id": "gate-a-ci-checks",
       "title": "Add CI for Gate A",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "platform",
       "why": "ROADMAP Gate A is not met because lint, tests, build, and migration checks are still manual.",
@@ -86,7 +86,7 @@
     {
       "id": "auth-logout-revoke",
       "title": "Implement logout and refresh-session revocation",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "backend-auth",
       "why": "ROADMAP Week 4 and the baseline note that auth still lacks an explicit logout/revoke endpoint.",
@@ -114,7 +114,7 @@
     {
       "id": "email-provider-boundary",
       "title": "Add an email-provider boundary for OTP and password reset",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "backend-auth",
       "why": "Closed beta needs real email delivery; debug_code is only acceptable for local/debug mode.",
@@ -140,7 +140,7 @@
     {
       "id": "brand-voice-settings-ui",
       "title": "Wire a basic brand-voice settings UI",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "frontend-settings",
       "why": "Onboarding creates a brand profile, but the roadmap still lacks a way to edit brand voice/tone later.",
@@ -167,7 +167,7 @@
     {
       "id": "upload-progress-cancel-preview",
       "title": "Improve upload UX with progress, cancel, and preview",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "frontend-content",
       "why": "Week 5 notes that real uploads work, but progress percentage, mid-upload cancel, and image preview are missing.",
@@ -192,7 +192,7 @@
     {
       "id": "content-engine-contract-tests",
       "title": "Add Content Engine tests for structured output and fake providers",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "backend-content",
       "why": "Week 5 still lacks worker unit tests with fake providers and contract tests for malformed structured output.",

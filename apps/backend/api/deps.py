@@ -12,6 +12,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from adapters.email.debug import DebugEmailSender
+from adapters.email.smtp import SmtpEmailSender
 from adapters.oauth.base import OAuthClientPort
 from adapters.oauth.facebook import FacebookOAuthClient
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
@@ -41,10 +43,19 @@ from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
 from core.enums import Platform
 from core.security import decode_access_token
+from domain.ports.email import EmailSender
 
 bearer_scheme = HTTPBearer(auto_error=True)
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
+
+
+@lru_cache
+def _email_sender() -> EmailSender:
+    settings = get_settings()
+    if settings.email_provider == "debug":
+        return DebugEmailSender()
+    return SmtpEmailSender(settings)
 
 
 def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthService:
@@ -53,6 +64,7 @@ def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthServic
         otp_challenges=OtpRepository(session),
         refresh_sessions=RefreshSessionRepository(session),
         settings=settings,
+        email_sender=_email_sender(),
     )
 
 

@@ -5,7 +5,25 @@ Mỗi test rollback transaction riêng (xem conftest.py) nên không cần dọn
 
 from httpx import AsyncClient
 
+from adapters.persistence.otp_repository import OtpRepository
+from adapters.persistence.refresh_session_repository import RefreshSessionRepository
+from adapters.persistence.user_repository import UserRepository
+from application.services.auth_service import AuthService
+from core.config import Settings
+
 PASSWORD = "matkhau123"
+
+
+class RecordingEmailSender:
+    def __init__(self) -> None:
+        self.sent: list[dict] = []
+
+    async def send_password_reset_code(
+        self, *, email: str, code: str, expires_in_seconds: int
+    ) -> None:
+        self.sent.append(
+            {"email": email, "code": code, "expires_in_seconds": expires_in_seconds}
+        )
 
 
 async def _sign_up(
@@ -167,6 +185,53 @@ async def test_password_reset_doi_duoc_mat_khau_va_dang_nhap_luon(client: AsyncC
             "/auth/login/email", json={"email": "b1@havi.vn", "password": "matkhaumoi456"}
         )
     ).status_code == 200
+
+
+async def test_password_reset_goi_email_sender_va_chi_local_moi_tra_debug_code(
+    db_session,
+):
+    email_sender = RecordingEmailSender()
+    settings = Settings(
+        env="production",
+        debug=True,
+        use_mock_llm=False,
+        use_fake_publisher=False,
+        disable_rate_limit=False,
+        email_provider="smtp",
+        email_from="no-reply@havi.vn",
+        smtp_host="smtp.havi.vn",
+    )
+    service = AuthService(
+        users=UserRepository(db_session),
+        otp_challenges=OtpRepository(db_session),
+        refresh_sessions=RefreshSessionRepository(db_session),
+        settings=settings,
+        email_sender=email_sender,
+    )
+
+    await service.sign_up(name="Chị Lan", email="b6@havi.vn", password=PASSWORD)
+    result = await service.request_password_reset(email="B6@Havi.vn")
+
+    assert result.debug_code is None
+    assert len(email_sender.sent) == 1
+    assert email_sender.sent[0]["email"] == "b6@havi.vn"
+    assert email_sender.sent[0]["code"]
+
+
+def test_staging_thieu_email_provider_that_thi_config_fail_ro_rang():
+    try:
+        Settings(
+            env="staging",
+            debug=False,
+            use_mock_llm=False,
+            use_fake_publisher=False,
+            disable_rate_limit=False,
+            email_provider="debug",
+        )
+    except ValueError as exc:
+        assert "HAVI_EMAIL_PROVIDER=debug" in str(exc)
+    else:
+        raise AssertionError("staging must reject debug email provider")
 
 
 async def test_password_reset_email_chua_dang_ky_van_tra_202_khong_co_ma(client: AsyncClient):

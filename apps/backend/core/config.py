@@ -47,6 +47,18 @@ class Settings(BaseSettings):
     otp_resend_cooldown_seconds: int = 30
     otp_max_attempts: int = 5
 
+    # Local/debug returns `debug_code` for password reset. Staging/production must
+    # configure a real provider; otherwise the reset flow pretends to send email
+    # while the user never receives anything.
+    email_provider: Literal["debug", "smtp"] = "debug"
+    email_from: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    smtp_timeout_seconds: int = 10
+
     token_encryption_key: str = ""
 
     # Dùng MockProvider thay vì gọi LLM thật. Mặc định bật ở local để chạy tay
@@ -154,6 +166,27 @@ class Settings(BaseSettings):
                 "Tắt rate limit chỉ dùng cho test ở local."
             )
         return self
+
+    @model_validator(mode="after")
+    def _force_real_email_outside_local(self) -> "Settings":
+        """Password reset email must be real outside local development."""
+        if self.env == "local":
+            return self
+        if self.email_provider == "debug":
+            raise ValueError(
+                f"HAVI_EMAIL_PROVIDER=debug không được phép khi HAVI_ENV={self.env}. "
+                "Staging/production phải cấu hình provider email thật."
+            )
+        if self.email_provider == "smtp" and (not self.email_from or not self.smtp_host):
+            raise ValueError(
+                "HAVI_EMAIL_PROVIDER=smtp cần HAVI_EMAIL_FROM và HAVI_SMTP_HOST."
+            )
+        return self
+
+    @property
+    def expose_debug_codes(self) -> bool:
+        """Only local debug mode can reveal OTPs in API responses."""
+        return self.env == "local" and self.debug
 
 
 @lru_cache

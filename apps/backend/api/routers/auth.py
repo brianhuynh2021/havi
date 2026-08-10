@@ -41,8 +41,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class OtpChallenge(HaviModel):
     """Frontend dùng `resend_after_seconds` để chạy đồng hồ đếm ngược trên màn OTP.
 
-    `debug_code` chỉ có giá trị khi `HAVI_DEBUG=true` (chưa có email provider thật
-    — xem ROADMAP.md "Quyết định cần chốt"). Không log mã ra bất kỳ đâu.
+    `debug_code` chỉ có giá trị ở local khi `HAVI_DEBUG=true`. Staging/production
+    phải gửi email thật và không bao giờ trả mã trong API response.
     """
 
     resend_after_seconds: int

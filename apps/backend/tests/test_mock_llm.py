@@ -99,7 +99,7 @@ def test_local_van_bat_mock_duoc():
 
 
 def test_staging_tat_mock_thi_khoi_dong_binh_thuong():
-    """Staging thật phải tắt cả ba cờ "chỉ dành cho local" — đây là config đúng.
+    """Staging thật phải tắt các cấu hình local-only — đây là config đúng.
 
     `disable_rate_limit=False` khai tường minh: conftest set
     `HAVI_DISABLE_RATE_LIMIT=true` cho cả suite, và Settings đọc env nên không
@@ -110,10 +110,14 @@ def test_staging_tat_mock_thi_khoi_dong_binh_thuong():
         use_mock_llm=False,
         use_fake_publisher=False,
         disable_rate_limit=False,
+        email_provider="smtp",
+        email_from="no-reply@havi.vn",
+        smtp_host="smtp.havi.vn",
     )
     assert settings.use_mock_llm is False
     assert settings.use_fake_publisher is False
     assert settings.disable_rate_limit is False
+    assert settings.email_provider == "smtp"
 
 
 def test_tat_rate_limit_o_staging_thi_khong_khoi_dong_duoc():

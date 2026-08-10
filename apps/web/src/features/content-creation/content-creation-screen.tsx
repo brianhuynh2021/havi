@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,18 @@ type RawChip = {
   kind: "photo" | "text";
   label: string;
   input: RawInput;
+  previewUrl?: string;
+};
+
+type UploadRow = {
+  key: string;
+  fileName: string;
+  previewUrl: string;
+  progress: number;
+  status: "uploading" | "complete" | "cancelled" | "failed";
+  message?: string;
+  assetId?: string;
+  controller: AbortController;
 };
 
 const jobProgressLabel: Record<string, string> = {
@@ -38,7 +52,7 @@ export function ContentCreationScreen() {
   const [chips, setChips] = useState<RawChip[]>([]);
   const [note, setNote] = useState("");
   const [noteOpen, setNoteOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploads, setUploads] = useState<UploadRow[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +63,7 @@ export function ContentCreationScreen() {
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlsRef = useRef(new Set<string>());
 
   /** `keepError` cho lượt nạp lại *sau khi* một hành động thất bại: nạp lại
    * thành công không có nghĩa là lỗi vừa rồi biến mất, và xoá nó đi thì chủ
@@ -82,38 +97,120 @@ export function ContentCreationScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
+    return () => {
+      for (const url of previewUrls) URL.revokeObjectURL(url);
+      previewUrls.clear();
+    };
+  }, []);
+
+  function rememberPreviewUrl(url: string) {
+    previewUrlsRef.current.add(url);
+  }
+
+  function forgetPreviewUrl(url: string | undefined) {
+    if (!url || !previewUrlsRef.current.has(url)) return;
+    URL.revokeObjectURL(url);
+    previewUrlsRef.current.delete(url);
+  }
+
   // Job xong thì nạp lại hàng chờ duyệt và xoá chip — liệu thô đã thành bài rồi.
   const onJobReady = useCallback(() => {
     setJobId(null);
+    for (const chip of chips) forgetPreviewUrl(chip.previewUrl);
     setChips([]);
+    setUploads([]);
     setNote("");
     setNoteOpen(false);
     loadItems();
-  }, [loadItems]);
+  }, [chips, loadItems]);
 
   const poll = useJobPolling(jobId, onJobReady);
 
   async function onPickFiles(files: FileList | null) {
     if (!files?.length) return;
     setError(null);
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      const result = await uploadImage(file);
-      if (!result.ok) {
-        setError(result.message);
-        continue;
-      }
-      setChips((prev) => [
-        ...prev,
-        {
-          key: result.data,
-          kind: "photo",
-          label: file.name,
-          input: { kind: "photo", media_asset_id: result.data },
+    const pendingUploads = Array.from(files).map((file, index) => {
+      const previewUrl = URL.createObjectURL(file);
+      const key = `upload-${Date.now()}-${index}-${file.name}`;
+      rememberPreviewUrl(previewUrl);
+      return {
+        file,
+        row: {
+          key,
+          fileName: file.name,
+          previewUrl,
+          progress: 0,
+          status: "uploading" as const,
+          controller: new AbortController(),
         },
-      ]);
-    }
-    setUploading(false);
+      };
+    });
+
+    setUploads((prev) => [...prev, ...pendingUploads.map((upload) => upload.row)]);
+
+    await Promise.all(
+      pendingUploads.map(async ({ file, row }) => {
+        const result = await uploadImage(file, {
+          signal: row.controller.signal,
+          onProgress: (progress) => {
+            setUploads((prev) =>
+              prev.map((upload) =>
+                upload.key === row.key
+                  ? { ...upload, progress: Math.max(upload.progress, progress) }
+                  : upload,
+              ),
+            );
+          },
+        });
+
+        if (row.controller.signal.aborted) {
+          setUploads((prev) =>
+            prev.map((upload) =>
+              upload.key === row.key
+                ? { ...upload, progress: 0, status: "cancelled", message: "Đã huỷ" }
+                : upload,
+            ),
+          );
+          return;
+        }
+
+        if (!result.ok) {
+          setUploads((prev) =>
+            prev.map((upload) =>
+              upload.key === row.key
+                ? {
+                    ...upload,
+                    status: "failed",
+                    message: result.message,
+                  }
+                : upload,
+            ),
+          );
+          setError(result.message);
+          return;
+        }
+
+        setUploads((prev) =>
+          prev.map((upload) =>
+            upload.key === row.key
+              ? { ...upload, progress: 100, status: "complete", assetId: result.data }
+              : upload,
+          ),
+        );
+        setChips((prev) => [
+          ...prev,
+          {
+            key: result.data,
+            kind: "photo",
+            label: file.name,
+            previewUrl: row.previewUrl,
+            input: { kind: "photo", media_asset_id: result.data },
+          },
+        ]);
+      }),
+    );
     // Cho phép chọn lại đúng file vừa bỏ ra: input file không bắn `change` nếu
     // value không đổi.
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -136,10 +233,19 @@ export function ContentCreationScreen() {
   }
 
   function removeChip(key: string) {
+    const removed = chips.find((chip) => chip.key === key);
+    forgetPreviewUrl(removed?.previewUrl);
     setChips((prev) => prev.filter((c) => c.key !== key));
+    setUploads((prev) => prev.filter((upload) => upload.assetId !== key));
+  }
+
+  function cancelUpload(key: string) {
+    const upload = uploads.find((item) => item.key === key);
+    upload?.controller.abort();
   }
 
   const generating = poll.status === "queued" || poll.status === "processing";
+  const uploading = uploads.some((upload) => upload.status === "uploading");
 
   async function generate() {
     if (!chips.length || generating) return;
@@ -274,10 +380,66 @@ export function ContentCreationScreen() {
         ) : null}
       </section>
 
+      {uploads.length ? (
+        <section className={styles.uploadList} aria-label="Ảnh đang nạp">
+          {uploads.map((upload) => (
+            <article key={upload.key} className={styles.uploadItem}>
+              <img
+                className={styles.uploadPreview}
+                src={upload.previewUrl}
+                alt={`Xem trước ${upload.fileName}`}
+              />
+              <div className={styles.uploadBody}>
+                <div className={styles.uploadTopline}>
+                  <span className={styles.uploadName}>{upload.fileName}</span>
+                  <span className={styles.uploadPercent}>
+                    {upload.status === "uploading"
+                      ? `${upload.progress}%`
+                      : upload.status === "complete"
+                        ? "Xong"
+                        : upload.message}
+                  </span>
+                </div>
+                <div
+                  className={styles.progressTrack}
+                  role="progressbar"
+                  aria-label={`Tiến độ tải ${upload.fileName}`}
+                  aria-valuenow={upload.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <span
+                    className={styles.progressBar}
+                    style={{ width: `${upload.progress}%` }}
+                  />
+                </div>
+              </div>
+              {upload.status === "uploading" ? (
+                <button
+                  type="button"
+                  className={styles.cancelUpload}
+                  onClick={() => cancelUpload(upload.key)}
+                >
+                  Huỷ
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </section>
+      ) : null}
+
       {chips.length ? (
         <section className={styles.chipRow} aria-label="Liệu thô vừa nạp">
           {chips.map((chip) => (
             <span key={chip.key} className={styles.chip}>
+              {chip.previewUrl ? (
+                <img
+                  className={styles.chipPreview}
+                  src={chip.previewUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              ) : null}
               <span className={styles.chipKind}>
                 {chip.kind === "photo" ? "Ảnh" : "Ghi chú"}
               </span>

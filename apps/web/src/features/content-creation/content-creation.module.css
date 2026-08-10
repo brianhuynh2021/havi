@@ -57,6 +57,13 @@
   font-size: 12.5px;
 }
 
+.chipPreview {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
 .chipKind {
   padding: 2px 7px;
   border-radius: 999px;
@@ -86,6 +93,92 @@
 .chipRemove:hover {
   background: var(--color-border);
   color: var(--color-ink);
+}
+
+.uploadList {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.uploadItem {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.uploadPreview {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--color-surface-soft);
+}
+
+.uploadBody {
+  min-width: 0;
+}
+
+.uploadTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.uploadName {
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadPercent {
+  flex: none;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.progressTrack {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+}
+
+.progressBar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transition: width 160ms ease;
+}
+
+.cancelUpload {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelUpload:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
 }
 
 .noteBox {
@@ -283,6 +376,20 @@
   .dropZone,
   .processingCard {
     padding: 18px;
+  }
+
+  .uploadItem {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .uploadPreview {
+    width: 48px;
+    height: 48px;
+  }
+
+  .cancelUpload {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 

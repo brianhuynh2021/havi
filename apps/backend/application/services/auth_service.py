@@ -28,6 +28,7 @@ from core.security import (
     verify_password,
 )
 from domain.models.user import User
+from domain.ports.email import EmailSender
 
 
 class EmailAlreadyRegistered(Exception):
@@ -87,11 +88,13 @@ class AuthService:
         otp_challenges: OtpRepository,
         refresh_sessions: RefreshSessionRepository,
         settings: Settings,
+        email_sender: EmailSender,
     ) -> None:
         self._users = users
         self._otp_challenges = otp_challenges
         self._refresh_sessions = refresh_sessions
         self._settings = settings
+        self._email_sender = email_sender
 
     async def sign_up(self, *, name: str, email: str, password: str) -> TokenPairResult:
         """Đăng ký xong đăng nhập luôn — email chưa cần xác minh để dùng app.
@@ -140,10 +143,15 @@ class AuthService:
             code_hash=hash_otp_code(code, normalized_email, self._settings),
             expires_at=datetime.now(UTC) + timedelta(seconds=ttl),
         )
+        await self._email_sender.send_password_reset_code(
+            email=normalized_email,
+            code=code,
+            expires_in_seconds=ttl,
+        )
         return OtpChallengeResult(
             resend_after_seconds=cooldown,
             expires_in_seconds=ttl,
-            debug_code=code if self._settings.debug else None,
+            debug_code=code if self._settings.expose_debug_codes else None,
         )
 
     async def confirm_password_reset(

@@ -1,5 +1,5 @@
-import { ConnectionsScreen } from "@/features/connections/connections-screen";
+import { SettingsScreen } from "@/features/settings/settings-screen";
 
 export default function Page() {
-  return <ConnectionsScreen />;
+  return <SettingsScreen />;
 }
