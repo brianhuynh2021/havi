@@ -59,7 +59,7 @@ jobs:
           --health-retries 5
 
     env:
-      HAVI_ENV: development
+      HAVI_ENV: local
       HAVI_DEBUG: "true"
       HAVI_DATABASE_URL: postgresql+psycopg://havi:havi@localhost:5432/havi
       HAVI_REDIS_URL: redis://localhost:6379/0

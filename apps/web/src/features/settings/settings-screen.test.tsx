@@ -104,6 +104,7 @@ describe("SettingsScreen", () => {
 
     render(<SettingsScreen />);
     const user = userEvent.setup();
+    await screen.findByDisplayValue("Spa An Nhiên");
 
     await user.clear(await screen.findByLabelText("Tên tiệm"));
     await user.type(screen.getByLabelText("Tên tiệm"), "Tiệm An Nhiên");
