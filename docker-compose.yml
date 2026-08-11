@@ -36,7 +36,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000" # S3 API — khớp HAVI_MEDIA_PUBLIC_URL trong .env.example
+      - "9000:9000" # S3 API, matches HAVI_MEDIA_PUBLIC_URL in .env.example
       - "9001:9001" # Console web
     volumes:
       - minio-data:/data
@@ -46,8 +46,9 @@ services:
       timeout: 5s
       retries: 10
 
-  # Job một lần: tạo sẵn bucket havi-media và cho phép đọc public (media_public_url
-  # trỏ thẳng link, không qua presigned GET). Chạy xong tự exit, không phải service dài hạn.
+  # One-shot job: create the havi-media bucket and allow public reads. The
+  # media_public_url points directly to object URLs instead of presigned GETs.
+  # This exits after setup and is not a long-running service.
   minio-init:
     image: minio/mc:latest
     depends_on:

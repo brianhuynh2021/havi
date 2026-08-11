@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { channelLabels } from "@/features/content-creation/content-creation.fixture";
 import { FailedPostsPanel } from "@/features/publish-jobs/failed-posts-panel";
 import {
   addDays,
   fetchCalendar,
+  rescheduleItem,
   startOfVnWeek,
   toVnDateString,
   type CalendarDay,
@@ -30,11 +32,41 @@ function dayLabel(iso: string): string {
   return `${day}/${month}`;
 }
 
+const vnDateTime = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+function datetimeLocalValue(iso: string | null | undefined, fallbackDate: string): string {
+  if (!iso) return `${fallbackDate}T09:00`;
+  const parts = Object.fromEntries(
+    vnDateTime.formatToParts(new Date(iso)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function toVnOffsetIso(value: string): string {
+  return `${value}:00+07:00`;
+}
+
+function canReschedule(status: string): boolean {
+  return status === "approved" || status === "scheduled";
+}
+
 export function CalendarScreen() {
   const [weekStart, setWeekStart] = useState(() => startOfVnWeek(new Date()));
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftTime, setDraftTime] = useState("");
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const today = toVnDateString(new Date());
 
@@ -63,6 +95,30 @@ export function CalendarScreen() {
       cancelled = true;
     };
   }, [weekStart, reloadKey]);
+
+  function startEditing(item: CalendarDay["items"][number], fallbackDate: string) {
+    setEditingId(item.id);
+    setDraftTime(datetimeLocalValue(item.scheduled_at, fallbackDate));
+    setRescheduleError(null);
+  }
+
+  async function submitReschedule(itemId: string) {
+    if (!draftTime) {
+      setRescheduleError("Chọn ngày giờ đăng mới trước đã nhé.");
+      return;
+    }
+    setSavingId(itemId);
+    setRescheduleError(null);
+    const result = await rescheduleItem(itemId, toVnOffsetIso(draftTime));
+    setSavingId(null);
+    if (!result.ok) {
+      setRescheduleError(result.message);
+      setReloadKey((k) => k + 1);
+      return;
+    }
+    setEditingId(null);
+    setReloadKey((k) => k + 1);
+  }
 
   const empty = days.every((day) => day.items.length === 0);
   const rangeLabel = days.length
@@ -155,6 +211,59 @@ export function CalendarScreen() {
                         <Badge tone={statusTone[item.status]}>
                           {statusLabel[item.status]}
                         </Badge>
+                        {canReschedule(item.status) ? (
+                          editingId === item.id ? (
+                            <form
+                              className={styles.rescheduleForm}
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                void submitReschedule(item.id);
+                              }}
+                            >
+                              <label className={styles.rescheduleLabel}>
+                                Giờ đăng mới
+                                <Input
+                                  type="datetime-local"
+                                  value={draftTime}
+                                  onChange={(event) => setDraftTime(event.target.value)}
+                                  aria-label="Giờ đăng mới"
+                                />
+                              </label>
+                              {rescheduleError ? (
+                                <p className={styles.inlineError} role="alert">
+                                  {rescheduleError}
+                                </p>
+                              ) : null}
+                              <div className={styles.rescheduleActions}>
+                                <Button
+                                  type="submit"
+                                  disabled={savingId === item.id}
+                                  className={styles.compactButton}
+                                >
+                                  {savingId === item.id ? "Đang lưu…" : "Lưu"}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  className={styles.compactButton}
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setRescheduleError(null);
+                                  }}
+                                >
+                                  Huỷ
+                                </Button>
+                              </div>
+                            </form>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              className={styles.changeTimeButton}
+                              onClick={() => startEditing(item, day.date)}
+                            >
+                              Đổi giờ
+                            </Button>
+                          )
+                        ) : null}
                       </article>
                     ))}
                   </div>

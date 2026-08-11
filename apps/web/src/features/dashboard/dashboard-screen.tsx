@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import {
+  fetchDashboardActivity,
   fetchDashboardSummary,
+  type DashboardActivityEvent,
   type DashboardContentSummary,
 } from "./dashboard.api";
 import styles from "./dashboard.module.css";
@@ -26,22 +28,71 @@ function stats(summary: DashboardContentSummary) {
   ];
 }
 
+const activityTime = new Intl.DateTimeFormat("vi-VN", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+function activityCopy(event: DashboardActivityEvent) {
+  if (event.job_kind === "publish.run_job" && event.error) {
+    return {
+      text: "Một bài chưa đăng được, cần xem lại kết nối hoặc thử đăng lại.",
+      tag: "Lỗi đăng",
+    };
+  }
+  if (event.job_kind === "publish.run_job") {
+    return { text: "Một bài đã đăng thành công.", tag: "Đã đăng" };
+  }
+  if (event.job_kind === "content.approve") {
+    return {
+      text: "Một bài đã được duyệt và đưa vào lịch đăng.",
+      tag: "Đã duyệt",
+    };
+  }
+  if (event.job_kind === "content.reject") {
+    return { text: "Một bản nháp đã được trả về để chỉnh lại.", tag: "Cần sửa" };
+  }
+  if (event.job_kind === "content.reschedule") {
+    return { text: "Một bài đã được đổi giờ đăng.", tag: "Đổi lịch" };
+  }
+  if (event.job_kind === "content.generate_drafts") {
+    return { text: "Havi đã tạo bản nháp mới để chị duyệt.", tag: "Bản nháp" };
+  }
+  return { text: "Workspace vừa có cập nhật mới.", tag: "Cập nhật" };
+}
+
 export function DashboardScreen() {
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
+  const [activity, setActivity] = useState<DashboardActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activityError, setActivityError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      const result = await fetchDashboardSummary();
+      const [summaryResult, activityResult] = await Promise.all([
+        fetchDashboardSummary(),
+        fetchDashboardActivity(),
+      ]);
       if (cancelled) return;
-      if (result.ok) {
-        setSummary(result.data);
+      if (summaryResult.ok) {
+        setSummary(summaryResult.data);
         setError(null);
       } else {
-        setError(result.message);
+        setError(summaryResult.message);
+      }
+      if (activityResult.ok) {
+        setActivity(activityResult.data);
+        setActivityError(null);
+      } else {
+        setActivity([]);
+        setActivityError(activityResult.message);
       }
       setLoading(false);
     }
@@ -148,31 +199,29 @@ export function DashboardScreen() {
 
           <section className={styles.activityCard}>
             <p className={styles.sectionEyebrow}>Hoạt động gần đây</p>
-            {summary.published === 0 && summary.failed === 0 ? (
+            {activityError ? (
+              <p className={styles.activityError} role="alert">
+                {activityError}
+              </p>
+            ) : activity.length === 0 ? (
               <EmptyState
-                title="Chưa có bài đã đăng"
-                body="Sau khi scheduler đăng bài thật, hoạt động sẽ hiện ở đây."
+                title="Chưa có hoạt động gần đây"
+                body="Khi Havi tạo, duyệt, đổi lịch hoặc đăng bài, hoạt động sẽ hiện ở đây."
               />
             ) : (
               <div className={styles.activityList}>
-                {summary.published > 0 ? (
-                  <article className={styles.activityItem}>
-                    <p className={styles.activityTime}>Tuần này</p>
-                    <p className={styles.activityText}>
-                      {summary.published} bài đã đăng thành công.
-                    </p>
-                    <span className={styles.activityTag}>Đã đăng</span>
-                  </article>
-                ) : null}
-                {summary.failed > 0 ? (
-                  <article className={styles.activityItem}>
-                    <p className={styles.activityTime}>Cần xử lý</p>
-                    <p className={styles.activityText}>
-                      {summary.failed} bài đăng lỗi đang chờ xem lại.
-                    </p>
-                    <span className={styles.activityTag}>Lỗi</span>
-                  </article>
-                ) : null}
+                {activity.map((event) => {
+                  const copy = activityCopy(event);
+                  return (
+                    <article key={event.id} className={styles.activityItem}>
+                      <p className={styles.activityTime}>
+                        {activityTime.format(new Date(event.created_at))}
+                      </p>
+                      <p className={styles.activityText}>{copy.text}</p>
+                      <span className={styles.activityTag}>{copy.tag}</span>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>

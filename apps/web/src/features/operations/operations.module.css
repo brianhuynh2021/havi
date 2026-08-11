@@ -1,0 +1,164 @@
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.eyebrow {
+  color: var(--color-primary-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.subtitle {
+  max-width: 520px;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.windowNote {
+  margin-top: 20px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-body);
+  font-size: 12.5px;
+}
+
+.statsGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statCard,
+.panel {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.statCard {
+  padding: 16px;
+}
+
+.statLabel,
+.miniLabel {
+  color: var(--color-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statValue {
+  margin-top: 6px;
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.statDetail {
+  margin-top: 4px;
+  color: var(--color-body);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.splitGrid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+}
+
+.panel {
+  padding: 18px 20px;
+}
+
+.panelTitle {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.publishGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.miniValue {
+  margin-top: 4px;
+  color: var(--color-ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.rateRows {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rateRow,
+.providerRow {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border-soft);
+  color: var(--color-body);
+  font-size: 13px;
+}
+
+.rateRow {
+  grid-template-columns: 1fr auto;
+}
+
+.providerList {
+  margin-top: 10px;
+}
+
+.providerRow {
+  grid-template-columns: minmax(92px, 1fr) auto auto auto;
+}
+
+.providerName {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+@media (max-width: 1080px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .statsGrid,
+  .splitGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .publishGrid,
+  .providerRow {
+    grid-template-columns: 1fr;
+  }
+}

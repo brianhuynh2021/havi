@@ -1,39 +1,38 @@
 # Havi System Architecture
 
-Tài liệu này là sơ đồ triển khai chuẩn cho MVP, được rút ra từ prototype
-`Havi - Kiến Trúc Hệ Thống.dc.html`, `REPOSITORY_STRATEGY.md` và
-`TECHNICAL_SPEC.md`.
+This is the canonical MVP deployment architecture, derived from the architecture
+prototype, repository strategy, and technical spec.
 
-## 0. Nguyên tắc kỹ thuật nền tảng
+## 0. Engineering Principles
 
-Havi dùng tư duy kỹ thuật kiểu MIT: bắt đầu từ invariant và interface đơn giản,
-phân rã hệ thống thành module có thể lý giải/test độc lập, đo trước khi scale.
-Đây là định hướng engineering của dự án, không phải tên một tiêu chuẩn MIT chính thức.
+Havi starts from invariants and simple interfaces. The system should be modular,
+testable, observable, and scaled only where bottlenecks are proven.
 
-### Mười nguyên tắc bắt buộc
+### Required Principles
 
-1. **Simple first:** chọn modular monolith, một PostgreSQL và một queue trước;
-   không thêm microservice, event bus hoặc database mới khi chưa có số liệu chứng minh.
-2. **Ranh giới rõ:** mỗi module có input, output, data ownership và failure modes
-   được mô tả; module khác chỉ dùng public interface.
-3. **Dependency một chiều:** entrypoint phụ thuộc application, application phụ
-   thuộc domain/ports, adapter triển khai ports; domain không import framework/provider.
-4. **Single source of truth:** PostgreSQL sở hữu business state; Redis chỉ giữ
-   queue/cache/lock ngắn hạn; calendar và dashboard là projection, không tạo state song song.
-5. **Invariant trước workflow:** approval, tenant isolation, quota và idempotency
-   được enforce trong domain/service, không chỉ dựa vào UI hoặc convention.
-6. **Deterministic và idempotent:** cùng một command/idempotency key không tạo
-   hai kết quả bên ngoài; retry phải an toàn và có giới hạn.
-7. **Failure isolation:** lỗi một job/adapter không kéo sập request khác; lỗi được
-   phân loại temporary, auth-permission hoặc validation-permanent.
-8. **Observability là feature:** request/job có correlation ID, structured log,
-   state transition, latency, token/cost và error reason đủ để debug không đọc mò DB.
-9. **Scale theo bottleneck:** API stateless, worker scale theo queue depth, media
-   nằm ở object storage; chỉ tách service khi ownership/load/deploy cadence thật sự khác.
-10. **Test contract và invariant:** ưu tiên tests ở ranh giới module, state machine,
-    tenant isolation và adapter contract hơn test chi tiết implementation dễ vỡ.
+1. **Simple first:** begin with a modular monolith, one PostgreSQL database, and
+   one queue. Do not add microservices, event buses, or extra databases before
+   evidence requires them.
+2. **Clear boundaries:** each module owns inputs, outputs, data, and failure
+   modes.
+3. **One-way dependencies:** entrypoints depend on application services;
+   application services depend on domain/ports; adapters implement ports.
+4. **Single source of truth:** PostgreSQL owns business state. Redis owns
+   queue/cache/short locks. Calendar and dashboard are projections.
+5. **Invariants before workflow:** approval, tenant isolation, quota, and
+   idempotency are enforced in backend services/domain logic.
+6. **Deterministic and idempotent:** retrying with the same command/idempotency
+   key must not create duplicate external side effects.
+7. **Failure isolation:** one job/adapter failure must not collapse unrelated
+   requests.
+8. **Observability is a feature:** request/job correlation, structured logs,
+   state transitions, latency, token usage, and error reasons must be traceable.
+9. **Scale by bottleneck:** API is stateless, workers scale by queue depth, media
+   lives in object storage.
+10. **Test contracts and invariants:** prioritize tests around module boundaries,
+    state machines, tenant isolation, adapter contracts, and E2E smoke flows.
 
-### Dependency rules
+### Dependency Rules
 
 Frontend:
 
@@ -45,11 +44,10 @@ features
 components/ui + lib/api-client
 ```
 
-- `app/` chỉ routing, layout, metadata và composition.
-- Feature không import private code của feature khác; chia sẻ qua UI primitive,
-  public feature contract hoặc route-level composition.
-- UI component không gọi HTTP trực tiếp; feature data layer dùng generated API client.
-- Fixture và API implementation cùng thỏa một feature-facing interface để thay thế rõ ràng.
+- `app/` handles routing, layout, metadata, and composition.
+- Features should not import private code from other features.
+- UI primitives do not call HTTP directly.
+- Feature data layers use the generated API client.
 
 Backend:
 
@@ -63,84 +61,69 @@ domain + ports                   rules, state machine, interfaces
 repositories / provider adapters PostgreSQL, Redis, LLM, Facebook, storage
 ```
 
-- Domain không import FastAPI, Celery, SQLAlchemy, Redis SDK, OpenAI SDK hoặc platform SDK.
-- API, worker và scheduler gọi cùng application service; không nhân đôi business rule.
-- Repository/adapter chỉ chuyển đổi I/O; không tự quyết định approval/quota/state transition.
-- Event chỉ dùng ở async/external boundary; không thay function call nội bộ bằng event vô lý.
-- Mỗi thay đổi schema đi qua migration; không sửa production database thủ công.
+- Domain code does not import FastAPI, Celery, SQLAlchemy, Redis SDKs, LLM SDKs,
+  or platform SDKs.
+- API, worker, and scheduler call the same application services.
+- Repositories/adapters translate I/O and do not own business decisions.
+- Every schema change goes through Alembic.
 
-Backend target structure:
+Target backend structure:
 
 ```text
 apps/backend/
 ├── api/                         # FastAPI entrypoint + thin routers
-├── worker/                      # Celery entrypoint, gọi application services
-├── scheduler/                   # Beat entrypoint, chỉ phát command đến hạn
+├── worker/                      # Celery entrypoint
+├── scheduler/                   # Beat entrypoint
 ├── application/
-│   ├── services/                # Use cases + transaction boundaries
-│   └── dto/                     # Input/output nội bộ của use case
+│   └── services/                # Use cases + transaction boundaries
 ├── domain/
-│   ├── models/                  # Entity/value object thuần Python
-│   ├── policies/                # Approval, quota, scheduling rules
-│   ├── services/                # edit_engine.py (§5.3) và service thuần khác
+│   ├── models/                  # Entities/value objects
+│   ├── policies/                # Approval, quota, scheduling, routing
 │   └── ports/                   # Repository/provider interfaces
 ├── adapters/
 │   ├── persistence/             # PostgreSQL repositories
-│   ├── queue/                   # Redis/Celery implementation
-│   ├── storage/                 # S3-compatible implementation
-│   ├── llm/                     # Text model provider implementation (§5.2)
-│   ├── media/                   # Video/image pipeline provider adapters (§5.3, P1/P2)
-│   │   ├── video_understanding/ # Gemini, OpenAI, model khác
-│   │   ├── transcription/       # WhisperX, API khác
-│   │   └── renderer/            # FFmpeg, Remotion, renderer khác
-│   └── channels/                # Facebook, Zalo, Google adapters
-├── migrations/                  # Alembic, versioned schema only
-└── tests/                       # domain, contract, integration, E2E
+│   ├── storage/                 # S3-compatible storage
+│   ├── llm/                     # Text model providers
+│   ├── publishers/              # Facebook/fake publishers
+│   └── oauth/                   # OAuth clients
+├── migrations/
+└── tests/
 ```
 
-`core/` hiện tại là scaffold chuyển tiếp. Khi triển khai persistence, code trong
-`core/` được tách dần vào `domain/` và `application/`; không cần big-bang rewrite.
+`core/` is transitional scaffolding. Code should move into `domain/` and
+`application/` gradually as boundaries mature; no big-bang rewrite is required.
 
-### Quy tắc chống over-engineering
-
-- Không tạo abstraction trước khi có ít nhất hai implementation hoặc một boundary bên ngoài rõ.
-- Không tạo shared package chứa business logic giữa frontend và backend.
-- Không cache dữ liệu chưa đo là chậm; mọi cache phải có owner và invalidation rule.
-- Không swallow exception hoặc retry vô hạn.
-- Không thêm background job nếu request đồng bộ đơn giản, nhanh và an toàn hơn.
-- Mọi ngoại lệ dependency rule phải có ADR ngắn ghi lý do, trade-off và ngày xem lại.
-
-## 1. Kiến trúc tổng thể
+## 1. System Overview
 
 ```mermaid
 flowchart LR
-    subgraph INPUT["Nguồn vào"]
-        WEB["Web app<br/>Ảnh, ghi âm, nội dung, duyệt"]
-        SALES["Webhook bán hàng"]
+    subgraph INPUT["Input"]
+        WEB["Web app<br/>media, text, approval"]
+        SALES["Sales webhook"]
         LISTEN["Social listening crawler"]
     end
 
     subgraph EDGE["API boundary"]
-        API["FastAPI<br/>Auth, workspace, CRUD, approvals"]
+        API["FastAPI<br/>auth, workspace, CRUD, approvals"]
     end
 
-    subgraph CORE["Lõi xử lý theo job"]
+    subgraph CORE["Job-based core"]
         QUEUE["Redis / Job Queue"]
-        MEDIA["Ingest & Media Pipeline<br/>code thường"]
-        PROFILE["Industry / Brand Profile<br/>cache theo tenant"]
-        CONTENT["Content Engine<br/>LLM, một lần gọi nhiều đầu ra"]
-        CLASSIFY["Listening Classifier<br/>rule + model nhỏ"]
-        REPLY["Reply Drafter + CRM<br/>luôn chờ chủ duyệt"]
-        SCHEDULER["Scheduler<br/>lịch đăng, retry, quota"]
-        EVENT["event_log<br/>input, output, token, thời gian"]
+        MEDIA["Ingest & Media Pipeline"]
+        PROFILE["Industry / Brand Profile"]
+        CONTENT["Content Engine<br/>one call, many drafts"]
+        CLASSIFY["Listening Classifier"]
+        REPLY["Reply Drafter + CRM<br/>approval first"]
+        SCHEDULER["Scheduler<br/>publish, retry, quota"]
+        EVENT["event_log<br/>input, output, tokens, latency"]
     end
 
-    subgraph DATA["Dữ liệu"]
-        POSTGRES[("PostgreSQL<br/>tenant-scoped")]
+    subgraph DATA["Data"]
+        POSTGRES[("PostgreSQL<br/>tenant scoped")]
         OBJECT[("Object Storage<br/>media assets")]
     end
 
-    subgraph OUTPUT["Adapter kênh ra"]
+    subgraph OUTPUT["Channel adapters"]
         META["Facebook / Instagram"]
         ZALO["Zalo OA / ZNS"]
         GOOGLE["Google Business"]
@@ -179,193 +162,141 @@ flowchart LR
     EVENT --> POSTGRES
 ```
 
-## 2. Kiến trúc frontend
+## 2. Frontend Architecture
 
-Frontend dùng Next.js App Router. Route chỉ ghép màn hình; business state và API
-được tách theo feature để khi nối backend không phải sửa lại phần trình bày.
+The frontend uses Next.js App Router. Routes compose screens; features own
+business-facing state and API calls.
 
 ```mermaid
 flowchart TD
-    ROUTES["src/app<br/>route, layout, metadata"] --> SHELL["App Shell<br/>sidebar, workspace, responsive nav"]
-    SHELL --> DASHBOARD["features/dashboard<br/>Tổng quan"]
-    SHELL --> CONTENT_UI["features/content<br/>Tạo nội dung"]
-    SHELL --> CALENDAR_UI["features/calendar<br/>Lịch đăng"]
-    SHELL --> LEADS_UI["features/leads<br/>Khách tiềm năng"]
-    SHELL --> REPORT_UI["features/analytics<br/>Báo cáo"]
+    ROUTES["src/app<br/>routes, layout, metadata"] --> SHELL["App Shell"]
+    SHELL --> DASHBOARD["features/dashboard"]
+    SHELL --> CONTENT_UI["features/content-creation"]
+    SHELL --> CALENDAR_UI["features/calendar"]
+    SHELL --> LEADS_UI["features/leads"]
+    SHELL --> REPORT_UI["features/reports"]
+    SHELL --> OPS_UI["features/operations"]
 
-    DASHBOARD --> UI["components/ui<br/>card, badge, button, empty state"]
+    DASHBOARD --> UI["components/ui"]
     CONTENT_UI --> UI
     CALENDAR_UI --> UI
     LEADS_UI --> UI
     REPORT_UI --> UI
+    OPS_UI --> UI
 
-    DASHBOARD --> DATA["Feature data layer"]
-    CONTENT_UI --> DATA
-    CALENDAR_UI --> DATA
-    LEADS_UI --> DATA
-    REPORT_UI --> DATA
-    DATA --> MOCK["Mock fixtures<br/>giai đoạn dựng prototype"]
-    DATA --> CLIENT["Generated OpenAPI client<br/>giai đoạn nối backend"]
+    DASHBOARD --> CLIENT["Generated OpenAPI client"]
+    CONTENT_UI --> CLIENT
+    CALENDAR_UI --> CLIENT
+    LEADS_UI --> CLIENT
+    REPORT_UI --> CLIENT
+    OPS_UI --> CLIENT
     CLIENT --> API["FastAPI"]
 ```
 
-### Cấu trúc mục tiêu
+Target structure:
 
 ```text
 apps/web/src/
 ├── app/                         # Routing, layouts, metadata
 ├── components/
-│   ├── app-shell/               # Sidebar và workspace switcher
-│   └── ui/                      # Primitive dùng chung
+│   ├── app-shell/
+│   └── ui/
 ├── features/
 │   ├── dashboard/
-│   ├── content/
+│   ├── content-creation/
 │   ├── calendar/
 │   ├── leads/
-│   └── analytics/
+│   ├── reports/
+│   └── operations/
 ├── lib/
-│   ├── api-client/              # Chỉ gọi backend qua HTTP
-│   └── config/
-└── styles/                      # Design tokens toàn cục
+│   ├── api-client/
+│   └── auth/
+└── app/globals.css
 ```
 
-## 3. Luồng trạng thái nội dung
+## 3. Content State Machine
 
 ```mermaid
 stateDiagram-v2
     [*] --> draft
-    draft --> pending_approval: AI tạo bản nháp
-    pending_approval --> draft: Chủ tiệm sửa / từ chối
-    pending_approval --> approved: Chủ tiệm duyệt
-    approved --> scheduled: Chọn giờ đăng
-    scheduled --> publishing: Scheduler chạy job
-    publishing --> published: Adapter trả thành công
-    publishing --> failed: Lỗi nền tảng
-    failed --> publishing: Retry có giới hạn
+    draft --> pending_approval: AI creates draft
+    pending_approval --> draft: owner edits or rejects
+    pending_approval --> approved: owner approves
+    approved --> scheduled: schedule selected
+    scheduled --> publishing: scheduler claims job
+    publishing --> published: adapter succeeds
+    publishing --> failed: platform error
+    failed --> publishing: bounded retry
+    failed --> dead_letter: retry exhausted/permanent failure
 ```
 
-Backend là nguồn sự thật của state machine. Frontend chỉ hiển thị trạng thái và
-gửi action; không giữ token nền tảng, prompt production hoặc secret.
+The backend is authoritative for the state machine. The frontend renders state
+and sends actions; it never owns platform tokens, production prompts, or secrets.
 
-## 4. Thứ tự triển khai frontend
+## 4. Frontend Implementation Order
 
-1. Khóa design tokens và App Shell theo prototype.
-2. Dựng từng màn bằng fixture tĩnh, bắt đầu từ `Tổng quan`.
-3. Bổ sung interaction đúng prototype trong từng feature.
-4. Sinh TypeScript client từ OpenAPI rồi thay fixture bằng API data.
-5. Thêm loading, empty, error và permission states trước khi tích hợp end-to-end.
+1. Lock design tokens and App Shell.
+2. Build each screen with static fixtures.
+3. Add prototype interactions inside each feature.
+4. Generate the TypeScript client from OpenAPI and replace fixtures with API
+   calls.
+5. Add loading, empty, error, permission, and retry states before end-to-end
+   integration.
 
-## 5. Multi-provider AI layer
+## 5. Multi-Provider AI Layer
 
-> Trạng thái: **thiết kế, chưa code.** Ghi lại ở đây để không mất quyết định giữa
-> các buổi làm việc. Việc hiện thực đi theo đúng phân kỳ ROADMAP.md §4 — Content
-> Engine text là P0, pipeline video/hình ảnh (§5.3 dưới) là P1/P2.
+Status: text content generation is implemented; video/media pipeline remains
+future scope.
 
-### 5.1 Vì sao nhiều provider
+### 5.1 Provider Router
 
-Không phụ thuộc một provider duy nhất — một lần Anthropic/Gemini/OpenAI sập hoặc
-đổi giá không được phép làm tê liệt Content Engine. `adapters/llm/` implement
-`LLMProviderPort` (domain interface, không đổi theo provider) với 3 adapter:
-**Gemini** (ưu tiên/mặc định), **Anthropic**, **OpenAI**. Domain chỉ biết interface,
-không import SDK provider nào trực tiếp (đúng nguyên tắc #3 ở §0).
+`adapters/llm/` implements a domain `LLMProviderPort` for Gemini, Anthropic, and
+OpenAI. Domain code depends on the port and `ProviderRouter`, not SDKs.
 
-Một `ProviderRouter` (domain policy, code thường — không phải LLM) quyết định thử
-provider nào trước, theo đúng thứ tự ba lý do đã chốt:
+Provider fallback reasons:
 
-1. **Outage/lỗi/timeout** — provider đang gọi trả lỗi/rate-limit/timeout → thử
-   provider kế tiếp trong danh sách cho cùng request, có giới hạn số lần thử.
-2. **Cost routing** — mỗi workspace/gói giá có thể map sang danh sách provider ưu
-   tiên khác nhau (gói rẻ ưu tiên provider rẻ hơn).
-3. **Chất lượng output không đạt** — output không qua schema validation hoặc banned-claims
-   validation → thử lại bằng provider khác thay vì retry cùng provider với cùng prompt.
+1. outage, rate limit, timeout, or transient provider error
+2. cost routing by workspace/plan
+3. output fails schema or banned-claims validation
 
-Mỗi lần chuyển provider phải ghi vào `event_log` (provider đã thử, lý do chuyển,
-provider cuối cùng phục vụ) — nối tiếp cơ chế `tokens_in/out` đã có trong `EventLogEntry`.
+Every provider attempt should be observable through `event_log`: provider tried,
+failure kind, final provider, latency, and token usage.
 
-### 5.2 Áp dụng theo phễu bậc thang (không phải mọi bước đều gọi model)
+### 5.2 Token-Saving Funnel
 
-Giữ nguyên phễu tiết kiệm token đã có trong `worker/tasks.py` — multi-provider chỉ
-chen vào những bậc thật sự cần model, không áp cho bậc rule-based:
+Do not call expensive models at every step:
 
 ```text
-100% input --> rule/keyword (0 token, code thường)
-   --> ~5% cần hiểu ngữ nghĩa --> model rẻ (1 provider, không cần multi-provider)
-      --> ~1% cần model mạnh xử lý phức tạp --> multi-provider layer (Gemini ưu tiên, fallback Anthropic/OpenAI)
+100% input -> rules/keywords (0 tokens)
+   -> small subset requiring semantics -> cheap classifier
+      -> small subset requiring strong generation -> multi-provider LLM
 ```
 
-Content Engine (sinh multi-channel draft, structured output) là nơi multi-provider
-áp dụng đầy đủ nhất vì đây là bậc tốn token nhất và chất lượng ảnh hưởng trực tiếp
-tới draft chủ tiệm thấy. Các bậc rẻ hơn (`classify_listening_item`) vẫn dùng 1
-provider cố định cho đơn giản, trừ khi có số liệu cho thấy cần đổi.
+The Content Engine is the main P0 use of multi-provider routing because it is
+token-expensive and directly visible to users.
 
-### 5.3 Pipeline video & hình ảnh (P1/P2 — Content Studio)
+### 5.3 Future Video/Image Pipeline
 
-Mở rộng cho input là video hoặc khi kênh đích cần video dựng thật (Reels/TikTok/
-YouTube), không chỉ script như Content Engine hiện tại. Mỗi bậc là một port riêng,
-đa-implementation từ đầu vì bản chất đã multi-provider:
+Future content studio scope:
 
 ```mermaid
 flowchart TD
-    UPLOAD["Upload<br/>media_asset type=video"] --> VU["Video Understanding port<br/>Gemini · OpenAI · model khác"]
-    VU --> TR["Transcript Engine port<br/>WhisperX · API khác"]
-    TR --> EDIT["Edit Engine ⭐<br/>domain/services — code thường, deterministic"]
-    EDIT -->|"gọi hẹp, có schema"| SEM["LLM sub-call: chọn highlight/caption<br/>dùng lại multi-provider layer §5.1"]
+    UPLOAD["Upload video"] --> VU["Video Understanding port"]
+    VU --> TR["Transcript Engine port"]
+    TR --> EDIT["Edit Engine<br/>deterministic domain logic"]
+    EDIT --> SEM["Narrow LLM sub-call<br/>schema constrained"]
     SEM --> EDIT
-    EDIT --> PLAN["EditPlan.json<br/>domain/models — contract giữa Edit Engine và Renderer"]
-    PLAN --> RENDER["Renderer port<br/>FFmpeg (mặc định) · Remotion (template/animation) · renderer khác"]
-    RENDER --> OUT["Final Reel/TikTok/Short<br/>ghi lại thành media_asset mới, chờ duyệt như content_item"]
+    EDIT --> PLAN["EditPlan.json"]
+    PLAN --> RENDER["Renderer port<br/>FFmpeg / Remotion"]
+    RENDER --> OUT["Final media_asset<br/>approval flow"]
 ```
 
-Vai trò từng khối:
+Design notes:
 
-- **Video Understanding port** — nhận video thô, trả về tín hiệu cấu trúc (scene,
-  đối tượng, khoảnh khắc nổi bật, chất lượng khung hình). Nhiều implementation
-  (Gemini/OpenAI/khác) đứng sau cùng `LLMProviderPort`-style interface, dùng lại
-  `ProviderRouter` ở §5.1.
-- **Transcript Engine port** — audio → transcript có timestamp. WhisperX là
-  implementation mặc định (tự host được, không phụ thuộc API ngoài); "API khác"
-  là fallback khi cần.
-- **Edit Engine (⭐ phần cốt lõi, không phải LLM)** — domain logic thuần
-  (`domain/services/edit_engine.py`), **không gọi provider trực tiếp**. Nhận output
-  của hai port trên, áp rule xác định (độ dài mục tiêu theo kênh, thứ tự hook-đầu,
-  đồng bộ caption, cắt khoảng lặng) để ghép thành `EditPlan.json`. Khi một quyết
-  định thật sự cần hiểu ngữ nghĩa (ví dụ chọn 3 giây "hook" hay nhất trong nhiều
-  lựa chọn ngang nhau về rule), Edit Engine gọi một **sub-call LLM hẹp, có schema
-  đầu ra rõ** qua multi-provider layer §5.1 — không giao toàn bộ việc sinh
-  `EditPlan.json` cho một lần gọi LLM lớn. Lý do chọn hướng này: giữ pipeline
-  deterministic/idempotent (nguyên tắc #6 ở §0), auditable, và không đội chi phí
-  token lên toàn bộ video dài.
-- **EditPlan.json** — contract giữa Edit Engine và Renderer, là domain model có
-  schema (giống `ContentItem`/`ContentJob` hiện tại), không phải free-form JSON từ
-  LLM. Ví dụ hình dạng:
-
-  ```json
-  {
-    "source_media_id": "uuid",
-    "target_channel": "reels",
-    "duration_target_seconds": 20,
-    "clips": [
-      { "start_ms": 0, "end_ms": 3200, "reason": "hook" },
-      { "start_ms": 15000, "end_ms": 18500, "reason": "highlight" }
-    ],
-    "captions": [{ "start_ms": 0, "end_ms": 3200, "text": "..." }],
-    "render_target": "ffmpeg"
-  }
-  ```
-
-- **Renderer port** — nhận `EditPlan.json`, xuất video cuối. FFmpeg là mặc định
-  (chạy được on-prem/worker, không phụ thuộc SaaS); Remotion dùng khi cần
-  animation/template đẹp hơn FFmpeg thuần làm được. Output ghi lại thành
-  `media_asset` mới, đi qua đúng approval flow như `content_item` — không tự đăng.
-
-Ghi chú phạm vi và rủi ro:
-
-- **Chưa nằm trong pilot P0.** ROADMAP.md §4 đã chốt P0 chỉ ảnh+text, video để
-  P1/P2 (TikTok/YouTube adapters). Việc ghi thiết kế ở đây không đổi thứ tự đó.
-- **Chi phí cao hơn hẳn text.** Video Understanding + transcription + render
-  compute đều tốn hơn nhiều so với Content Engine text — khi hiện thực phải có
-  quota/threshold riêng cho pipeline này trong `event_log`, không dùng chung ngân
-  sách token với Content Engine.
-- **Renderer là compute-heavy, không phải job nhanh** — khi hiện thực cần chạy
-  trên worker riêng hoặc hàng đợi riêng (đúng nguyên tắc #9 ở §0: scale theo
-  bottleneck), không chặn queue của content job thông thường.
+- Video understanding and transcription are separate ports.
+- The Edit Engine should be deterministic and auditable.
+- LLM calls should be narrow and schema-constrained, not responsible for the
+  entire edit plan.
+- `EditPlan.json` is a domain contract between the edit engine and renderer.
+- Rendered output becomes a new `media_asset` and follows the same approval flow.
+- This is not P0 pilot scope and should have its own quota/compute guardrails.

@@ -1,223 +1,464 @@
-# Havi — Cấu hình & triển khai
+# Havi — Configuration and Deployment
 
-> Tài liệu vận hành: cần chạy gì, khai biến nào, và **cái gì sai thì im lặng**.
+> Operational documentation: what must run, which variables matter, and which
+> failures are silent.
 >
-> Nguyên tắc viết file này: chỉ ghi những thứ **không suy ra được từ code**. Danh
-> sách biến đầy đủ ở `apps/backend/.env.example`; cách chạy local ở `README.md`.
-> Đây là chỗ ghi các cái bẫy — thứ mà thiếu nó thì mọi thứ trông như đang chạy.
+> This file records details that are not obvious from code. The complete
+> environment variable list lives in `apps/backend/.env.example`; local setup is
+> in `README.md`.
 
-## 1. Cấu hình "chỉ dành cho local"
+## 1. Local-Only Modes
 
-Các biến dưới đây làm Havi **giả lập** thay vì làm thật. Chúng đều có validator
-ném lỗi lúc khởi động khi `HAVI_ENV != local`, nên không thể lỡ để sót lên staging
-— nhưng phải hiểu vì sao mới biết cần kiểm gì sau khi deploy.
+The following variables make Havi simulate work instead of doing real external
+work. Validators reject these modes when `HAVI_ENV != local`, so they cannot be
+left on silently in staging or production.
 
-| Biến | Mặc định | Bật true nghĩa là | Sai kiểu gì |
+| Variable | Default | When true / value | Failure mode |
 |---|---|---|---|
-| `HAVI_USE_MOCK_LLM` | `true` | Draft là văn mẫu, không gọi model | Chủ tiệm đăng văn mẫu lên Facebook thật mà tưởng AI viết |
-| `HAVI_USE_FAKE_PUBLISHER` | `true` | Không có bài nào lên Facebook | Mọi bài báo "đã đăng", dashboard xanh, **Trang trống trơn** |
-| `HAVI_DISABLE_RATE_LIMIT` | `false` | Không giới hạn gì | Không có dấu hiệu nào; brute force mật khẩu không bị chặn, script lỗi đốt hết quota LLM trong vài phút |
-| `HAVI_EMAIL_PROVIDER=debug` | `debug` | Reset password trả `debug_code`, không gửi email thật | User staging/production không nhận được mã đặt lại mật khẩu |
+| `HAVI_USE_MOCK_LLM` | `true` | Drafts are canned mock output; no model call | Users may publish mock copy while thinking AI wrote it |
+| `HAVI_USE_FAKE_PUBLISHER` | `true` | No post is sent to Facebook | Everything looks published in Havi while the real Page is empty |
+| `HAVI_DISABLE_RATE_LIMIT` | `false` | No rate limits apply | Brute force and runaway scripts are not throttled |
+| `HAVI_EMAIL_PROVIDER=debug` | `debug` | Password reset returns `debug_code`; no real email | Staging/production users never receive reset codes |
 
-**Mặc định của hai cờ đầu là `true`** — tức nếu chỉ copy `.env.example` rồi deploy
-thì backend sẽ **không khởi động** (validator chặn). Đó là chủ ý: thà không chạy
-còn hơn chạy giả.
+The first two defaults are intentionally `true` for local development. If someone
+copies `.env.example` directly to staging, the backend should fail fast instead
+of running fake behavior.
 
-Sau khi deploy, kiểm bằng log khởi động: nếu thấy dòng cảnh báo
-`Publish đang chạy FAKE` hoặc `LLM đang chạy MOCK` ở staging thì có gì đó sai.
+After deploy, check startup logs. Any staging log that says publishing is fake or
+LLM is mock is a deployment error.
 
-Email cũng theo cùng nguyên tắc: local dùng `HAVI_EMAIL_PROVIDER=debug` để test
-quên mật khẩu không cần vendor. Khi `HAVI_ENV=staging|production`, backend sẽ
-không khởi động nếu vẫn để debug. Cấu hình SMTP tối thiểu:
+For staging/production password reset, configure SMTP:
 
 ```bash
 HAVI_EMAIL_PROVIDER=smtp
-HAVI_EMAIL_FROM=no-reply@domain-cua-anh.com
-HAVI_SMTP_HOST=smtp.domain-cua-anh.com
+HAVI_EMAIL_FROM=no-reply@your-domain.com
+HAVI_SMTP_HOST=smtp.your-domain.com
 HAVI_SMTP_PORT=465
 HAVI_SMTP_USERNAME=...
 HAVI_SMTP_PASSWORD=...
 HAVI_SMTP_USE_TLS=true
 ```
 
-Ở staging/production, `/auth/password-reset/request` không bao giờ trả
-`debug_code`; mã chỉ đi qua email provider.
+In staging/production, `/auth/password-reset/request` must never return
+`debug_code`.
 
-## 2. Facebook — bốn thứ phải khai, thiếu một cái là chết theo một kiểu khác
+## 2. Facebook Setup
 
-Đây là phần mất nhiều thời gian nhất khi dựng lần đầu, vì Facebook không nói rõ
-thiếu cái gì. Làm **đúng thứ tự** này:
+Facebook setup is the slowest first-deploy step because different missing fields
+fail in different ways. Configure these in order.
 
-### 2.1. App Domains (App settings → Basic)
+### 2.1. App Domains
 
-Điền **chỉ tên miền**, không có `https://`, không có đường dẫn:
+In App settings -> Basic, enter only the domain name. Do not include protocol or
+path:
 
-```
-domain-cua-anh.com
-```
-
-- Thiếu → màn cấp quyền báo **"Can't load URL"** trước cả khi hỏi quyền.
-- Facebook **chặn lưu App Domains khi thiếu Privacy Policy URL** — điền
-  `https://domain-cua-anh.com/bao-mat` trước, rồi mới điền App Domains.
-- **Không sửa được qua Graph API** (`(#10) Changing app settings through API calls
-  has been disabled`) — phải bấm trên dashboard.
-
-### 2.2. Valid OAuth Redirect URIs (Facebook Login → Settings)
-
-Điền **URL đầy đủ**, khớp từng ký tự với `HAVI_FACEBOOK_REDIRECT_URI`:
-
-```
-https://api.domain-cua-anh.com/connections/facebook/callback
+```text
+your-domain.com
 ```
 
-- Đây là ô **khác** với App Domains ở trên. Dán URL đầy đủ vào App Domains sẽ lỗi,
-  và dán tên miền vào ô này cũng lỗi.
-- Ô **"Redirect URI to check"** ở đầu trang chỉ là công cụ tra cứu — dán vào đó
-  không lưu gì. Dán vào ô danh sách rồi bấm **Enter** cho thành thẻ, rồi Save.
-- **"Enforce HTTPS" đã bị Meta khoá** (công tắc mờ, không tắt được), nên
-  `http://localhost` không còn là redirect URI hợp lệ. Local phải dùng tunnel:
+- Missing domain: Facebook fails before the permission screen loads.
+- Facebook blocks App Domains until Privacy Policy URL is set. Configure the
+  privacy URL first, then add App Domains.
+- App Domains cannot be changed through Graph API; use the dashboard.
 
-  ```bash
-  brew install cloudflared
-  cloudflared tunnel --url http://localhost:8000
-  ```
+### 2.2. Valid OAuth Redirect URIs
 
-  URL `trycloudflare.com` **đổi mỗi lần chạy lại tunnel** — đổi thì phải khai lại
-  cả `HAVI_FACEBOOK_REDIRECT_URI`, App Domains và Valid OAuth Redirect URIs.
+In Facebook Login -> Settings, enter the full URL. It must match
+`HAVI_FACEBOOK_REDIRECT_URI` exactly:
 
-### 2.3. Use cases → quyền (Use cases → Manage everything on your Page)
+```text
+https://api.your-domain.com/connections/facebook/callback
+```
 
-Ba quyền Havi cần, cả ba phải ở trạng thái **"Ready for testing"**:
-
-| Quyền | Dùng để |
-|---|---|
-| `pages_show_list` | Đọc danh sách Page chủ tiệm quản lý |
-| `pages_read_engagement` | Đọc tên Page (bắt buộc khi lấy Page token qua `/me/accounts`) |
-| `pages_manage_posts` | Đăng bài |
-
-Quyền chưa bật ở đây thì **không hiện ra để tick** ở bước Configuration bên dưới.
-
-### 2.4. Configuration (Facebook Login for Business → Configurations)
-
-App tạo mới hiện nay mặc định là **Facebook Login for Business**, loại này khai
-quyền trong một *Configuration* và request gửi `config_id` — **không** gửi `scope`.
-Gửi `scope` thì Facebook vẫn hiện màn cấp quyền rồi mới trả `Invalid Scopes` ở
-bước callback, nên rất khó đoán.
-
-Tạo configuration với: **Login variation** = General, **Access token** = User
-access token, **Permissions** = đúng ba quyền trên (bỏ tick
-`business_management`, `pages_manage_engagement` — Havi không dùng).
-
-Copy Configuration ID vào `HAVI_FACEBOOK_CONFIG_ID`.
-
-App dùng Facebook Login *thường* thì để trống biến này — code tự đi đường cũ
-(gửi `scope`).
-
-### 2.5. Ai được dùng khi chưa qua App Review
-
-Development mode cho **người có vai trò trong app** (Administrator, Developer,
-Tester) nối Page của chính họ và đăng thật — đủ cho closed beta 5–10 tiệm, thêm
-thủ công từng người ở **App roles → Roles**.
-
-Lưu ý: Administrator **đã bao gồm** quyền của Tester, và Facebook không cho hạ
-Admin cuối cùng xuống Tester (`You must have at least one admin`).
-
-App Review + Business Verification (cần pháp nhân) chỉ bắt buộc khi mở public
-signup.
-
-## 3. Quota token & rate limit
-
-### Quota — đo bằng token, không bằng tiền
-
-Trần theo gói, khai trong `domain/policies/quota.py`:
-
-| Gói | Trần/tháng | Ước lượng |
-|---|---:|---|
-| `trial` | 100.000 token | ~25 bài |
-| `tiem_nho` | 500.000 token | ~125 bài |
-| `toan_dien` | 2.000.000 token | ~500 bài |
-
-**Vì sao token chứ không phải tiền:** mỗi provider một đơn giá và giá LLM đổi liên
-tục, nên một bảng giá hardcode cho ra con số *nhìn như đúng* mà sai — tệ hơn không
-có quota, vì nó tạo cảm giác đang kiểm soát chi phí trong khi không. Số token là
-sự thật tuyệt đối trong `event_log`. Muốn ra tiền thì nhân ngoài, ở chỗ định giá gói.
-
-Quota reset theo mốc dương lịch **giờ VN** (không phải 30 ngày từ lúc đăng ký).
-Vượt trần → `429` kèm `Retry-After` và số liệu thật.
-
-**Đây là số cần đo lại sau pilot** (ROADMAP §9 Economics), không phải hằng số vĩnh
-viễn — sửa ở đúng một chỗ `MONTHLY_TOKEN_QUOTA`.
-
-### Rate limit — cần Redis, và fail-open
-
-Khai trong `domain/policies/rate_limits.py`. Auth theo **IP**, upload/content theo
-**workspace**.
-
-Hai điều phải biết khi lên staging:
-
-1. **Redis hỏng thì cho qua (fail-open)**, không chặn. Rate limit là lớp bảo vệ,
-   fail-closed sẽ biến một sự cố Redis thành outage toàn phần. Đánh đổi: trong lúc
-   Redis chết thì **không có giới hạn nào** và không có dấu hiệu gì trên UI — nên
-   **alert cho Redis là bắt buộc**, không phải tuỳ chọn.
-
-2. **Phải chạy sau reverse proxy.** Rate limit theo IP đọc `X-Forwarded-For`, mà
-   header đó do client gửi nên giả mạo được. Chỉ an toàn khi có proxy mình kiểm
-   soát ghi đè header. Chạy trần ra internet thì kẻ tấn công đổi header mỗi lượt là
-   thoát giới hạn hoàn toàn.
-
-## 4. Bốn process phải chạy
-
-Thiếu process nào thì hệ thống vẫn "chạy" nhưng mất một mảng chức năng, im lặng:
-
-| Process | Lệnh | Thiếu thì |
-|---|---|---|
-| API | `uvicorn api.main:app --host 0.0.0.0 --port 8000` | Không có gì hoạt động (rõ ràng) |
-| Celery worker | `celery -A worker.celery_app:celery_app worker -l info` | Bấm "Để Havi viết" xong job treo ở `queued` mãi; bài đã duyệt không bao giờ lên Trang |
-| Celery beat | `celery -A scheduler.beat:celery_app beat -l info` | Bài đã duyệt nằm mãi ở `scheduled`, **không có lỗi nào** |
-| Web | `next start` | Chủ tiệm không vào được |
-
-Cả worker và beat cần extra `queue`: `uv sync --extra queue`.
-
-Beat có 5 lịch; 3 trong số đó vẫn là khung `NotImplementedError` (refresh token,
-CRM nudge, engagement) — thấy traceback của chúng trong log worker là **đã biết**,
-không phải regression. Xem ROADMAP Tuần 8+.
-
-## 5. Migration
+- This is not the same field as App Domains.
+- The "Redirect URI to check" input is only a validation helper; it does not save
+  anything.
+- Meta now enforces HTTPS. `http://localhost` is not a valid redirect URI for
+  this flow. For local OAuth testing, use a tunnel:
 
 ```bash
-uv run alembic upgrade head    # trước khi khởi động API bản mới
-uv run alembic check           # phải sạch: model và DB đã khớp
+brew install cloudflared
+cloudflared tunnel --url http://localhost:8000
 ```
 
-Chưa có backup/restore rehearsal và rollback strategy — **chưa được mời khách beta
-trước khi có** (ROADMAP §3 "Hạ tầng bắt buộc trước beta").
+The `trycloudflare.com` URL changes on each tunnel run, so update
+`HAVI_FACEBOOK_REDIRECT_URI`, App Domains, and Valid OAuth Redirect URIs together.
 
-## 6. Secret — cái nào đổi được, cái nào không
+### 2.3. Use Cases and Permissions
 
-| Secret | Đổi được không |
+Under Use cases -> Manage everything on your Page, the following permissions must
+be "Ready for testing":
+
+| Permission | Purpose |
 |---|---|
-| `HAVI_JWT_SECRET` | Đổi được, nhưng mọi người đang đăng nhập bị đá ra (token cũ không verify được) |
-| `HAVI_TOKEN_ENCRYPTION_KEY` | **Đổi là mất hết token nền tảng đã lưu** — mọi chủ tiệm phải nối lại kênh. Thiếu khoá thì code ném lỗi chứ không lưu plaintext. |
-| API key LLM | Đổi tự do, không ảnh hưởng dữ liệu |
-| Facebook client secret | Đổi được; token Page đã cấp vẫn dùng được tới khi hết hạn |
+| `pages_show_list` | Read Pages the user manages |
+| `pages_read_engagement` | Read Page metadata and retrieve Page tokens |
+| `pages_manage_posts` | Publish posts |
 
-Chưa có key rotation plan (ROADMAP §3) — `HAVI_TOKEN_ENCRYPTION_KEY` hiện là khoá
-đơn, không có versioning, nên chưa xoay được mà không mất token.
+If these permissions are not enabled here, they cannot be selected in the
+Configuration step.
 
-## 7. Checklist trước khi mở cho khách
+### 2.4. Facebook Login for Business Configuration
 
-Rút từ ROADMAP §3 "Hạ tầng bắt buộc trước beta" — **không mời khách beta nếu còn
-mục nào chưa xong**:
+New apps often use Facebook Login for Business. In that mode, permissions live in
+a Configuration and the OAuth URL sends `config_id`, not `scope`. Sending `scope`
+can show a permission screen and fail later with `Invalid Scopes`.
 
-- [ ] `HAVI_ENV=staging|production` (validator tự chặn ba cờ local)
-- [ ] `alembic upgrade head` xong, `alembic check` sạch
-- [ ] Đủ 4 process, và **beat có chạy** (kiểm bằng cách duyệt một bài rồi xem nó
-      có lên Trang không — không có lỗi nào để dựa vào)
-- [ ] Facebook: App Domains + Redirect URI + 3 quyền + Configuration ID
-- [ ] Reverse proxy ghi đè `X-Forwarded-For` (nếu không, rate limit theo IP vô nghĩa)
-- [ ] Email provider thật cho password reset; `HAVI_EMAIL_PROVIDER` không phải `debug`
-- [ ] **Alert cho Redis** — rate limit fail-open nên Redis chết là mất giới hạn mà
-      không có dấu hiệu gì
-- [ ] Backup tự động **và** đã restore thử được (chưa làm)
-- [ ] Tenant isolation test pass trong CI (chưa có CI)
-- [ ] Đăng thử một bài thật lên Page nháp trước khi cho khách vào
+Create a Configuration with:
+
+- Login variation: General
+- Access token: User access token
+- Permissions: exactly `pages_show_list`, `pages_read_engagement`,
+  `pages_manage_posts`
+- Do not add `business_management` or `pages_manage_engagement`
+
+Copy the Configuration ID to `HAVI_FACEBOOK_CONFIG_ID`.
+
+If the app uses classic Facebook Login, leave `HAVI_FACEBOOK_CONFIG_ID` empty.
+
+### 2.5. Development Mode Access
+
+Before App Review, only app roles can use the app in Development mode. Add closed
+beta users manually as Administrator, Developer, or Tester.
+
+App Review and Business Verification are required before public signup, but they
+do not block a small closed beta where each tester is added manually.
+
+## 3. Token Quota and Rate Limits
+
+### Quota Is Measured in Tokens
+
+Plan limits are defined in `domain/policies/quota.py`:
+
+| Plan | Monthly limit | Rough estimate |
+|---|---:|---|
+| `trial` | 100,000 tokens | ~25 posts |
+| `tiem_nho` | 500,000 tokens | ~125 posts |
+| `toan_dien` | 2,000,000 tokens | ~500 posts |
+
+Havi tracks tokens instead of money because providers and pricing change. Token
+usage in `event_log` is the durable source of truth; price conversion belongs in
+pricing/billing logic.
+
+Quota resets on the calendar-month boundary in Vietnam time. Exceeding quota
+returns `429` with `Retry-After` and real usage numbers.
+
+These limits must be recalibrated after pilot usage.
+
+### Internal Operations UI
+
+The internal route `/noi-bo/van-hanh` debugs the active workspace during pilot.
+It calls `/analytics/operations` and shows only aggregate metrics: event/error
+rate, latency, token totals, provider breakdown, publish success, and dead-letter
+rate.
+
+Do not use this page as a customer dashboard. It is internal debug tooling and
+does not display request bodies, token secrets, raw provider errors, post
+content, or PII. Use Dashboard/Reports for customer-facing views.
+
+### Rate Limits Need Redis and Fail Open
+
+Rate limits are defined in `domain/policies/rate_limits.py`. Auth is IP-based;
+upload/content generation are workspace-based.
+
+Two staging requirements:
+
+1. Redis failures fail open. This avoids turning a Redis issue into a full
+   outage, but means traffic is unthrottled while Redis is down. Alerting on
+   Redis failure is mandatory.
+2. Run behind a controlled reverse proxy. IP rate limiting reads
+   `X-Forwarded-For`; that header is only trustworthy if your proxy overwrites
+   it.
+
+## 4. Required Processes
+
+All four processes are required. Missing processes can look like partial product
+bugs rather than deployment failures.
+
+| Process | Command | If missing |
+|---|---|---|
+| API | `uvicorn api.main:app --host 0.0.0.0 --port 8000` | Nothing works |
+| Celery worker | `celery -A worker.celery_app:celery_app worker -l info` | Content jobs stay queued; approved posts never publish |
+| Celery beat | `celery -A scheduler.beat:celery_app beat -l info` | Scheduled posts stay scheduled with no visible error |
+| Web | `next start` | Users cannot access the app |
+
+Worker and beat need the `queue` extra:
+
+```bash
+uv sync --extra queue
+```
+
+Some beat schedules are still placeholders for later product areas. Known
+`NotImplementedError` traces for unfinished refresh/CRM/engagement jobs are not
+regressions unless the roadmap says those areas are complete.
+
+## 5. Staging Deployment Runbook
+
+This is the minimum runbook for a staging deploy. Production should use the same
+order with stronger access control, monitored backups, and an explicit approver.
+
+### 5.1. Pre-Deploy Checks
+
+Run from a clean working tree or a tagged build artifact:
+
+```bash
+npm run lint:web
+npm run test:web
+npm run build:web
+cd apps/backend && uv run ruff check . && uv run pytest
+cd apps/backend && uv run alembic check
+```
+
+Confirm environment guardrails before starting processes:
+
+```bash
+test "$HAVI_ENV" = "staging" -o "$HAVI_ENV" = "production"
+test "$HAVI_USE_MOCK_LLM" = "false"
+test "$HAVI_USE_FAKE_PUBLISHER" = "false"
+test "$HAVI_DISABLE_RATE_LIMIT" = "false"
+test "$HAVI_EMAIL_PROVIDER" != "debug"
+test -n "$HAVI_TOKEN_ENCRYPTION_KEY"
+```
+
+For a closed Facebook beta, confirm every tester is added to the Facebook app
+roles before asking them to connect a Page.
+
+### 5.2. Deploy Order
+
+Use this order to avoid workers running code against an old schema:
+
+1. Put worker and beat in drain/paused mode if the platform supports it.
+2. Create a pre-deploy Postgres backup.
+3. Deploy and run database migrations.
+4. Deploy API.
+5. Deploy worker.
+6. Deploy beat.
+7. Deploy web.
+8. Run smoke checks.
+
+If the platform cannot pause workers, scale worker and beat to zero before
+running migrations, then scale them back up after API deploy.
+
+### 5.3. Required Process Checks
+
+All four processes must be alive after deploy:
+
+```bash
+# API
+curl -fsS https://api.example.com/health
+
+# Web
+curl -fsS https://app.example.com/
+
+# Worker and beat
+# Use your platform process list/log command. Required evidence:
+# - one worker process is running
+# - one beat process is running
+# - worker logs show it received registered tasks
+# - beat logs show scheduled task emission
+```
+
+Functional smoke test:
+
+1. Sign in with an internal test account.
+2. Create one content job.
+3. Confirm drafts are created.
+4. Approve one Facebook draft for a near-future time.
+5. Confirm beat dispatches a publish job.
+6. Confirm worker publishes or records a clear fake-mode-blocked/config error.
+7. Open `/noi-bo/van-hanh` and confirm event/publish metrics changed.
+
+For staging with real Facebook Development mode, use a draft/test Page.
+
+### 5.4. Migration Forward and Rollback Strategy
+
+Forward migration:
+
+```bash
+cd apps/backend
+uv run alembic upgrade head
+uv run alembic check
+```
+
+Rollback rule:
+
+- Prefer forward fixes for application bugs.
+- Use Alembic downgrade only for a migration that has just been deployed, has not
+  been used by new code for long, and is known to be reversible.
+- Never downgrade after destructive migrations unless a restore rehearsal proves
+  the path.
+- Do not edit production data by hand as a rollback.
+
+Before any risky migration, record:
+
+```bash
+cd apps/backend
+uv run alembic current
+uv run alembic history --verbose -n 5
+```
+
+If rollback is chosen:
+
+```bash
+cd apps/backend
+uv run alembic downgrade -1
+uv run alembic current
+```
+
+Then redeploy the previous API/worker/beat/web version that matches the schema.
+
+### 5.5. Incident Checklist
+
+For every staging incident, capture:
+
+- time detected
+- affected workspace/user
+- request id or job id
+- current deploy version/commit
+- process affected: web, API, worker, beat, Postgres, Redis, object storage,
+  Facebook, LLM provider, email
+- whether fake/mock guardrails are involved
+- whether data restore is needed
+- owner for follow-up
+
+Fast triage commands:
+
+```bash
+curl -fsS https://api.example.com/health
+curl -fsS https://app.example.com/
+cd apps/backend && uv run alembic current
+```
+
+Use `/analytics/events` and `/noi-bo/van-hanh` for workspace-scoped job/debug
+evidence. Do not paste raw tokens, request bodies, or customer content into
+incident notes.
+
+## 6. Migrations
+
+Run migrations before starting a new API version:
+
+```bash
+uv run alembic upgrade head
+uv run alembic check
+```
+
+Run `alembic check` after migrations to confirm models and migration state still
+match.
+
+## 7. Backup and Restore Rehearsal
+
+Backups are not proven until restore has been rehearsed. Run this once before
+founder beta and after any infrastructure migration.
+
+### 7.1. Postgres Backup
+
+Local rehearsal with Docker Compose:
+
+```bash
+mkdir -p backups
+docker compose exec -T postgres pg_dump -U havi -d havi \
+  --format=custom --no-owner --no-acl > backups/havi-$(date +%Y%m%d-%H%M%S).dump
+```
+
+Staging should use the managed database provider's backup/export facility when
+available. Keep at least:
+
+- daily backups for 7 days
+- one weekly backup for 4 weeks during beta
+- a pre-deploy backup before every migration
+
+### 7.2. Postgres Restore Rehearsal
+
+Restore only into a throwaway database or local rehearsal stack:
+
+```bash
+docker compose exec -T postgres createdb -U havi havi_restore
+docker compose exec -T postgres pg_restore -U havi -d havi_restore \
+  --clean --if-exists --no-owner --no-acl < backups/<backup-file>.dump
+docker compose exec -T postgres psql -U havi -d havi_restore \
+  -c "select count(*) from workspaces;"
+```
+
+Validation checklist:
+
+- restore command completes without errors
+- core tables are queryable
+- `alembic_version` matches expected deploy version
+- a test API instance can point to the restored database and pass `/health`
+- one internal login/workspace read works against restored data
+
+Clean up the rehearsal database:
+
+```bash
+docker compose exec -T postgres dropdb -U havi havi_restore
+```
+
+### 7.3. Object Storage Backup
+
+For local MinIO, mirror the media bucket:
+
+```bash
+mkdir -p backups/minio-havi-media
+docker run --rm --network havi_default -v "$PWD/backups:/backup" minio/mc:latest \
+  sh -c "mc alias set local http://minio:9000 minioadmin minioadmin && \
+         mc mirror --overwrite local/havi-media /backup/minio-havi-media"
+```
+
+For staging/production object storage, prefer bucket versioning or provider
+backup/replication. If provider backup is unavailable, schedule a regular bucket
+mirror to a separate bucket/account.
+
+Metadata and blobs must be restored together:
+
+- Postgres `media_assets` rows point to object URLs/keys.
+- Restoring the database without matching object data leaves broken media.
+- Restoring object data without matching database rows leaves orphaned blobs.
+
+### 7.4. Object Storage Restore Rehearsal
+
+Rehearse by copying a small sample prefix into a throwaway bucket:
+
+```bash
+docker run --rm --network havi_default -v "$PWD/backups:/backup" minio/mc:latest \
+  sh -c "mc alias set local http://minio:9000 minioadmin minioadmin && \
+         mc mb --ignore-existing local/havi-media-restore-test && \
+         mc mirror --overwrite /backup/minio-havi-media local/havi-media-restore-test && \
+         mc ls local/havi-media-restore-test && \
+         mc rb --force local/havi-media-restore-test"
+```
+
+Validation checklist:
+
+- sample media objects exist in restored bucket
+- public/media URL policy matches the original bucket policy
+- a browser can load a restored object URL
+- restored database rows reference available object keys
+
+## 8. Secrets
+
+| Secret | Rotation impact |
+|---|---|
+| `HAVI_JWT_SECRET` | Existing sessions are invalidated |
+| `HAVI_TOKEN_ENCRYPTION_KEY` | Stored platform tokens become unreadable; users must reconnect channels |
+| LLM API keys | Can rotate without data impact |
+| Facebook client secret | Can rotate; issued Page tokens continue until expiry |
+
+`HAVI_TOKEN_ENCRYPTION_KEY` is currently a single key without versioning. Do not
+rotate it casually; add a migration plan first.
+
+## 9. Pre-Beta Checklist
+
+Do not invite customer beta users while any critical item remains unchecked:
+
+- [ ] `HAVI_ENV=staging|production`
+- [ ] `alembic upgrade head` complete and `alembic check` clean
+- [ ] API, worker, beat, and web processes are all running
+- [ ] Beat verified by approving a post and seeing it publish
+- [ ] Facebook App Domains, Redirect URI, permissions, and Configuration ID set
+- [ ] Reverse proxy overwrites `X-Forwarded-For`
+- [ ] Real email provider configured for password reset
+- [ ] Redis failure alerting configured
+- [ ] Automated backup exists and restore has been rehearsed for Postgres and
+      object storage
+- [ ] Tenant isolation tests pass in CI
+- [ ] A real post has been published to a draft/test Page

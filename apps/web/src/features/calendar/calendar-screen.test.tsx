@@ -43,13 +43,18 @@ function item(overrides: Record<string, unknown> = {}) {
 function mockCalendar(
   daysFor: (start: string) => unknown[],
   deadLetterJobs: unknown[] = [],
+  onReschedule?: (body: unknown) => Response,
 ) {
   const asked: { start: string; end: string }[] = [];
   vi.spyOn(globalThis, "fetch").mockImplementation(
     async (input: RequestInfo | URL) => {
-      const url = new URL(input instanceof Request ? input.url : String(input));
+      const request = input instanceof Request ? input : new Request(input);
+      const url = new URL(request.url);
       if (url.pathname.includes("/publish-jobs")) {
         return jsonResponse(deadLetterJobs);
+      }
+      if (request.method === "POST" && url.pathname.includes("/reschedule")) {
+        return onReschedule?.(await request.json()) ?? jsonResponse(item());
       }
       const start = url.searchParams.get("start") ?? "";
       const end = url.searchParams.get("end") ?? "";
@@ -183,5 +188,54 @@ describe("CalendarScreen", () => {
 
     // Bài lỗi không thuộc tuần nào — phải thấy được kể cả khi đang xem tuần khác.
     expect(await screen.findByText(/1 bài chưa đăng được/)).toBeInTheDocument();
+  });
+
+  it("đổi ngày giờ đăng bằng timezone VN và nạp lại lịch sau khi lưu", async () => {
+    const bodies: unknown[] = [];
+    const asked = mockCalendar(
+      (start) => {
+        const days = emptyWeek(start) as { date: string; items: unknown[] }[];
+        days[0].items = [item({ scheduled_at: `${days[0].date}T02:30:00Z` })];
+        return days;
+      },
+      [],
+      (body) => {
+        bodies.push(body);
+        return jsonResponse(item({ scheduled_at: "2026-08-11T03:15:00Z" }));
+      },
+    );
+    render(<CalendarScreen />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /đổi giờ/i }));
+    await user.clear(screen.getByLabelText("Giờ đăng mới"));
+    await user.type(screen.getByLabelText("Giờ đăng mới"), "2026-08-11T10:15");
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ scheduled_at: "2026-08-11T10:15:00+07:00" });
+    await waitFor(() => expect(asked.length).toBeGreaterThan(1));
+  });
+
+  it("backend từ chối 409 thì báo lỗi và nạp lại lịch", async () => {
+    const asked = mockCalendar(
+      (start) => {
+        const days = emptyWeek(start) as { date: string; items: unknown[] }[];
+        days[0].items = [item()];
+        return days;
+      },
+      [],
+      () => jsonResponse({ detail: "published" }, 409),
+    );
+    render(<CalendarScreen />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /đổi giờ/i }));
+    await user.click(screen.getByRole("button", { name: "Lưu" }));
+
+    expect(
+      await screen.findByText(/đã đăng rồi nên không đổi lịch được nữa/i),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(asked.length).toBeGreaterThan(1));
   });
 });

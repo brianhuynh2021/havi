@@ -1,23 +1,26 @@
-# Repository Strategy & Future Split Plan — Havi (Một Chạm)
+# Repository Strategy and Future Split Plan — Havi
 
-Tài liệu kỹ thuật đi kèm bộ handoff thiết kế. Dành cho dev / Claude Code khi khởi tạo codebase thật.
+This technical note accompanies the design handoff and guides codebase
+initialization.
 
-## Quyết định mặc định của dự án (MVP)
+## MVP Decision
 
 ```text
 Repository model:    Monorepo
-Frontend / backend:  Logically separated (tách kiến trúc, không tách repo)
-Deployment:          Independent per app
+Frontend/backend:    Logically separated, same repository
+Deployment:          Independent per app/process
 Database ownership:  Backend only
-Secrets ownership:   Backend + infrastructure only
+Secrets ownership:   Backend and infrastructure only
 API contract:        OpenAPI
 Future split method: git subtree split
 Manual file copying: Not allowed
 ```
 
-> Tách kiến trúc từ ngày đầu, nhưng chỉ tách repository khi có nhu cầu kinh doanh, đội ngũ hoặc bảo mật thực sự.
+Architectural boundaries exist from day one. Repository splitting should happen
+only when team structure, security, ownership, or deployment cadence makes it
+necessary.
 
-## Cấu trúc ban đầu
+## Initial Structure
 
 ```text
 havi-platform/
@@ -27,46 +30,46 @@ havi-platform/
 │       ├── api/          # FastAPI entrypoint
 │       ├── worker/       # Celery worker entrypoint
 │       ├── scheduler/    # Celery Beat entrypoint
-│       ├── core/         # Domain và application services dùng chung
+│       ├── core/         # Transitional core utilities
 │       └── migrations/   # Alembic migrations
 ├── packages/
-│   ├── generated-api-client/
-│   └── frontend-config/
 ├── contracts/
-│   ├── openapi/
-│   └── events/
 ├── infrastructure/
 ├── docs/
 └── docker-compose.yml
 ```
 
-## 1. Nguyên tắc tách biệt ngay từ đầu
+## 1. Separation Principles
 
-Frontend và backend là hai ứng dụng độc lập dù cùng repository. Giao tiếp duy nhất qua HTTP API:
+Frontend and backend are independent applications even while they share a repo.
+The only runtime communication path is HTTP:
 
 ```text
 Next.js frontend
-        ↓ HTTPS
+        ↓ HTTPS / OpenAPI
 FastAPI backend
 ```
 
-Frontend **không được**: import Python code từ backend; truy cập PostgreSQL/Redis trực tiếp; chứa database credential, OAuth client secret, LLM API key, prompt production, encryption key; phụ thuộc đường dẫn nội bộ của backend.
+The frontend must not:
 
-Không viết:
+- import backend Python code
+- access PostgreSQL/Redis directly
+- contain database credentials, OAuth secrets, LLM keys, production prompts, or
+  encryption keys
+- depend on backend private file paths
+
+Use the generated API client:
 
 ```typescript
-import something from "../../../api/internal"
+import { apiClient } from "@/lib/api-client";
 ```
 
-Phải dùng API client riêng:
+The backend exposes OpenAPI at `/openapi.json`; the frontend generates TypeScript
+types/client code from that contract.
 
-```typescript
-import { apiClient } from "@/lib/api-client"
-```
+## 2. Independent Deployment
 
-Backend xuất OpenAPI contract tại `/openapi.json`; frontend sinh TypeScript client từ đó để giảm sai lệch request/response.
-
-## 2. Deploy độc lập dù đang dùng monorepo
+Recommended workflow split:
 
 ```text
 .github/workflows/
@@ -76,22 +79,24 @@ Backend xuất OpenAPI contract tại `/openapi.json`; frontend sinh TypeScript 
 └── deploy-scheduler.yml
 ```
 
-- Thay đổi `apps/web` → chỉ deploy frontend
-- Thay đổi `apps/backend/api` → chỉ deploy backend
-- Thay đổi `apps/backend/worker` → chỉ deploy worker
-- Thay đổi `apps/backend/scheduler` → chỉ deploy scheduler
-- Database migration được kiểm soát riêng
+Deployment ownership:
 
-Ví dụ:
+- `apps/web` changes deploy only the frontend.
+- `apps/backend/api` changes deploy only the API.
+- `apps/backend/worker` changes deploy only the worker.
+- `apps/backend/scheduler` changes deploy only beat/scheduler.
+- Database migrations are controlled separately.
+
+Example deployment targets:
 
 ```text
-apps/web        → Cloudflare Workers
-apps/backend/api        → Railway hoặc AWS
-apps/backend/worker     → Railway hoặc AWS
-apps/backend/scheduler  → Railway hoặc AWS
+apps/web               -> Cloudflare/Vercel/etc.
+apps/backend/api       -> Railway/AWS/Fly/etc.
+apps/backend/worker    -> Railway/AWS/Fly/etc.
+apps/backend/scheduler -> Railway/AWS/Fly/etc.
 ```
 
-## 3. Environment variables tách biệt
+## 3. Environment Variable Boundaries
 
 Frontend:
 
@@ -112,24 +117,25 @@ ZALO_CLIENT_SECRET=
 TOKEN_ENCRYPTION_KEY=
 ```
 
-Frontend không bao giờ nhận biến môi trường bí mật của backend.
+Never expose backend secrets to the frontend runtime.
 
-## 4. Khi nào mới tách thành nhiều repository
+## 4. When to Split Repositories
 
-Không tách chỉ để "trông chuyên nghiệp". Chỉ tách khi:
+Do not split repositories just to look more mature. Split only when one or more
+of these are true:
 
-- Team frontend và backend hoạt động độc lập
-- Release cadence rất khác nhau
-- CI/CD monorepo quá chậm hoặc khó quản lý
-- Quyền truy cập source code cần khác nhau (dev chỉ được xem frontend)
-- Backend chứa IP cần bảo vệ cao hơn
-- Background processing đã thành hệ thống lớn
-- Nhiều team / nhiều owner
-- Monorepo gây xung đột hoặc bottleneck rõ ràng
+- frontend and backend teams work independently
+- release cadences differ significantly
+- monorepo CI/CD becomes too slow or difficult
+- code access must differ by team
+- backend source contains higher-protection IP
+- background processing has grown into a separate system
+- ownership and on-call boundaries diverge
+- the monorepo causes clear bottlenecks
 
-## 5. Cách tách repository sau này
+## 5. Split Method
 
-Không copy code thủ công. Dùng `git subtree split`.
+Do not copy files manually. Use `git subtree split`.
 
 Frontend:
 
@@ -155,25 +161,25 @@ git remote add infrastructure-repo <NEW_INFRASTRUCTURE_REPOSITORY_URL>
 git push infrastructure-repo split-infrastructure:main
 ```
 
-Repository mới chỉ chứa code của thư mục đó + lịch sử commit liên quan, không chứa phần còn lại, không cần copy file thủ công.
+The new repo contains only that directory and the relevant commit history.
 
-## 6. Không xóa code khỏi monorepo ngay lập tức
+## 6. Do Not Remove Monorepo Code Immediately
 
-Checklist trước khi xóa:
+Before deleting the moved directory from the monorepo:
 
 ```text
-[ ] Repository mới clone được
-[ ] Application build được
-[ ] Tests chạy thành công
-[ ] Environment variables đã được cấu hình
-[ ] CI/CD hoạt động
-[ ] Deployment thành công
-[ ] API contract hoạt động
-[ ] Shared dependencies đã được xử lý
-[ ] Secrets không bị đưa sang repository sai
+[ ] New repo can be cloned
+[ ] Application builds
+[ ] Tests pass
+[ ] Environment variables are configured
+[ ] CI/CD works
+[ ] Deployment works
+[ ] API contract works
+[ ] Shared dependencies are handled
+[ ] Secrets did not move to the wrong repo
 ```
 
-Chỉ sau khi xong hết mới:
+Only then:
 
 ```bash
 git rm -r apps/web
@@ -181,13 +187,17 @@ git commit -m "chore: move frontend to separate repository"
 git push
 ```
 
-## 7. Phải chỉnh sau khi tách
+## 7. Update After Splitting
 
-CI/CD workflow · Docker build context · Environment variables · Deployment configuration · README · API URL · CORS · Shared package dependencies · OpenAPI client generation · Versioning · Release process · Branch protection · Repository permissions · Secret configuration · Local development instructions.
+Review CI/CD workflows, Docker build context, environment variables, deployment
+configuration, README files, API URLs, CORS, shared dependencies, OpenAPI client
+generation, versioning, release process, branch protection, repository
+permissions, secret configuration, and local-development instructions.
 
-## 8. Shared packages
+## 8. Shared Packages
 
-Không tạo package chia sẻ business logic giữa frontend và backend. API, worker và scheduler được phép dùng chung domain/application code trong `apps/backend/core`. Qua ranh giới frontend–backend chỉ chia sẻ **contract**:
+Do not share business logic between frontend and backend packages. Across the
+frontend/backend boundary, share only contracts:
 
 ```text
 OpenAPI schema
@@ -201,9 +211,15 @@ Public enums
 Backend is the source of truth.
 ```
 
-Sau khi tách, với `packages/generated-api-client` chọn 1 trong 3: (1) generate client trong frontend CI từ OpenAPI URL, (2) publish private package, (3) commit generated client vào frontend repo. **MVP ưu tiên cách 1.**
+After a repo split, choose one strategy for `packages/generated-api-client`:
 
-## 9. Cấu trúc sau khi tách hoàn toàn
+1. Generate the client in frontend CI from an OpenAPI URL.
+2. Publish a private package.
+3. Commit generated client code to the frontend repo.
+
+For MVP, prefer option 1.
+
+## 9. Target Structure After Full Split
 
 ```text
 havi-frontend
@@ -211,19 +227,22 @@ havi-backend
 havi-infrastructure
 ```
 
-Backend repo tiếp tục chứa API + worker + scheduler vì chúng dùng chung domain nghiệp vụ. Chỉ tách worker thành repository khác nếu sau này có team owner và chu kỳ phát hành thực sự độc lập.
+The backend repository should still contain API, worker, and scheduler because
+they share domain logic. Split the worker only when ownership or release cadence
+becomes genuinely independent.
 
-## 10. Ánh xạ sang thiết kế Havi
+## 10. Design Responsibility Map
 
-| Màn thiết kế | App chịu trách nhiệm |
+| Design area | Owning app/process |
 |---|---|
-| Landing Page, Đăng Nhập, Onboarding, MVP App | `apps/web` |
-| Auth/OTP, content CRUD, approval, connected accounts | `apps/backend/api` |
-| Chế bản AI đa kênh, social listening, soạn reply | `apps/backend/worker` |
-| Đăng bài giờ vàng, nhắc CRM Zalo/Email | `apps/backend/scheduler` |
+| Landing page, auth UI, onboarding, main app | `apps/web` |
+| Auth, content CRUD, approval, connected accounts | `apps/backend/api` |
+| AI content generation, listening, reply drafting | `apps/backend/worker` |
+| Scheduled publishing, CRM reminders | `apps/backend/scheduler` |
 
-Lưu ý bắt buộc theo triết lý Havi:
+Mandatory Havi constraints:
 
-- Prompt chế bản và prompt seeding nằm **trong backend**, không bao giờ lộ ra frontend bundle.
-- Approval state machine (`draft → pending_approval → approved → scheduled → publishing → published | failed`) do backend sở hữu; frontend chỉ gọi API và render trạng thái.
-- Token nền tảng (Facebook/Google/Zalo) mã hoá bằng `TOKEN_ENCRYPTION_KEY`, chỉ backend giải mã.
+- Production prompts live in the backend, never in the frontend bundle.
+- The approval state machine belongs to the backend.
+- Platform tokens are encrypted with `TOKEN_ENCRYPTION_KEY` and decrypted only by
+  the backend.

@@ -1,16 +1,20 @@
 # Docs Index
 
-Tài liệu trong `docs/` được chia theo vai trò để dễ tra cứu và onboarding:
+Documentation in `docs/` is grouped by audience and purpose:
 
-- [`handoff/`](handoff/) — handoff từ design sang implementation, và
-  [DEPLOYMENT.md](handoff/DEPLOYMENT.md) (cấu hình & triển khai)
-- [`product/`](product/) — roadmap và định hướng sản phẩm
-- [`architecture/`](architecture/) — technical spec, repository strategy và quyết định kiến trúc
+- [`handoff/`](handoff/) — design-to-implementation handoff and
+  [DEPLOYMENT.md](handoff/DEPLOYMENT.md)
+- [`product/`](product/) — roadmap and product direction
+- [`architecture/`](architecture/) — technical spec, repository strategy, and
+  architecture decisions
 
-**Dựng staging/production?** Đọc [`handoff/DEPLOYMENT.md`](handoff/DEPLOYMENT.md) —
-nó ghi các thứ *không suy ra được từ code*: ba cờ làm Havi giả lập, thứ tự bấm trên
-Facebook Developers, quota/rate limit, 4 process phải chạy và cái gì sai thì im lặng.
+Setting up staging or production? Start with
+[`handoff/DEPLOYMENT.md`](handoff/DEPLOYMENT.md). It captures the operational
+details that are not obvious from code: local-only fake modes, Facebook Developer
+setup order, quota/rate-limit behavior, required processes, and silent failure
+modes.
 
-Sơ đồ triển khai chuẩn: [`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md).
+Canonical deployment architecture:
+[`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md).
 
-Tài liệu nên được đặt vào đúng nhóm thay vì tiếp tục dồn ở root `docs/`.
+Add new documentation to the correct group instead of growing root-level docs.

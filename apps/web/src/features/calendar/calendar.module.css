@@ -115,6 +115,55 @@
   line-height: 1.4;
 }
 
+.changeTimeButton {
+  align-self: flex-start;
+  min-height: 26px;
+  padding: 4px 0;
+  font-size: 11px;
+  color: var(--color-primary-dark);
+}
+
+.rescheduleForm {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 3px;
+}
+
+.rescheduleLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.rescheduleLabel input {
+  min-height: 32px;
+  padding: 7px 8px;
+  font-size: 11px;
+}
+
+.inlineError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.rescheduleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.compactButton {
+  min-height: 28px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
 @media (max-width: 1080px) {
   .grid {
     grid-template-columns: repeat(3, minmax(160px, 1fr));

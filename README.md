@@ -1,96 +1,104 @@
 # Havi
 
-> AI marketing đa ngành cho tiệm nhỏ & cá nhân kinh doanh — bán **kết quả**, không bán công cụ.
+> Multi-industry AI marketing for small shops and solo operators. Havi sells
+> outcomes, not tools.
 
-Havi là "nhân viên marketing AI" cho người dùng **không rành công nghệ** (spa, F&B, môi giới BĐS, kỹ sư/chuyên gia). Một luồng khép kín, chạy bằng 1 nút:
+Havi is an "AI marketing employee" for non-technical users such as spas, F&B
+shops, real-estate brokers, engineers, specialists, and small online sellers. The
+product is built around one closed-loop workflow:
 
-1. **Nạp liệu thô** (<30s) — ảnh chụp vội, ghi âm, vài dòng gõ tay, hoặc webhook từ phần mềm bán hàng
-2. **Lò phản ứng AI** — tự nhận diện ngành → xử lý media → 1 lần gọi LLM sinh 4–5 bản nội dung theo kênh
-3. **Tổng đài phân phối** — tự đăng đa kênh đúng khung giờ vàng qua API chính thức
-4. **Săn mồi & chăm sóc** — social listening + soạn câu trả lời **chờ chủ duyệt** (không bao giờ tự gửi); CRM vòng đời khách + FAQ 24/7 (chỉ tự động với câu đã duyệt sẵn)
+1. **Capture raw material** in under 30 seconds: quick photos, voice notes, typed
+   notes, or future POS/webhook inputs.
+2. **AI content engine**: detect the industry, process media context, and use one
+   LLM call to generate several channel-specific drafts.
+3. **Distribution hub**: publish approved content through official platform APIs
+   at suitable local posting times.
+4. **Lead and care loop**: draft replies for owner approval, run CRM nudges, and
+   answer approved FAQ items only.
 
-Mọi báo cáo đo bằng **khách hỏi giá / khách đến tiệm / khách quay lại** — không phải like/reach.
+Reports should measure business outcomes: price inquiries, visits, returning
+customers, and published-post reliability. Vanity metrics such as likes and reach
+are secondary.
 
-## Cấu trúc repo
+## Repository Layout
 
-Monorepo `havi-platform`, frontend và backend tách kiến trúc nhưng chung repo:
+This is the `havi-platform` monorepo. Frontend and backend are separated by
+runtime boundary but live in one repository.
 
-| Thư mục | Nội dung |
+| Path | Purpose |
 |---|---|
 | [`apps/web/`](apps/web/) | Next.js frontend |
-| [`apps/backend/`](apps/backend/) | FastAPI API + Celery worker + scheduler + domain core |
-| [`prototypes/`](prototypes/) | 6 prototype high-fidelity dạng `.dc.html` (mở trực tiếp trong trình duyệt) + `support.js` |
-| [`docs/`](docs/) | Tài liệu được chia theo nhóm: handoff, product, architecture |
+| [`apps/backend/`](apps/backend/) | FastAPI API, Celery worker, scheduler, and domain core |
+| [`prototypes/`](prototypes/) | High-fidelity `.dc.html` design prototypes plus `support.js` |
+| [`docs/`](docs/) | Handoff, product, and architecture documentation |
 
-## Chạy local
+## Local Development
 
-Thứ tự: hạ tầng (Docker) → backend → frontend. Cần có Docker, Node 20+, và
-[`uv`](https://docs.astral.sh/uv/) cài sẵn.
+Start services in this order: infrastructure, backend, then frontend. You need
+Docker, Node 20+, and [`uv`](https://docs.astral.sh/uv/).
 
-### 1. Hạ tầng — Postgres, Redis, MinIO
+### 1. Infrastructure: Postgres, Redis, MinIO
 
 ```bash
 npm run infra:up
 ```
 
-Khởi động Postgres (`5432`), Redis (`6379`) và MinIO S3-compatible (`9000`,
-console `9001`), tự tạo bucket `havi-media`. Dừng bằng `npm run infra:down`.
+This starts Postgres on `5432`, Redis on `6379`, and S3-compatible MinIO on
+`9000` with console on `9001`. The `havi-media` bucket is created automatically.
+Stop the stack with:
 
-### 2. Backend — FastAPI + Celery
+```bash
+npm run infra:down
+```
+
+### 2. Backend: FastAPI and Celery
 
 ```bash
 cd apps/backend
 cp .env.example .env
 uv sync --extra dev --extra db --extra queue --extra storage
-uv run alembic upgrade head   # chạy migration lên Postgres vừa khởi động ở bước 1
+uv run alembic upgrade head
 cd ../..
 npm run dev:api
 ```
 
-API ở <http://localhost:8000> (Swagger tại `/docs`, chỉ bật khi `HAVI_DEBUG=true`).
-Chi tiết: [`apps/backend/README.md`](apps/backend/README.md).
+The API runs at <http://localhost:8000>. Swagger is available at `/docs` when
+`HAVI_DEBUG=true`. See [`apps/backend/README.md`](apps/backend/README.md) for
+backend details.
 
-Worker là bắt buộc nếu muốn thử tạo nội dung — `POST /content/jobs` chỉ đẩy job
-vào hàng đợi, không có worker thì job nằm mãi ở `queued`:
+The worker is required for content generation. `POST /content/jobs` only queues a
+job; without the worker, jobs remain `queued`.
 
 ```bash
 npm run dev:worker
 ```
 
-Scheduler (chỉ cần khi làm publish theo lịch, Tuần 7):
+The scheduler is required for scheduled publishing:
 
 ```bash
 cd apps/backend && uv run celery -A scheduler.beat:celery_app beat -l info
 ```
 
-**Local mặc định dùng mock LLM** (`HAVI_USE_MOCK_LLM=true`): bấm "Để Havi viết"
-bao nhiêu lần cũng không tốn tiền API, và không cần API key để chạy được app.
-Draft là văn mẫu ghép từ liệu thô, đủ để test luồng và UI.
+Local development uses the mock LLM by default (`HAVI_USE_MOCK_LLM=true`). This
+lets you test the workflow without API keys or model spend. To call a real model,
+set a provider key, set `HAVI_USE_MOCK_LLM=false`, and restart the worker.
 
-Muốn test bằng model thật: điền `HAVI_GEMINI_API_KEY` rồi đặt
-`HAVI_USE_MOCK_LLM=false`, khởi động lại worker.
+Mock LLM and fake publisher are allowed only when `HAVI_ENV=local`. The backend
+refuses to start in staging or production if either fake mode is enabled.
 
-Mock chỉ sống ở local. Đặt `HAVI_USE_MOCK_LLM=true` khi `HAVI_ENV` là `staging`
-hoặc `production` sẽ làm backend **không khởi động được** — chặn ngay ở deploy,
-vì để lọt thì chủ tiệm đăng văn mẫu lên Facebook thật mà tưởng AI viết.
-
-Nếu tắt mock mà chưa có key nào, job chuyển sang `failed` kèm lý do và UI hiện
-nút thử lại — đúng thiết kế, không phải hỏng.
-
-### 3. Frontend — Next.js
+### 3. Frontend: Next.js
 
 ```bash
 npm install
-npm run generate:api   # sinh TypeScript client từ OpenAPI của backend (cần backend chạy hoặc export được schema)
+npm run generate:api
 npm run dev:web
 ```
 
-Web ở <http://localhost:3000>.
+The web app runs at <http://localhost:3000>.
 
-### Kiểm tra nhanh (trước khi commit)
+## Checks Before Commit
 
-`uv run pytest` cần Postgres thật đang chạy (`npm run infra:up`) — test auth
-tự rollback transaction, không để lại dữ liệu.
+Backend tests need the local Postgres stack:
 
 ```bash
 npm run lint:web && npm run test:web && npm run build:web
@@ -98,56 +106,75 @@ npm run infra:up
 cd apps/backend && uv run ruff check . && uv run pytest
 ```
 
-### CI / GitHub Actions
+Local E2E core flow:
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) tự động kiểm tra trên mọi Pull Request và Push vào `main` / `dev`:
+```bash
+npm run infra:up
+npm run migrate
+npm run e2e
+```
+
+`npm run e2e` uses mock LLM output and `FakePublisher` in-process. It creates an
+isolated email/workspace inside the test transaction, does not call paid model
+APIs, and does not publish to Facebook.
+
+## CI / GitHub Actions
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) checks pull requests and
+pushes to `main` / `dev`:
+
 - **Web:** `npm run lint:web`, `npm run test:web`, `npm run build:web`
-- **Backend:** `ruff check .`, `alembic upgrade head` (migration), và `pytest` (với Postgres & Redis service containers)
+- **Backend:** `ruff check .`, `alembic upgrade head`, and `pytest` with Postgres
+  and Redis service containers
 
-### Tổng hợp lệnh
+## Command Reference
 
-| Lệnh | Việc gì |
+| Command | Purpose |
 |---|---|
-| `npm run infra:up` / `infra:down` | Bật/tắt Postgres, Redis, MinIO |
-| `npm run migrate` | `alembic upgrade head` |
-| `npm run dev:web` / `dev:api` | Chạy frontend / backend (dev, reload) |
-| `npm run dev:worker` | Chạy Celery worker (cần cho tạo nội dung) |
-| `npm run generate:api` | Sinh lại TypeScript client từ OpenAPI |
-| `npm run lint:web` / `lint:api` | Lint frontend / backend |
-| `npm run test:web` / `test:api` | Test frontend (Vitest) / backend (pytest) |
-| `npm run build:web` | Production build frontend |
+| `npm run infra:up` / `infra:down` | Start/stop Postgres, Redis, and MinIO |
+| `npm run migrate` | Run `alembic upgrade head` |
+| `npm run dev:web` / `dev:api` | Run frontend/backend in development mode |
+| `npm run dev:worker` | Run the Celery worker |
+| `npm run generate:api` | Regenerate the TypeScript OpenAPI client |
+| `npm run lint:web` / `lint:api` | Lint frontend/backend |
+| `npm run test:web` / `test:api` | Run frontend/backend tests |
+| `npm run e2e` | Run the isolated signup-to-report smoke test |
+| `npm run build:web` | Build the production frontend |
 
-### Tài liệu chính
+## Main Documentation
 
-- [docs/README.md](docs/README.md) — index tài liệu theo từng nhóm
-- [docs/handoff/DEPLOYMENT.md](docs/handoff/DEPLOYMENT.md) — **cấu hình & triển khai**:
-  ba cờ "chỉ dành cho local", các bước bấm trên Facebook Developers, quota/rate
-  limit, 4 process phải chạy, checklist trước khi mở cho khách. Đọc file này khi
-  dựng staging/production.
-- [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — mô tả chi tiết từng màn hình, fidelity, luồng duyệt bài
-- [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — lộ trình sản phẩm
-- [docs/architecture/SYSTEM_ARCHITECTURE.md](docs/architecture/SYSTEM_ARCHITECTURE.md) — sơ đồ hệ thống, frontend và state nội dung
-- [docs/architecture/TECHNICAL_SPEC.md](docs/architecture/TECHNICAL_SPEC.md) — đặc tả kỹ thuật
-- [docs/architecture/REPOSITORY_STRATEGY.md](docs/architecture/REPOSITORY_STRATEGY.md) — chiến lược tổ chức repo
+- [docs/README.md](docs/README.md) — documentation index
+- [docs/handoff/DEPLOYMENT.md](docs/handoff/DEPLOYMENT.md) — configuration,
+  deployment, Facebook setup, quota, rate limits, required processes, and beta
+  checklist
+- [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — design-to-build handoff
+- [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — product roadmap
+- [docs/architecture/SYSTEM_ARCHITECTURE.md](docs/architecture/SYSTEM_ARCHITECTURE.md)
+  — architecture and process boundaries
+- [docs/architecture/TECHNICAL_SPEC.md](docs/architecture/TECHNICAL_SPEC.md) —
+  technical specification
+- [docs/architecture/REPOSITORY_STRATEGY.md](docs/architecture/REPOSITORY_STRATEGY.md)
+  — repository strategy
 
-### Prototype (`prototypes/`)
+## Prototypes
 
-| File | Màn hình |
+The `.dc.html` files are high-fidelity design references. They are not production
+code to copy.
+
+| File | Screen |
 |---|---|
-| `Havi - MVP App.dc.html` | Sản phẩm chính (sidebar + 5 tab) |
-| `Havi - Onboarding.dc.html` | Onboarding 3 bước |
-| `Havi - Đăng Nhập.dc.html` | Đăng nhập / Đăng ký |
-| `Havi - Landing Page.dc.html` | Landing page |
-| `Havi - AI Marketing.dc.html` | Trang giới thiệu AI marketing |
-| `Havi - Kiến Trúc Hệ Thống.dc.html` | Sơ đồ kiến trúc hệ thống |
+| `Havi - MVP App.dc.html` | Main product app |
+| `Havi - Onboarding.dc.html` | Three-step onboarding |
+| `Havi - Dang Nhap.dc.html` | Login, signup, OTP, password reset |
+| `Havi - Landing Page.dc.html` | Public landing page |
+| `Havi - AI Marketing.dc.html` | Pitch/demo flow |
+| `Havi - Kien Truc He Thong.dc.html` | Architecture reference |
 
-> Các file `.dc.html` là **design reference** thể hiện giao diện & hành vi mong muốn — không phải production code để copy. Nhiệm vụ: tái tạo pixel-perfect trong codebase thật.
+## Tech Stack
 
-## Tech stack
-
-- **Frontend:** Next.js 16 (App Router, TypeScript)
-- **Backend:** FastAPI + Celery (worker & Beat), PostgreSQL, Redis
-- **Contract:** OpenAPI — backend là nguồn sự thật, frontend sinh TypeScript client từ đó
+- **Frontend:** Next.js 16, App Router, TypeScript
+- **Backend:** FastAPI, Celery worker/beat, PostgreSQL, Redis
+- **Contract:** OpenAPI generated from the backend and consumed by the frontend
 
 ## License
 

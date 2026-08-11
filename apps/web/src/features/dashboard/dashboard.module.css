@@ -246,6 +246,13 @@
   margin-top: 8px;
 }
 
+.activityError {
+  margin: 14px 0 0;
+  color: var(--color-danger);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .activityItem {
   display: grid;
   grid-template-columns: 52px 1fr auto;

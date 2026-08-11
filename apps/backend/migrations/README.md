@@ -1,36 +1,49 @@
 # Migrations
 
-Alembic (async template), khởi tạo qua `docker-compose.yml` ở root + local stack.
+Alembic uses the async template and the local stack from the root
+`docker-compose.yml`.
 
-## Chạy local stack trước
+## Start the Local Stack
+
+From the repository root:
 
 ```bash
-docker compose up -d          # postgres, redis, minio (từ root repo)
+docker compose up -d
 ```
 
-## Tạo/chạy migration
+This starts Postgres, Redis, and MinIO.
+
+## Create and Run Migrations
 
 ```bash
 cd apps/backend
 uv sync --extra db
-uv run alembic revision --autogenerate -m "mô tả ngắn"
+uv run alembic revision --autogenerate -m "short description"
 uv run alembic upgrade head
 ```
 
-`migrations/env.py` đọc connection string trực tiếp từ `core.config.Settings`
-(`HAVI_DATABASE_URL`) — không set `sqlalchemy.url` trong `alembic.ini`, tránh hai
-nguồn sự thật.
+`migrations/env.py` reads the connection string from `core.config.Settings`
+(`HAVI_DATABASE_URL`). Do not maintain a second source of truth in
+`alembic.ini`.
 
-`target_metadata` trong `env.py` trỏ vào `domain.models.Base.metadata`. Thêm
-model mới thì import nó vào `domain/models/__init__.py` để `--autogenerate`
-thấy được, rồi luôn chạy `uv run alembic check` trước khi commit — phải báo
-"No new upgrade operations detected." mới coi là model ↔ migration khớp nhau.
+`target_metadata` points to `domain.models.Base.metadata`. When adding a new
+model, import it in `domain/models/__init__.py` so autogenerate can see it.
 
-## Quy tắc
+Before committing a schema change, run:
 
-- Backend là chủ sở hữu duy nhất của database. Frontend không bao giờ kết nối trực tiếp.
-- Mọi bảng nghiệp vụ đều có `workspace_id` và mọi query đều scope theo nó — không cho
-  leak chéo tenant.
-- Migration được deploy tách riêng khỏi 3 process (api / worker / scheduler), xem
-  `docs/architecture/REPOSITORY_STRATEGY.md` §2.
-- Mỗi thay đổi schema đi qua migration; không sửa production database thủ công.
+```bash
+uv run alembic check
+```
+
+It must report `No new upgrade operations detected.` before model and migration
+state are considered aligned.
+
+## Rules
+
+- The backend is the only database owner.
+- The frontend must never connect to the database directly.
+- Business tables should be workspace-scoped where applicable.
+- Queries must enforce workspace scope to prevent cross-tenant leaks.
+- Migrations deploy separately from API, worker, and scheduler processes.
+- Every schema change goes through Alembic; do not edit production databases by
+  hand.

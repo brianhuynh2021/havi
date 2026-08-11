@@ -1,142 +1,135 @@
 # Havi Backend
 
-FastAPI + Celery. Chủ sở hữu database, secret, prompt production và approval state machine.
-Frontend (`apps/web`) chỉ nói chuyện với backend qua HTTP + OpenAPI client.
+FastAPI + Celery backend. This app owns database state, secrets, production
+prompts, and the approval state machine. The frontend (`apps/web`) talks to the
+backend only through HTTP and the generated OpenAPI client.
 
-## Cấu trúc
+## Structure
 
 ```text
 apps/backend/
-├── api/            # FastAPI entrypoint — routers theo domain
-├── worker/         # Celery worker — chế bản AI, listening, soạn reply
-├── scheduler/      # Celery Beat — đăng giờ vàng, refresh token, nhắc CRM
-├── core/           # Scaffold chuyển tiếp: config, enums, state machine, event_log
+├── api/            # FastAPI entrypoint and domain routers
+├── worker/         # Celery worker: AI generation, future listening/replies
+├── scheduler/      # Celery Beat: scheduled publishing, token refresh, CRM jobs
+├── core/           # Transitional config/enums/state-machine utilities
 ├── domain/
-│   └── models/     # SQLAlchemy models — nguồn sự thật của DB schema
-├── migrations/     # Alembic (đã khởi tạo, xem migrations/README.md)
+│   └── models/     # SQLAlchemy models, DB schema source
+├── migrations/     # Alembic migrations
 └── tests/
 ```
 
-Ba process deploy độc lập nhưng dùng chung `core/`. Xem
+API, worker, and scheduler deploy as separate processes while sharing backend
+domain/application code. See
 [`docs/architecture/REPOSITORY_STRATEGY.md`](../../docs/architecture/REPOSITORY_STRATEGY.md).
 
-## Chạy local
+## Local Setup
 
-Khởi động Postgres/Redis/MinIO (từ root repo, tài liệu duy nhất — không cần biết gì thêm):
+Start Postgres, Redis, and MinIO from the repository root:
 
 ```bash
 docker compose up -d
 ```
 
-Cài backend:
+Install backend dependencies:
 
 ```bash
-cd apps/backend && cp .env.example .env && uv sync --extra dev --extra db --extra storage
+cd apps/backend
+cp .env.example .env
+uv sync --extra dev --extra db --extra queue --extra storage
 ```
 
-Chạy migration (cần extra `db`, xem [`migrations/README.md`](migrations/README.md)):
+Run migrations:
 
 ```bash
-cd apps/backend && uv run alembic upgrade head
+uv run alembic upgrade head
 ```
+
+Run the API:
 
 ```bash
-cd apps/backend && uv run uvicorn api.main:app --reload --port 8000
+uv run uvicorn api.main:app --reload --port 8000
 ```
 
-- Swagger UI: <http://localhost:8000/docs> (chỉ bật khi `HAVI_DEBUG=true`)
+- Swagger UI: <http://localhost:8000/docs> when `HAVI_DEBUG=true`
 - OpenAPI contract: <http://localhost:8000/openapi.json>
 - Health: <http://localhost:8000/health>
 
-Test và lint (`test_auth_flow.py` cần Postgres thật — `docker compose up -d` ở
-root trước; mỗi test tự rollback transaction, không để lại dữ liệu):
+Run tests and lint:
 
 ```bash
-cd apps/backend && uv run pytest && uv run ruff check .
+uv run pytest
+uv run ruff check .
 ```
 
-Worker và scheduler (cần Redis, cài thêm extra `queue`):
+Tests use real Postgres and rollback each DB transaction. Object storage is not
+transactional, so media tests can leave development objects in the bucket.
+
+Run worker and scheduler:
 
 ```bash
-cd apps/backend && uv run --extra queue celery -A worker.celery_app:celery_app worker -l info
+uv run --extra queue celery -A worker.celery_app:celery_app worker -l info
+uv run --extra queue celery -A scheduler.beat:celery_app beat -l info
 ```
 
-```bash
-cd apps/backend && uv run --extra queue celery -A scheduler.beat:celery_app beat -l info
-```
+## Current Implementation
 
-## Trạng thái hiện tại
+Implemented with real persistence/integration boundaries:
 
-`/auth/*`, `/workspaces/*`, `/brand-profile`, `/media` và `/content` (tạo/đọc job
-+ list item) chạy thật (Postgres + MinIO + Redis/Celery). Phần approve/reject/
-versions của `/content` và 7 router domain còn lại vẫn trả `501 Not Implemented` — có schema request/response thật
-trong OpenAPI để `apps/web` sinh TypeScript client và dựng UI fixture trước.
+- auth, refresh sessions, password reset contracts
+- workspaces and workspace members
+- brand profile
+- media upload tickets and object-storage metadata
+- content jobs, content engine, approval, version history, calendar
+- quota and rate limits
+- platform connections and Facebook publishing adapter
+- fake publisher for local/test
+- publish scheduler, retry, dead-letter handling, and event logging
+- analytics dashboard, reports, events, and operations metrics
+- local E2E smoke test for signup -> draft -> approve -> fake publish -> report
 
-Đã có thật:
+Important files:
 
-- `core/enums.py` — public enums (kênh, trạng thái, ngành, gói cước…)
-- `core/content_state.py` — state machine của content item, có test
-- `core/config.py` — settings + secret boundary
-- `core/events.py` — khung `event_log` (Pydantic contract; bảng thật là `domain/models/audit.py:EventLog`, chưa insert)
-- `core/phone.py` — chuẩn hoá SĐT Việt Nam (0xxxxxxxxx → +84…), chỉ dùng cho Zalo OA
-- `core/security.py` — JWT access token, hash password (Argon2id), hash mã 6 số/refresh token
-- `core/file_signatures.py` — kiểm magic bytes; presigned POST không kiểm nội dung file
-- `domain/models/` — SQLAlchemy models thật: `User`, `OtpChallenge`, `RefreshSession`,
-  `Workspace`, `WorkspaceMember`, `BrandProfile`, `EventLog` — migrate được lên
-  Postgres thật (`uv run alembic upgrade head`), verify bằng `alembic check`.
-- `adapters/persistence/` — session async (`db.py`, commit-per-request) + repository
-  cho user/OTP/refresh session/workspace/workspace member/brand profile/media.
-- `adapters/storage/object_storage.py` — presigned POST lên S3-compatible; dùng POST
-  thay PUT vì chỉ POST cho phép condition `content-length-range` (chặn size ở storage).
-- `application/services/` — `auth_service.py` (email+mật khẩu, JWT), `workspace_service.py`
-  (workspace/member), `brand_profile_service.py` (giọng văn/từ cấm/FAQ),
-  `media_service.py` (upload ticket, xác nhận upload, tag). Exception thuần (không
-  phụ thuộc FastAPI), router dịch sang HTTP status.
-- `api/` — 12 domain router theo API surface trong `TECHNICAL_SPEC.md`; `auth.py`,
-  `workspaces.py`, `brand_profile.py`, `media.py`, `content.py` (một phần) đã nối
-  DB/storage/queue thật, 7 domain router khác còn `501`.
-- `domain/ports/llm.py` + `domain/policies/provider_router.py` — multi-provider LLM:
-  Gemini ưu tiên, fallback Anthropic/OpenAI khi lỗi/quota/output không đạt.
-- `adapters/llm/` — Gemini/Anthropic/OpenAI qua REST (httpx, không SDK riêng cho
-  từng provider) + `fake.py` để test không cần API key.
-- `application/services/content_engine.py` — một job = một lần gọi LLM sinh nhiều
-  bản theo kênh; validate schema + banned claims trước khi lưu draft.
-- `worker/tasks.py:generate_drafts` — Celery job thật chạy Content Engine.
-- `api/deps.py:PathWorkspaceMemberDep` — chặn 403 khi JWT hợp lệ nhưng không
-  phải thành viên của `{workspace_id}` trong path (khác `WorkspaceDep`, đọc từ JWT).
-- `tests/test_auth_flow.py`, `test_workspace_flow.py`, `test_brand_profile_flow.py`,
-  `test_media_flow.py` — test thật trên Postgres + MinIO (không mock), mỗi test
-  rollback transaction DB riêng — xem `tests/conftest.py`. Lưu ý: object đã upload
-  **không** rollback (storage không có transaction), nên test media để lại object
-  rác trong bucket dev.
+- `core/enums.py` — public enums
+- `core/content_state.py` — content item state machine
+- `core/config.py` — settings and deployment guardrails
+- `core/events.py` — event-log contract
+- `core/security.py` — JWT, Argon2id password hashing, OTP/refresh hashing
+- `core/file_signatures.py` — upload magic-byte checks
+- `domain/models/` — SQLAlchemy models
+- `adapters/persistence/` — repositories
+- `adapters/storage/object_storage.py` — S3-compatible presigned uploads
+- `adapters/llm/` — Gemini/Anthropic/OpenAI REST adapters and fake provider
+- `application/services/content_engine.py` — one job creates multiple drafts
+- `application/services/publish_service.py` — publish dispatch/run/retry logic
+- `worker/tasks.py` — Celery task entrypoints
+- `scheduler/tasks.py` / `scheduler/beat.py` — scheduled command entrypoints
 
-Chưa có: OAuth nền tảng, adapter publish kênh, email provider thật (dùng
-`debug_code` tạm), endpoint logout/revoke session, cache brand profile cho worker,
-lifecycle/cleanup cho asset `pending` bị bỏ dở, quota LLM theo workspace, approve/
-reject/version cho content item, và repository cho các domain còn lại (calendar,
-inbox, leads, analytics, billing, connections).
+## Local AI and Publishing Modes
 
-**LLM: đã có key cả ba provider, nhưng `HAVI_USE_MOCK_LLM=true` nên draft vẫn là
-văn mẫu.** Đặt `false` để gọi model thật (tốn tiền theo token). Toàn bộ luồng cũng
-test được bằng `adapters/llm/fake.py` mà không cần key.
+Local defaults use mock LLM and fake publisher so development is free and does
+not publish real posts. These modes are forbidden outside `HAVI_ENV=local`; the
+backend refuses to start in staging/production if they are enabled.
 
-## Triển khai staging/production
+Set `HAVI_USE_MOCK_LLM=false` and configure a provider key to call a real model.
+Set `HAVI_USE_FAKE_PUBLISHER=false` only when you intend to publish through a real
+connected platform account.
 
-Xem [docs/handoff/DEPLOYMENT.md](../../docs/handoff/DEPLOYMENT.md). Ba thứ hay quên
-nhất, và cả ba đều sai *im lặng*:
+## Staging / Production
 
-1. **Beat không chạy** → bài đã duyệt nằm mãi ở `scheduled`, không có lỗi nào.
-2. **Không có reverse proxy ghi đè `X-Forwarded-For`** → rate limit theo IP vô nghĩa
-   (client tự khai header được).
-3. **Không có alert cho Redis** → rate limit fail-open, Redis chết là mất giới hạn
-   mà UI không hiện gì.
+Read [docs/handoff/DEPLOYMENT.md](../../docs/handoff/DEPLOYMENT.md). The most
+common silent failures are:
 
-## Ràng buộc không được phá
+1. Beat is not running, so scheduled posts never leave `scheduled`.
+2. Reverse proxy does not overwrite `X-Forwarded-For`, making IP rate limits
+   meaningless.
+3. Redis alerting is missing; rate limits fail open while Redis is down.
 
-1. Mặc định `review_first` — không nội dung nào lên mạng khi chủ chưa duyệt.
-2. Reply cho khách **không bao giờ** có `full_auto`, trừ FAQ chủ đã duyệt sẵn từng câu.
-3. Prompt chế bản và prompt seeding nằm trong backend, không lộ ra frontend bundle.
-4. Token nền tảng mã hoá bằng `TOKEN_ENCRYPTION_KEY`, không xuất hiện trong response.
-5. Mọi query scope theo `workspace_id` — không leak chéo tenant.
-6. Publish job có idempotency key — không đăng đúp.
-7. Câu seeding luôn minh bạch danh tính, không giả danh khách hàng.
+## Non-Negotiable Constraints
+
+1. Default mode is `review_first`: no content goes online before approval.
+2. Customer replies never use `full_auto` except exact pre-approved FAQ answers.
+3. Production prompts live only in the backend.
+4. Platform tokens are encrypted and never returned in API responses.
+5. Every query is scoped by `workspace_id`.
+6. Publish jobs use idempotency keys to prevent duplicate posts.
+7. Outreach/reply copy must be truthful about the business identity.
