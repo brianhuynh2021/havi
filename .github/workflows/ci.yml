@@ -28,14 +28,14 @@ jobs:
       - name: Test Web
         run: npm run test:web
 
-      - name: Build Web
-        run: npm run build:web
-
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
       - name: Visual and Accessibility Smoke
         run: npm run test:visual
+
+      - name: Build Web
+        run: npm run build:web
 
   backend:
     name: Backend Checks
