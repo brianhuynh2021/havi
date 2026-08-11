@@ -60,7 +60,9 @@ npm run test:visual
 ```
 
 The Playwright config starts `next dev` on port `3100`, uses mocked API
-responses, and runs both `desktop` and `mobile` projects.
+responses, and runs both `desktop` and `mobile` projects. CI uses a slightly
+looser screenshot diff threshold than local runs to absorb Ubuntu font
+rasterization differences while still catching large layout regressions.
 
 ## Review Rules
 
