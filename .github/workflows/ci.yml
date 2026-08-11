@@ -101,11 +101,17 @@ jobs:
             -e MINIO_ROOT_PASSWORD=minioadmin \
             minio/minio:latest server /data
           for i in {1..30}; do
-            curl -fsS http://localhost:9000/minio/health/live && break
+            if curl -fsS http://localhost:9000/minio/health/live; then
+              break
+            fi
+            if [ "$i" = "30" ]; then
+              docker logs havi-ci-minio
+              exit 1
+            fi
             sleep 2
           done
-          docker run --rm --network host minio/mc:latest \
-            sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc mb --ignore-existing local/havi-media && mc anonymous set download local/havi-media"
+          docker run --rm --network host --entrypoint /bin/sh minio/mc:latest \
+            -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc mb --ignore-existing local/havi-media && mc anonymous set download local/havi-media"
 
       - name: Run Pytest
         run: uv run pytest
