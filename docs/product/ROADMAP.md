@@ -74,7 +74,6 @@ Still pending:
 - Engagement snapshots if Facebook permissions allow
 - Unified inbox and lead/CRM workflows
 - Customer-facing next actions for all reconnect/quota/failure cases
-- Security review checklist
 - Visual regression and accessibility baseline
 - Data deletion, account deletion, and consent records
 - Founder dogfooding plan and beta readiness process
@@ -149,6 +148,9 @@ Still pending:
 - Postgres backup and restore rehearsal commands for local/staging practice
 - Object-storage backup and restore rehearsal guidance for local MinIO and
   provider-backed staging
+- Security review checklist for founder beta with auth/session, token
+  encryption, tenant isolation, upload validation, logging/redaction, fake-mode,
+  dependency, deployment-secret, deletion, and consent gates
 
 ## 5. Current Definition of Done
 
@@ -195,11 +197,10 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 
 ## 7. Current Priority Queue
 
-1. Complete security review checklist.
-2. Set up visual regression and accessibility baseline.
-3. Design data deletion, account deletion, and consent records.
-4. Prepare a 7-day founder dogfooding plan.
-5. Sync the product roadmap after agent-loop batches.
+1. Set up visual regression and accessibility baseline.
+2. Design data deletion, account deletion, and consent records.
+3. Prepare a 7-day founder dogfooding plan.
+4. Sync the product roadmap after agent-loop batches.
 
 ## 8. Upcoming Work
 
@@ -226,15 +227,23 @@ cd apps/backend && uv run alembic check
 
 ### P0: Security Review Checklist
 
+Status: completed for founder beta in `docs/security/SECURITY_REVIEW.md`.
+
 Acceptance criteria:
 
-- auth/session/token handling reviewed
-- platform token encryption reviewed
-- tenant isolation reviewed
-- upload validation reviewed
-- logs/events checked for secrets and PII
-- local-only flags verified as blocked outside local
-- dependency and deployment secret handling reviewed
+- [x] auth/session/token handling reviewed
+- [x] platform token encryption reviewed
+- [x] tenant isolation reviewed
+- [x] upload validation reviewed
+- [x] logs/events checked for secrets and PII
+- [x] local-only flags verified as blocked outside local
+- [x] dependency and deployment secret handling reviewed
+
+Open follow-ups before external beta:
+
+- data deletion and consent policy remains P1
+- dependency vulnerability scanning should be added
+- refresh-token storage should move from `localStorage` to HTTP-only cookies
 
 ### P1: Visual Regression and Accessibility Baseline
 
