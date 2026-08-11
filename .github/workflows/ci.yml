@@ -64,7 +64,7 @@ jobs:
       HAVI_DATABASE_URL: postgresql+psycopg://havi:havi@localhost:5432/havi
       HAVI_REDIS_URL: redis://localhost:6379/0
       HAVI_JWT_SECRET: ci-jwt-secret-key-must-be-at-least-32-bytes-long
-      HAVI_FERNET_KEY: Z3A5T2I3NTRLN3Y4OTAxMjM0NTY3ODkwMTIzNDU2Nzg=
+      HAVI_TOKEN_ENCRYPTION_KEY: Z3A5T2I3NTRLN3Y4OTAxMjM0NTY3ODkwMTIzNDU2Nzg=
       HAVI_USE_MOCK_LLM: "true"
 
     defaults:
@@ -92,6 +92,20 @@ jobs:
 
       - name: Alembic Migration Check
         run: uv run alembic upgrade head
+
+      - name: Start MinIO
+        run: |
+          docker run -d --name havi-ci-minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for i in {1..30}; do
+            curl -fsS http://localhost:9000/minio/health/live && break
+            sleep 2
+          done
+          docker run --rm --network host minio/mc:latest \
+            sh -c "mc alias set local http://localhost:9000 minioadmin minioadmin && mc mb --ignore-existing local/havi-media && mc anonymous set download local/havi-media"
 
       - name: Run Pytest
         run: uv run pytest

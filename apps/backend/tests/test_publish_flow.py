@@ -301,8 +301,10 @@ class TestPhanLoaiLoi:
 
         for _ in range(MAX_ATTEMPTS):
             job = (await repo.claim_due(now=_at(21)))[0]
-            job.next_attempt_at = None
             await repo.mark_failed(job, kind=PublishFailureKind.TEMPORARY, detail="429")
+            if job.status is PublishStatus.PENDING:
+                job.next_attempt_at = None
+                await db_session.flush()
 
         assert job.status is PublishStatus.DEAD_LETTER
         assert job.attempt_count == MAX_ATTEMPTS
