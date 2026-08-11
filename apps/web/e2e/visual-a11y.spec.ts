@@ -357,10 +357,7 @@ function defineRouteChecks(route: VisualRoute) {
     await page.waitForLoadState("networkidle");
     await expectReady(page, route);
 
-    await expect(page).toHaveScreenshot(
-      `${route.name}-${testInfo.project.name}.png`,
-      { fullPage: true },
-    );
+    await expect(page).toHaveScreenshot(`${route.name}-${testInfo.project.name}.png`);
   });
 
   test(`${route.name} accessibility smoke`, async ({ page }) => {
