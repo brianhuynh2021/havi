@@ -74,7 +74,6 @@ Still pending:
 - Engagement snapshots if Facebook permissions allow
 - Unified inbox and lead/CRM workflows
 - Customer-facing next actions for all reconnect/quota/failure cases
-- Visual regression and accessibility baseline
 - Data deletion, account deletion, and consent records
 - Founder dogfooding plan and beta readiness process
 
@@ -151,6 +150,8 @@ Still pending:
 - Security review checklist for founder beta with auth/session, token
   encryption, tenant isolation, upload validation, logging/redaction, fake-mode,
   dependency, deployment-secret, deletion, and consent gates
+- Visual regression and accessibility baseline for major web routes across
+  desktop and mobile viewports
 
 ## 5. Current Definition of Done
 
@@ -174,6 +175,7 @@ Common web verification:
 npm run lint:web
 npm run test:web
 npm run build:web
+npm run test:visual
 ```
 
 Common backend verification:
@@ -197,10 +199,9 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 
 ## 7. Current Priority Queue
 
-1. Set up visual regression and accessibility baseline.
-2. Design data deletion, account deletion, and consent records.
-3. Prepare a 7-day founder dogfooding plan.
-4. Sync the product roadmap after agent-loop batches.
+1. Design data deletion, account deletion, and consent records.
+2. Prepare a 7-day founder dogfooding plan.
+3. Sync the product roadmap after agent-loop batches.
 
 ## 8. Upcoming Work
 
@@ -247,12 +248,14 @@ Open follow-ups before external beta:
 
 ### P1: Visual Regression and Accessibility Baseline
 
+Status: completed in `docs/testing/VISUAL_ACCESSIBILITY.md`.
+
 Acceptance criteria:
 
-- baseline screenshots for major app routes
-- smoke accessibility checks for nav/forms/buttons/states
-- mobile and desktop viewport checks
-- documented command for local/CI execution
+- [x] baseline screenshots for major app routes
+- [x] smoke accessibility checks for nav/forms/buttons/states
+- [x] mobile and desktop viewport checks
+- [x] documented command for local/CI execution
 
 ### P1: Data Deletion, Account Deletion, and Consent Records
 

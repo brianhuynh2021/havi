@@ -36,3 +36,5 @@ agent-loop/patches/
 
 # Generated OpenAPI artifact — nguồn sự thật là backend code, chỉ commit schema.d.ts
 apps/web/openapi.json
+apps/web/playwright-report/
+apps/web/test-results/

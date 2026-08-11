@@ -8,6 +8,7 @@ Documentation in `docs/` is grouped by audience and purpose:
 - [`architecture/`](architecture/) — technical spec, repository strategy, and
   architecture decisions
 - [`security/`](security/) — security review checklists and release gates
+- [`testing/`](testing/) — visual regression and accessibility baselines
 
 Setting up staging or production? Start with
 [`handoff/DEPLOYMENT.md`](handoff/DEPLOYMENT.md). It captures the operational

@@ -9,6 +9,7 @@
     "build:web": "npm run build --workspace web",
     "lint:web": "npm run lint --workspace web",
     "test:web": "npm run test --workspace web",
+    "test:visual": "npm run test:visual --workspace web",
     "e2e": "cd apps/backend && uv run pytest tests/test_e2e_core_flow.py",
     "generate:api": "npm run generate:api --workspace web",
     "dev:api": "cd apps/backend && uv run uvicorn api.main:app --reload --port 8000",
