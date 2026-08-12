@@ -19,12 +19,12 @@ let refreshInFlight: Promise<StoredTokens | null> | null = null;
 
 async function refreshTokens(): Promise<StoredTokens | null> {
   const current = readTokens();
-  if (!current) return null;
 
   const response = await fetch(`${baseUrl}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: current.refreshToken }),
+    credentials: "include",
+    body: JSON.stringify({ refresh_token: current?.refreshToken }),
   });
 
   if (!response.ok) {
@@ -68,10 +68,10 @@ async function authedFetch(input: Request): Promise<Response> {
 
   let response: Response;
   try {
-    response = await fetch(input);
+    response = await fetch(input, { credentials: "include" });
   } catch (err) {
     try {
-      response = await fetch(retry);
+      response = await fetch(retry, { credentials: "include" });
     } catch {
       throw err;
     }
@@ -83,7 +83,7 @@ async function authedFetch(input: Request): Promise<Response> {
   if (!refreshed) return response;
 
   retry.headers.set("Authorization", `Bearer ${refreshed.accessToken}`);
-  return fetch(retry);
+  return fetch(retry, { credentials: "include" });
 }
 
 export const apiClient = createClient<paths>({ baseUrl, fetch: authedFetch });
@@ -98,5 +98,5 @@ export const apiClient = createClient<paths>({ baseUrl, fetch: authedFetch });
  * ngoài và test hoá ra đang gọi backend đang chạy. */
 export const publicApiClient = createClient<paths>({
   baseUrl,
-  fetch: (input) => globalThis.fetch(input),
+  fetch: (input) => globalThis.fetch(input, { credentials: "include" }),
 });

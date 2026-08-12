@@ -21,6 +21,7 @@ import { channelLabels, type PublishMode } from "./content-creation.fixture";
 import { DraftEditor } from "./draft-editor";
 import { useJobPolling } from "./use-job-polling";
 import { QuotaBanner } from "./quota-banner";
+import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -97,6 +98,14 @@ const jobProgressLabel: Record<string, string> = {
   processing: "Havi đang viết bài từ liệu chị vừa nạp…",
 };
 
+function makeNoteChipKey(chipCount: number): string {
+  return `note-${chipCount}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function makeJobKey(chips: RawChip[]): string {
+  return `job-${Date.now()}-${chips.map((c) => c.key).join("|")}`;
+}
+
 export function ContentCreationScreen() {
   const [publishMode, setPublishMode] = useState<PublishMode>("review_first");
   const [chips, setChips] = useState<RawChip[]>([]);
@@ -117,27 +126,6 @@ export function ContentCreationScreen() {
     body: string;
     isInstant: boolean;
   } | null>(null);
-  const [aiImages, setAiImages] = useState<Record<string, string>>({});
-  const [generatingAiImageId, setGeneratingAiImageId] = useState<string | null>(null);
-
-  async function handleGenerateAiImage(itemId: string, note?: string | null) {
-    setGeneratingAiImageId(itemId);
-    const samples = [
-      "/ai-samples/facial_care.jpg",
-      "/ai-samples/foot_bath.jpg",
-      "/ai-samples/herbal_wash.jpg",
-    ];
-    let selected = samples[0];
-    if (note?.toLowerCase().includes("chân") || note?.toLowerCase().includes("ngâm")) {
-      selected = samples[1];
-    } else if (note?.toLowerCase().includes("gội") || note?.toLowerCase().includes("thảo")) {
-      selected = samples[2];
-    }
-    await new Promise((r) => setTimeout(r, 600));
-    setAiImages((prev) => ({ ...prev, [itemId]: selected }));
-    setGeneratingAiImageId(null);
-    setNotice("✨ Havi đã dùng AI vẽ ảnh minh hoạ thành công cho bài viết này!");
-  }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef(new Set<string>());
 
@@ -191,11 +179,33 @@ export function ContentCreationScreen() {
     previewUrlsRef.current.delete(url);
   }
 
-  // Job xong thì nạp lại hàng chờ duyệt và thông báo cho chị chủ tiệm.
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const addToast = useCallback((toast: Omit<ToastItem, "id">) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+    if (toast.type !== "loading") {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 6000);
+    }
+    return id;
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Job xong thì nạp lại hàng chờ duyệt và hiển thị thông báo Toast ở góc phải màn hình.
   const onJobReady = useCallback(() => {
-    setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt.");
+    setToasts((prev) => prev.filter((t) => t.type !== "loading"));
+    addToast({
+      type: "success",
+      title: "🎉 Havi đã sáng tạo xong bài mới!",
+      description: "Đã nạp vào danh sách bên dưới — mời chị cuộn xuống duyệt nhé.",
+    });
     loadItems();
-  }, [loadItems]);
+  }, [addToast, loadItems]);
 
   const poll = useJobPolling(jobId, onJobReady);
 
@@ -323,7 +333,7 @@ export function ContentCreationScreen() {
     if (!currentChips.length && note.trim()) {
       const text = note.trim();
       const newChip: RawChip = {
-        key: `note-${chips.length}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        key: makeNoteChipKey(chips.length),
         kind: "text",
         label: text.length > 40 ? `${text.slice(0, 40)}…` : text,
         input: { kind: "text", text },
@@ -335,7 +345,7 @@ export function ContentCreationScreen() {
     setNotice(null);
 
     // Key gắn với bộ liệu thô và thời điểm gửi để tạo được nhiều job liên tiếp
-    const key = `job-${Date.now()}-${currentChips.map((c) => c.key).join("|")}`;
+    const key = makeJobKey(currentChips);
     const result = await createJob(
       currentChips.map((c) => c.input),
       key,
@@ -359,6 +369,13 @@ export function ContentCreationScreen() {
     setJobId(result.data.id);
     // Job vừa tạo sẽ tiêu token — nạp lại số còn lại sau khi worker chạy xong.
     setQuotaKey((k) => k + 1);
+
+    // Hiển thị Toast góc phải màn hình theo chuẩn MIT
+    addToast({
+      type: "loading",
+      title: "⚡ Havi đang viết bài cho tiệm",
+      description: "Đang chạy ngầm trong nền — Chị có thể tạo tiếp bài khác hoặc chuyển màn hình thoải mái.",
+    });
   }
 
   async function onApprove(id: string, scheduledAt?: string) {
@@ -612,21 +629,7 @@ export function ContentCreationScreen() {
         </p>
       ) : null}
 
-      {generating ? (
-        <section className={styles.processingCard} aria-label="Đang xử lý">
-          <span className={styles.spinner} aria-hidden="true" />
-          <div>
-            <p className={styles.processingTitle}>
-              {poll.activeCount > 1
-                ? `⚡ Havi đang viết bài cho ${poll.activeCount} bộ liệu thô trong nền…`
-                : jobProgressLabel[poll.status ?? "queued"]}
-            </p>
-            <p className={styles.processingMeta}>
-              Thường xong trong dưới 90 giây — chị có thể tạo bài khác hoặc lướt màn hình khác.
-            </p>
-          </div>
-        </section>
-      ) : null}
+
 
       {poll.status === "failed" ? (
         <ErrorState
@@ -785,6 +788,9 @@ export function ContentCreationScreen() {
           </div>
         </div>
       ) : null}
+
+      {/* Floating Toast Notification ở góc phải màn hình theo chuẩn MIT */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </>
   );
 }

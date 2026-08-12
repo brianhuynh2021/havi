@@ -136,7 +136,11 @@ class FacebookPublisher(PublisherPort):
             try:
                 img_res = await client.get(
                     media_url,
-                    headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
+                    headers={
+                        "User-Agent": (
+                            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+                        )
+                    },
                     follow_redirects=True,
                 )
                 if img_res.status_code == 200 and len(img_res.content) > 0:
@@ -153,7 +157,11 @@ class FacebookPublisher(PublisherPort):
                     response = await client.post(url, data=data, files=files)
                     if response.status_code < 400:
                         return response.json()
-                    logger.error("Facebook _post_photo failed (%s): %s", response.status_code, response.text)
+                    logger.error(
+                        "Facebook _post_photo failed (%s): %s",
+                        response.status_code,
+                        response.text,
+                    )
                     raise self._classify_error(response)
             except Exception as exc:
                 if isinstance(

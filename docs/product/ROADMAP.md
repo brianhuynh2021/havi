@@ -201,9 +201,9 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 
 All Founder Beta milestones (Gates A through E) are 100% completed, tested, and verified.
 Queue for External Beta Phase:
-1. Setup dependency vulnerability scanning audit (`npm audit` & `uv pip audit`).
-2. Add HTTP-only cookie option for refresh tokens to supplement local storage.
-3. Prepare marketing landing page assets for external pilot cohort onboarding.
+- [x] Dependency vulnerability scanning audit (`npm audit` & `pip-audit` verified cleanly with 0 backend vulnerabilities).
+- [x] Add HTTP-only cookie support (`havi_refresh_token`) for refresh tokens on auth endpoints and frontend fetch clients.
+- [ ] Prepare marketing landing page assets for external pilot cohort onboarding.
 
 ## 8. Upcoming Work
 

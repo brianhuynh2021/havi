@@ -165,7 +165,8 @@ async def test_job_failed_bam_thu_lai_cung_idempotency_key_thi_enqueue_lai(
 
     # Giả lập job bị failed
     repo = ContentRepository(db_session)
-    job = await repo.get_job(workspace_id=db_session.info.get("workspace_id") or first.json()["workspace_id"], job_id=job_id)
+    target_ws = db_session.info.get("workspace_id") or first.json()["workspace_id"]
+    job = await repo.get_job(workspace_id=target_ws, job_id=job_id)
     if job:
         await repo.mark_job_failed(job, reason="Lỗi giả lập")
 

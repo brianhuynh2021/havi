@@ -94,7 +94,7 @@ class TokenPair(HaviModel):
 
 
 class RefreshRequest(HaviModel):
-    refresh_token: str
+    refresh_token: str | None = None
 
 
 class CurrentUser(HaviModel):

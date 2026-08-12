@@ -24,25 +24,17 @@ export type JobPollState = {
   resetJob: () => void;
 };
 
-const IDLE: JobPollState = {
-  status: null,
-  job: null,
-  error: null,
-  activeCount: 0,
-  addJobId: () => {},
-  resetJob: () => {},
-};
-
 /**
-  * Theo dõi các content job đang chạy ngầm tới khi `drafts_ready` hoặc `failed`.
-  *
-  * Hỗ trợ chạy nhiều job cùng lúc không chắn giao diện (Async non-blocking queue).
-  */
+ * Theo dõi các content job đang chạy ngầm tới khi `drafts_ready` hoặc `failed`.
+ *
+ * Hỗ trợ chạy nhiều job cùng lúc không chắn giao diện (Async non-blocking queue).
+ */
 export function useJobPolling(
   initialJobId: string | null,
   onReady: () => void,
 ): JobPollState {
-  const [jobIds, setJobIds] = useState<string[]>([]);
+  const [jobIds, setJobIds] = useState<string[]>(() => (initialJobId ? [initialJobId] : []));
+  const [prevInitialJobId, setPrevInitialJobId] = useState<string | null>(initialJobId);
   const [state, setState] = useState<{
     status: JobStatus | null;
     job: ContentJob | null;
@@ -50,11 +42,12 @@ export function useJobPolling(
   }>({ status: null, job: null, error: null });
 
   // Cập nhật jobIds khi prop initialJobId thay đổi
-  useEffect(() => {
-    if (initialJobId) {
-      setJobIds((prev) => (prev.includes(initialJobId) ? prev : [...prev, initialJobId]));
+  if (initialJobId !== prevInitialJobId) {
+    setPrevInitialJobId(initialJobId);
+    if (initialJobId && !jobIds.includes(initialJobId)) {
+      setJobIds((prev) => [...prev, initialJobId]);
     }
-  }, [initialJobId]);
+  }
 
   const onReadyRef = useRef(onReady);
   useEffect(() => {

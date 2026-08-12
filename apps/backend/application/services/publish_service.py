@@ -12,8 +12,8 @@ from uuid import UUID
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
-from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.media_repository import MediaRepository
+from adapters.persistence.publish_repository import PublishRepository
 from core.alerts import Alert, AlertSink, LoggingAlertSink
 from core.config import get_settings
 from core.enums import (
@@ -33,14 +33,22 @@ from domain.ports.publisher import (
     PublishRequest,
 )
 
+logger = logging.getLogger("havi.publish_service")
+
+
 def select_topic_image(media_note: str | None, text: str | None) -> str:
     """Chọn ảnh chủ đề chất lượng cao phù hợp với media_note hoặc nội dung bài AI sinh."""
     combined = f"{media_note or ''} {text or ''}".lower()
-    if any(k in combined for k in ("quà", "gift", "thưởng", "khuyến mãi", "ưu đãi", "bốc thăm", "voucher", "trò chơi", "game")):
+    keywords_gift = (
+        "quà", "gift", "thưởng", "khuyến mãi", "ưu đãi", "bốc thăm", "voucher", "trò chơi", "game"
+    )
+    keywords_food = ("cafe", "cà phê", "trà", "ăn", "uống", "food", "drink", "nhà hàng")
+    if any(k in combined for k in keywords_gift):
         return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80"
     if any(k in combined for k in ("tóc", "hair", "gội", "cắt", "uốn", "nhuộm", "styling")):
         return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80"
-    if any(k in combined for k in ("cafe", "cà phê", "trà", "ăn", "uống", "food", "drink", "nhà hàng")):
+    if any(k in combined for k in keywords_food):
+        return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
         return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
     if any(k in combined for k in ("da", "dưỡng", "skin", "mặt", "trị liệu", "massage", "facial")):
         return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80"

@@ -6,6 +6,7 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 đăng đúp khi user bấm 2 lần hoặc 2 worker cùng nhận job.
 """
 
+import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -45,6 +46,8 @@ from core.schemas import (
 )
 from domain.policies import rate_limits
 from domain.policies.quota import QuotaExceeded
+
+logger = logging.getLogger("havi.content")
 
 router = APIRouter(prefix="/content", tags=["content"])
 

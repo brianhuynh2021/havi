@@ -8,7 +8,7 @@ SĐT (`PUT /auth/phone`) là tuỳ chọn, chỉ để nhận bản nháp/nhắc
 — không dùng để đăng nhập.
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from api.deps import AuthDep, AuthServiceDep
 from api.rate_limit import limit_by_ip
@@ -23,6 +23,7 @@ from application.services.auth_service import (
     PhoneAlreadyUsed,
     RefreshTokenInvalid,
 )
+from core.config import get_settings
 from core.schemas import (
     CurrentUser,
     EmailLoginRequest,
@@ -37,6 +38,24 @@ from core.schemas import (
 from domain.policies import rate_limits
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+COOKIE_NAME = "havi_refresh_token"
+
+
+def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
+    settings = get_settings()
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=not settings.debug,
+        max_age=30 * 24 * 3600,
+        path="/",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(key=COOKIE_NAME, path="/")
 
 
 class OtpChallenge(HaviModel):
@@ -66,7 +85,9 @@ def _to_token_pair(result) -> TokenPair:
     status_code=status.HTTP_201_CREATED,
     dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
 )
-async def sign_up(payload: SignUpRequest, auth_service: AuthServiceDep) -> TokenPair:
+async def sign_up(
+    payload: SignUpRequest, auth_service: AuthServiceDep, response: Response
+) -> TokenPair:
     """Đăng ký xong đăng nhập luôn — mật khẩu đã là bằng chứng sở hữu tài khoản."""
     try:
         result = await auth_service.sign_up(
@@ -76,7 +97,9 @@ async def sign_up(payload: SignUpRequest, auth_service: AuthServiceDep) -> Token
         raise HTTPException(
             status.HTTP_409_CONFLICT, "Email đã có tài khoản — đăng nhập thay vì đăng ký"
         ) from exc
-    return _to_token_pair(result)
+    res = _to_token_pair(result)
+    _set_refresh_cookie(response, result.refresh_token)
+    return res
 
 
 @router.post(
@@ -84,7 +107,9 @@ async def sign_up(payload: SignUpRequest, auth_service: AuthServiceDep) -> Token
     response_model=TokenPair,
     dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
 )
-async def login_email(payload: EmailLoginRequest, auth_service: AuthServiceDep) -> TokenPair:
+async def login_email(
+    payload: EmailLoginRequest, auth_service: AuthServiceDep, response: Response
+) -> TokenPair:
     try:
         result = await auth_service.login_with_email(
             email=payload.email, password=payload.password
@@ -95,7 +120,9 @@ async def login_email(payload: EmailLoginRequest, auth_service: AuthServiceDep) 
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, "Email hoặc mật khẩu không đúng"
         ) from exc
-    return _to_token_pair(result)
+    res = _to_token_pair(result)
+    _set_refresh_cookie(response, result.refresh_token)
+    return res
 
 
 @router.post(
@@ -128,7 +155,7 @@ async def request_password_reset(
     dependencies=[limit_by_ip("auth_reset", rate_limits.AUTH_PASSWORD_RESET)],
 )
 async def confirm_password_reset(
-    payload: PasswordResetConfirm, auth_service: AuthServiceDep
+    payload: PasswordResetConfirm, auth_service: AuthServiceDep, response: Response
 ) -> TokenPair:
     """Đặt mật khẩu mới rồi đăng nhập luôn — khỏi bắt user nhập lại."""
     try:
@@ -141,7 +168,9 @@ async def confirm_password_reset(
         ) from exc
     except OtpInvalidOrExpired as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Mã không đúng hoặc đã hết hạn") from exc
-    return _to_token_pair(result)
+    res = _to_token_pair(result)
+    _set_refresh_cookie(response, result.refresh_token)
+    return res
 
 
 @router.put("/phone", response_model=CurrentUser)
@@ -163,19 +192,43 @@ async def set_phone(
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh(payload: RefreshRequest, auth_service: AuthServiceDep) -> TokenPair:
+async def refresh(
+    request: Request,
+    response: Response,
+    auth_service: AuthServiceDep,
+    payload: RefreshRequest | None = None,
+) -> TokenPair:
+    token = (
+        payload.refresh_token if payload and payload.refresh_token else None
+    ) or request.cookies.get(COOKIE_NAME)
+    if not token:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "Refresh token không hợp lệ hoặc đã hết hạn"
+        )
     try:
-        result = await auth_service.refresh(refresh_token=payload.refresh_token)
+        result = await auth_service.refresh(refresh_token=token)
     except RefreshTokenInvalid as exc:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, "Refresh token không hợp lệ hoặc đã hết hạn"
         ) from exc
-    return _to_token_pair(result)
+    res = _to_token_pair(result)
+    _set_refresh_cookie(response, result.refresh_token)
+    return res
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(payload: RefreshRequest, auth_service: AuthServiceDep) -> None:
-    await auth_service.logout(refresh_token=payload.refresh_token)
+async def logout(
+    request: Request,
+    response: Response,
+    auth_service: AuthServiceDep,
+    payload: RefreshRequest | None = None,
+) -> None:
+    token = (
+        payload.refresh_token if payload and payload.refresh_token else None
+    ) or request.cookies.get(COOKIE_NAME)
+    if token:
+        await auth_service.logout(refresh_token=token)
+    _clear_refresh_cookie(response)
 
 
 @router.get("/me", response_model=CurrentUser)
@@ -187,7 +240,7 @@ async def me(auth: AuthDep, auth_service: AuthServiceDep) -> CurrentUser:
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_me(auth: AuthDep, auth_service: AuthServiceDep) -> None:
+async def delete_me(auth: AuthDep, auth_service: AuthServiceDep, response: Response) -> None:
     """Xoá vĩnh viễn tài khoản người dùng và thu hồi mọi phiên làm việc."""
     try:
         await auth_service.delete_user_account(user_id=auth.user_id)
@@ -197,4 +250,5 @@ async def delete_me(auth: AuthDep, auth_service: AuthServiceDep) -> None:
             "Tài khoản đang là owner của workspace có thành viên khác. "
             "Vui lòng chuyển quyền owner hoặc xoá workspace trước.",
         ) from exc
+    _clear_refresh_cookie(response)
 
