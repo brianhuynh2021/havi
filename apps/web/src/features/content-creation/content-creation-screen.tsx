@@ -110,7 +110,7 @@ export function ContentCreationScreen() {
   const [publishMode, setPublishMode] = useState<PublishMode>("review_first");
   const [chips, setChips] = useState<RawChip[]>([]);
   const [note, setNote] = useState("");
-  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(true);
   const [uploads, setUploads] = useState<UploadRow[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [items, setItems] = useState<ContentItem[]>([]);
@@ -364,7 +364,7 @@ export function ContentCreationScreen() {
     setChips([]);
     setUploads([]);
     setNote("");
-    setNoteOpen(false);
+    setNoteOpen(true);
 
     poll.addJobId(result.data.id);
     setJobId(result.data.id);
