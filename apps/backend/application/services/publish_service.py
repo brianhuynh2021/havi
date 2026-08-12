@@ -13,7 +13,9 @@ from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.publish_repository import PublishRepository
+from adapters.persistence.media_repository import MediaRepository
 from core.alerts import Alert, AlertSink, LoggingAlertSink
+from core.config import get_settings
 from core.enums import (
     Channel,
     ConnectionStatus,
@@ -68,6 +70,8 @@ class PublishService:
         connections: ConnectionRepository,
         publishes: PublishRepository,
         events: EventLogRepository,
+        media: MediaRepository | None = None,
+        media_public_url: str | None = None,
         alerts: AlertSink | None = None,
         publishers: dict[Channel, PublisherPort],
     ) -> None:
@@ -75,6 +79,8 @@ class PublishService:
         self._connections = connections
         self._publishes = publishes
         self._events = events
+        self._media = media
+        self._media_public_url = media_public_url or get_settings().media_public_url
         self._alerts = alerts or LoggingAlertSink()
         self._publishers = publishers
 
@@ -165,10 +171,27 @@ class PublishService:
                 detail="Không giải mã được token nền tảng",
             )
 
+        media_urls: list[str] = []
+        if self._media:
+            job_obj = await self._content.get_job(
+                workspace_id=job.workspace_id, job_id=item.job_id
+            )
+            if job_obj and job_obj.raw_inputs:
+                for inp in job_obj.raw_inputs:
+                    asset_id_str = inp.get("media_asset_id")
+                    if asset_id_str:
+                        asset = await self._media.get(
+                            workspace_id=job.workspace_id, asset_id=UUID(str(asset_id_str))
+                        )
+                        if asset:
+                            url = f"{self._media_public_url.rstrip('/')}/{asset.object_key}"
+                            media_urls.append(url)
+
         try:
             result = await publisher.publish(
                 PublishRequest(
                     text=item.text,
+                    media_urls=media_urls,
                     external_account_id=connection.external_account_id,
                     idempotency_key=job.idempotency_key,
                 ),
