@@ -714,3 +714,21 @@ class TestTokenRedaction:
         )
         assert PAGE_TOKEN not in repr(account)
         assert "***" in repr(account)
+
+
+async def test_facebook_data_deletion_callback():
+    """Endpoint /connections/facebook/data-deletion trả JSON url & confirmation_code đúng chuẩn Meta."""
+    from api.main import create_app
+    from httpx import ASGITransport, AsyncClient
+
+    app = create_app()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        res = await client.post("/connections/facebook/data-deletion")
+        assert res.status_code == 200
+        data = res.json()
+        assert "url" in data
+        assert "confirmation_code" in data
+        assert data["confirmation_code"].startswith("del_")
+        assert "/huong-dan-xoa-du-lieu" in data["url"]
+
+

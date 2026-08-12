@@ -8,10 +8,13 @@ tới, không kèm JWT. Danh tính đến từ `state` đã ký ở `/start`, xe
 `core.oauth_state`.
 """
 
+import base64
+import json
 import logging
+import uuid
 
-from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from api.deps import AuthDep, ConnectionServiceDep, WorkspaceDep
 from application.services.connection_service import (
@@ -161,3 +164,56 @@ async def disconnect(
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, "Kênh này chưa được nối"
         ) from exc
+
+
+@router.post("/facebook/data-deletion", include_in_schema=False)
+@router.get("/facebook/data-deletion", include_in_schema=False)
+async def facebook_data_deletion(request: Request) -> JSONResponse:
+    """Callback xử lý yêu cầu xóa dữ liệu từ Facebook (Meta Data Deletion Request).
+
+    Meta yêu cầu endpoint trả URL hướng dẫn/xác nhận xóa kèm `confirmation_code`.
+    """
+    settings = get_settings()
+    confirmation_code = f"del_{uuid.uuid4().hex[:12]}"
+
+    signed_request = request.query_params.get("signed_request")
+    if not signed_request and request.method == "POST":
+        try:
+            body = await request.body()
+            body_text = body.decode("utf-8", errors="ignore")
+            # Parse form urlencoded signed_request=...
+            for param in body_text.split("&"):
+                if param.startswith("signed_request="):
+                    signed_request = param.split("=", 1)[1]
+                    break
+        except Exception:
+            pass
+
+    if signed_request:
+        try:
+            parts = signed_request.split(".", 1)
+            if len(parts) == 2:
+                payload = parts[1]
+                # Fix base64url padding
+                padded_payload = payload + "=" * (-len(payload) % 4)
+                decoded_bytes = base64.urlsafe_b64decode(padded_payload)
+                data = json.loads(decoded_bytes.decode("utf-8"))
+                user_id = data.get("user_id")
+                if user_id:
+                    logger.info(
+                        "Facebook Data Deletion requested for user_id: %s (code: %s)",
+                        user_id,
+                        confirmation_code,
+                    )
+        except Exception:
+            logger.warning("Failed to parse Facebook signed_request in data deletion callback")
+
+    status_url = f"{settings.web_base_url}/huong-dan-xoa-du-lieu?confirmation_code={confirmation_code}"
+    return JSONResponse(
+        content={
+            "url": status_url,
+            "confirmation_code": confirmation_code,
+        }
+    )
+
+

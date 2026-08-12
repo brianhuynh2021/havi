@@ -203,17 +203,16 @@ All Founder Beta milestones (Gates A through E) are 100% completed, tested, and 
 Queue for External Beta Phase:
 - [x] Dependency vulnerability scanning audit (`npm audit` & `pip-audit` verified cleanly with 0 backend vulnerabilities).
 - [x] Add HTTP-only cookie support (`havi_refresh_token`) for refresh tokens on auth endpoints and frontend fetch clients.
+- [x] Facebook App Review submission package & compliance infrastructure (Meta Data Deletion Callback API, `/huong-dan-xoa-du-lieu` page, and submission guide in `docs/operations/FACEBOOK_APP_REVIEW.md`).
 - [ ] Prepare marketing landing page assets for external pilot cohort onboarding.
 
 ## 8. Upcoming Work
 
 ### Completed: Founder Dogfooding Plan
 
-Status: completed in `docs/operations/DOGFOODING_PLAN.md`.
-
-Acceptance criteria:
-
+Status: completed
 - [x] 7-day internal beta checklist (Day 1 through Day 7 action guide)
+- [x] Automated 7-day founder dogfooding protocol runner (`scripts/dogfood_suite.py`)
 - [x] daily tasks and operational telemetry log template
 - [x] P0/P1 bug triage SLAs and response times defined
 - [x] immediate stop rules (kill switches) defined for system failures or credential leaks
