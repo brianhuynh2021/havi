@@ -27,6 +27,52 @@ const vnTime = new Intl.DateTimeFormat("vi-VN", {
   hour12: false,
 });
 
+function getTopicImage(mediaNote?: string | null, text?: string | null): string {
+  const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
+  if (
+    combined.includes("quà") ||
+    combined.includes("gift") ||
+    combined.includes("thưởng") ||
+    combined.includes("khuyến mãi") ||
+    combined.includes("ưu đãi") ||
+    combined.includes("bốc thăm") ||
+    combined.includes("voucher") ||
+    combined.includes("trò chơi") ||
+    combined.includes("game")
+  ) {
+    return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80";
+  }
+  if (
+    combined.includes("tóc") ||
+    combined.includes("hair") ||
+    combined.includes("gội") ||
+    combined.includes("cắt") ||
+    combined.includes("uốn") ||
+    combined.includes("nhuộm")
+  ) {
+    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80";
+  }
+  if (
+    combined.includes("cafe") ||
+    combined.includes("cà phê") ||
+    combined.includes("ăn") ||
+    combined.includes("uống")
+  ) {
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80";
+  }
+  if (
+    combined.includes("da") ||
+    combined.includes("dưỡng") ||
+    combined.includes("mặt") ||
+    combined.includes("trị liệu") ||
+    combined.includes("massage") ||
+    combined.includes("facial")
+  ) {
+    return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80";
+  }
+  return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80";
+}
+
 function dayLabel(iso: string): string {
   const [, month, day] = iso.split("-");
   return `${day}/${month}`;
@@ -63,15 +109,18 @@ export function CalendarScreen() {
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Modal xem chi tiết & đổi giờ bài viết
+  const [selectedItem, setSelectedItem] = useState<{
+    item: CalendarDay["items"][number];
+    fallbackDate: string;
+  } | null>(null);
+
   const [draftTime, setDraftTime] = useState("");
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const today = toVnDateString(new Date());
-
-  // `reloadKey` để nút "Thử lại" nạp lại đúng tuần đang xem mà không phải nhân
-  // đôi logic fetch ra ngoài effect.
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -96,8 +145,8 @@ export function CalendarScreen() {
     };
   }, [weekStart, reloadKey]);
 
-  function startEditing(item: CalendarDay["items"][number], fallbackDate: string) {
-    setEditingId(item.id);
+  function openDetailModal(item: CalendarDay["items"][number], fallbackDate: string) {
+    setSelectedItem({ item, fallbackDate });
     setDraftTime(datetimeLocalValue(item.scheduled_at, fallbackDate));
     setRescheduleError(null);
   }
@@ -116,7 +165,21 @@ export function CalendarScreen() {
       setReloadKey((k) => k + 1);
       return;
     }
-    setEditingId(null);
+    setSelectedItem(null);
+    setReloadKey((k) => k + 1);
+  }
+
+  async function handleRepublish(itemId: string) {
+    setSavingId(itemId);
+    setRescheduleError(null);
+    const nowIso = toVnOffsetIso(datetimeLocalValue(new Date().toISOString(), today));
+    const result = await rescheduleItem(itemId, nowIso);
+    setSavingId(null);
+    if (!result.ok) {
+      setRescheduleError(result.message);
+      return;
+    }
+    setSelectedItem(null);
     setReloadKey((k) => k + 1);
   }
 
@@ -130,13 +193,10 @@ export function CalendarScreen() {
       <header className={styles.header}>
         <h1 className={styles.title}>Lịch đăng</h1>
         <p className={styles.subtitle}>
-          Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh.
+          Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh. Bấm vào bài để xem chi tiết.
         </p>
       </header>
 
-      {/* Trên thanh chọn tuần: bài không đăng được là việc gấp hơn xem lịch, và
-          nó không thuộc tuần nào cả — bài lỗi từ tuần trước vẫn phải thấy khi
-          đang xem tuần này. Đăng lại xong thì nạp lại lịch để bài hiện đúng. */}
       <FailedPostsPanel onPublished={() => setReloadKey((k) => k + 1)} />
 
       <div className={styles.weekBar}>
@@ -194,76 +254,33 @@ export function CalendarScreen() {
                 ) : (
                   <div className={styles.postList}>
                     {day.items.map((item) => (
-                      <article key={item.id} className={styles.postCard}>
+                      <article
+                        key={item.id}
+                        className={styles.postCard}
+                        onClick={() => openDetailModal(item, day.date)}
+                        title="Bấm để xem chi tiết bài đăng"
+                      >
                         <div className={styles.postMeta}>
                           <span className={styles.postTime}>
                             {item.scheduled_at
                               ? vnTime.format(new Date(item.scheduled_at))
                               : "--:--"}
                           </span>
+                          <span className={styles.postId}>
+                            #{item.id.slice(0, 6)}
+                          </span>
+                        </div>
+                        <p className={styles.postTitleSnippet}>{item.text}</p>
+                        <div className={styles.postMeta}>
                           <span className={styles.postChannel}>
                             {channelLabels[
                               item.channel as keyof typeof channelLabels
                             ] ?? item.channel}
                           </span>
+                          <Badge tone={statusTone[item.status]}>
+                            {statusLabel[item.status]}
+                          </Badge>
                         </div>
-                        <p className={styles.postExcerpt}>{item.text}</p>
-                        <Badge tone={statusTone[item.status]}>
-                          {statusLabel[item.status]}
-                        </Badge>
-                        {canReschedule(item.status) ? (
-                          editingId === item.id ? (
-                            <form
-                              className={styles.rescheduleForm}
-                              onSubmit={(event) => {
-                                event.preventDefault();
-                                void submitReschedule(item.id);
-                              }}
-                            >
-                              <label className={styles.rescheduleLabel}>
-                                Giờ đăng mới
-                                <Input
-                                  type="datetime-local"
-                                  value={draftTime}
-                                  onChange={(event) => setDraftTime(event.target.value)}
-                                  aria-label="Giờ đăng mới"
-                                />
-                              </label>
-                              {rescheduleError ? (
-                                <p className={styles.inlineError} role="alert">
-                                  {rescheduleError}
-                                </p>
-                              ) : null}
-                              <div className={styles.rescheduleActions}>
-                                <Button
-                                  type="submit"
-                                  disabled={savingId === item.id}
-                                  className={styles.compactButton}
-                                >
-                                  {savingId === item.id ? "Đang lưu…" : "Lưu"}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  className={styles.compactButton}
-                                  onClick={() => {
-                                    setEditingId(null);
-                                    setRescheduleError(null);
-                                  }}
-                                >
-                                  Huỷ
-                                </Button>
-                              </div>
-                            </form>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              className={styles.changeTimeButton}
-                              onClick={() => startEditing(item, day.date)}
-                            >
-                              Đổi giờ
-                            </Button>
-                          )
-                        ) : null}
                       </article>
                     ))}
                   </div>
@@ -280,6 +297,124 @@ export function CalendarScreen() {
           ) : null}
         </>
       )}
+
+      {/* Modal Chi tiết & Đổi giờ bài đăng */}
+      {selectedItem ? (
+        <div
+          className={styles.modalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedItem(null);
+          }}
+        >
+          <div className={styles.modalCard} role="dialog" aria-modal="true">
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <span className={styles.postId}>
+                  #{selectedItem.item.id.slice(0, 8)}
+                </span>
+                <Badge tone={statusTone[selectedItem.item.status]}>
+                  {statusLabel[selectedItem.item.status]}
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                className={styles.compactButton}
+                onClick={() => setSelectedItem(null)}
+              >
+                ✕ Đóng
+              </Button>
+            </div>
+
+            <div className={styles.postMeta}>
+              <span>
+                ⏰ <strong>Giờ đăng:</strong>{" "}
+                {selectedItem.item.scheduled_at
+                  ? vnTime.format(new Date(selectedItem.item.scheduled_at)) +
+                    " (Giờ VN)"
+                  : "Chưa chọn giờ"}
+              </span>
+              <span>
+                📌 <strong>Kênh:</strong>{" "}
+                {channelLabels[
+                  selectedItem.item.channel as keyof typeof channelLabels
+                ] ?? selectedItem.item.channel}
+              </span>
+            </div>
+
+            <div className={styles.modalBody}>{selectedItem.item.text}</div>
+
+            <div className={styles.imagePreviewBox}>
+              <img
+                src={getTopicImage(selectedItem.item.media_note, selectedItem.item.text)}
+                alt="Ảnh minh hoạ bài đăng"
+                className={styles.modalPreviewImage}
+              />
+              <span className={styles.imageBadge}>✨ Ảnh minh hoạ AI đính kèm bài đăng</span>
+            </div>
+
+            {selectedItem.item.media_note ? (
+              <div className={styles.modalMediaNote}>
+                💡 <strong>Gợi ý ảnh/video:</strong> {selectedItem.item.media_note}
+              </div>
+            ) : null}
+
+            <div className={styles.rescheduleSection}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={savingId === selectedItem.item.id}
+                onClick={() => void handleRepublish(selectedItem.item.id)}
+              >
+                {savingId === selectedItem.item.id
+                  ? "🔄 Đang phát lệnh đăng lại…"
+                  : "🔄 Đăng lại bài này ngay (0 Token AI)"}
+              </Button>
+            </div>
+
+            {canReschedule(selectedItem.item.status) ? (
+              <div className={styles.rescheduleSection}>
+                <h4 className={styles.rescheduleTitle}>📅 Đổi ngày giờ đăng</h4>
+                <form
+                  className={styles.rescheduleForm}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void submitReschedule(selectedItem.item.id);
+                  }}
+                >
+                  <Input
+                    type="datetime-local"
+                    value={draftTime}
+                    onChange={(e) => setDraftTime(e.target.value)}
+                    aria-label="Giờ đăng mới"
+                  />
+                  {rescheduleError ? (
+                    <p className={styles.inlineError} role="alert">
+                      {rescheduleError}
+                    </p>
+                  ) : null}
+                  <div className={styles.rescheduleActions}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setSelectedItem(null)}
+                    >
+                      Huỷ
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={savingId === selectedItem.item.id}
+                    >
+                      {savingId === selectedItem.item.id
+                        ? "Đang lưu…"
+                        : "Lưu giờ mới"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

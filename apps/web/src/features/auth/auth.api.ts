@@ -32,7 +32,7 @@ export type AuthResult =
 
 /** `detail` của FastAPI khi 422 là mảng object, không phải chuỗi — render thẳng
  * ra UI sẽ hiện "[object Object]". */
-function detailToMessage(detail: unknown, fallback: string): string {
+export function detailToMessage(detail: unknown, fallback: string): string {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
     const first = detail[0] as { msg?: string } | undefined;

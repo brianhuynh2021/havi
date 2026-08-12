@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client/client";
-import { NETWORK_ERROR_MESSAGE } from "@/features/auth/auth.api";
+import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
 import type { components } from "@/lib/api-client/schema";
 
 export type ContentItem = components["schemas"]["ContentItem"];
@@ -110,34 +110,45 @@ export async function createJob(
   try {
     const { data, error, response } = await apiClient.POST("/content/jobs", {
       body: { raw_inputs: rawInputs },
-      headers: { "Idempotency-Key": idempotencyKey },
+      headers: { "Idempotency-Key": encodeURIComponent(idempotencyKey) },
     });
     if (error || !data) {
+      const detailObj = (error as { detail?: unknown } | undefined)?.detail;
+      if (response?.status === 401) {
+        return {
+          ok: false,
+          message: detailToMessage(detailObj, "Phiên đăng nhập đã hết hạn. Chị đăng nhập lại hoặc F5 tải lại trang giúp em nhé."),
+        };
+      }
       if (response?.status === 409) {
         return {
           ok: false,
-          message: "Chưa hoàn thành onboarding nên chưa tạo bài được.",
+          message: detailToMessage(detailObj, "Chưa hoàn thành onboarding nên chưa tạo bài được."),
         };
       }
       if (response?.status === 429) {
-        // Backend dùng 429 cho hai thứ khác nhau và câu trả lời cho chủ tiệm cũng
-        // khác: hết quota tháng thì chờ tới đầu tháng (hoặc nâng gói), còn bấm quá
-        // nhanh thì chờ vài phút. Phân biệt bằng `detail` vì đó là thứ backend đã
-        // viết sẵn bằng tiếng Việt cho từng trường hợp.
-        const detail =
-          typeof error === "object" && error && "detail" in error
-            ? String((error as { detail?: unknown }).detail ?? "")
-            : "";
         return {
           ok: false,
-          message: detail || "Chị thao tác hơi nhanh — đợi một chút rồi thử lại nhé.",
+          message: detailToMessage(detailObj, "Chị thao tác hơi nhanh — đợi một chút rồi thử lại nhé."),
         };
       }
-      return { ok: false, message: GENERIC_ERROR };
+      return {
+        ok: false,
+        message: detailToMessage(detailObj, GENERIC_ERROR),
+      };
     }
     return { ok: true, data };
-  } catch {
-    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  } catch (err) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Havi API createJob error]:", err);
+    }
+    const errDetail = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      message: errDetail
+        ? `Không kết nối được với Havi (${errDetail}). Kiểm tra kết nối mạng hoặc server giúp em nhé.`
+        : NETWORK_ERROR_MESSAGE,
+    };
   }
 }
 

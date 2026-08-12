@@ -274,6 +274,11 @@ async def approve_all(
         item_ids=payload.content_item_ids,
         user_id=auth.user_id,
     )
+    try:
+        from scheduler.tasks import dispatch_due_posts
+        dispatch_due_posts.delay()
+    except Exception as exc:
+        logger.warning("Không thể kích hoạt dispatch_due_posts: %s", exc)
     return BulkApproveResult(
         approved=outcome.approved,
         rejected=[
@@ -307,6 +312,11 @@ async def approve_content(
         raise _not_found() from exc
     except InvalidTransitionError as exc:
         raise transition_conflict(exc) from exc
+    try:
+        from scheduler.tasks import dispatch_due_posts
+        dispatch_due_posts.delay()
+    except Exception as exc:
+        logger.warning("Không thể kích hoạt dispatch_due_posts: %s", exc)
     return ContentItem.model_validate(item)
 
 

@@ -66,7 +66,17 @@ async function authedFetch(input: Request): Promise<Response> {
   // Request đã `bodyUsed` sẽ ném. Không clone sẵn thì mọi POST retry đều hỏng.
   const retry = input.clone();
 
-  const response = await fetch(input);
+  let response: Response;
+  try {
+    response = await fetch(input);
+  } catch (err) {
+    try {
+      response = await fetch(retry);
+    } catch {
+      throw err;
+    }
+  }
+
   if (response.status !== 401 || !tokens) return response;
 
   const refreshed = await refreshOnce();

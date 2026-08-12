@@ -26,7 +26,7 @@ trap cleanup INT TERM EXIT
 
 # 3. Start Backend Services & Web Frontend
 echo "⚡ [3/4] Starting Backend API (port 8000)..."
-(cd apps/backend && uv run uvicorn api.main:app --reload --port 8000) &
+(cd apps/backend && uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000) &
 
 echo "⚙️ [4/4] Starting Celery Worker & Beat..."
 (cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -l info) &

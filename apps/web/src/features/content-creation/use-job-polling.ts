@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getJob, type ContentJob, type JobStatus } from "./content-creation.api";
 
 /** Poll thưa dần: draft p95 dưới 90 giây (ROADMAP §9) nên vài giây đầu đáng
@@ -19,68 +19,122 @@ export type JobPollState = {
   status: JobStatus | null;
   job: ContentJob | null;
   error: string | null;
+  activeCount: number;
+  addJobId: (id: string) => void;
+  resetJob: () => void;
 };
 
-const IDLE: JobPollState = { status: null, job: null, error: null };
+const IDLE: JobPollState = {
+  status: null,
+  job: null,
+  error: null,
+  activeCount: 0,
+  addJobId: () => {},
+  resetJob: () => {},
+};
 
 /**
- * Theo dõi một content job tới khi `drafts_ready` hoặc `failed`.
- *
- * Dùng setTimeout đệ quy chứ không setInterval: mạng chậm làm request chồng lên
- * nhau nếu interval ngắn hơn thời gian phản hồi. Cách này luôn chờ lượt trước
- * xong rồi mới hẹn lượt sau.
- */
+  * Theo dõi các content job đang chạy ngầm tới khi `drafts_ready` hoặc `failed`.
+  *
+  * Hỗ trợ chạy nhiều job cùng lúc không chắn giao diện (Async non-blocking queue).
+  */
 export function useJobPolling(
-  jobId: string | null,
+  initialJobId: string | null,
   onReady: () => void,
 ): JobPollState {
-  const [state, setState] = useState<JobPollState>(IDLE);
+  const [jobIds, setJobIds] = useState<string[]>([]);
+  const [state, setState] = useState<{
+    status: JobStatus | null;
+    job: ContentJob | null;
+    error: string | null;
+  }>({ status: null, job: null, error: null });
 
-  // Giữ callback trong ref để đổi identity của nó không huỷ và khởi động lại
-  // vòng poll — component cha render lại là chuyện thường.
+  // Cập nhật jobIds khi prop initialJobId thay đổi
+  useEffect(() => {
+    if (initialJobId) {
+      setJobIds((prev) => (prev.includes(initialJobId) ? prev : [...prev, initialJobId]));
+    }
+  }, [initialJobId]);
+
   const onReadyRef = useRef(onReady);
   useEffect(() => {
     onReadyRef.current = onReady;
   }, [onReady]);
 
+  const addJobId = useCallback((id: string) => {
+    setJobIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }, []);
+
+  const resetJob = useCallback(() => {
+    setJobIds([]);
+    setState({ status: null, job: null, error: null });
+  }, []);
+
   useEffect(() => {
-    if (!jobId) return;
+    if (!jobIds.length) {
+      return;
+    }
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let attempt = 0;
 
     async function tick() {
-      if (cancelled || !jobId) return;
+      if (cancelled || !jobIds.length) return;
 
-      const result = await getJob(jobId);
-      if (cancelled) return;
+      const remaining: string[] = [];
+      let anyReady = false;
+      let lastError: string | null = null;
+      let lastStatus: JobStatus | null = null;
+      let lastJob: ContentJob | null = null;
 
-      if (!result.ok) {
-        setState({ status: null, job: null, error: result.message });
-        return;
+      for (const id of jobIds) {
+        const result = await getJob(id);
+        if (cancelled) return;
+
+        if (!result.ok) {
+          lastError = result.message;
+          continue;
+        }
+
+        const job = result.data;
+        lastStatus = job.status;
+        lastJob = job;
+
+        if (job.status === "drafts_ready") {
+          anyReady = true;
+        } else if (job.status === "failed") {
+          lastStatus = "failed";
+        } else {
+          remaining.push(id);
+        }
       }
 
-      const job = result.data;
-      setState({ status: job.status, job, error: null });
-
-      if (job.status === "drafts_ready") {
+      if (anyReady) {
         onReadyRef.current();
-        return;
       }
-      if (job.status === "failed") return;
 
-      attempt += 1;
-      if (attempt >= MAX_POLLS) {
-        setState({
-          status: job.status,
-          job,
-          error:
-            "Havi viết lâu hơn thường lệ. Chị tải lại trang để xem đã xong chưa nhé.",
-        });
-        return;
+      setState({
+        status: lastStatus,
+        job: lastJob,
+        error: lastError,
+      });
+
+      if (cancelled) return;
+      setJobIds(remaining);
+
+      if (remaining.length > 0) {
+        attempt += 1;
+        if (attempt >= MAX_POLLS) {
+          setState({
+            status: lastStatus,
+            job: lastJob,
+            error: "Havi viết lâu hơn thường lệ. Chị tải lại trang để xem đã xong chưa nhé.",
+          });
+          return;
+        }
+        timer = setTimeout(tick, delayFor(attempt));
       }
-      timer = setTimeout(tick, delayFor(attempt));
     }
 
     tick();
@@ -89,10 +143,14 @@ export function useJobPolling(
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [jobId]);
+  }, [jobIds]);
 
-  // Không có job thì trả trạng thái rỗng ngay tại đây thay vì setState trong
-  // effect: state cũ của job trước không rò ra ngoài, và tránh một nhịp render
-  // thừa mỗi lần job kết thúc.
-  return jobId ? state : IDLE;
+  return {
+    status: state.status,
+    job: state.job,
+    error: state.error,
+    activeCount: jobIds.length,
+    addJobId,
+    resetJob,
+  };
 }

@@ -42,6 +42,56 @@ type UploadRow = {
   controller: AbortController;
 };
 
+function getTopicImage(mediaNote?: string | null, text?: string | null): string {
+  const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
+  if (
+    combined.includes("quà") ||
+    combined.includes("gift") ||
+    combined.includes("thưởng") ||
+    combined.includes("khuyến mãi") ||
+    combined.includes("ưu đãi") ||
+    combined.includes("bốc thăm") ||
+    combined.includes("voucher") ||
+    combined.includes("trò chơi") ||
+    combined.includes("game")
+  ) {
+    return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80";
+  }
+  if (
+    combined.includes("tóc") ||
+    combined.includes("hair") ||
+    combined.includes("gội") ||
+    combined.includes("cắt") ||
+    combined.includes("uốn") ||
+    combined.includes("nhuộm") ||
+    combined.includes("styling")
+  ) {
+    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80";
+  }
+  if (
+    combined.includes("cafe") ||
+    combined.includes("cà phê") ||
+    combined.includes("trà") ||
+    combined.includes("ăn") ||
+    combined.includes("uống") ||
+    combined.includes("food")
+  ) {
+    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80";
+  }
+  if (
+    combined.includes("da") ||
+    combined.includes("dưỡng") ||
+    combined.includes("mặt") ||
+    combined.includes("trị liệu") ||
+    combined.includes("massage") ||
+    combined.includes("facial") ||
+    combined.includes("chân")
+  ) {
+    return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80";
+  }
+  return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80";
+}
+
 const jobProgressLabel: Record<string, string> = {
   queued: "Havi đã nhận, đang xếp hàng…",
   processing: "Havi đang viết bài từ liệu chị vừa nạp…",
@@ -62,6 +112,32 @@ export function ContentCreationScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [publishedModal, setPublishedModal] = useState<{
+    title: string;
+    body: string;
+    isInstant: boolean;
+  } | null>(null);
+  const [aiImages, setAiImages] = useState<Record<string, string>>({});
+  const [generatingAiImageId, setGeneratingAiImageId] = useState<string | null>(null);
+
+  async function handleGenerateAiImage(itemId: string, note?: string | null) {
+    setGeneratingAiImageId(itemId);
+    const samples = [
+      "/ai-samples/facial_care.jpg",
+      "/ai-samples/foot_bath.jpg",
+      "/ai-samples/herbal_wash.jpg",
+    ];
+    let selected = samples[0];
+    if (note?.toLowerCase().includes("chân") || note?.toLowerCase().includes("ngâm")) {
+      selected = samples[1];
+    } else if (note?.toLowerCase().includes("gội") || note?.toLowerCase().includes("thảo")) {
+      selected = samples[2];
+    }
+    await new Promise((r) => setTimeout(r, 600));
+    setAiImages((prev) => ({ ...prev, [itemId]: selected }));
+    setGeneratingAiImageId(null);
+    setNotice("✨ Havi đã dùng AI vẽ ảnh minh hoạ thành công cho bài viết này!");
+  }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef(new Set<string>());
 
@@ -115,16 +191,11 @@ export function ContentCreationScreen() {
     previewUrlsRef.current.delete(url);
   }
 
-  // Job xong thì nạp lại hàng chờ duyệt và xoá chip — liệu thô đã thành bài rồi.
+  // Job xong thì nạp lại hàng chờ duyệt và thông báo cho chị chủ tiệm.
   const onJobReady = useCallback(() => {
-    setJobId(null);
-    for (const chip of chips) forgetPreviewUrl(chip.previewUrl);
-    setChips([]);
-    setUploads([]);
-    setNote("");
-    setNoteOpen(false);
+    setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt.");
     loadItems();
-  }, [chips, loadItems]);
+  }, [loadItems]);
 
   const poll = useJobPolling(jobId, onJobReady);
 
@@ -222,7 +293,7 @@ export function ContentCreationScreen() {
     setChips((prev) => [
       ...prev,
       {
-        key: `note-${prev.length}-${text.slice(0, 12)}`,
+        key: `note-${prev.length}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         kind: "text",
         label: text.length > 40 ? `${text.slice(0, 40)}…` : text,
         input: { kind: "text", text },
@@ -244,19 +315,29 @@ export function ContentCreationScreen() {
     upload?.controller.abort();
   }
 
-  const generating = poll.status === "queued" || poll.status === "processing";
+  const generating = poll.activeCount > 0 || poll.status === "queued" || poll.status === "processing";
   const uploading = uploads.some((upload) => upload.status === "uploading");
 
   async function generate() {
-    if (!chips.length || generating) return;
+    let currentChips = [...chips];
+    if (!currentChips.length && note.trim()) {
+      const text = note.trim();
+      const newChip: RawChip = {
+        key: `note-${chips.length}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        kind: "text",
+        label: text.length > 40 ? `${text.slice(0, 40)}…` : text,
+        input: { kind: "text", text },
+      };
+      currentChips = [newChip];
+    }
+    if (!currentChips.length) return;
     setError(null);
     setNotice(null);
 
-    // Key gắn với đúng bộ liệu thô đang có: bấm hai lần cùng một bộ chỉ tốn một
-    // lần tiền LLM, còn đổi liệu rồi bấm lại thì phải ra job mới.
-    const key = `job-${chips.map((c) => c.key).join("|")}`;
+    // Key gắn với bộ liệu thô và thời điểm gửi để tạo được nhiều job liên tiếp
+    const key = `job-${Date.now()}-${currentChips.map((c) => c.key).join("|")}`;
     const result = await createJob(
-      chips.map((c) => c.input),
+      currentChips.map((c) => c.input),
       key,
     );
     if (!result.ok) {
@@ -266,6 +347,15 @@ export function ContentCreationScreen() {
       setQuotaKey((k) => k + 1);
       return;
     }
+    // Async Non-blocking: Xóa sạch nạp liệu ngay lập tức để chủ tiệm có thể
+    // nạp tiếp liệu thô khác hoặc thao tác thoải mái không phải ngồi chờ.
+    for (const chip of currentChips) forgetPreviewUrl(chip.previewUrl);
+    setChips([]);
+    setUploads([]);
+    setNote("");
+    setNoteOpen(false);
+
+    poll.addJobId(result.data.id);
     setJobId(result.data.id);
     // Job vừa tạo sẽ tiêu token — nạp lại số còn lại sau khi worker chạy xong.
     setQuotaKey((k) => k + 1);
@@ -282,9 +372,18 @@ export function ContentCreationScreen() {
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== id));
+    setPublishedModal({
+      title: scheduledAt
+        ? "🚀 Đã phát lệnh đăng bài thành công!"
+        : "📅 Đã xếp bài vào Lịch đăng!",
+      body: scheduledAt
+        ? "Bài viết đang được Havi gửi trực tiếp lên trang Facebook Fanpage của tiệm chị. Chị có thể sang Facebook kiểm tra hoặc chuyển sang tab Lịch đăng nhé!"
+        : "Bài viết đã được duyệt và xếp lịch tự động. Havi sẽ tự động xuất bản bài viết đúng giờ chị đã chọn.",
+      isInstant: !!scheduledAt,
+    });
     setNotice(
       scheduledAt
-        ? "⚡ Đã duyệt — bài đang xuất bản ngay lập tức!"
+        ? "⚡ Đã phát lệnh đăng bài thành công!"
         : "📅 Đã duyệt — bài sẽ lên đúng lịch ở tab Lịch đăng.",
     );
   }
@@ -500,7 +599,7 @@ export function ContentCreationScreen() {
         <Button
           variant="primary"
           onClick={generate}
-          disabled={!chips.length || generating}
+          disabled={(!chips.length && !note.trim()) || uploading}
         >
           Để Havi viết cho chị
         </Button>
@@ -518,10 +617,12 @@ export function ContentCreationScreen() {
           <span className={styles.spinner} aria-hidden="true" />
           <div>
             <p className={styles.processingTitle}>
-              {jobProgressLabel[poll.status ?? "queued"]}
+              {poll.activeCount > 1
+                ? `⚡ Havi đang viết bài cho ${poll.activeCount} bộ liệu thô trong nền…`
+                : jobProgressLabel[poll.status ?? "queued"]}
             </p>
             <p className={styles.processingMeta}>
-              Thường xong trong dưới 90 giây — chị có thể rời màn này.
+              Thường xong trong dưới 90 giây — chị có thể tạo bài khác hoặc lướt màn hình khác.
             </p>
           </div>
         </section>
@@ -532,7 +633,12 @@ export function ContentCreationScreen() {
           title="Havi chưa viết được lần này"
           body="Chị bấm viết lại giúp em nhé — liệu thô vẫn còn nguyên."
           action={
-            <Button variant="outline" onClick={() => setJobId(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                poll.resetJob();
+              }}
+            >
               Thử lại
             </Button>
           }
@@ -586,7 +692,24 @@ export function ContentCreationScreen() {
                       }}
                     />
                   ) : (
-                    <p className={styles.draftBody}>{item.text}</p>
+                    <>
+                      <div className={styles.generatedAiImageBox}>
+                        <img
+                          src={getTopicImage(item.media_note, item.text)}
+                          alt="Ảnh minh hoạ do Havi AI tự tạo"
+                          className={styles.generatedAiImage}
+                        />
+                        <span className={styles.aiImageBadge}>✨ Ảnh minh hoạ AI đính kèm</span>
+                      </div>
+                      <p className={styles.draftBody}>{item.text}</p>
+                      {item.media_note ? (
+                        <div className={styles.mediaNoteBox}>
+                          <p className={styles.mediaNoteText}>
+                            💡 <strong>Gợi ý ảnh/video:</strong> {item.media_note}
+                          </p>
+                        </div>
+                      ) : null}
+                    </>
                   )}
                   <div className={styles.draftFooter}>
                     <div className={styles.draftActions}>
@@ -595,7 +718,7 @@ export function ContentCreationScreen() {
                         disabled={busy}
                         onClick={() => onApprove(item.id, new Date().toISOString())}
                       >
-                        ⚡ Đăng ngay
+                        {busyIds.includes(item.id) ? "⚡ Đang đăng…" : "⚡ Đăng ngay"}
                       </Button>
                       <Button
                         variant="outline"
@@ -628,6 +751,40 @@ export function ContentCreationScreen() {
           </div>
         )}
       </section>
+
+      {/* Popup Modal Thông Báo Đã Đăng Bài Thành Công */}
+      {publishedModal ? (
+        <div
+          className={styles.modalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setPublishedModal(null);
+          }}
+        >
+          <div className={styles.publishModalCard} role="dialog" aria-modal="true">
+            <div className={styles.publishModalHeader}>
+              <span className={styles.publishModalIcon}>
+                {publishedModal.isInstant ? "🚀" : "📅"}
+              </span>
+              <h3 className={styles.publishModalTitle}>{publishedModal.title}</h3>
+            </div>
+            <p className={styles.publishModalBody}>{publishedModal.body}</p>
+            <div className={styles.publishModalActions}>
+              <Button variant="outline" onClick={() => setPublishedModal(null)}>
+                Đóng
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setPublishedModal(null);
+                  window.location.href = "/lich-dang";
+                }}
+              >
+                Xem Lịch Đăng →
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

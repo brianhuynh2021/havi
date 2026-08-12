@@ -148,6 +148,34 @@ async def test_cung_idempotency_key_khong_tao_job_thu_hai(
     assert len(job_queue.enqueued) == 1, "lần thứ hai không được enqueue lại"
 
 
+async def test_job_failed_bam_thu_lai_cung_idempotency_key_thi_enqueue_lai(
+    client: AsyncClient, job_queue: RecordingJobQueue, db_session
+):
+    """Khi job trước bị failed, bấm thử lại với cùng idempotency key phải được enqueue lại."""
+    from adapters.persistence.content_repository import ContentRepository
+
+    token_pair = await _onboard(client, email="retry_failed@havi.vn")
+    headers = _headers(token_pair) | {"Idempotency-Key": "retry-key-1"}
+    payload = {"raw_inputs": [{"kind": "text", "text": "Bài thử lại"}]}
+
+    first = await client.post("/content/jobs", json=payload, headers=headers)
+    assert first.status_code == 202
+    job_id = first.json()["id"]
+    assert len(job_queue.enqueued) == 1
+
+    # Giả lập job bị failed
+    repo = ContentRepository(db_session)
+    job = await repo.get_job(workspace_id=db_session.info.get("workspace_id") or first.json()["workspace_id"], job_id=job_id)
+    if job:
+        await repo.mark_job_failed(job, reason="Lỗi giả lập")
+
+    # Bấm thử lại với cùng key
+    retry_resp = await client.post("/content/jobs", json=payload, headers=headers)
+    assert retry_resp.status_code == 202
+    assert retry_resp.json()["id"] == job_id
+    assert len(job_queue.enqueued) == 2, "job failed bấm lại phải được re-enqueue"
+
+
 async def test_khong_co_idempotency_key_thi_moi_lan_la_job_moi(
     client: AsyncClient, job_queue: RecordingJobQueue
 ):

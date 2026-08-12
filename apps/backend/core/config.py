@@ -23,7 +23,13 @@ class Settings(BaseSettings):
     env: Literal["local", "staging", "production"] = "local"
     debug: bool = True
 
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://0.0.0.0:3000",
+        ]
+    )
 
     database_url: str = "postgresql+psycopg://havi:havi@localhost:5432/havi"
     redis_url: str = "redis://localhost:6379/0"
@@ -80,7 +86,7 @@ class Settings(BaseSettings):
     # provider còn lại là fallback khi Gemini lỗi/quota/output không đạt.
     # Provider thiếu key sẽ bị router bỏ qua, không gọi rồi lỗi.
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.6-flash"
+    gemini_model: str = "gemini-2.5-flash"
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5"
     openai_api_key: str = ""

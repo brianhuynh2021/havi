@@ -207,10 +207,10 @@ describe("CalendarScreen", () => {
     render(<CalendarScreen />);
 
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: /đổi giờ/i }));
+    await user.click(await screen.findByText(/Ưu đãi gội đầu thảo dược/i));
     await user.clear(screen.getByLabelText("Giờ đăng mới"));
     await user.type(screen.getByLabelText("Giờ đăng mới"), "2026-08-11T10:15");
-    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await user.click(screen.getByRole("button", { name: "Lưu giờ mới" }));
 
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect(bodies[0]).toEqual({ scheduled_at: "2026-08-11T10:15:00+07:00" });
@@ -230,8 +230,8 @@ describe("CalendarScreen", () => {
     render(<CalendarScreen />);
 
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: /đổi giờ/i }));
-    await user.click(screen.getByRole("button", { name: "Lưu" }));
+    await user.click(await screen.findByText(/Ưu đãi gội đầu thảo dược/i));
+    await user.click(screen.getByRole("button", { name: "Lưu giờ mới" }));
 
     expect(
       await screen.findByText(/đã đăng rồi nên không đổi lịch được nữa/i),

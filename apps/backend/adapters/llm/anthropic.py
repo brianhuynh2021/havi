@@ -23,6 +23,29 @@ _API_VERSION = "2023-06-01"
 _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504, 529})
 
 
+def _sanitize_schema_for_anthropic(schema: dict) -> dict:
+    """Anthropic structured output (output_config.format) yêu cầu mọi object schema
+    phải chỉ định rõ `additionalProperties: False`.
+    """
+    if not isinstance(schema, dict):
+        return schema
+    res = dict(schema)
+    if res.get("type") == "object" or "properties" in res:
+        if "type" not in res:
+            res["type"] = "object"
+        res.setdefault("additionalProperties", False)
+    if "properties" in res and isinstance(res["properties"], dict):
+        res["properties"] = {
+            k: _sanitize_schema_for_anthropic(v) for k, v in res["properties"].items()
+        }
+    if "items" in res and isinstance(res["items"], dict):
+        res["items"] = _sanitize_schema_for_anthropic(res["items"])
+    for key in ("$defs", "definitions"):
+        if key in res and isinstance(res[key], dict):
+            res[key] = {k: _sanitize_schema_for_anthropic(v) for k, v in res[key].items()}
+    return res
+
+
 class AnthropicProvider(LLMProviderPort):
     def __init__(self, settings: Settings, *, timeout_seconds: float = 60.0) -> None:
         self._api_key = settings.anthropic_api_key
@@ -38,13 +61,14 @@ class AnthropicProvider(LLMProviderPort):
         return bool(self._api_key)
 
     async def generate(self, request: LLMRequest) -> LLMResponse:
+        sanitized_schema = _sanitize_schema_for_anthropic(request.output_schema)
         payload = {
             "model": self._model,
             "max_tokens": request.max_output_tokens,
             "system": request.system_prompt,
             "messages": [{"role": "user", "content": request.user_prompt}],
             "output_config": {
-                "format": {"type": "json_schema", "schema": request.output_schema}
+                "format": {"type": "json_schema", "schema": sanitized_schema}
             },
         }
         headers = {

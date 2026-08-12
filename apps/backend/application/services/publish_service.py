@@ -33,7 +33,19 @@ from domain.ports.publisher import (
     PublishRequest,
 )
 
-logger = logging.getLogger(__name__)
+def select_topic_image(media_note: str | None, text: str | None) -> str:
+    """Chọn ảnh chủ đề chất lượng cao phù hợp với media_note hoặc nội dung bài AI sinh."""
+    combined = f"{media_note or ''} {text or ''}".lower()
+    if any(k in combined for k in ("quà", "gift", "thưởng", "khuyến mãi", "ưu đãi", "bốc thăm", "voucher", "trò chơi", "game")):
+        return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80"
+    if any(k in combined for k in ("tóc", "hair", "gội", "cắt", "uốn", "nhuộm", "styling")):
+        return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80"
+    if any(k in combined for k in ("cafe", "cà phê", "trà", "ăn", "uống", "food", "drink", "nhà hàng")):
+        return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
+    if any(k in combined for k in ("da", "dưỡng", "skin", "mặt", "trị liệu", "massage", "facial")):
+        return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80"
+    return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80"
+
 
 #: Kênh nào đăng qua nền tảng nào. Chỉ Facebook có adapter thật ở pilot.
 CHANNEL_TO_PLATFORM: dict[Channel, Platform] = {
@@ -186,6 +198,12 @@ class PublishService:
                         if asset:
                             url = f"{self._media_public_url.rstrip('/')}/{asset.object_key}"
                             media_urls.append(url)
+
+        if not media_urls:
+            # Bài do AI sinh (hoặc không đính kèm ảnh thô): tự động chọn ảnh minh hoạ
+            # chất lượng cao đúng chủ đề để bài đăng trên Facebook luôn có hình đẹp.
+            topic_url = select_topic_image(item.media_note, item.text)
+            media_urls.append(topic_url)
 
         try:
             result = await publisher.publish(

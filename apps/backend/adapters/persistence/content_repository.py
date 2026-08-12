@@ -47,6 +47,11 @@ class ContentRepository:
             workspace_id=workspace_id, idempotency_key=idempotency_key
         )
         if existing is not None:
+            if existing.status == ContentJobStatus.FAILED:
+                existing.status = ContentJobStatus.QUEUED
+                existing.failure_reason = None
+                await self._session.flush()
+                return existing, True
             return existing, False
 
         job = ContentJob(

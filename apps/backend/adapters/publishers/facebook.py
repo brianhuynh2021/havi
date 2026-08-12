@@ -125,36 +125,46 @@ class FacebookPublisher(PublisherPort):
         access_token: str,
         published: bool = True,
     ) -> dict:
-        """Đăng 1 ảnh lên /photos. 
+        """Đăng 1 ảnh lên /photos.
 
-        Khi ở local (media_url chứa localhost/127.0.0.1/minio), Facebook server không
-        thể tải URL từ máy dev, nên Havi đọc bytes từ MinIO cục bộ và POST file nhị phân
-        `source` trực tiếp lên Graph API.
+        - Với ảnh local (localhost/127.0.0.1/minio), Facebook server không thể tải URL
+          từ máy dev nên Havi đọc bytes local và POST file nhị phân `source`.
+        - Với URL công khai, gửi trực tiếp `url` kèm `published` để Facebook tự fetch.
         """
         is_local = any(host in media_url for host in ("localhost", "127.0.0.1", "minio"))
         if is_local:
             try:
-                img_res = await client.get(media_url)
-                if img_res.status_code == 200:
+                img_res = await client.get(
+                    media_url,
+                    headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
+                    follow_redirects=True,
+                )
+                if img_res.status_code == 200 and len(img_res.content) > 0:
                     content_type = img_res.headers.get("content-type", "image/jpeg")
+                    if "html" in content_type:
+                        content_type = "image/jpeg"
                     files = {"source": ("image.jpg", img_res.content, content_type)}
-                    data = {"access_token": access_token}
+                    data = {
+                        "access_token": access_token,
+                        "published": "true" if published else "false",
+                    }
                     if caption:
                         data["caption"] = caption
-                    if not published:
-                        data["published"] = "false"
                     response = await client.post(url, data=data, files=files)
-                    if response.status_code >= 400:
-                        raise self._classify_error(response)
-                    return response.json()
+                    if response.status_code < 400:
+                        return response.json()
+                    logger.error("Facebook _post_photo failed (%s): %s", response.status_code, response.text)
+                    raise self._classify_error(response)
             except Exception as exc:
                 if isinstance(
                     exc, (AuthPermissionError, ValidationPublishError, TemporaryPublishError)
                 ):
                     raise
-                logger.warning("Tải ảnh local thất bại, fallback sang gửi url: %s", exc)
+                logger.warning("Tải ảnh local thất bại, fallback sang gửi URL: %s", exc)
 
-        payload: dict[str, str] = {"url": media_url}
+        payload: dict[str, str] = {
+            "url": media_url,
+        }
         if caption:
             payload["caption"] = caption
         if not published:
