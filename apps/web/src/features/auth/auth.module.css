@@ -1,16 +1,14 @@
-/* Không dùng var(--font-display): prototype để tiêu đề màn auth ở font body
-   (Inter) weight 700. Merriweather chỉ dành cho logo và tiêu đề trong app. */
 .title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-ink);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
   text-align: center;
 }
 
 .subtitle {
   margin-top: 8px;
-  color: var(--color-muted);
-  font-size: 15px;
+  color: #94a3b8;
+  font-size: 14.5px;
   text-align: center;
 }
 
@@ -18,12 +16,9 @@
   margin-top: 26px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
-/* Label bọc luôn input (prototype dùng <label> làm khối): click chữ là focus
-   được ô, không cần htmlFor, và khoảng cách label–ô luôn dính 7px kể cả khi
-   form đổi `gap`. */
 .field {
   display: flex;
   flex-direction: column;
@@ -31,41 +26,40 @@
 }
 
 .label {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--color-body);
+  color: #e2e8f0;
 }
 
 .error {
-  color: #c0564a;
+  color: #ef4444;
   font-size: 13px;
   font-weight: 600;
 }
 
-/* "Quên mật khẩu?" nằm trong form, nép phải ngay trên nút — đúng chỗ người
-   dùng nhớ ra là mình quên, không phải cuối trang. */
 .inlineLink {
   align-self: flex-end;
   border: 0;
   background: none;
   padding: 0;
-  color: var(--color-primary-dark);
+  color: #a5b4fc;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .inlineLink:hover {
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
 .divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 22px;
-  color: var(--color-muted);
+  margin-top: 24px;
+  color: #64748b;
   font-size: 12px;
 }
 
@@ -74,82 +68,29 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--color-border);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .footerBlock {
   margin-top: 26px;
   padding-top: 20px;
-  border-top: 1px solid #f0eae4;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
 }
 
 .footerBlock p {
-  color: var(--color-body);
-  font-size: 15px;
+  color: #94a3b8;
+  font-size: 14.5px;
 }
 
 .footerBlock a {
-  color: var(--color-primary-dark);
+  color: #6366f1;
   font-weight: 700;
 }
 
 .consentText {
-  color: var(--color-muted);
+  color: #64748b;
   font-size: 12px;
   line-height: 1.5;
   text-align: center;
-}
-
-/* Gạch chân thay vì chỉ đổi màu: đây là link pháp lý người dùng phải nhận ra
-   được là bấm được, và cỡ chữ 12px thì màu thôi chưa đủ tương phản. */
-.consentText a {
-  color: var(--color-primary-dark);
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-.otpHint {
-  font-size: 13px;
-  color: var(--color-body);
-}
-
-.resendLink,
-.backLink {
-  align-self: center;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--color-primary-dark);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.resendLink:disabled {
-  color: var(--color-muted);
-  cursor: not-allowed;
-}
-
-.backLink {
-  color: var(--color-muted);
-}
-
-.successText {
-  color: var(--color-body);
-  font-size: 13.5px;
-  line-height: 1.55;
-}
-
-.footerText {
-  margin-top: 16px;
-  color: var(--color-muted);
-  font-size: 12.5px;
-  text-align: center;
-}
-
-.footerText a {
-  color: var(--color-primary-dark);
-  font-weight: 600;
 }

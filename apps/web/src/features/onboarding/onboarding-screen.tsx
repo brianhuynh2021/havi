@@ -126,9 +126,15 @@ export function OnboardingScreen() {
                   }`}
                   onClick={() => setIndustry(option.value)}
                 >
-                  {option.label}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700 }}>
+                    <span style={{ fontSize: "18px" }}>{option.icon}</span>
+                    <span>{option.label}</span>
+                  </div>
+                  <div style={{ fontSize: "11.5px", fontWeight: 400, color: "#6b625b", marginTop: "4px", lineHeight: "1.3" }}>
+                    {option.desc}
+                  </div>
                   {option.recommended ? (
-                    <span className={styles.recommendedTag}>Đề xuất pilot</span>
+                    <span className={styles.recommendedTag}>★ Đề xuất pilot</span>
                   ) : null}
                 </button>
               ))}

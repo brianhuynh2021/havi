@@ -6,7 +6,7 @@
 
 .paper {
   border: 1px solid var(--color-border);
-  background: #fff;
+  background: var(--color-paper, #151827);
   color: var(--color-ink);
 }
 

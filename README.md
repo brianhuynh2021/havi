@@ -114,6 +114,19 @@ npm run dev:web
 
 The web app runs at <http://localhost:3000>.
 
+#### Local Web Routes & Preview URLs
+
+| Route | Local URL | Description |
+|---|---|---|
+| **Landing Page** | [http://localhost:3000/gioi-thieu](http://localhost:3000/gioi-thieu) | Public marketing landing page with interactive prompt sandbox and industry showcase |
+| **Onboarding** | [http://localhost:3000/onboarding](http://localhost:3000/onboarding) | Three-step shop setup wizard (Industry selection, channel connection, AI setup) |
+| **Sign Up** | [http://localhost:3000/dang-ky](http://localhost:3000/dang-ky) | Email & password registration screen |
+| **Sign In** | [http://localhost:3000/dang-nhap](http://localhost:3000/dang-nhap) | Email & password login screen |
+| **Content Creation** | [http://localhost:3000/noi-dung](http://localhost:3000/noi-dung) | Raw material input, AI draft generation, and 1-click approval |
+| **Calendar** | [http://localhost:3000/lich-dang](http://localhost:3000/lich-dang) | Vietnam-timezone schedule grid with ISO offset rescheduling |
+| **Reports** | [http://localhost:3000/bao-cao](http://localhost:3000/bao-cao) | Real workspace business outcomes, attribution, and published stats |
+| **Internal Operations** | [http://localhost:3000/noi-bo/van-hanh](http://localhost:3000/noi-bo/van-hanh) | Pilot operational metrics (job latency, token usage, error rates) |
+
 ## Checks Before Commit
 
 Backend tests need the local Postgres stack:

@@ -1,21 +1,21 @@
 /**
- * Nội dung Landing Page.
+ * Nội dung Landing Page Havi.
  *
- * Mọi câu chữ ở đây là claim công khai, nên phải bám capability THẬT chứ không
- * bám prototype (ROADMAP §2: "Những claim chưa có production capability không
- * được đưa lên landing page public"; §10 xếp "landing hứa nhiều hơn sản phẩm"
- * là rủi ro mất niềm tin + pháp lý).
+ * Đảm bảo bám đúng capability THẬT (ROADMAP §2, §10, §12):
+ * - Nêu rõ giai đoạn thử nghiệm.
+ * - Đúng các kênh pilot: Facebook, Zalo OA, Google Business, Bản tin Email.
+ * - Đảm bảo nguyên tắc duyệt-trước là giá trị cốt lõi.
  */
 
 export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
-  { v: "Đa kênh", l: "Facebook, Zalo OA, Google Business & Email" },
-  { v: "< 90 giây", l: "từ ý tưởng đến bài nháp hoàn chỉnh" },
-  { v: "100%", l: "nội dung và email đều chờ bạn duyệt" },
+  { v: "Đa kênh trong 1 lần duyệt", l: "Facebook · Zalo OA · Google Business · Email", icon: "🌐" },
+  { v: "< 90 giây", l: "Từ ý tưởng đến bài nháp hoàn chỉnh", icon: "⚡" },
+  { v: "100%", l: "Bài viết & email đều chờ bạn duyệt", icon: "🛡️" },
 ];
 
-/** Các kênh hỗ trợ bài đăng & email chăm sóc. */
+/** Các kênh pilot hỗ trợ. */
 export const heroChannels = [
   { n: "Facebook", b: "f", c: "#1877F2" },
   { n: "Zalo OA", b: "Z", c: "#0068FF" },
@@ -42,7 +42,7 @@ export const steps: Step[] = [
   {
     n: "4",
     title: "Thu hút & Chăm sóc khách",
-    desc: "Bài đã duyệt tự xếp vào lịch tuần theo giờ Việt Nam, giữ nhịp tương tác liên tục để kéo khách hàng thật về tiệm và shop của bạn.",
+    desc: "Bài đã duyệt tự xếp vào lịch tuần theo giờ Việt Nam, giữ nhịp tương tác liên tục để kéo khách hàng thật về tiệm.",
   },
 ];
 
@@ -51,8 +51,8 @@ export const industries = [
   {
     name: "Spa / Tiệm làm đẹp & Clinic",
     badge: "SP",
-    color: "linear-gradient(135deg,#D97736,#A85324)",
-    image: "/images/spa_photo.jpg",
+    color: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+    image: "/images/spa_photo_hq.jpg",
     rows: [
       { k: "Hình ảnh", t: "Chụp một tấm ảnh khách trước/sau khi làm liệu trình" },
       { k: "Bài viết", t: "Havi viết bài Facebook thu hút và email nhắc lịch chăm sóc da chuẩn vị" },
@@ -63,7 +63,7 @@ export const industries = [
     name: "Môi giới BĐS & Dự án",
     badge: "BĐS",
     color: "linear-gradient(135deg,#0068FF,#0041A8)",
-    image: "/images/bds_photo.jpg",
+    image: "/images/bds_photo_hq.jpg",
     rows: [
       { k: "Thông tin", t: "Ảnh nhà đất thực tế và thông tin pháp lý ngắn gọn" },
       { k: "Bài viết", t: "Havi soạn bài đăng bán nhà chuẩn vị & email báo giá gửi khách nét" },
@@ -74,7 +74,7 @@ export const industries = [
     name: "Quán ăn / Cà phê / F&B",
     badge: "CF",
     color: "linear-gradient(135deg,#E65100,#EF6C00)",
-    image: "/images/cafe_photo.jpg",
+    image: "/images/cafe_photo_hq.jpg",
     rows: [
       { k: "Món mới", t: "Ảnh món mới hoặc vài dòng về ưu đãi trong tuần" },
       { k: "Bài viết", t: "Havi tạo bài đăng kéo khách ghé quán & bản tin email ưu đãi hội viên" },
@@ -85,7 +85,7 @@ export const industries = [
     name: "Shop Online & Traffic Builder",
     badge: "TF",
     color: "linear-gradient(135deg,#7C3AED,#5B21B6)",
-    image: "/images/hero_photo.jpg",
+    image: "/images/hero_ai_studio_hq.jpg",
     rows: [
       { k: "Sản phẩm", t: "Ảnh sản phẩm mới về hoặc chia sẻ giá trị kinh nghiệm" },
       { k: "Bài viết", t: "Havi tạo chuỗi nội dung kéo traffic đa kênh & email chào hàng tự động" },

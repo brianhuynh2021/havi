@@ -20,12 +20,13 @@
   margin-top: 20px;
   padding: 20px 24px;
   border-radius: 14px;
-  background: var(--color-surface-dark);
-  color: var(--color-paper);
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #312e81;
 }
 
 .insightLabel {
-  color: #e8c4a8;
+  color: #4338ca;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -47,16 +48,16 @@
 
 .statCard {
   padding: 18px 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: var(--shadow-card);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
 }
 
 .statValue {
-  color: var(--color-primary-dark);
+  color: #4f46e5;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 900;
 }
 
@@ -76,10 +77,10 @@
 .attributionCard {
   margin-top: 20px;
   padding: 20px 22px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: var(--shadow-card);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
 }
 
 .chartBars {

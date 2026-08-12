@@ -2,59 +2,67 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   padding: 11px 20px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 160ms ease, border-color 160ms ease,
-    color 160ms ease;
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .primary {
-  background: var(--color-primary);
-  color: #fff;
+  background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.25);
 }
 
 .primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  background: linear-gradient(135deg, #1a75ff 0%, #0052cc 100%);
+  box-shadow: 0 6px 24px rgba(0, 102, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .ghost {
   padding: 8px 16px;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 12.5px;
+  background: rgba(0, 102, 255, 0.1);
+  color: var(--color-primary);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  font-size: 13px;
+  border-radius: 8px;
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  background: rgba(0, 102, 255, 0.18);
+  border-color: rgba(0, 102, 255, 0.35);
 }
 
-/* Nút chính màn auth: to, đậm, dùng --color-action (#a85b33) chứ không phải
-   --color-primary (#d4956f). Primary quá nhạt để làm nút hành động — chữ trắng
-   trên nền đó không đạt tương phản, và prototype cũng dùng màu đậm. */
 .large {
   width: 100%;
-  padding: 17px 0;
+  padding: 16px 0;
   border-radius: 12px;
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .primary.large {
-  background: var(--color-action);
+  background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%);
+  box-shadow: 0 8px 28px rgba(0, 102, 255, 0.35);
 }
 
 .primary.large:hover:not(:disabled) {
-  background: var(--color-action-hover);
+  background: linear-gradient(135deg, #1a75ff 0%, #0284c7 100%);
+  box-shadow: 0 10px 32px rgba(0, 210, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .primary.large:disabled {
@@ -63,24 +71,32 @@
 }
 
 .outline {
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-ink);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 .outline:hover:not(:disabled) {
   border-color: var(--color-primary);
-  color: var(--color-primary-dark);
+  color: var(--color-primary);
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.12);
+  transform: translateY(-1px);
 }
 
 .outline.large {
   padding: 14px 0;
-  border-width: 1.5px;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
   font-size: 15px;
 }
 
 .outline.large:hover:not(:disabled) {
-  border-color: var(--color-border);
-  background: var(--color-background);
-  color: var(--color-ink);
+  border-color: rgba(0, 210, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
 }
+
