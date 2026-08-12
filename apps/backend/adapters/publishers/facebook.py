@@ -77,13 +77,19 @@ class FacebookPublisher(PublisherPort):
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             if not request.media_urls:
                 body = await self._post(
-                    client, f"{GRAPH_BASE}/{page_id}/feed",
-                    {"message": request.text}, access_token,
+                    client,
+                    f"{GRAPH_BASE}/{page_id}/feed",
+                    {"message": request.text},
+                    access_token,
                 )
             elif len(request.media_urls) == 1:
-                body = await self._post(
-                    client, f"{GRAPH_BASE}/{page_id}/photos",
-                    {"url": request.media_urls[0], "caption": request.text}, access_token,
+                body = await self._post_photo(
+                    client,
+                    f"{GRAPH_BASE}/{page_id}/photos",
+                    request.media_urls[0],
+                    request.text,
+                    access_token,
+                    published=True,
                 )
             else:
                 body = await self._post_album(client, page_id, request, access_token)
@@ -110,6 +116,51 @@ class FacebookPublisher(PublisherPort):
             external_post_id=str(external_id), published_at=datetime.now(UTC)
         )
 
+    async def _post_photo(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        media_url: str,
+        caption: str | None,
+        access_token: str,
+        published: bool = True,
+    ) -> dict:
+        """Đăng 1 ảnh lên /photos. 
+
+        Khi ở local (media_url chứa localhost/127.0.0.1/minio), Facebook server không
+        thể tải URL từ máy dev, nên Havi đọc bytes từ MinIO cục bộ và POST file nhị phân
+        `source` trực tiếp lên Graph API.
+        """
+        is_local = any(host in media_url for host in ("localhost", "127.0.0.1", "minio"))
+        if is_local:
+            try:
+                img_res = await client.get(media_url)
+                if img_res.status_code == 200:
+                    content_type = img_res.headers.get("content-type", "image/jpeg")
+                    files = {"source": ("image.jpg", img_res.content, content_type)}
+                    data = {"access_token": access_token}
+                    if caption:
+                        data["caption"] = caption
+                    if not published:
+                        data["published"] = "false"
+                    response = await client.post(url, data=data, files=files)
+                    if response.status_code >= 400:
+                        raise self._classify_error(response)
+                    return response.json()
+            except Exception as exc:
+                if isinstance(
+                    exc, (AuthPermissionError, ValidationPublishError, TemporaryPublishError)
+                ):
+                    raise
+                logger.warning("Tải ảnh local thất bại, fallback sang gửi url: %s", exc)
+
+        payload: dict[str, str] = {"url": media_url}
+        if caption:
+            payload["caption"] = caption
+        if not published:
+            payload["published"] = "false"
+        return await self._post(client, url, payload, access_token)
+
     async def _post_album(
         self,
         client: httpx.AsyncClient,
@@ -125,12 +176,14 @@ class FacebookPublisher(PublisherPort):
         mà Facebook tự dọn.
         """
         media_ids: list[str] = []
-        for url in request.media_urls:
-            photo = await self._post(
+        for media_url in request.media_urls:
+            photo = await self._post_photo(
                 client,
                 f"{GRAPH_BASE}/{page_id}/photos",
-                {"url": url, "published": "false"},
-                access_token,
+                media_url,
+                caption=None,
+                access_token=access_token,
+                published=False,
             )
             photo_id = photo.get("id")
             if not photo_id:
