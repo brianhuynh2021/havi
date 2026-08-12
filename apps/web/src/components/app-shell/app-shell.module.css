@@ -160,7 +160,31 @@
   width: calc(100% - 240px);
   max-width: 1140px;
   flex: 1;
-  padding: 28px 40px 60px;
+  padding: 20px 40px 60px;
+}
+
+.topHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.topHeaderTitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pageBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .mobileNav {

@@ -22,6 +22,7 @@ import { DraftEditor } from "./draft-editor";
 import { useJobPolling } from "./use-job-polling";
 import { QuotaBanner } from "./quota-banner";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
+import { pushNotification } from "@/components/notifications/notification-store";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -196,9 +197,14 @@ export function ContentCreationScreen() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Job xong thì nạp lại hàng chờ duyệt và hiển thị thông báo Toast ở góc phải màn hình.
+  // Job xong thì nạp lại hàng chờ duyệt và hiển thị thông báo Toast + Chuông thông báo ở góc phải.
   const onJobReady = useCallback(() => {
     setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.");
+    pushNotification({
+      type: "draft_ready",
+      title: "⚡ Havi vừa tạo xong các bản nháp mới",
+      description: "Bài viết mới cho Facebook, Zalo, Google Business đã sẵn sàng cho chị duyệt.",
+    });
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({
       type: "success",
