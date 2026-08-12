@@ -87,3 +87,44 @@ export function parseBannedClaims(value: string): string[] {
 export function formatBannedClaims(value: string[] | undefined): string {
   return (value ?? []).join("\n");
 }
+
+export async function deleteWorkspace(workspaceId: string): Promise<Result<void>> {
+  try {
+    const response = await apiClient.DELETE("/workspaces/{workspace_id}", {
+      params: { path: { workspace_id: workspaceId } },
+    });
+    const errorObj = (response as { error?: unknown }).error;
+    if (errorObj) {
+      const detail = errorObj && typeof errorObj === "object" && "detail" in errorObj
+        ? String((errorObj as { detail?: unknown }).detail)
+        : null;
+      return {
+        ok: false,
+        message: detail || "Không thể xoá workspace, thử lại giúp chị nhé.",
+      };
+    }
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function deleteAccount(): Promise<Result<void>> {
+  try {
+    const response = await apiClient.DELETE("/auth/me");
+    const errorObj = (response as { error?: unknown }).error;
+    if (errorObj) {
+      const detail = errorObj && typeof errorObj === "object" && "detail" in errorObj
+        ? String((errorObj as { detail?: unknown }).detail)
+        : null;
+      return {
+        ok: false,
+        message: detail || "Không thể xoá tài khoản, thử lại giúp chị nhé.",
+      };
+    }
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+

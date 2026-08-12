@@ -36,6 +36,11 @@ class UserRepository:
         user.phone = phone
         await self._session.flush()
 
-    async def set_active_workspace(self, user: User, workspace_id: UUID) -> None:
+    async def set_active_workspace(self, user: User, workspace_id: UUID | None) -> None:
         user.active_workspace_id = workspace_id
         await self._session.flush()
+
+    async def delete(self, user: User) -> None:
+        await self._session.delete(user)
+        await self._session.flush()
+

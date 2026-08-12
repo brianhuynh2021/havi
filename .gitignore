@@ -38,3 +38,7 @@ agent-loop/patches/
 apps/web/openapi.json
 apps/web/playwright-report/
 apps/web/test-results/
+
+# Celery beat runtime schedule
+celerybeat-schedule*
+

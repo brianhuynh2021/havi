@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, status
 from api.deps import AuthDep, PathWorkspaceMemberDep, WorkspaceServiceDep
 from application.services.workspace_service import (
     AlreadyMember,
+    CannotDeleteWorkspaceNotOwner,
     CannotRemoveLastOwner,
     InviteUserNotFound,
     WorkspaceNotFound,
@@ -24,6 +25,7 @@ from core.schemas import (
 )
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
+
 
 
 @router.get("", response_model=list[Workspace])
@@ -143,3 +145,19 @@ async def remove_member(
         raise HTTPException(
             status.HTTP_409_CONFLICT, "Không thể xoá owner duy nhất của workspace"
         ) from exc
+
+
+@router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_workspace(
+    workspace_id: PathWorkspaceMemberDep,
+    auth: AuthDep,
+    workspace_service: WorkspaceServiceDep,
+) -> None:
+    """Xoá workspace và toàn bộ dữ liệu thuộc về workspace (owner only)."""
+    try:
+        await workspace_service.delete_workspace(workspace_id=workspace_id, user_id=auth.user_id)
+    except CannotDeleteWorkspaceNotOwner as exc:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "Chỉ owner mới có quyền xoá workspace"
+        ) from exc
+

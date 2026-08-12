@@ -218,7 +218,7 @@
     {
       "id": "calendar-reschedule-ui",
       "title": "Add calendar UI for rescheduling posts",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "frontend-calendar",
       "why": "The backend has a reschedule API, but the roadmap notes that the calendar UI still lacks drag-and-drop or a change-time flow.",
@@ -244,7 +244,7 @@
     {
       "id": "activity-feed-from-events",
       "title": "Back the activity feed with real event/audit data",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "analytics-ux",
       "why": "Week 8 still needs an activity feed sourced from audit/event projections that make sense to users.",
@@ -269,7 +269,7 @@
     {
       "id": "operations-ui-minimal",
       "title": "Create a minimal internal operations metrics UI",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "ops-ui",
       "why": "The backend has /analytics/operations, but the roadmap still lacks an internal UI for debugging pilot operations.",
@@ -294,7 +294,7 @@
     {
       "id": "e2e-core-flow",
       "title": "Add an E2E core flow from signup to publish to report",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "testing",
       "why": "Gate E requires happy/error path E2E coverage on staging; there is still no signup -> draft -> approve -> publish -> report E2E flow.",
@@ -319,7 +319,7 @@
     {
       "id": "staging-runbook-backup-restore",
       "title": "Write staging runbook and backup/restore rehearsal steps",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "ops-docs",
       "why": "Week 9/Gate E requires backup/restore, migration strategy, and an incident runbook before founder beta.",
@@ -344,7 +344,7 @@
     {
       "id": "security-review-checklist",
       "title": "Complete security checklist for auth, tenant scope, upload, OAuth, and logs",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "security",
       "why": "Week 9 requires a security review of auth, tenant scope, upload, OAuth, secrets, and logs.",
@@ -370,7 +370,7 @@
     {
       "id": "visual-a11y-baseline",
       "title": "Set up visual regression and accessibility baseline",
-      "status": "pending",
+      "status": "completed",
       "priority": "P2",
       "area": "frontend-qa",
       "why": "Gate B/test strategy still lacks visual regression, keyboard walkthrough, and automated accessibility checks.",
@@ -395,7 +395,7 @@
     {
       "id": "data-deletion-consent",
       "title": "Design data deletion, account deletion, and consent records",
-      "status": "pending",
+      "status": "completed",
       "priority": "P1",
       "area": "privacy",
       "why": "Gate F requires tested account/data deletion and consent records; Privacy mentions 30-day retention but code is not complete.",
@@ -421,7 +421,7 @@
     {
       "id": "founder-dogfooding-plan",
       "title": "Prepare a 7-day founder dogfooding plan",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "product-ops",
       "why": "Week 10/Gate E requires the founder to use the product for 7 days with at least 10 content jobs and 5 publish jobs.",
@@ -442,7 +442,7 @@
     {
       "id": "sync-product-roadmap",
       "title": "Sync the product roadmap after an agent-loop batch",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "area": "planning",
       "why": "After agent-loop tasks are processed, docs/product/ROADMAP.md must remain the source of truth with updated status, verification evidence, and next steps.",

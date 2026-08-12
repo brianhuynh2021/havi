@@ -65,6 +65,9 @@ def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthServic
         refresh_sessions=RefreshSessionRepository(session),
         settings=settings,
         email_sender=_email_sender(),
+        members=WorkspaceMemberRepository(session),
+        workspaces=WorkspaceRepository(session),
+        events=EventLogRepository(session),
     )
 
 
@@ -79,6 +82,8 @@ def get_workspace_service(
         members=WorkspaceMemberRepository(session),
         users=UserRepository(session),
         auth_service=auth_service,
+        events=EventLogRepository(session),
+        media_service=MediaService(media=MediaRepository(session), storage=_object_storage()),
     )
 
 
@@ -193,6 +198,7 @@ def get_connection_service(session: DbSessionDep, settings: SettingsDep) -> Conn
         members=WorkspaceMemberRepository(session),
         oauth_clients=_oauth_clients(),
         settings=settings,
+        events=EventLogRepository(session),
     )
 
 

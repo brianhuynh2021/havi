@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import WorkspaceRole
@@ -51,6 +51,24 @@ class WorkspaceMemberRepository:
         )
         return result.scalar_one()
 
+    async def count_members(self, workspace_id: UUID) -> int:
+        result = await self._session.execute(
+            select(func.count()).where(WorkspaceMember.workspace_id == workspace_id)
+        )
+        return result.scalar_one()
+
+    async def list_for_user(self, user_id: UUID) -> list[WorkspaceMember]:
+        result = await self._session.execute(
+            select(WorkspaceMember).where(WorkspaceMember.user_id == user_id)
+        )
+        return list(result.scalars().all())
+
+    async def remove_all_for_user(self, user_id: UUID) -> None:
+        await self._session.execute(
+            delete(WorkspaceMember).where(WorkspaceMember.user_id == user_id)
+        )
+        await self._session.flush()
+
     async def list_with_user_for_workspace(
         self, workspace_id: UUID
     ) -> list[tuple[WorkspaceMember, User]]:
@@ -60,3 +78,4 @@ class WorkspaceMemberRepository:
             .where(WorkspaceMember.workspace_id == workspace_id)
         )
         return [(member, user) for member, user in result.all()]
+

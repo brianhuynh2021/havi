@@ -1,10 +1,16 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import Industry, PublishMode
-from domain.models.workspace import Workspace, WorkspaceMember
+from domain.models.audit import EventLog
+from domain.models.connection import PlatformConnection
+from domain.models.content import ContentItem, ContentItemVersion, ContentJob
+from domain.models.media import MediaAsset
+from domain.models.publish import PublishJob
+from domain.models.user import User
+from domain.models.workspace import BrandProfile, Workspace, WorkspaceMember
 
 
 class WorkspaceRepository:
@@ -48,3 +54,54 @@ class WorkspaceRepository:
             workspace.publish_mode = publish_mode
         await self._session.flush()
         return workspace
+
+    async def delete_workspace_cascade(self, workspace_id: UUID) -> None:
+        """Cascade deletes all data associated with workspace_id and anonymizes audit logs."""
+        await self._session.execute(
+            delete(BrandProfile).where(BrandProfile.workspace_id == workspace_id)
+        )
+        content_item_ids_stmt = select(ContentItem.id).where(
+            ContentItem.workspace_id == workspace_id
+        )
+        await self._session.execute(
+            delete(ContentItemVersion).where(
+                ContentItemVersion.content_item_id.in_(content_item_ids_stmt)
+            )
+        )
+        await self._session.execute(
+            delete(ContentItem).where(ContentItem.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            delete(ContentJob).where(ContentJob.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            delete(PublishJob).where(PublishJob.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            delete(PlatformConnection).where(PlatformConnection.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            delete(MediaAsset).where(MediaAsset.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            delete(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace_id)
+        )
+        await self._session.execute(
+            update(EventLog)
+            .where(EventLog.workspace_id == workspace_id)
+            .values(
+                workspace_id=None,
+                input_summary="[redacted]",
+                output_summary="[redacted]",
+            )
+        )
+        await self._session.execute(
+            update(User)
+            .where(User.active_workspace_id == workspace_id)
+            .values(active_workspace_id=None)
+        )
+        await self._session.execute(
+            delete(Workspace).where(Workspace.id == workspace_id)
+        )
+        await self._session.flush()
+

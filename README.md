@@ -34,10 +34,28 @@ runtime boundary but live in one repository.
 
 ## Local Development
 
-Start services in this order: infrastructure, backend, then frontend. You need
-Docker, Node 20+, and [`uv`](https://docs.astral.sh/uv/).
+### One-Click Devbox (Recommended)
 
-### 1. Infrastructure: Postgres, Redis, MinIO
+Run a single command to start Docker infrastructure, run DB migrations, and launch Backend API, Celery Worker, Beat, and Next.js Web:
+
+```bash
+npm run dev
+# Or: npm run devbox
+```
+
+This starts:
+- **Web App**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **Postgres, Redis, MinIO**: Managed in background via Docker
+
+---
+
+### Manual Step-by-Step Setup
+
+If you prefer to start services individually:
+
+#### 1. Infrastructure: Postgres, Redis, MinIO
 
 ```bash
 npm run infra:up

@@ -159,7 +159,7 @@ export function OnboardingScreen() {
               {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
                   tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}
               <Button variant="outline" onClick={() => setStep(3)}>
-                Để sau
+                Bỏ qua
               </Button>
               <Button
                 variant="primary"

@@ -5,6 +5,8 @@
     "apps/web"
   ],
   "scripts": {
+    "dev": "bash scripts/devbox.sh",
+    "devbox": "bash scripts/devbox.sh",
     "dev:web": "npm run dev --workspace web",
     "build:web": "npm run build --workspace web",
     "lint:web": "npm run lint --workspace web",

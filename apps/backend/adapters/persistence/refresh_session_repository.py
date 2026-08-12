@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.models.user import RefreshSession
@@ -33,3 +33,10 @@ class RefreshSessionRepository:
     async def revoke(self, refresh_session: RefreshSession) -> None:
         refresh_session.revoked_at = datetime.now(UTC)
         await self._session.flush()
+
+    async def delete_all_for_user(self, user_id: UUID) -> None:
+        await self._session.execute(
+            delete(RefreshSession).where(RefreshSession.user_id == user_id)
+        )
+        await self._session.flush()
+

@@ -6,12 +6,16 @@ import "./globals.css";
 const inter = Inter({
   variable: "--font-body",
   subsets: ["latin", "vietnamese"],
+  fallback: ["system-ui", "-apple-system", "sans-serif"],
+  display: "swap",
 });
 
 const merriweather = Merriweather({
   variable: "--font-display",
   subsets: ["latin", "vietnamese"],
   weight: ["700", "900"],
+  fallback: ["Georgia", "serif"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

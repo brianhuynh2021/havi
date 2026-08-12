@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, status
 from api.deps import AuthDep, AuthServiceDep
 from api.rate_limit import limit_by_ip
 from application.services.auth_service import (
+    CannotDeleteUserWithOwnedWorkspaces,
     EmailAlreadyRegistered,
     InvalidCredentials,
     InvalidPhoneFormat,
@@ -183,3 +184,17 @@ async def me(auth: AuthDep, auth_service: AuthServiceDep) -> CurrentUser:
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy user")
     return CurrentUser.model_validate(user)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(auth: AuthDep, auth_service: AuthServiceDep) -> None:
+    """Xoá vĩnh viễn tài khoản người dùng và thu hồi mọi phiên làm việc."""
+    try:
+        await auth_service.delete_user_account(user_id=auth.user_id)
+    except CannotDeleteUserWithOwnedWorkspaces as exc:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Tài khoản đang là owner của workspace có thành viên khác. "
+            "Vui lòng chuyển quyền owner hoặc xoá workspace trước.",
+        ) from exc
+

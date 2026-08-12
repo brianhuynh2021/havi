@@ -173,7 +173,7 @@ describe("OnboardingScreen", () => {
     await chonNganhVaTiepTuc();
 
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: /để sau/i }));
+    await user.click(await screen.findByRole("button", { name: /bỏ qua/i }));
     await user.click(screen.getByRole("button", { name: /bắt đầu/i }));
     await user.click(screen.getByRole("button", { name: /vào app/i }));
 

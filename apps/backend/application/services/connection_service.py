@@ -17,9 +17,11 @@ from uuid import UUID
 
 from adapters.oauth.base import OAuthClientPort, OAuthError
 from adapters.persistence.connection_repository import ConnectionRepository
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from core.config import Settings
 from core.enums import Platform
+from core.events import EventLogEntry
 from core.oauth_state import (
     DEFAULT_RETURN_KEY,
     RETURN_PATHS,
@@ -66,11 +68,14 @@ class ConnectionService:
         members: WorkspaceMemberRepository,
         oauth_clients: dict[Platform, OAuthClientPort],
         settings: Settings,
+        events: EventLogRepository | None = None,
     ) -> None:
         self._connections = connections
         self._members = members
         self._oauth_clients = oauth_clients
         self._settings = settings
+        self._events = events
+
 
     # --- Đọc -----------------------------------------------------------------
 
@@ -158,6 +163,19 @@ class ConnectionService:
             platform.value,
             account.external_account_id,
         )
+        if self._events is not None:
+            summary = (
+                f"platform={platform.value} "
+                f"account_name={account.account_name} "
+                f"external_id={account.external_account_id}"
+            )
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=payload.workspace_id,
+                    job_kind="consent.platform_connected",
+                    input_summary=summary,
+                )
+            )
         return to_schema(connection)
 
     # --- Ngắt kênh -----------------------------------------------------------
@@ -173,6 +191,15 @@ class ConnectionService:
         )
         if connection is None:
             raise ConnectionNotFound()
+        if self._events is not None:
+            summary = f"platform={platform.value} account_name={connection.account_name}"
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace_id,
+                    job_kind="consent.platform_disconnected",
+                    input_summary=summary,
+                )
+            )
         await self._connections.delete(connection)
 
     # --- Nội bộ --------------------------------------------------------------

@@ -164,4 +164,42 @@ describe("SettingsScreen", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/chưa lưu được/i);
     expect(screen.getByDisplayValue("Spa An Nhiên")).toBeInTheDocument();
   });
+
+  it("xoá tiệm thành công", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input: RequestInfo | URL) => {
+        const request = input instanceof Request ? input : new Request(input);
+        if (request.method === "GET" && request.url.includes("/workspaces/w1")) {
+          return jsonResponse(workspace());
+        }
+        if (request.method === "GET" && request.url.includes("/brand-profile")) {
+          return jsonResponse(profile());
+        }
+        if (request.method === "GET" && request.url.includes("/connections")) {
+          return jsonResponse([]);
+        }
+        if (request.method === "DELETE" && request.url.includes("/workspaces/w1")) {
+          return new Response(null, { status: 204 });
+        }
+        return jsonResponse({ detail: "not found" }, 404);
+      });
+
+    render(<SettingsScreen />);
+    const user = userEvent.setup();
+    await screen.findByDisplayValue("Spa An Nhiên");
+
+    await user.click(screen.getByRole("button", { name: /xoá tiệm này/i }));
+    await waitFor(() => {
+      const calls = fetchSpy.mock.calls;
+      const deleteCall = calls.find(([req]) => {
+        const url = req instanceof Request ? req.url : String(req);
+        const method = req instanceof Request ? req.method : "GET";
+        return url.includes("/workspaces/w1") && method === "DELETE";
+      });
+      expect(deleteCall).toBeDefined();
+    });
+  });
 });
+

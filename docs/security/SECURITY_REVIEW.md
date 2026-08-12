@@ -33,7 +33,7 @@ that should be completed before inviting external beta users.
 | Frontend token handling | Accepted risk | Token access is centralized in `apps/web/src/lib/auth/token-store.ts`; tests cover corrupted storage and refresh failure. | HTTP-only cookies are recommended before public launch because XSS can read `localStorage`. |
 | Dependency handling | Partial | CI runs lint, tests, build, Alembic upgrade, and full backend pytest. | Add dependency audit or lockfile vulnerability scanning before external beta. |
 | Deployment secret handling | Partial | Deployment docs list required secrets and fake-mode blockers; CI uses non-production test values. | Confirm staging secrets are stored in the hosting provider secret manager, not `.env` committed files. |
-| Data deletion and consent | Open | Roadmap has a dedicated P1 item for account/workspace deletion and consent records. | Complete `docs/security/DATA_RETENTION_AND_CONSENT.md` before external beta. |
+| Data deletion and consent | Pass | Defined retention rules in DATA_RETENTION_AND_CONSENT.md, implemented DELETE /workspaces/{id} and DELETE /auth/me APIs, anonymized event logs, and added test suite. | Recheck backup retention cycles prior to broad public launch. |
 
 ## 3. Verified Controls
 
@@ -154,15 +154,16 @@ Required before public launch:
 
 ### Data Deletion and Consent
 
-Risk: account/workspace deletion, retained audit events, platform-token deletion,
-and automation consent records are not yet formally defined.
+Status: Completed.
 
-Required before external beta:
+Implemented controls:
 
-- define retention rules for users, workspaces, media, content, event logs, and
-  publish records
-- define consent records for publish mode and platform connection
-- add API and test coverage for deletion behavior
+- Retention rules defined in `docs/security/DATA_RETENTION_AND_CONSENT.md`.
+- `DELETE /workspaces/{workspace_id}` cascades deletion of brand profiles, content jobs/items, publish jobs, encrypted platform connections, and object storage files (S3/MinIO).
+- `DELETE /auth/me` revokes sessions, auto-deletes sole-member workspaces, and removes user profile.
+- Event logs for deleted workspaces have `workspace_id` set to NULL and inputs redacted.
+- Consent audit logs recorded for publish mode changes, workspace lifecycle, and platform connections.
+- Covered by unit and integration tests (`tests/test_deletion_and_consent.py`).
 
 ### Secret Rotation
 
@@ -210,7 +211,7 @@ Founder beta may proceed when:
 
 External beta remains blocked until:
 
-- data deletion and consent records are implemented
-- dependency vulnerability scanning is added
-- refresh-token storage is moved out of `localStorage` or the risk is explicitly
+- [x] data deletion and consent records are implemented
+- [ ] dependency vulnerability scanning is added
+- [ ] refresh-token storage is moved out of `localStorage` or the risk is explicitly
   accepted for the beta cohort

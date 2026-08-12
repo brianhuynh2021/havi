@@ -13,10 +13,15 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
+from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from core.config import Settings
+from core.enums import WorkspaceRole
+from core.events import EventLogEntry
 from core.phone import InvalidPhoneNumber, normalize_vietnamese_phone
 from core.security import (
     create_access_token,
@@ -65,6 +70,10 @@ class PhoneAlreadyUsed(Exception):
     pass
 
 
+class CannotDeleteUserWithOwnedWorkspaces(Exception):
+    pass
+
+
 @dataclass
 class OtpChallengeResult:
     resend_after_seconds: int
@@ -89,12 +98,19 @@ class AuthService:
         refresh_sessions: RefreshSessionRepository,
         settings: Settings,
         email_sender: EmailSender,
+        members: WorkspaceMemberRepository | None = None,
+        workspaces: WorkspaceRepository | None = None,
+        events: EventLogRepository | None = None,
     ) -> None:
         self._users = users
         self._otp_challenges = otp_challenges
         self._refresh_sessions = refresh_sessions
         self._settings = settings
         self._email_sender = email_sender
+        self._members = members
+        self._workspaces = workspaces
+        self._events = events
+
 
     async def sign_up(self, *, name: str, email: str, password: str) -> TokenPairResult:
         """Đăng ký xong đăng nhập luôn — email chưa cần xác minh để dùng app.
@@ -238,7 +254,39 @@ class AuthService:
             needs_onboarding=user.active_workspace_id is None,
         )
 
+    async def delete_user_account(self, *, user_id: UUID) -> None:
+        user = await self._users.get_by_id(user_id)
+        if user is None:
+            return
+
+        if self._members is not None and self._workspaces is not None:
+            memberships = await self._members.list_for_user(user_id)
+            for m in memberships:
+                if m.role == WorkspaceRole.OWNER:
+                    total_members = await self._members.count_members(m.workspace_id)
+                    total_owners = await self._members.count_owners(m.workspace_id)
+                    if total_members <= 1:
+                        await self._workspaces.delete_workspace_cascade(m.workspace_id)
+                    elif total_owners <= 1:
+                        raise CannotDeleteUserWithOwnedWorkspaces()
+
+            await self._members.remove_all_for_user(user_id)
+
+        await self._refresh_sessions.delete_all_for_user(user_id)
+
+        if self._events is not None:
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=None,
+                    job_kind="consent.user_account_deleted",
+                    input_summary=f"user_id={user_id} email={user.email}",
+                )
+            )
+
+        await self._users.delete(user)
+
     @staticmethod
     def _normalize_email(email: str) -> str:
         """Lowercase để "Huong@x.vn" và "huong@x.vn" không tạo 2 tài khoản."""
         return email.strip().lower()
+

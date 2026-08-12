@@ -4,15 +4,21 @@ Ném exception thuần, router dịch sang HTTP status — cùng quy ước vớ
 """
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from uuid import UUID
 
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.auth_service import AuthService, TokenPairResult
 from core.enums import Industry, PublishMode, WorkspaceRole
+from core.events import EventLogEntry
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
+
+if TYPE_CHECKING:
+    from application.services.media_service import MediaService
 
 
 class WorkspaceNotFound(Exception):
@@ -31,6 +37,10 @@ class CannotRemoveLastOwner(Exception):
     pass
 
 
+class CannotDeleteWorkspaceNotOwner(Exception):
+    pass
+
+
 @dataclass
 class MemberWithUser:
     member: WorkspaceMember
@@ -45,11 +55,15 @@ class WorkspaceService:
         members: WorkspaceMemberRepository,
         users: UserRepository,
         auth_service: AuthService,
+        events: EventLogRepository | None = None,
+        media_service: "MediaService | None" = None,
     ) -> None:
         self._workspaces = workspaces
         self._members = members
         self._users = users
         self._auth_service = auth_service
+        self._events = events
+        self._media_service = media_service
 
     async def list_workspaces(self, user_id: UUID) -> list[Workspace]:
         return await self._workspaces.list_for_user(user_id)
@@ -69,6 +83,15 @@ class WorkspaceService:
         owner = await self._users.get_by_id(owner_user_id)
         if owner is not None:
             await self._users.set_active_workspace(owner, workspace.id)
+
+        if self._events is not None:
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace.id,
+                    job_kind="consent.workspace_created",
+                    input_summary=f"user_id={owner_user_id} name={name} industry={industry.value}",
+                )
+            )
         return workspace
 
     async def get_workspace(self, workspace_id: UUID) -> Workspace:
@@ -86,9 +109,51 @@ class WorkspaceService:
         publish_mode: PublishMode | None,
     ) -> Workspace:
         workspace = await self.get_workspace(workspace_id)
-        return await self._workspaces.update(
+        old_mode = workspace.publish_mode
+        updated = await self._workspaces.update(
             workspace, name=name, industry=industry, publish_mode=publish_mode
         )
+        if publish_mode is not None and publish_mode != old_mode and self._events is not None:
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace_id,
+                    job_kind="consent.publish_mode_changed",
+                    input_summary=f"from={old_mode.value} to={publish_mode.value}",
+                )
+            )
+        return updated
+
+    async def delete_workspace(self, *, workspace_id: UUID, user_id: UUID) -> None:
+        workspace = await self.get_workspace(workspace_id)
+        member = await self._members.get(workspace_id=workspace_id, user_id=user_id)
+        if member is None or member.role != WorkspaceRole.OWNER:
+            raise CannotDeleteWorkspaceNotOwner()
+
+        if self._events is not None:
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace_id,
+                    job_kind="consent.workspace_deleted",
+                    input_summary=f"user_id={user_id} workspace_name={workspace.name}",
+                )
+            )
+
+        if self._media_service is not None:
+            assets, _ = await self._media_service.list_media(
+                workspace_id=workspace_id,
+                type=None,
+                status=None,
+                tag=None,
+                limit=1000,
+                offset=0,
+            )
+            for asset in assets:
+                try:
+                    await self._media_service._storage.delete_object(asset.object_key)
+                except Exception:
+                    pass
+
+        await self._workspaces.delete_workspace_cascade(workspace_id)
 
     async def activate_workspace(self, *, user_id: UUID, workspace_id: UUID) -> TokenPairResult:
         """Membership đã được xác nhận ở dependency router — chỉ set + reissue token."""
@@ -123,3 +188,4 @@ class WorkspaceService:
             if owner_count <= 1:
                 raise CannotRemoveLastOwner()
         await self._members.remove(member)
+

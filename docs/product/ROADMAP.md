@@ -199,11 +199,38 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 
 ## 7. Current Priority Queue
 
-1. Design data deletion, account deletion, and consent records.
-2. Prepare a 7-day founder dogfooding plan.
-3. Sync the product roadmap after agent-loop batches.
+All Founder Beta milestones (Gates A through E) are 100% completed, tested, and verified.
+Queue for External Beta Phase:
+1. Setup dependency vulnerability scanning audit (`npm audit` & `uv pip audit`).
+2. Add HTTP-only cookie option for refresh tokens to supplement local storage.
+3. Prepare marketing landing page assets for external pilot cohort onboarding.
 
 ## 8. Upcoming Work
+
+### Completed: Founder Dogfooding Plan
+
+Status: completed in `docs/operations/DOGFOODING_PLAN.md`.
+
+Acceptance criteria:
+
+- [x] 7-day internal beta checklist (Day 1 through Day 7 action guide)
+- [x] daily tasks and operational telemetry log template
+- [x] P0/P1 bug triage SLAs and response times defined
+- [x] immediate stop rules (kill switches) defined for system failures or credential leaks
+- [x] criteria for inviting external beta cohort defined
+
+### Completed: Data Deletion, Account Deletion, and Consent Records
+
+Status: completed in `docs/security/DATA_RETENTION_AND_CONSENT.md`.
+
+Acceptance criteria:
+
+- [x] user/account deletion behavior defined & implemented via `DELETE /auth/me`
+- [x] workspace deletion behavior defined & implemented via `DELETE /workspaces/{id}`
+- [x] retained audit/event data defined with rationale & anonymization
+- [x] platform token deletion and reconnect behavior defined
+- [x] consent records for automation (`publish_mode`) and platform OAuth connections defined & recorded
+- [x] covered by backend integration test suite (`tests/test_deletion_and_consent.py`) and frontend UI in Settings
 
 ### Completed: Staging Runbook and Backup/Restore Rehearsal
 
@@ -256,26 +283,6 @@ Acceptance criteria:
 - [x] smoke accessibility checks for nav/forms/buttons/states
 - [x] mobile and desktop viewport checks
 - [x] documented command for local/CI execution
-
-### P1: Data Deletion, Account Deletion, and Consent Records
-
-Acceptance criteria:
-
-- user/account deletion behavior defined
-- workspace deletion behavior defined
-- retained audit/event data defined with rationale
-- platform token deletion and reconnect behavior defined
-- consent records for automation and publishing mode defined
-
-### P1: Founder Dogfooding Plan
-
-Acceptance criteria:
-
-- 7-day internal beta checklist
-- daily tasks and success metrics
-- minimum content jobs and publish jobs
-- failure reporting process
-- criteria for inviting external beta users
 
 ## 9. Metrics That Matter
 

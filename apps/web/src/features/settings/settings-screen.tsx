@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { ConnectionList } from "@/features/connections/connection-list";
 import { industryOptions } from "@/features/onboarding/onboarding.fixture";
+import { clearTokens } from "@/lib/auth/token-store";
 import {
+  deleteAccount,
+  deleteWorkspace,
   formatBannedClaims,
   loadSettings,
   parseBannedClaims,
@@ -47,6 +50,9 @@ export function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [deletingWorkspace, setDeletingWorkspace] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +107,43 @@ export function SettingsScreen() {
       setError(result.message);
     }
     setSaving(false);
+  }
+
+  async function handleDeleteWorkspace() {
+    if (!form.workspaceId) return;
+    const confirmed = window.confirm(
+      `Chị có chắc chắn muốn xoá tiệm "${form.name}"? Hành động này sẽ xoá vĩnh viễn toàn bộ bài viết, cấu hình thương hiệu và kết nối kênh.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingWorkspace(true);
+    setError("");
+    const result = await deleteWorkspace(form.workspaceId);
+    if (result.ok) {
+      clearTokens();
+      window.location.href = "/onboarding";
+    } else {
+      setError(result.message);
+      setDeletingWorkspace(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm(
+      "Chị có chắc chắn muốn xoá tài khoản Havi? Hành động này sẽ thu hồi toàn bộ phiên làm việc và xoá dữ liệu tài khoản.",
+    );
+    if (!confirmed) return;
+
+    setDeletingAccount(true);
+    setError("");
+    const result = await deleteAccount();
+    if (result.ok) {
+      clearTokens();
+      window.location.href = "/login";
+    } else {
+      setError(result.message);
+      setDeletingAccount(false);
+    }
   }
 
   return (
@@ -211,6 +254,50 @@ export function SettingsScreen() {
         </p>
         <ConnectionList returnTo="settings" />
       </section>
+
+      <section className={`${styles.section} ${styles.dangerSection}`} aria-labelledby="danger-title">
+        <h2 className={styles.sectionTitle} id="danger-title">
+          Vùng nguy hiểm
+        </h2>
+        <p className={styles.sectionHint}>
+          Xoá tiệm hoặc tài khoản sẽ gỡ bỏ dữ liệu vĩnh viễn và không thể khôi phục.
+        </p>
+
+        <div className={styles.dangerCard}>
+          <div className={styles.dangerTitle}>Xoá tiệm hiện tại</div>
+          <div className={styles.dangerText}>
+            Xoá toàn bộ bài nháp, kết nối Facebook, hình ảnh và cài đặt của tiệm này.
+          </div>
+          <div className={styles.dangerActions}>
+            <button
+              type="button"
+              className={styles.dangerButtonOutline}
+              disabled={loading || deletingWorkspace || deletingAccount}
+              onClick={handleDeleteWorkspace}
+            >
+              {deletingWorkspace ? "Đang xoá tiệm..." : "Xoá tiệm này"}
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.dangerCard}>
+          <div className={styles.dangerTitle}>Xoá tài khoản người dùng</div>
+          <div className={styles.dangerText}>
+            Xoá vĩnh viễn tài khoản Havi của chị và thu hồi toàn bộ đăng nhập.
+          </div>
+          <div className={styles.dangerActions}>
+            <button
+              type="button"
+              className={styles.dangerButton}
+              disabled={loading || deletingWorkspace || deletingAccount}
+              onClick={handleDeleteAccount}
+            >
+              {deletingAccount ? "Đang xoá tài khoản..." : "Xoá tài khoản"}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
+
