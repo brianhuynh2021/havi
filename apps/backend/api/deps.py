@@ -21,6 +21,8 @@ from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.inbox_repository import InboxRepository
+from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.publish_repository import PublishRepository
@@ -35,7 +37,9 @@ from application.services.auth_service import AuthService
 from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
+from application.services.inbox_service import InboxService
 from application.services.job_queue import CeleryJobQueue, JobQueue
+from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.workspace_service import WorkspaceService
@@ -98,6 +102,24 @@ def get_brand_profile_service(session: DbSessionDep) -> BrandProfileService:
 
 
 BrandProfileServiceDep = Annotated[BrandProfileService, Depends(get_brand_profile_service)]
+
+
+def get_inbox_service(session: DbSessionDep) -> InboxService:
+    return InboxService(
+        inbox=InboxRepository(session),
+        profiles=BrandProfileRepository(session),
+        events=EventLogRepository(session),
+    )
+
+
+InboxServiceDep = Annotated[InboxService, Depends(get_inbox_service)]
+
+
+def get_lead_service(session: DbSessionDep) -> LeadService:
+    return LeadService(leads=LeadRepository(session))
+
+
+LeadServiceDep = Annotated[LeadService, Depends(get_lead_service)]
 
 
 @lru_cache

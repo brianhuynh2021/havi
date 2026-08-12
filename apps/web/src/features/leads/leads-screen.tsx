@@ -27,7 +27,7 @@ export function LeadsScreen() {
     Object.fromEntries(leadsFixture.map((lead) => [lead.id, lead.status])),
   );
 
-  function send(id: string) {
+  async function send(id: string) {
     setStatuses((prev) => ({ ...prev, [id]: "sent" }));
   }
 

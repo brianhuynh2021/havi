@@ -6,10 +6,10 @@ sẵn từng câu trong brand profile.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 
-from api.deps import AuthDep, WorkspaceDep
-from api.errors import NotImplementedEndpoint
+from api.deps import AuthDep, InboxServiceDep, WorkspaceDep
+from application.services.inbox_service import InboxItemNotFound
 from core.enums import InboxItemStatus, Platform
 from core.schemas import InboxItem, InboxReplyRequest, Page
 
@@ -17,26 +17,60 @@ router = APIRouter(prefix="/inbox", tags=["inbox"])
 
 
 @router.get("", response_model=Page[InboxItem])
-def list_inbox(
+async def list_inbox(
     workspace_id: WorkspaceDep,
+    inbox_service: InboxServiceDep,
     status: InboxItemStatus | None = None,
     platform: Platform | None = None,
     limit: int = Query(default=50, le=200),
     offset: int = 0,
 ) -> Page[InboxItem]:
-    del workspace_id, status, platform, limit, offset
-    raise NotImplementedEndpoint()
+    items, total = await inbox_service.list_items(
+        workspace_id=workspace_id,
+        status=status,
+        platform=platform,
+        limit=limit,
+        offset=offset,
+    )
+    return Page[InboxItem](items=items, total=total, limit=limit, offset=offset)
 
 
 @router.post("/{item_id}/reply", response_model=InboxItem)
-def send_reply(item_id: UUID, payload: InboxReplyRequest, auth: AuthDep) -> InboxItem:
+async def send_reply(
+    item_id: UUID,
+    payload: InboxReplyRequest,
+    workspace_id: WorkspaceDep,
+    inbox_service: InboxServiceDep,
+    auth: AuthDep,
+) -> InboxItem:
     """Nút "Gửi" / "Sửa rồi gửi" — chỉ chạy khi có action của người thật."""
-    del item_id, payload, auth
-    raise NotImplementedEndpoint()
+    del auth
+    try:
+        return await inbox_service.send_reply(
+            workspace_id=workspace_id,
+            item_id=item_id,
+            text=payload.text,
+        )
+    except InboxItemNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy tin nhắn/bình luận này",
+        )
 
 
 @router.post("/{item_id}/dismiss", status_code=status.HTTP_204_NO_CONTENT)
-def dismiss(item_id: UUID, auth: AuthDep) -> None:
+async def dismiss(
+    item_id: UUID,
+    workspace_id: WorkspaceDep,
+    inbox_service: InboxServiceDep,
+    auth: AuthDep,
+) -> None:
     """Nút "Bỏ qua"."""
-    del item_id, auth
-    raise NotImplementedEndpoint()
+    del auth
+    try:
+        await inbox_service.dismiss_item(workspace_id=workspace_id, item_id=item_id)
+    except InboxItemNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy tin nhắn/bình luận này",
+        )
