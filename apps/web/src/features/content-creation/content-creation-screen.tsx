@@ -198,6 +198,7 @@ export function ContentCreationScreen() {
 
   // Job xong thì nạp lại hàng chờ duyệt và hiển thị thông báo Toast ở góc phải màn hình.
   const onJobReady = useCallback(() => {
+    setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.");
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({
       type: "success",
