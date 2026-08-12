@@ -116,7 +116,7 @@ export function LandingScreen() {
         </div>
 
         {/* Ảnh mô phỏng bản nháp chờ duyệt có chọn tab kênh & email */}
-        <div className={styles.previewCard} aria-hidden="true">
+        <div className={styles.previewCard}>
           <div className={styles.previewBar}>
             <div className={styles.previewDots}>
               <span className={styles.previewDot} />
