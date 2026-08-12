@@ -311,7 +311,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /^duyệt$/i }));
+    await user.click(screen.getByRole("button", { name: /lên lịch/i }));
 
     await waitFor(() =>
       expect(screen.queryByText("Nội dung c1")).not.toBeInTheDocument(),
@@ -336,7 +336,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /^duyệt$/i }));
+    await user.click(screen.getByRole("button", { name: /đăng ngay/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /vừa đổi trạng thái/i,

@@ -271,9 +271,9 @@ export function ContentCreationScreen() {
     setQuotaKey((k) => k + 1);
   }
 
-  async function onApprove(id: string) {
+  async function onApprove(id: string, scheduledAt?: string) {
     setBusyIds((prev) => [...prev, id]);
-    const result = await approveItem(id);
+    const result = await approveItem(id, scheduledAt);
     setBusyIds((prev) => prev.filter((b) => b !== id));
     if (!result.ok) {
       setError(result.message);
@@ -282,7 +282,11 @@ export function ContentCreationScreen() {
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== id));
-    setNotice("Đã duyệt — bài sẽ lên đúng lịch ở tab Lịch đăng.");
+    setNotice(
+      scheduledAt
+        ? "⚡ Đã duyệt — bài đang xuất bản ngay lập tức!"
+        : "📅 Đã duyệt — bài sẽ lên đúng lịch ở tab Lịch đăng.",
+    );
   }
 
   async function onReject(id: string) {
@@ -589,9 +593,16 @@ export function ContentCreationScreen() {
                       <Button
                         variant="primary"
                         disabled={busy}
+                        onClick={() => onApprove(item.id, new Date().toISOString())}
+                      >
+                        ⚡ Đăng ngay
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={busy}
                         onClick={() => onApprove(item.id)}
                       >
-                        Duyệt
+                        📅 Lên lịch
                       </Button>
                       <Button
                         variant="outline"

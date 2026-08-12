@@ -182,11 +182,17 @@ export async function listPendingItems(): Promise<Result<ContentItem[]>> {
   }
 }
 
-export async function approveItem(itemId: string): Promise<Result<ContentItem>> {
+export async function approveItem(
+  itemId: string,
+  scheduledAt?: string,
+): Promise<Result<ContentItem>> {
   try {
     const { data, error, response } = await apiClient.POST(
       "/content/{content_id}/approve",
-      { params: { path: { content_id: itemId } }, body: {} },
+      {
+        params: { path: { content_id: itemId } },
+        body: { scheduled_at: scheduledAt || null },
+      },
     );
     if (error || !data) {
       return {
