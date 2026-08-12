@@ -462,7 +462,39 @@
         "python3 -m json.tool agent-loop/roadmap.json",
         "git diff -- docs/product/ROADMAP.md"
       ],
-      "prompt": "Read the agent-loop checkpoint and update docs/product/ROADMAP.md. Clearly distinguish implemented/tested work from mere agent proposals. After syncing, suggest the next 3 tasks that should enter the loop."
+      "prompt": "Read the agent-loop checkpoint and update docs/product/ROADMAP.md. Clearly distinguish implemented/tested work from severe agent proposals. After syncing, suggest the next 3 tasks that should enter the loop."
+    },
+    {
+      "id": "lead-care-loop-station-4",
+      "title": "Implement Station 4 Lead & Care Loop (Unified Inbox, AI Reply & CRM APIs)",
+      "status": "completed",
+      "priority": "P0",
+      "area": "inbox-crm",
+      "why": "Station 4 of Havi requires a unified inbox for comments and price inquiries, exact matching auto-replies for approved FAQs, and AI draft generation for all other inquiries stopping at awaiting_approval.",
+      "files_to_read": [
+        "apps/backend/domain/models/inbox.py",
+        "apps/backend/domain/models/lead.py",
+        "apps/backend/adapters/persistence/inbox_repository.py",
+        "apps/backend/adapters/persistence/lead_repository.py",
+        "apps/backend/application/services/inbox_service.py",
+        "apps/backend/application/services/lead_service.py",
+        "apps/backend/api/routers/inbox.py",
+        "apps/backend/api/routers/leads.py",
+        "apps/web/src/features/leads/leads.api.ts",
+        "apps/web/src/features/leads/leads-screen.tsx"
+      ],
+      "acceptance_criteria": [
+        "Customer inquiries matching approved BrandProfile.faq auto-reply with status sent",
+        "All other customer inquiries generate AI draft replies holding in awaiting_approval",
+        "Backend /inbox and /leads REST endpoints support full CRUD operations",
+        "Frontend LeadsScreen connects to live APIs with optimistic approval handling",
+        "100% of web Vitest unit tests pass cleanly"
+      ],
+      "verify_commands": [
+        "cd apps/backend && uv run pytest tests/test_inbox_flow.py",
+        "npm run test:web"
+      ],
+      "prompt": "Build Station 4 Lead & Care Loop with exact FAQ auto-matching and approval-first AI reply generation."
     }
   ]
 }

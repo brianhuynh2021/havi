@@ -204,6 +204,7 @@ Queue for External Beta Phase:
 - [x] Dependency vulnerability scanning audit (`npm audit` & `pip-audit` verified cleanly with 0 backend vulnerabilities).
 - [x] Add HTTP-only cookie support (`havi_refresh_token`) for refresh tokens on auth endpoints and frontend fetch clients.
 - [x] Facebook App Review submission package & compliance infrastructure (Meta Data Deletion Callback API, `/huong-dan-xoa-du-lieu` page, and submission guide in `docs/operations/FACEBOOK_APP_REVIEW.md`).
+- [x] Station 4: Lead & Care Loop (Unified Inbox, AI Reply Generator, Exact FAQ Auto-matching, and `/inbox` & `/leads` REST APIs).
 - [ ] Prepare marketing landing page assets for external pilot cohort onboarding.
 
 ## 8. Upcoming Work
