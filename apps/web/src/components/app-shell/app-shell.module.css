@@ -3,19 +3,24 @@
   display: flex;
   background: var(--color-background);
   color: var(--color-ink);
+  position: relative;
 }
 
 .sidebar {
-  width: 232px;
+  width: 240px;
   height: 100vh;
   flex: none;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 0;
+  bottom: 0;
+  z-index: 50;
   display: flex;
   flex-direction: column;
-  padding: 20px 14px;
+  padding: 20px 16px;
   background: var(--color-surface-dark);
   color: var(--color-paper);
+  overflow-y: auto;
 }
 
 .brand {
@@ -151,10 +156,11 @@
 }
 
 .content {
-  width: 100%;
-  max-width: 1080px;
+  margin-left: 240px;
+  width: calc(100% - 240px);
+  max-width: 1140px;
   flex: 1;
-  padding: 28px 36px;
+  padding: 28px 40px 60px;
 }
 
 .mobileNav {
@@ -174,6 +180,8 @@
   }
 
   .content {
+    margin-left: 0;
+    width: 100%;
     max-width: none;
     padding: 24px 20px 40px;
   }
