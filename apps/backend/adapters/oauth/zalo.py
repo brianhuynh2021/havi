@@ -111,13 +111,31 @@ class ZaloOAuthClient(OAuthClientPort):
             else None
         )
 
-        oa_id = data.get("oa_id") or "zalo_oa_default"
-        oa_name = data.get("oa_name") or f"Zalo OA ({oa_id})"
+        oa_id = data.get("oa_id")
+        oa_name = data.get("oa_name")
+
+        if access_token and not (oa_id and oa_name):
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    oa_res = await client.get(
+                        "https://openapi.zalo.me/v2.0/oa/getoa",
+                        headers={"access_token": access_token},
+                    )
+                    if oa_res.status_code == 200:
+                        oa_info = oa_res.json().get("data", {})
+                        if isinstance(oa_info, dict):
+                            oa_id = oa_info.get("oa_id") or oa_id
+                            oa_name = oa_info.get("name") or oa_name
+            except Exception:
+                pass
+
+        final_oa_id = str(oa_id or "zalo_oa_default")
+        final_oa_name = str(oa_name or (f"Zalo OA ({final_oa_id})" if final_oa_id != "zalo_oa_default" else "Zalo Official Account"))
 
         return OAuthAccount(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_at=expires_at,
-            account_name=oa_name,
-            external_account_id=str(oa_id),
+            account_name=final_oa_name,
+            external_account_id=final_oa_id,
         )

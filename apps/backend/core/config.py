@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="HAVI_",
-        env_file=".env",
+        env_file=(".env", "apps/backend/.env"),
         env_file_encoding="utf-8",
         extra="ignore",
         # Không để pydantic-settings tự parse field kiểu list/dict thành JSON.
