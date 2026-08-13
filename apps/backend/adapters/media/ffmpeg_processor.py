@@ -91,6 +91,31 @@ class FFmpegVideoProcessor:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
 
+    def thumbnail_bytes(
+        self,
+        video_bytes: bytes,
+        filename_hint: str = "temp.mp4",
+        timestamp_seconds: float = 1.0,
+    ) -> bytes | None:
+        """Lấy ảnh bìa từ buffer — ffmpeg cần file thật nên phải ghi tạm.
+
+        Nếu clip ngắn hơn `timestamp_seconds` thì `-ss` nhảy quá đuôi video và
+        ffmpeg không xuất khung nào; thử lại ở giây 0 để clip 1-2 giây vẫn có bìa.
+        """
+        suffix = os.path.splitext(filename_hint)[1] or ".mp4"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(video_bytes)
+            tmp_path = tmp.name
+
+        try:
+            frame = self.extract_thumbnail(tmp_path, timestamp_seconds=timestamp_seconds)
+            if frame is None and timestamp_seconds > 0:
+                frame = self.extract_thumbnail(tmp_path, timestamp_seconds=0)
+            return frame
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
     def extract_thumbnail(
         self, file_path: str, timestamp_seconds: float = 1.0
     ) -> bytes | None:

@@ -15,10 +15,11 @@ from domain.models.lead import Lead
 class LeadOutcomes:
     """Số liệu kết quả kinh doanh trong một khoảng thời gian.
 
-    `walk_ins` đếm lead đã chốt (`WON`) chứ không phải một nguồn check-in riêng:
-    Havi chưa nối POS, và `WON` là bằng chứng gần nhất mà hệ thống thực sự có
-    rằng khách đã tới tiệm. `/analytics` phải nói rõ điều đó ra thay vì để con số
-    trông như đếm được từ cửa.
+    `won_leads` đếm lead ở stage `WON` và `/analytics/summary` phơi ra đúng cái
+    tên đó. Trước đây nó được gọi là `walk_ins`, nhưng Havi chưa nối POS hay
+    check-in nào — không có nguồn nào ở đây đếm được người bước qua cửa tiệm, nên
+    cái tên cũ hứa một phép đo mà hệ thống không thực hiện. Nếu sau này có nguồn
+    check-in thật thì nó là một trường riêng, không phải trường này đổi nghĩa.
     """
 
     new_leads: int
@@ -106,6 +107,7 @@ class LeadRepository:
         message: str | None = None,
         suggested_reply: str | None = None,
         notes: str | None = None,
+        content_item_id: UUID | None = None,
     ) -> Lead:
         lead = Lead(
             workspace_id=workspace_id,
@@ -117,6 +119,7 @@ class LeadRepository:
             message=message,
             suggested_reply=suggested_reply,
             notes=notes,
+            content_item_id=content_item_id,
         )
         self._session.add(lead)
         await self._session.flush()
@@ -156,6 +159,7 @@ class LeadRepository:
         stage: LeadStage | None = None,
         reply_status: LeadReplyStatus | None = None,
         notes: str | None = None,
+        content_item_id: UUID | None = None,
     ) -> Lead:
         if name is not None:
             lead.name = name
@@ -167,5 +171,26 @@ class LeadRepository:
             lead.reply_status = reply_status
         if notes is not None:
             lead.notes = notes
+        if content_item_id is not None:
+            lead.content_item_id = content_item_id
         await self._session.flush()
         return lead
+
+    async def count_customers_by_channel(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> dict:
+        """Đếm số lead/khách hàng theo channel của bài viết được gắn trực tiếp."""
+        from domain.models.content import ContentItem
+
+        result = await self._session.execute(
+            select(ContentItem.channel, func.count(func.distinct(Lead.id)))
+            .join(ContentItem, Lead.content_item_id == ContentItem.id)
+            .where(
+                Lead.workspace_id == workspace_id,
+                Lead.created_at >= start,
+                Lead.created_at < end,
+            )
+            .group_by(ContentItem.channel)
+        )
+        return {row[0]: row[1] for row in result.all()}
+

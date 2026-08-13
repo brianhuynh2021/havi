@@ -6,8 +6,34 @@ transaction — nên mỗi test dùng object key riêng (uuid trong key) để k
 nhau, và các object rác này nằm trong bucket dev, không ảnh hưởng gì.
 """
 
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
 import httpx
+import pytest
 from httpx import AsyncClient
+
+ffmpeg_required = pytest.mark.skipif(
+    not (shutil.which("ffmpeg") and shutil.which("ffprobe")),
+    reason="cần ffmpeg/ffprobe trong PATH",
+)
+
+
+def _make_vertical_clip(path: Path) -> Path:
+    """Clip dọc 4 giây có tiếng — hợp lệ với cả ba kênh video."""
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", "testsrc=size=540x960:rate=30:duration=4",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+            "-shortest", "-pix_fmt", "yuv420p", str(path),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    return path
 
 
 async def _onboard(client: AsyncClient, *, email: str) -> dict:
@@ -97,6 +123,71 @@ async def test_upload_that_len_minio_roi_complete_chuyen_sang_raw(client: AsyncC
     assert body["size_bytes"] == len(content)
     assert body["uploaded_at"] is not None
     assert body["url"].endswith(body["filename"])
+
+
+@ffmpeg_required
+async def test_upload_video_thi_complete_tra_thong_so_bia_va_kenh(client: AsyncClient):
+    """Clip dọc đi hết luồng: probe → ảnh bìa → kênh đăng được.
+
+    Đi qua HTTP và MinIO thật thay vì gọi `MediaService` trực tiếp: cái đáng kiểm
+    ở đây là ảnh bìa có *thật sự* nằm trên bucket và tải về được, không phải là
+    service có gọi đúng hàm.
+    """
+    token_pair = await _onboard(client, email="m-video@havi.vn")
+    headers = _headers(token_pair)
+    ticket = await _request_ticket(
+        client, headers, filename="clip-doc.mp4", content_type="video/mp4", type="video"
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = _make_vertical_clip(Path(tmp) / "clip-doc.mp4")
+        content = path.read_bytes()
+
+    upload_status = await _upload_to_storage(
+        ticket, content=content, content_type="video/mp4"
+    )
+    assert upload_status in (200, 204), f"MinIO từ chối upload: {upload_status}"
+
+    completed = await client.post(f"/media/{ticket['asset_id']}/complete", headers=headers)
+    assert completed.status_code == 200, completed.text
+    body = completed.json()
+
+    assert body["status"] == "raw"
+    assert body["aspect_ratio"] == "9:16"
+    assert body["width"] == 540
+    assert body["height"] == 960
+    assert 3.5 <= body["duration_seconds"] <= 4.5
+    # Clip dọc 4 giây có tiếng: hợp cả ba kênh video.
+    assert set(body["eligible_channels"]) == {"reels", "tiktok", "youtube"}
+
+    assert body["thumbnail_url"], "phải có ảnh bìa"
+    async with httpx.AsyncClient() as storage_client:
+        fetched = await storage_client.get(body["thumbnail_url"])
+    assert fetched.status_code == 200, "ảnh bìa phải tải về được từ bucket"
+    assert fetched.content.startswith(b"\xff\xd8"), "ảnh bìa phải là JPEG"
+
+
+async def test_upload_anh_khong_sinh_thong_so_video(client: AsyncClient):
+    """Ảnh không được mang thông số video hay ảnh bìa.
+
+    NULL ở đây là câu trả lời đúng: một tấm ảnh không có `duration_seconds` bằng 0,
+    nó không có khái niệm thời lượng.
+    """
+    token_pair = await _onboard(client, email="m-anh-khong-video@havi.vn")
+    headers = _headers(token_pair)
+    ticket = await _request_ticket(client, headers)
+    await _upload_to_storage(
+        ticket, content=b"\xff\xd8\xff\xe0" + b"\x00" * 40, content_type="image/jpeg"
+    )
+
+    body = (
+        await client.post(f"/media/{ticket['asset_id']}/complete", headers=headers)
+    ).json()
+
+    assert body["duration_seconds"] is None
+    assert body["aspect_ratio"] is None
+    assert body["thumbnail_url"] is None
+    assert body["eligible_channels"] == []
 
 
 async def test_complete_khi_chua_upload_tra_409(client: AsyncClient):

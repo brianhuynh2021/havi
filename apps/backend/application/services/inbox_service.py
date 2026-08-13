@@ -10,9 +10,11 @@ from uuid import UUID
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
+from adapters.publishers.fake_reply import FakeReplyPublisher
 from core.enums import InboxItemStatus, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
+from domain.ports.reply_publisher import ReplyPublisherPort, ReplyRequest
 
 
 class InboxItemNotFound(Exception):
@@ -54,10 +56,15 @@ class InboxService:
         inbox: InboxRepository,
         profiles: BrandProfileRepository,
         events: EventLogRepository,
+        reply_publishers: dict[Platform, ReplyPublisherPort] | None = None,
     ) -> None:
         self._inbox = inbox
         self._profiles = profiles
         self._events = events
+        self._reply_publishers = reply_publishers or {
+            Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
+            Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
+        }
 
     async def list_items(
         self,
@@ -105,8 +112,17 @@ class InboxService:
         matched_answer = _match_approved_faq(faqs, content)
 
         if matched_answer:
-            # FAQ khớp tuyệt đối -> đây là ngoại lệ duy nhất được tự động trả
-            # lời khách (Nguyên tắc #1).
+            # FAQ khớp tuyệt đối -> gửi qua reply publisher port (Nguyên tắc #1)
+            publisher = self._reply_publishers.get(platform) or FakeReplyPublisher(platform)
+            reply_res = await publisher.send_reply(
+                ReplyRequest(
+                    workspace_id=workspace_id,
+                    platform=platform,
+                    text=matched_answer,
+                    external_message_id=external_message_id,
+                )
+            )
+
             item = await self._inbox.create(
                 workspace_id=workspace_id,
                 platform=platform,
@@ -124,7 +140,9 @@ class InboxService:
                     workspace_id=workspace_id,
                     job_kind="inbox.faq_auto_reply",
                     input_summary=f"{platform.value}: tin nhắn khớp FAQ đã duyệt",
-                    output_summary=matched_answer[:200],
+                    output_summary=(
+                        f"reply_id:{reply_res.external_reply_id} | {matched_answer[:200]}"
+                    ),
                 )
             )
             return item
@@ -154,11 +172,31 @@ class InboxService:
         if item is None:
             raise InboxItemNotFound()
 
-        return await self._inbox.update_status(
+        publisher = self._reply_publishers.get(item.platform) or FakeReplyPublisher(item.platform)
+        reply_res = await publisher.send_reply(
+            ReplyRequest(
+                workspace_id=workspace_id,
+                platform=item.platform,
+                text=text,
+                external_message_id=item.external_message_id,
+            )
+        )
+
+        updated = await self._inbox.update_status(
             item,
             status=InboxItemStatus.SENT,
             reply_text=text,
         )
+
+        await self._events.record(
+            EventLogEntry(
+                workspace_id=workspace_id,
+                job_kind="inbox.reply_sent",
+                input_summary=f"{item.platform.value}: gửi phản hồi cho {item.author_name}",
+                output_summary=f"reply_id:{reply_res.external_reply_id} | {text[:200]}",
+            )
+        )
+        return updated
 
     async def dismiss_item(
         self,
@@ -171,3 +209,4 @@ class InboxService:
             raise InboxItemNotFound()
 
         await self._inbox.update_status(item, status=InboxItemStatus.DISMISSED)
+

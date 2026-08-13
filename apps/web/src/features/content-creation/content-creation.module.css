@@ -191,6 +191,55 @@
   background: #f8fafc;
 }
 
+/* --- Kênh clip đăng được, hiện ngay sau khi upload -------------------------- */
+
+.clipEligibility {
+  margin-top: 9px;
+}
+
+.clipSpec {
+  margin: 0 0 5px;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.clipUnknown {
+  margin: 9px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.clipChannelList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clipChannelFits,
+.clipChannelUnfit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clipChannelFits {
+  color: #15803d;
+}
+
+/* Không hợp kênh không phải là lỗi — clip vẫn nằm trong thư viện — nên dùng màu
+   chữ mờ chứ không phải đỏ báo lỗi. Kết luận nằm trong chữ ("đăng được" /
+   "không đăng được"), nên màu và dấu ✓/✕ chỉ là lớp phụ chứ không phải nơi duy
+   nhất mang thông tin. */
+.clipChannelUnfit {
+  color: var(--color-muted);
+}
+
 .noteBox {
   margin-top: 14px;
   display: flex;

@@ -12,9 +12,12 @@ import {
   approveItem,
   createJob,
   listPendingItems,
+  mediaTypeOf,
   rejectItem,
-  uploadImage,
+  uploadMedia,
+  type Channel,
   type ContentItem,
+  type MediaAsset,
   type RawInput,
 } from "./content-creation.api";
 import { channelLabels, type PublishMode } from "./content-creation.fixture";
@@ -37,12 +40,88 @@ type UploadRow = {
   key: string;
   fileName: string;
   previewUrl: string;
+  isVideo: boolean;
   progress: number;
   status: "uploading" | "complete" | "cancelled" | "failed";
   message?: string;
   assetId?: string;
+  /** Chỉ có với video, và chỉ sau khi backend probe xong ở lượt `complete`. */
+  asset?: MediaAsset;
   controller: AbortController;
 };
+
+/** Kênh video Havi kiểm ràng buộc — khớp `VIDEO_REQUIREMENTS` ở backend. */
+const VIDEO_CHANNEL_LABELS: Record<string, string> = {
+  reels: "Facebook Reels",
+  tiktok: "TikTok",
+  youtube: "YouTube Shorts",
+};
+
+function isEligible(asset: MediaAsset, channel: string): boolean {
+  return (asset.eligible_channels ?? []).includes(channel as Channel);
+}
+
+/** Mô tả clip bằng thứ chủ tiệm nhìn thấy được, không phải bằng tên trường. */
+function describeClip(asset: MediaAsset): string {
+  const parts: string[] = [];
+  if (asset.aspect_ratio) parts.push(`khung ${asset.aspect_ratio}`);
+  if (typeof asset.duration_seconds === "number") {
+    parts.push(`${Math.round(asset.duration_seconds)} giây`);
+  }
+  if (asset.has_audio === false) parts.push("không có tiếng");
+  return parts.join(" · ");
+}
+
+/** "Clip này đăng được Reels nhưng không đăng được Shorts" — ngay lúc upload.
+ *
+ * Kiểm ngay bây giờ vì bây giờ là lúc còn quay lại được. Nếu ràng buộc chỉ lộ ra
+ * lúc scheduler gọi API nền tảng thì chủ tiệm biết mình quay ngang sau khi đã lỡ
+ * giờ đăng tối thứ Bảy (`domain/policies/video_constraints.py`).
+ *
+ * `aspect_ratio == null` nghĩa là chưa probe được, KHÔNG phải không hợp kênh nào:
+ * nói "clip này không đăng được đâu cả" về một clip Havi chưa đọc nổi là bịa ra
+ * một kết luận từ chỗ không có dữ liệu.
+ */
+function renderClipEligibility(asset: MediaAsset | undefined) {
+  if (!asset) return null;
+  if (!asset.aspect_ratio) {
+    return (
+      <p className={styles.clipUnknown} role="status">
+        Havi chưa đọc được thông số clip này nên chưa kiểm được kênh nào đăng
+        được. Clip vẫn nằm trong thư viện của chị.
+      </p>
+    );
+  }
+
+  const description = describeClip(asset);
+  const channels = Object.entries(VIDEO_CHANNEL_LABELS);
+  const fitCount = channels.filter(([channel]) => isEligible(asset, channel)).length;
+
+  return (
+    <div className={styles.clipEligibility}>
+      <p className={styles.clipSpec}>
+        {description}
+        {fitCount === 0 ? " — chưa hợp kênh video nào" : null}
+      </p>
+      <ul className={styles.clipChannelList}>
+        {channels.map(([channel, label]) => {
+          const fits = isEligible(asset, channel);
+          return (
+            <li
+              key={channel}
+              className={fits ? styles.clipChannelFits : styles.clipChannelUnfit}
+            >
+              {/* Dấu ✓/✕ là trang trí; câu đầy đủ nằm trong một text node duy
+                  nhất để trình đọc màn hình không phải ghép từ màu sắc. */}
+              <span aria-hidden="true">{fits ? "✓" : "✕"}</span>
+              <span>{`${label}: ${fits ? "đăng được" : "không đăng được"}`}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 function getTopicImage(mediaNote?: string | null, text?: string | null): string {
   const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
@@ -229,6 +308,7 @@ export function ContentCreationScreen() {
           key,
           fileName: file.name,
           previewUrl,
+          isVideo: mediaTypeOf(file) === "video",
           progress: 0,
           status: "uploading" as const,
           controller: new AbortController(),
@@ -240,7 +320,7 @@ export function ContentCreationScreen() {
 
     await Promise.all(
       pendingUploads.map(async ({ file, row }) => {
-        const result = await uploadImage(file, {
+        const result = await uploadMedia(file, {
           signal: row.controller.signal,
           onProgress: (progress) => {
             setUploads((prev) =>
@@ -280,21 +360,33 @@ export function ContentCreationScreen() {
           return;
         }
 
+        const asset = result.data;
         setUploads((prev) =>
           prev.map((upload) =>
             upload.key === row.key
-              ? { ...upload, progress: 100, status: "complete", assetId: result.data }
+              ? {
+                  ...upload,
+                  progress: 100,
+                  status: "complete",
+                  assetId: asset.id,
+                  asset,
+                }
               : upload,
           ),
         );
+        // Chỉ ảnh thành chip liệu thô: `RawInputKind` chưa có `video`, và Havi
+        // chưa đăng được kênh video nào (ROADMAP §17). Clip upload lên là để vào
+        // thư viện và để chủ tiệm biết nó có hợp khung/độ dài hay không — hứa nó
+        // sẽ được đưa vào bài viết ngay bây giờ là hứa thứ chưa có.
+        if (row.isVideo) return;
         setChips((prev) => [
           ...prev,
           {
-            key: result.data,
+            key: asset.id,
             kind: "photo",
             label: file.name,
             previewUrl: row.previewUrl,
-            input: { kind: "photo", media_asset_id: result.data },
+            input: { kind: "photo", media_asset_id: asset.id },
           },
         ]);
       }),
@@ -461,12 +553,12 @@ export function ContentCreationScreen() {
       <QuotaBanner reloadKey={quotaKey} />
 
       <section className={styles.dropZone} aria-label="Nạp liệu mới">
-        <p className={styles.dropTitle}>Thả ảnh vào đây, hoặc</p>
+        <p className={styles.dropTitle}>Thả ảnh hoặc clip vào đây, hoặc</p>
         <div className={styles.dropActions}>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4,video/quicktime,video/webm"
             multiple
             hidden
             data-testid="file-input"
@@ -477,7 +569,7 @@ export function ContentCreationScreen() {
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? "Đang tải ảnh…" : "+ Tải ảnh lên"}
+            {uploading ? "Đang tải lên…" : "+ Tải ảnh / clip lên"}
           </Button>
           {/* Ghi âm là P1 (ROADMAP §4): ảnh/text ổn định trước đã. */}
           <Button variant="outline" disabled title="Havi sẽ mở tính năng này sau">
@@ -508,14 +600,25 @@ export function ContentCreationScreen() {
       </section>
 
       {uploads.length ? (
-        <section className={styles.uploadList} aria-label="Ảnh đang nạp">
+        <section className={styles.uploadList} aria-label="Ảnh và clip đang nạp">
           {uploads.map((upload) => (
             <article key={upload.key} className={styles.uploadItem}>
-              <img
-                className={styles.uploadPreview}
-                src={upload.previewUrl}
-                alt={`Xem trước ${upload.fileName}`}
-              />
+              {upload.isVideo ? (
+                <video
+                  className={styles.uploadPreview}
+                  src={upload.previewUrl}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-label={`Xem trước ${upload.fileName}`}
+                />
+              ) : (
+                <img
+                  className={styles.uploadPreview}
+                  src={upload.previewUrl}
+                  alt={`Xem trước ${upload.fileName}`}
+                />
+              )}
               <div className={styles.uploadBody}>
                 <div className={styles.uploadTopline}>
                   <span className={styles.uploadName}>{upload.fileName}</span>
@@ -540,6 +643,9 @@ export function ContentCreationScreen() {
                     style={{ width: `${upload.progress}%` }}
                   />
                 </div>
+                {upload.isVideo && upload.status === "complete"
+                  ? renderClipEligibility(upload.asset)
+                  : null}
               </div>
               {upload.status === "uploading" ? (
                 <button

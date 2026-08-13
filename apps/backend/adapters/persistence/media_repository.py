@@ -76,6 +76,7 @@ class MediaRepository:
         *,
         size_bytes: int,
         video: VideoMetadata | None = None,
+        thumbnail_object_key: str | None = None,
     ) -> MediaAsset:
         asset.status = MediaStatus.RAW
         asset.size_bytes = size_bytes
@@ -86,6 +87,8 @@ class MediaRepository:
             asset.height = video.height
             asset.aspect_ratio = video.aspect_ratio
             asset.has_audio = video.has_audio
+        if thumbnail_object_key is not None:
+            asset.thumbnail_object_key = thumbnail_object_key
         await self._session.flush()
         return asset
 

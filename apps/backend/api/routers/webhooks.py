@@ -22,8 +22,10 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
+from adapters.persistence.event_log_repository import EventLogRepository
 from api.deps import InboxServiceDep, SettingsDep, WorkspaceDep
 from core.enums import Platform
+from core.events import EventLogEntry
 from core.schemas import HaviModel
 
 logger = logging.getLogger(__name__)
@@ -99,6 +101,7 @@ async def receive_meta_webhook(
 
     payload = await request.json()
     connections = ConnectionRepository(session)
+    events = EventLogRepository(session)
     accepted = 0
     skipped = 0
 
@@ -112,12 +115,20 @@ async def receive_meta_webhook(
             skipped += 1
             continue
 
-        await inbox_service.process_inquiry(
+        item = await inbox_service.process_inquiry(
             workspace_id=connection.workspace_id,
             platform=Platform.FACEBOOK,
             author_name=event.author_name,
             content=event.text,
             external_message_id=event.message_id,
+        )
+        await events.record(
+            EventLogEntry(
+                workspace_id=connection.workspace_id,
+                job_kind="inbox.webhook_received",
+                input_summary=f"meta_webhook:page_{event.page_id}",
+                output_summary=f"msg_id:{event.message_id} | item_id:{item.id}",
+            )
         )
         accepted += 1
 

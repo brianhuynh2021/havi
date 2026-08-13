@@ -58,6 +58,11 @@ def _to_schema(asset, media_service: MediaServiceDep) -> MediaAsset:
         height=asset.height,
         aspect_ratio=asset.aspect_ratio,
         has_audio=asset.has_audio,
+        thumbnail_url=(
+            media_service.public_url_for_key(asset.thumbnail_object_key)
+            if asset.thumbnail_object_key
+            else None
+        ),
         eligible_channels=eligible_channels(metadata) if metadata else [],
     )
 

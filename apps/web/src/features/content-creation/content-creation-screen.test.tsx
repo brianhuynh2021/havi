@@ -136,6 +136,28 @@ async function chonAnh() {
   await user.upload(input, file);
 }
 
+async function chonClip() {
+  const user = userEvent.setup();
+  const input = screen.getByTestId("file-input") as HTMLInputElement;
+  const file = new File(["xxx"], "clip-doc.mp4", { type: "video/mp4" });
+  await user.upload(input, file);
+}
+
+/** Asset video như backend trả về sau khi probe xong ở lượt `complete`. */
+function videoAsset(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "asset-1",
+    type: "video",
+    duration_seconds: 20,
+    width: 1080,
+    height: 1920,
+    aspect_ratio: "9:16",
+    has_audio: true,
+    eligible_channels: ["reels", "tiktok", "youtube"],
+    ...overrides,
+  };
+}
+
 describe("ContentCreationScreen", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -243,6 +265,111 @@ describe("ContentCreationScreen", () => {
     expect(await screen.findByText("Đã huỷ")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /bỏ goi-dau.jpg/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("upload clip xin ticket loại video, không phải image", async () => {
+    const fetchSpy = mockApi({ complete: () => jsonResponse(videoAsset()) });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+    await screen.findByText("Xong");
+
+    const ticketCall = fetchSpy.mock.calls.find(([input]) =>
+      (input instanceof Request ? input.url : String(input)).includes(
+        "/media/upload-ticket",
+      ),
+    );
+    const [input, init] = ticketCall ?? [];
+    const raw =
+      input instanceof Request ? await input.clone().text() : String(init?.body);
+    const body = JSON.parse(raw);
+    expect(body.type).toBe("video");
+    expect(body.content_type).toBe("video/mp4");
+  });
+
+  it("clip dọc hợp cả ba kênh thì hiện đủ ba kênh là đăng được", async () => {
+    mockApi({ complete: () => jsonResponse(videoAsset()) });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+
+    expect(await screen.findByText(/facebook reels: đăng được/i)).toBeInTheDocument();
+    expect(screen.getByText(/tiktok: đăng được/i)).toBeInTheDocument();
+    expect(screen.getByText(/youtube shorts: đăng được/i)).toBeInTheDocument();
+    // Thông số hiện ra bằng thứ chủ tiệm hiểu, không phải tên trường.
+    expect(screen.getByText(/khung 9:16 · 20 giây/i)).toBeInTheDocument();
+  });
+
+  it("clip dài quá 60 giây thì nói rõ Shorts không đăng được nhưng Reels thì có", async () => {
+    // Đây chính là câu ROADMAP §16 đòi: "clip này fits Reels nhưng không fits
+    // Shorts" — phải thấy lúc còn quay lại được, không phải lúc đã lỡ giờ đăng.
+    mockApi({
+      complete: () =>
+        jsonResponse(
+          videoAsset({ duration_seconds: 75, eligible_channels: ["reels", "tiktok"] }),
+        ),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+
+    expect(await screen.findByText(/facebook reels: đăng được/i)).toBeInTheDocument();
+    expect(screen.getByText(/youtube shorts: không đăng được/i)).toBeInTheDocument();
+  });
+
+  it("clip quay ngang thì nói rõ chưa hợp kênh video nào", async () => {
+    mockApi({
+      complete: () =>
+        jsonResponse(videoAsset({ aspect_ratio: "16:9", eligible_channels: [] })),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+
+    expect(await screen.findByText(/chưa hợp kênh video nào/i)).toBeInTheDocument();
+    expect(screen.getByText(/facebook reels: không đăng được/i)).toBeInTheDocument();
+  });
+
+  it("clip chưa probe được thì nói là chưa đọc được, không nói là không đăng được", async () => {
+    // Khác biệt quan trọng: "Havi chưa đọc được" ≠ "clip không hợp kênh nào".
+    // Kết luận thứ hai là bịa ra từ chỗ không có dữ liệu.
+    mockApi({
+      complete: () =>
+        jsonResponse(
+          videoAsset({
+            duration_seconds: null,
+            aspect_ratio: null,
+            has_audio: null,
+            eligible_channels: [],
+          }),
+        ),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+
+    expect(await screen.findByText(/chưa đọc được thông số clip/i)).toBeInTheDocument();
+    expect(screen.queryByText(/không đăng được/i)).not.toBeInTheDocument();
+  });
+
+  it("clip không thành chip liệu thô vì chưa đăng được kênh video nào", async () => {
+    mockApi({ complete: () => jsonResponse(videoAsset()) });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonClip();
+    await screen.findByText("Xong");
+
+    // Ảnh tạo chip để đưa vào bài; clip thì chưa — `RawInputKind` không có
+    // `video` và Havi chưa publish kênh video nào (ROADMAP §17).
+    expect(
+      screen.queryByRole("button", { name: /bỏ clip-doc.mp4/i }),
     ).not.toBeInTheDocument();
   });
 

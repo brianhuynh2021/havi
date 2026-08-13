@@ -45,3 +45,8 @@ class MediaAsset(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     height: Mapped[int | None] = mapped_column(default=None)
     aspect_ratio: Mapped[str | None] = mapped_column(default=None)
     has_audio: Mapped[bool | None] = mapped_column(default=None)
+
+    # Ảnh bìa trích từ clip lúc complete_upload. Lưu object key chứ không lưu URL,
+    # cùng lý do với `object_key`. NULL = chưa/không lấy được, và UI hiện
+    # placeholder — không có ảnh bìa là chuyện nhỏ, không được chặn upload.
+    thumbnail_object_key: Mapped[str | None] = mapped_column(default=None)

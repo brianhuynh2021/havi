@@ -50,6 +50,36 @@ async def test_inbox_faq_auto_reply(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["total"] == 0
 
+    # 3. Simulate inbound FAQ message -> auto reply
+    sim_resp = await client.post(
+        "/webhooks/dev/simulate",
+        json={"content": "Giờ mở cửa", "author_name": "Khách A"},
+        headers=auth_headers,
+    )
+    assert sim_resp.status_code == 200
+    assert sim_resp.json()["status"] == "sent"
+
+    # 4. Simulate inbound non-FAQ message -> drafted
+    sim_resp2 = await client.post(
+        "/webhooks/dev/simulate",
+        json={"content": "Gửi cho mình bảng giá dịch vụ với", "author_name": "Khách B"},
+        headers=auth_headers,
+    )
+    assert sim_resp2.status_code == 200
+    assert sim_resp2.json()["status"] == "drafted"
+    item_id = sim_resp2.json()["id"]
+
+    # 5. Send reply via API
+    reply_resp = await client.post(
+        f"/inbox/{item_id}/reply",
+        json={"text": "Dạ tiệm xin gửi chị bảng giá mới nhất ạ!"},
+        headers=auth_headers,
+    )
+    assert reply_resp.status_code == 200
+    assert reply_resp.json()["status"] == "sent"
+    assert reply_resp.json()["ai_suggested_reply"] is not None
+
+
 
 @pytest.mark.asyncio
 async def test_leads_crud_flow(client: AsyncClient):
@@ -81,3 +111,4 @@ async def test_leads_crud_flow(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["stage"] == "qualified"
     assert resp.json()["notes"] == "Khách thích hẹn 15:00 thứ Bảy"
+

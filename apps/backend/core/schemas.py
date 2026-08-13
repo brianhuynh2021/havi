@@ -198,6 +198,9 @@ class MediaAsset(HaviModel):
     height: int | None = None
     aspect_ratio: str | None = None
     has_audio: bool | None = None
+    #: Ảnh bìa trích từ clip lúc complete. None = chưa/không lấy được, UI hiện
+    #: placeholder thay vì khoảng trắng.
+    thumbnail_url: str | None = None
     #: Kênh video clip này đăng được, suy từ thông số trên
     #: (`domain/policies/video_constraints.py`). Rỗng với ảnh/audio.
     eligible_channels: list[Channel] = Field(default_factory=list)
@@ -421,6 +424,7 @@ class Lead(HaviModel):
     message: str | None = None
     suggested_reply: str | None = None
     notes: str | None = None
+    content_item_id: UUID | None = None
     created_at: datetime
 
 
@@ -429,6 +433,7 @@ class LeadCreate(HaviModel):
     phone: str | None = None
     source: LeadSource
     message: str | None = None
+    content_item_id: UUID | None = None
 
 
 class LeadUpdate(HaviModel):
@@ -436,6 +441,7 @@ class LeadUpdate(HaviModel):
     phone: str | None = None
     stage: LeadStage | None = None
     notes: str | None = None
+    content_item_id: UUID | None = None
 
 
 class CrmMessage(HaviModel):
@@ -451,10 +457,14 @@ class CrmMessage(HaviModel):
 
 
 class AnalyticsSummary(HaviModel):
-    """Đo bằng khách hỏi giá / khách đến tiệm / khách quay lại — không phải like/reach."""
+    """Đo bằng khách hỏi giá / lead đã chốt / khách quay lại — không phải like/reach."""
 
     price_inquiries: int
-    walk_ins: int
+    #: Lead ở stage `WON`. Từng có tên `walk_ins`, nhưng Havi chưa nối POS hay
+    #: check-in nào cả — không có gì ở đây đếm được người bước qua cửa tiệm. Cái
+    #: tên cũ hứa một phép đo mà hệ thống không thực hiện, nên nó nói đúng thứ nó
+    #: đo. Đổi lại tên khi có nguồn check-in thật.
+    won_leads: int
     returning_customers: int
     published_posts: int
     new_leads: int
@@ -518,6 +528,11 @@ class OperationsMetrics(HaviModel):
     tokens_in: int
     tokens_out: int
     tokens_total: int
+    job_count: int = 0
+    avg_tokens_per_job: int = 0
+    est_cost_per_job_vnd: int = 0
+    approved_draft_count: int = 0
+    est_cost_per_approved_draft_vnd: int = 0
     providers: list[OperationsProviderMetric]
     publish: OperationsPublishMetric
 

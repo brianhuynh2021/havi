@@ -6,6 +6,8 @@ export type ContentItem = components["schemas"]["ContentItem"];
 export type ContentJob = components["schemas"]["ContentJob"];
 export type JobStatus = components["schemas"]["ContentJobStatus"];
 export type RawInput = components["schemas"]["RawInput"];
+export type MediaAsset = components["schemas"]["MediaAsset"];
+export type Channel = components["schemas"]["Channel"];
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -20,26 +22,39 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+/** `video/*` → media type `video`, còn lại coi là ảnh. Backend whitelist content
+ * type chặt hơn thế và trả 415 nếu lệch — đây chỉ là chọn đúng nhánh để hỏi. */
+export function mediaTypeOf(file: File): "image" | "video" {
+  return file.type.startsWith("video/") ? "video" : "image";
+}
+
 /**
- * Upload ảnh: xin ticket → POST thẳng lên object storage → báo API đã xong.
+ * Upload ảnh hoặc clip: xin ticket → POST thẳng lên object storage → báo API đã xong.
  *
  * Ba lượt chứ không một, và bytes không đi qua API: presigned POST cho client
  * bắn thẳng lên storage, nên API không phải gánh băng thông ảnh và không giữ
  * file tạm (ROADMAP §3 "Không lưu file upload trong database hoặc filesystem
  * tạm của API"). Giới hạn dung lượng do storage tự chặn bằng
  * `content-length-range` trong ticket — không tin client tự khai.
+ *
+ * Trả về cả asset chứ không chỉ id: với video, lượt `complete` là nơi backend
+ * probe clip xong và trả về `eligible_channels`. Chủ tiệm phải thấy "clip này
+ * đăng được Reels nhưng không đăng được Shorts" ngay bây giờ — lúc còn quay lại
+ * được, chứ không phải lúc scheduler gọi API nền tảng và đã lỡ giờ đăng.
  */
-export async function uploadImage(
+export async function uploadMedia(
   file: File,
   options: UploadImageOptions = {},
-): Promise<Result<string>> {
+): Promise<Result<MediaAsset>> {
+  const mediaType = mediaTypeOf(file);
+  const noun = mediaType === "video" ? "clip" : "ảnh";
   try {
     options.onProgress?.(5);
     const ticket = await apiClient.POST("/media/upload-ticket", {
       body: {
         filename: file.name,
         content_type: file.type,
-        type: "image",
+        type: mediaType,
       },
     });
     if (ticket.error || !ticket.data) {
@@ -47,8 +62,8 @@ export async function uploadImage(
         ok: false,
         message:
           ticket.response?.status === 415
-            ? `Havi chưa nhận được định dạng ảnh này (${file.type || "không rõ"})`
-            : "Chưa tải được ảnh lên, thử lại giúp chị nhé.",
+            ? `Havi chưa nhận được định dạng ${noun} này (${file.type || "không rõ"})`
+            : `Chưa tải được ${noun} lên, thử lại giúp chị nhé.`,
       };
     }
     options.onProgress?.(20);
@@ -71,26 +86,30 @@ export async function uploadImage(
         ok: false,
         message:
           uploaded.status === 400
-            ? "Ảnh quá nặng hoặc sai định dạng — chọn ảnh khác giúp chị nhé."
-            : "Tải ảnh lên chưa xong, thử lại giúp chị nhé.",
+            ? `${noun === "clip" ? "Clip" : "Ảnh"} quá nặng hoặc sai định dạng — chọn ${noun} khác giúp chị nhé.`
+            : `Tải ${noun} lên chưa xong, thử lại giúp chị nhé.`,
       };
     }
     options.onProgress?.(85);
 
     // Storage nhận rồi không có nghĩa là xong: phải để API xác nhận object có
-    // thật (và đúng magic bytes) rồi mới chuyển pending → raw.
+    // thật (và đúng magic bytes) rồi mới chuyển pending → raw. Với video, đây
+    // cũng là lượt backend probe clip và trả về `eligible_channels`.
     const completed = await apiClient.POST("/media/{asset_id}/complete", {
       params: { path: { asset_id: ticket.data.asset_id } },
     });
     if (completed.error || !completed.data) {
-      return { ok: false, message: "Ảnh tải lên chưa hợp lệ, thử ảnh khác nhé." };
+      return {
+        ok: false,
+        message: `${noun === "clip" ? "Clip" : "Ảnh"} tải lên chưa hợp lệ, thử ${noun} khác nhé.`,
+      };
     }
     options.onProgress?.(100);
 
-    return { ok: true, data: ticket.data.asset_id };
+    return { ok: true, data: completed.data };
   } catch (error) {
     if (isAbortError(error)) {
-      return { ok: false, message: "Đã huỷ tải ảnh." };
+      return { ok: false, message: `Đã huỷ tải ${noun}.` };
     }
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }

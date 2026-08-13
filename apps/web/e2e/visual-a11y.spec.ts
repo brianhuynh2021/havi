@@ -12,6 +12,8 @@ const API_PATH_PREFIXES = [
   "/calendar",
   "/connections",
   "/content",
+  "/inbox",
+  "/leads",
   "/workspaces",
 ];
 
@@ -184,7 +186,7 @@ async function mockApi(page: Page) {
     if (path === "/analytics/summary") {
       return json(route, {
         price_inquiries: 0,
-        walk_ins: 0,
+        won_leads: 0,
         returning_customers: 0,
         published_posts: 5,
         new_leads: 0,
@@ -236,6 +238,49 @@ async function mockApi(page: Page) {
           success_rate: 0.8,
           dead_letter_rate: 0.2,
         },
+      });
+    }
+    if (path === "/inbox") {
+      return json(route, {
+        items: [
+          {
+            id: "i1",
+            workspace_id: "w1",
+            platform: "facebook",
+            content: "Combo gội đầu bao nhiêu tiền ạ?",
+            author_name: "Chị Lan",
+            status: "pending",
+            ai_suggested_reply: "Dạ combo gội đầu thảo dược 180k ạ.",
+            external_message_id: "m1",
+            created_at: FIXED_NOW_ISO,
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      });
+    }
+    if (path === "/leads") {
+      return json(route, {
+        items: [
+          {
+            id: "l1",
+            workspace_id: "w1",
+            name: "Chị Lan",
+            phone: "0901234567",
+            source: "fanpage",
+            stage: "new",
+            reply_status: "new",
+            message: "Combo gội đầu bao nhiêu tiền ạ?",
+            suggested_reply: null,
+            notes: null,
+            content_item_id: null,
+            created_at: FIXED_NOW_ISO,
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
       });
     }
     if (path === "/calendar") return json(route, { days: emptyWeek() });
@@ -331,22 +376,34 @@ type VisualRoute = (typeof publicRoutes)[number] | (typeof authenticatedRoutes)[
 async function expectReady(page: Page, route: VisualRoute) {
   await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible();
   if ("auth" in route && route.auth) {
-    await expect(page).not.toHaveURL(/\/dang-nhap$/);
+    await expect(page).not.toHaveURL(/\/login$/);
   }
 }
 
+// Đường dẫn tiếng Anh chuẩn (Gate J) và tiêu đề đúng như app render. Bảng này
+// từng trỏ vào các route tiếng Việt cũ (`/bao-cao`, `/noi-dung`) sau khi app đã
+// chuyển sang `/app/...`, nên mọi route có auth đều 404 và cả suite đỏ — một
+// suite đỏ toàn bộ thì không ai đọc nữa, và nó thôi bắt được hồi quy thật.
 const publicRoutes = [
-  { name: "landing", path: "/gioi-thieu", heading: /Havi/i, auth: false },
-  { name: "login", path: "/dang-nhap", heading: "Chào bạn trở lại", auth: false },
+  { name: "landing", path: "/about", heading: /Havi/i, auth: false },
+  { name: "login", path: "/login", heading: /Đăng nhập Havi/i, auth: false },
 ] as const;
 
 const authenticatedRoutes = [
-  { name: "dashboard", path: "/", heading: "Tổng quan hôm nay", auth: true },
-  { name: "content", path: "/noi-dung", heading: "Tạo nội dung", auth: true },
-  { name: "calendar", path: "/lich-dang", heading: "Lịch đăng", auth: true },
-  { name: "reports", path: "/bao-cao", heading: "Báo cáo", auth: true },
-  { name: "settings", path: "/cai-dat", heading: "Giọng thương hiệu", auth: true },
-  { name: "operations", path: "/noi-bo/van-hanh", heading: "Vận hành", auth: true },
+  { name: "dashboard", path: "/app", heading: /Tổng quan/i, auth: true },
+  { name: "content", path: "/app/content", heading: "Tạo nội dung", auth: true },
+  { name: "calendar", path: "/app/calendar", heading: /Lịch [Đđ]ăng/i, auth: true },
+  { name: "reports", path: "/app/reports", heading: /Báo [Cc]áo/i, auth: true },
+  { name: "settings", path: "/app/settings", heading: /Cài [Đđ]ặt/i, auth: true },
+  // `/app/leads` render đúng `LeadsScreen` này nên không thêm route riêng —
+  // baseline thứ hai của cùng một màn chỉ tốn thời gian chạy.
+  { name: "inbox", path: "/app/inbox", heading: /Hộp [Tt]hư/i, auth: true },
+  {
+    name: "operations",
+    path: "/app/internal/operations",
+    heading: "Vận hành",
+    auth: true,
+  },
 ] as const;
 
 function defineRouteChecks(route: VisualRoute) {
@@ -380,9 +437,24 @@ test.describe("public routes", () => {
 });
 
 test.describe("authenticated routes", () => {
+  // Cần CẢ cookie và localStorage. `src/middleware.ts` chạy ở edge nên chỉ đọc
+  // được cookie `havi_session` — localStorage vô hình với nó, và thiếu cookie thì
+  // mọi `/app/*` bị redirect về `/login` trước khi React kịp chạy. Còn
+  // `havi.tokens` trong localStorage là thứ route guard phía client đọc.
   test.use({
     storageState: {
-      cookies: [],
+      cookies: [
+        {
+          name: "havi_session",
+          value: authTokens.accessToken,
+          domain: new URL(APP_ORIGIN).hostname,
+          path: "/",
+          expires: -1,
+          httpOnly: false,
+          secure: false,
+          sameSite: "Lax" as const,
+        },
+      ],
       origins: [
         {
           origin: APP_ORIGIN,

@@ -37,7 +37,7 @@ function mockReports() {
       if (url.pathname.endsWith("/summary")) {
         return jsonResponse({
           price_inquiries: 0,
-          walk_ins: 0,
+          won_leads: 0,
           returning_customers: 0,
           published_posts: 5,
           new_leads: 0,
@@ -107,7 +107,7 @@ describe("ReportsScreen", () => {
         if (url.pathname.endsWith("/summary")) {
           return jsonResponse({
             price_inquiries: 0,
-            walk_ins: 0,
+            won_leads: 0,
             returning_customers: 0,
             published_posts: 0,
             new_leads: 0,

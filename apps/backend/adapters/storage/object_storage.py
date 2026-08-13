@@ -114,6 +114,25 @@ class ObjectStorage:
 
         return await asyncio.to_thread(_read)
 
+    async def put_object(
+        self, object_key: str, *, data: bytes, content_type: str
+    ) -> None:
+        """Ghi bytes do server tự sinh ra (ảnh bìa video) lên bucket.
+
+        Upload của người dùng vẫn đi bằng presigned POST — bytes không qua API.
+        Đường này chỉ dành cho thứ chính API tạo ra, nên không có gì để ký trước.
+        """
+
+        def _put() -> None:
+            self._client.put_object(
+                Bucket=self._settings.media_bucket,
+                Key=object_key,
+                Body=data,
+                ContentType=content_type,
+            )
+
+        await asyncio.to_thread(_put)
+
     async def delete_object(self, object_key: str) -> None:
         def _delete() -> None:
             self._client.delete_object(Bucket=self._settings.media_bucket, Key=object_key)

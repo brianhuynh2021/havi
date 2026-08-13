@@ -44,3 +44,16 @@ export async function listLeads(): Promise<Result<Lead[]>> {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export async function dismissInboxItem(id: string): Promise<Result<void>> {
+  try {
+    const { error } = await apiClient.POST("/inbox/{item_id}/dismiss", {
+      params: { path: { item_id: id } },
+    });
+    if (error) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+

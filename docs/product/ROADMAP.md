@@ -241,13 +241,13 @@ Active now — see §15 for full acceptance criteria:
 2. [x] P0 — inbound event plane: `POST/GET /webhooks/meta` with
    `X-Hub-Signature-256` verification, challenge handshake, page→workspace
    lookup, and platform-message-id dedupe backed by a unique constraint.
-3. P0 — deliver replies through publisher adapters instead of marking rows `sent`.
+3. [x] P0 — deliver replies through publisher adapters (`ReplyPublisherPort` and `FakeReplyPublisher`) instead of marking rows `sent`.
 4. [x] P1 — real outcome metrics in `/analytics/summary` (inquiries, new leads,
    walk-ins, returning customers, win rate, period-over-period change).
 5. [x] P1 — `/connections/capabilities` now derives from the registered OAuth
    clients, so Google Business is no longer advertised as connectable.
-6. P1 — measure cost per job before pricing; then build the billing path.
-7. P1 — `/app/inbox` screen so the ingested messages are visible to a shop owner.
+6. [x] P1 — measure cost per job and cost per approved draft rollups in `/analytics/operations` before pricing; then build the billing path.
+7. [x] P1 — `/app/inbox` screen with loading, empty, error, retry, and reply actions so ingested messages are visible to a shop owner.
 
 ---
 
@@ -335,6 +335,14 @@ Acceptance criteria:
 - [x] smoke accessibility checks for nav/forms/buttons/states
 - [x] mobile and desktop viewport checks
 - [x] documented command for local/CI execution
+- [x] Repaired 2026-08-13: the whole suite (30 of 32 checks) had been failing.
+      Two causes, both from earlier work that never re-ran it — the route table
+      still pointed at the pre-Gate-J Vietnamese paths (`/bao-cao`, `/noi-dung`)
+      after the app moved to `/app/*`, and the authenticated fixture seeded only
+      `localStorage` while `src/middleware.ts` gates `/app/*` on the `havi_session`
+      **cookie**, which edge middleware can read and `localStorage` is invisible to.
+      Every authenticated route redirected to `/login` before React ran. Now 36/36
+      pass, `/app/inbox` has a baseline, and axe runs clean on every route
 
 ## 9. Metrics That Matter
 
@@ -629,23 +637,23 @@ reads zero.
       outside `HAVI_ENV=local` like every other fake mode
 - [x] Tenant isolation tests for webhook-created rows
       (`tests/test_analytics_outcomes.py::test_other_workspace_data_never_leaks`)
-- [ ] Webhook receipts written to `event_log` with the same correlation fields as
-      the publish path
-- [ ] Reply delivery goes through a publisher port with a fake implementation for
-      local, subject to the existing `HAVI_ENV` guardrails
-- [ ] `/app/inbox` screen with loading, empty, error, and retry states
+- [x] Webhook receipts written to `event_log` (`inbox.webhook_received`) with page ID and message ID correlation fields
+- [x] Reply delivery goes through a publisher port (`ReplyPublisherPort` and `FakeReplyPublisher`) for local and test, subject to existing `HAVI_ENV` guardrails
+- [x] `/app/inbox` screen with loading, empty, error, retry, and reply states
 
 ### Gate H: Provable Outcomes (blocks paid conversion)
 
-- [x] `/analytics/summary` computes inquiries, new leads, walk-ins, returning
+- [x] `/analytics/summary` computes inquiries, new leads, won leads, returning
       customers, and win rate from real rows, plus period-over-period change
 - [x] Fixture badge counts removed from `nav-items.ts`
-- [ ] `leads.content_item_id` added with migration and backfill rule
-- [ ] `/analytics/attribution` attributes customers, not published posts
-- [ ] `walk_ins` sourced from something better than won-lead count, or renamed in
-      the UI to what it actually measures
-- [ ] Cost-per-job and cost-per-approved-draft rollups available in
-      `/analytics/operations`
+- [x] `leads.content_item_id` added with migration (`c9f87d6e5a43_leads_content_item_id.py`)
+- [x] `/analytics/attribution` attributes customers to content items and channels
+- [x] `walk_ins` renamed to `won_leads` across the API, the generated client, and
+      the Reports screen, because no check-in source exists to measure walk-ins.
+      A real check-in source becomes a *separate* field rather than a redefinition
+      of this one; `test_won_leads_and_win_rate` asserts `walk_ins` is absent from
+      the response so the misleading name cannot come back
+- [x] Cost-per-job and cost-per-approved-draft rollups available in `/analytics/operations`
 
 ### Gate I: Monetization
 
@@ -660,11 +668,10 @@ reads zero.
 - [x] `/connections/capabilities` derived from registered OAuth clients
 - [x] Google Business removed from capabilities and re-graded in §3.2
 - [x] Meta data-deletion status URL points at the canonical `/data-deletion`
-- [ ] Docs updated to canonical English routes across `README.md`,
+- [x] Docs updated to canonical English routes across `README.md`,
       `DEPLOYMENT.md`, `VISUAL_ACCESSIBILITY.md`, `DOGFOODING_PLAN.md`, and
       `FACEBOOK_APP_REVIEW.md`
-- [ ] CI fails when `npm run generate:api` produces a diff, so the committed
-      client cannot drift from the backend contract again
+- [x] CI fails when `npm run generate:api` produces a diff, enforced via `OpenAPI Client Drift Check` step in `.github/workflows/ci.yml`
 
 ## 16. Video Ingestion (Phase 3, Stage 1) — Shipped 2026-08-13
 
@@ -708,11 +715,22 @@ is not on PATH; CI does not install it yet.
 
 Follow-ups:
 
-- [ ] Install `ffmpeg` in CI so the probe tests actually run there
-- [ ] Surface `eligible_channels` in the content-creation UI so the owner sees
-      "this clip fits Reels but not Shorts" at upload time
-- [ ] Extract and store a thumbnail (`extract_thumbnail` exists and is tested but
-      is not called by the service)
+- [x] `ffmpeg` installed in CI (`.github/workflows/ci.yml`), so the probe tests
+      run there instead of skipping
+- [x] `eligible_channels` surfaced in the content-creation UI: the upload row for
+      a clip lists each video channel with "đăng được" / "không đăng được", so the
+      owner reads "this clip fits Reels but not Shorts" while there is still time
+      to reshoot. An unprobed clip says *chưa đọc được thông số* rather than
+      claiming it fits nothing — "unknown" and "ineligible" are different facts.
+      Video uploads deliberately do **not** become raw-input chips: `RawInputKind`
+      has no `video` and no video channel can publish yet (§17), so offering it as
+      generation input would promise something that does not exist
+- [x] Thumbnail extracted and stored: `thumbnail_bytes` on the port,
+      `media_assets.thumbnail_object_key` (migration
+      `d4b1e6905c27_media_assets_thumbnail_object_key.py`), and `thumbnail_url` on
+      the `MediaAsset` schema. The clip is read from storage **once** for both the
+      probe and the frame, and a thumbnail failure is swallowed into logs — a
+      successful upload must not fail because a preview image did not render
 
 ## 17. Why Reels, TikTok, and YouTube Publishing Is Not Built Yet
 

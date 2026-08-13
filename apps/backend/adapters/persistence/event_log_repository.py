@@ -144,6 +144,19 @@ class EventLogRepository:
         error_count = sum(1 for row in rows if row.error is not None)
         tokens_in = sum(row.tokens_in for row in rows)
         tokens_out = sum(row.tokens_out for row in rows)
+        tokens_total = tokens_in + tokens_out
+
+        job_ids = set(row.job_id for row in rows if row.job_id is not None)
+        job_count = len(job_ids)
+        avg_tokens_per_job = round(tokens_total / job_count) if job_count else 0
+        est_cost_per_job_vnd = round(avg_tokens_per_job * 0.035)
+
+        draft_events = sum(1 for row in rows if "content" in row.job_kind)
+        approved_draft_count = draft_events
+        est_cost_per_approved_draft_vnd = (
+            round(tokens_total / approved_draft_count * 0.035) if approved_draft_count else 0
+        )
+
         return {
             "event_count": event_count,
             "error_count": error_count,
@@ -152,7 +165,12 @@ class EventLogRepository:
             "p95_duration_ms": p95_duration_ms,
             "tokens_in": tokens_in,
             "tokens_out": tokens_out,
-            "tokens_total": tokens_in + tokens_out,
+            "tokens_total": tokens_total,
+            "job_count": job_count,
+            "avg_tokens_per_job": avg_tokens_per_job,
+            "est_cost_per_job_vnd": est_cost_per_job_vnd,
+            "approved_draft_count": approved_draft_count,
+            "est_cost_per_approved_draft_vnd": est_cost_per_approved_draft_vnd,
             "providers": [
                 {"provider": provider, **metrics}
                 for provider, metrics in sorted(providers.items())

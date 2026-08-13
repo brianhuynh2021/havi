@@ -953,7 +953,7 @@ export interface paths {
         };
         /**
          * Attribution
-         * @description Khối "Khách đến tiệm từ kênh nào".
+         * @description Khối "Lead đến từ kênh nào".
          */
         get: operations["attribution_analytics_attribution_get"];
         put?: never;
@@ -1024,13 +1024,13 @@ export interface components {
     schemas: {
         /**
          * AnalyticsSummary
-         * @description Đo bằng khách hỏi giá / khách đến tiệm / khách quay lại — không phải like/reach.
+         * @description Đo bằng khách hỏi giá / lead đã chốt / khách quay lại — không phải like/reach.
          */
         AnalyticsSummary: {
             /** Price Inquiries */
             price_inquiries: number;
-            /** Walk Ins */
-            walk_ins: number;
+            /** Won Leads */
+            won_leads: number;
             /** Returning Customers */
             returning_customers: number;
             /** Published Posts */
@@ -1495,6 +1495,8 @@ export interface components {
             suggested_reply?: string | null;
             /** Notes */
             notes?: string | null;
+            /** Content Item Id */
+            content_item_id?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1510,6 +1512,8 @@ export interface components {
             source: components["schemas"]["LeadSource"];
             /** Message */
             message?: string | null;
+            /** Content Item Id */
+            content_item_id?: string | null;
         };
         /**
          * LeadReplyStatus
@@ -1539,6 +1543,8 @@ export interface components {
             stage?: components["schemas"]["LeadStage"] | null;
             /** Notes */
             notes?: string | null;
+            /** Content Item Id */
+            content_item_id?: string | null;
         };
         /** MediaAsset */
         MediaAsset: {
@@ -1576,6 +1582,8 @@ export interface components {
             aspect_ratio?: string | null;
             /** Has Audio */
             has_audio?: boolean | null;
+            /** Thumbnail Url */
+            thumbnail_url?: string | null;
             /** Eligible Channels */
             eligible_channels?: components["schemas"]["Channel"][];
         };
@@ -1678,6 +1686,31 @@ export interface components {
             tokens_out: number;
             /** Tokens Total */
             tokens_total: number;
+            /**
+             * Job Count
+             * @default 0
+             */
+            job_count: number;
+            /**
+             * Avg Tokens Per Job
+             * @default 0
+             */
+            avg_tokens_per_job: number;
+            /**
+             * Est Cost Per Job Vnd
+             * @default 0
+             */
+            est_cost_per_job_vnd: number;
+            /**
+             * Approved Draft Count
+             * @default 0
+             */
+            approved_draft_count: number;
+            /**
+             * Est Cost Per Approved Draft Vnd
+             * @default 0
+             */
+            est_cost_per_approved_draft_vnd: number;
             /** Providers */
             providers: components["schemas"]["OperationsProviderMetric"][];
             publish: components["schemas"]["OperationsPublishMetric"];

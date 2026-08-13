@@ -1,4 +1,4 @@
-"""/analytics — đo bằng khách hỏi giá / khách đến tiệm / khách quay lại, không phải like.
+"""/analytics — đo bằng khách hỏi giá / lead đã chốt / khách quay lại, không phải like.
 
 Nguồn: `content_item.published_at` + engagement snapshot (polling theo lịch) + `lead`.
 Không cần real-time.
@@ -151,9 +151,7 @@ async def _outcomes_for(
     )
     return {
         "price_inquiries": inquiries,
-        # Chưa nối POS/check-in, nên "khách đến tiệm" lấy lead đã chốt làm bằng
-        # chứng gần nhất. Xem `LeadOutcomes` để biết vì sao không đếm cách khác.
-        "walk_ins": leads.won_leads,
+        "won_leads": leads.won_leads,
         "returning_customers": leads.returning_customers,
         "published_posts": published,
         "new_leads": leads.new_leads,
@@ -185,7 +183,7 @@ async def summary(
 
     return AnalyticsSummary(
         price_inquiries=int(current["price_inquiries"]),
-        walk_ins=int(current["walk_ins"]),
+        won_leads=int(current["won_leads"]),
         returning_customers=int(current["returning_customers"]),
         published_posts=int(current["published_posts"]),
         new_leads=int(current["new_leads"]),
@@ -200,8 +198,23 @@ async def summary(
 async def attribution(
     workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
 ) -> list[ChannelAttribution]:
-    """Khối "Khách đến tiệm từ kênh nào"."""
+    """Khối "Lead đến từ kênh nào"."""
     range_start, range_end = _date_range(start, end)
+    customer_counts = await LeadRepository(session).count_customers_by_channel(
+        workspace_id=workspace_id, start=range_start, end=range_end
+    )
+    if customer_counts:
+        total = sum(customer_counts.values())
+        return [
+            ChannelAttribution(
+                channel=channel,
+                customers=count,
+                share=round(count / total, 4) if total else 0,
+                note="Phân bổ theo khách hàng thực tế thu thập từ bài đăng.",
+            )
+            for channel, count in sorted(customer_counts.items(), key=lambda item: item[0].value)
+        ]
+
     counts = await ContentRepository(session).count_published_by_channel(
         workspace_id=workspace_id, start=range_start, end=range_end
     )
@@ -211,7 +224,7 @@ async def attribution(
             channel=channel,
             customers=count,
             share=round(count / total, 4) if total else 0,
-            note="Tạm tính theo bài đã đăng; chưa có engagement snapshot.",
+            note="Tạm tính theo bài đã đăng; chưa có dữ liệu lead gắn với bài viết.",
         )
         for channel, count in sorted(counts.items(), key=lambda item: item[0].value)
     ]

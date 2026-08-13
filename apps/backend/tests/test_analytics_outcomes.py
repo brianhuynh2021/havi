@@ -1,6 +1,6 @@
 """`/analytics/summary` phải đếm từ dữ liệu thật.
 
-Trước đây endpoint này trả 0 cứng cho `price_inquiries`, `walk_ins`,
+Trước đây endpoint này trả 0 cứng cho `price_inquiries`, `won_leads`,
 `returning_customers`, `new_leads` và `lead_won_rate` — đúng là không bịa số,
 nhưng cũng có nghĩa là màn hình Báo cáo không chứng minh được kết quả mà Havi
 bán. Test ở đây khoá lại: mỗi con số phải đổi khi dữ liệu nguồn đổi, và phải
@@ -76,7 +76,7 @@ async def test_new_leads_counted(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_won_leads_drive_walk_ins_and_win_rate(client: AsyncClient):
+async def test_won_leads_and_win_rate(client: AsyncClient):
     headers = await _onboard(client, "outcomes.won@havi.vn")
     won_id = await _create_lead(client, headers, name="Chị Lan", phone="0901111111")
     lost_id = await _create_lead(client, headers, name="Chị Hoa", phone="0902222222")
@@ -87,7 +87,10 @@ async def test_won_leads_drive_walk_ins_and_win_rate(client: AsyncClient):
 
     data = await _summary(client, headers)
     assert data["new_leads"] == 3
-    assert data["walk_ins"] == 1
+    assert data["won_leads"] == 1
+    # Cái tên phải nói đúng thứ nó đo: không có nguồn check-in nào trong hệ thống
+    # nên `/analytics/summary` không được phơi ra một trường tên `walk_ins`.
+    assert "walk_ins" not in data
     # Tỉ lệ chốt tính trên lead đã có kết luận (won + lost), không tính lead còn
     # đang mở — lead mới tạo hôm nay chưa thua thì không được kéo tỉ lệ xuống.
     assert data["lead_won_rate"] == 0.5

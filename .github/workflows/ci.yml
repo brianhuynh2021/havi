@@ -93,11 +93,24 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev --extra db --extra queue --extra storage
 
+      # tests/test_video_ingestion.py builds real clips with `ffmpeg testsrc`
+      # and reads them back with ffprobe. Without the binaries those tests skip,
+      # so the whole video ingestion path would have zero CI coverage while
+      # still reporting green.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Ruff Check
         run: uv run ruff check .
 
       - name: Alembic Migration Check
         run: uv run alembic upgrade head
+
+      # Catches model/migration drift, not just "migrations apply". This was
+      # broken for a long time: `domain/models/__init__.py` never imported the
+      # content models, so the command crashed instead of comparing.
+      - name: Alembic Drift Check
+        run: uv run alembic check
 
       - name: Start MinIO
         run: |
@@ -121,3 +134,20 @@ jobs:
 
       - name: Run Pytest
         run: uv run pytest
+
+      # The committed TypeScript client is generated from this backend, but
+      # nothing verified it stayed in sync. It had drifted far enough to still
+      # declare /crm-messages and /leads/{id}/messages, endpoints the backend
+      # does not serve. Regenerate here and fail on any diff.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: OpenAPI Client Drift Check
+        run: |
+          uv run python scripts/export_openapi.py > ../web/openapi.json
+          npx --yes openapi-typescript@7 ../web/openapi.json \
+            -o ../web/src/lib/api-client/schema.d.ts
+          git diff --exit-code -- ../web/src/lib/api-client/schema.d.ts \
+            || { echo "::error::schema.d.ts is stale — run 'npm run generate:api' and commit"; exit 1; }

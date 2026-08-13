@@ -61,6 +61,19 @@ class UploadTicketResult:
     ticket: UploadTicket
 
 
+@dataclass(frozen=True)
+class ProbedVideo:
+    """Kết quả một lượt đọc clip: thông số và ảnh bìa, mỗi thứ tự hỏng riêng.
+
+    Hai trường độc lập vì hai thất bại độc lập: ffprobe đọc được thông số mà
+    ffmpeg không xuất được khung hình là chuyện có thật, và ngược lại. Gộp thành
+    một `Optional` sẽ khiến một cái hỏng làm mất luôn cái kia.
+    """
+
+    metadata: VideoMetadata | None = None
+    thumbnail_object_key: str | None = None
+
+
 class MediaService:
     def __init__(
         self,
@@ -119,15 +132,16 @@ class MediaService:
             await self._storage.delete_object(asset.object_key)
             raise ContentDoesNotMatchType(asset.type)
 
-        video = await self._probe_video(asset, size_bytes=stored.size_bytes)
+        probed = await self._probe_video(asset, size_bytes=stored.size_bytes)
         return await self._media.mark_uploaded(
-            asset, size_bytes=stored.size_bytes, video=video
+            asset,
+            size_bytes=stored.size_bytes,
+            video=probed.metadata,
+            thumbnail_object_key=probed.thumbnail_object_key,
         )
 
-    async def _probe_video(
-        self, asset: MediaAsset, *, size_bytes: int
-    ) -> VideoMetadata | None:
-        """Đọc thông số clip ngay lúc upload xong.
+    async def _probe_video(self, asset: MediaAsset, *, size_bytes: int) -> ProbedVideo:
+        """Đọc thông số clip và trích ảnh bìa ngay lúc upload xong.
 
         Kiểm sớm để chủ tiệm biết clip quay ngang / dài quá ngay lúc còn quay lại
         được, thay vì phát hiện lúc scheduler gọi API nền tảng và đã lỡ giờ đăng
@@ -137,26 +151,58 @@ class MediaService:
         hành của Havi, không phải lỗi của người dùng, nên không được làm hỏng một
         lần upload đã thành công. Thông số NULL sẽ khiến kiểm ràng buộc kênh từ
         chối một cách rõ ràng thay vì đoán bừa.
+
+        Đọc bytes đúng một lượt cho cả probe và ảnh bìa: clip có thể tới hàng trăm
+        MB và tải về hai lần chỉ để lấy thêm một khung hình là trả giá gấp đôi cho
+        thứ phụ.
         """
         if asset.type is not MediaType.VIDEO or self._video is None:
-            return None
+            return ProbedVideo()
         if not self._video.is_available:
-            return None
+            return ProbedVideo()
         if size_bytes > self._max_probe_bytes:
             logger.warning(
                 "media.probe_skipped_too_large object_key=%s size_bytes=%d",
                 asset.object_key,
                 size_bytes,
             )
-            return None
+            return ProbedVideo()
 
         try:
             data = await self._storage.read_object(asset.object_key)
-            return await asyncio.to_thread(
+            metadata = await asyncio.to_thread(
                 self._video.probe_bytes, data, asset.filename
             )
         except Exception:
             logger.exception("media.probe_failed object_key=%s", asset.object_key)
+            return ProbedVideo()
+
+        thumbnail_key = await self._store_thumbnail(asset, data)
+        return ProbedVideo(metadata=metadata, thumbnail_object_key=thumbnail_key)
+
+    async def _store_thumbnail(self, asset: MediaAsset, data: bytes) -> str | None:
+        """Trích một khung hình rồi ghi cạnh clip. `None` khi không lấy được.
+
+        Ảnh bìa hoàn toàn là tiện lợi cho UI, nên mọi thất bại ở đây đều nuốt vào
+        log: một lần upload thành công không được đổ vì Havi không lấy được ảnh
+        xem trước. Key nằm cạnh object gốc nên vẫn mang tiền tố `workspace_id` —
+        cùng cách chống ghi đè chéo tenant như `create_upload_ticket`.
+        """
+        if self._video is None:
+            return None
+        try:
+            frame = await asyncio.to_thread(
+                self._video.thumbnail_bytes, data, asset.filename
+            )
+            if frame is None:
+                return None
+            thumbnail_key = f"{asset.object_key}.thumb.jpg"
+            await self._storage.put_object(
+                thumbnail_key, data=frame, content_type="image/jpeg"
+            )
+            return thumbnail_key
+        except Exception:
+            logger.exception("media.thumbnail_failed object_key=%s", asset.object_key)
             return None
 
     async def list_media(
@@ -191,6 +237,10 @@ class MediaService:
 
     def public_url(self, asset: MediaAsset) -> str:
         return self._storage.public_url(asset.object_key)
+
+    def public_url_for_key(self, object_key: str) -> str:
+        """URL cho object không phải asset gốc — hiện chỉ có ảnh bìa video."""
+        return self._storage.public_url(object_key)
 
     async def _require_asset(self, *, workspace_id: UUID, asset_id: UUID) -> MediaAsset:
         asset = await self._media.get(workspace_id=workspace_id, asset_id=asset_id)

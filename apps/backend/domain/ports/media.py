@@ -37,3 +37,17 @@ class VideoProcessorPort(Protocol):
     def probe_bytes(
         self, video_bytes: bytes, filename_hint: str = "temp.mp4"
     ) -> VideoMetadata | None: ...
+
+    def thumbnail_bytes(
+        self,
+        video_bytes: bytes,
+        filename_hint: str = "temp.mp4",
+        timestamp_seconds: float = 1.0,
+    ) -> bytes | None:
+        """JPEG một khung hình, hoặc `None` khi không lấy được.
+
+        Cùng quy tắc như `probe_bytes`: không đọc được thì nói là không đọc được.
+        Ảnh bìa không lấy được là chuyện nhỏ (UI hiện placeholder), nhưng trả về
+        một khung hình đen dựng sẵn thì chủ tiệm tưởng clip mình quay bị đen.
+        """
+        ...

@@ -5,8 +5,9 @@ dễ sai ở đây không phải luồng gọi hàm mà là *diễn giải outpu
 duration nằm ở `format` hay ở `stream`, stream nào là video khi file có nhiều
 stream, tỉ lệ nào thì tính là 9:16. Mock sẽ khoá lại đúng những giả định sai đó.
 
-Bỏ qua khi máy không có ffmpeg thay vì để đỏ: CI hiện chưa cài ffmpeg, và một
-test đỏ vì thiếu binary sẽ bị bỏ qua bằng mắt cho tới lúc nó che một lỗi thật.
+Bỏ qua khi máy không có ffmpeg thay vì để đỏ, để một máy dev thiếu binary không
+bị chặn. CI *có* cài ffmpeg (`.github/workflows/ci.yml`), nên các test này chạy
+thật ở đó — skip không còn là chỗ để lỗi trốn.
 """
 
 import shutil
@@ -126,6 +127,42 @@ class TestProbeRealVideo:
 
         assert thumb is not None
         assert thumb.startswith(b"\xff\xd8"), "phải là JPEG"
+
+    def test_thumbnail_bytes_works_from_buffer(self, processor: FFmpegVideoProcessor):
+        """`MediaService` chỉ có bytes trong tay, không có đường dẫn file."""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _make_video(
+                Path(tmp) / "clip.mp4", width=540, height=960, seconds=4, audio=False
+            )
+            thumb = processor.thumbnail_bytes(path.read_bytes(), "clip.mp4")
+
+        assert thumb is not None
+        assert thumb.startswith(b"\xff\xd8"), "phải là JPEG"
+
+    def test_thumbnail_falls_back_when_seek_passes_end_of_clip(
+        self, processor: FFmpegVideoProcessor
+    ):
+        """Clip ngắn hơn mốc seek vẫn phải có bìa.
+
+        `-ss 1.0` trên clip 0.5 giây nhảy quá đuôi video và ffmpeg không xuất
+        khung nào — chủ tiệm quay một cái vèo rồi upload là chuyện thường, và ô
+        trống trong thư viện trông như upload lỗi.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _make_video(
+                Path(tmp) / "short.mp4", width=540, height=960, seconds=0.5, audio=False
+            )
+            thumb = processor.thumbnail_bytes(
+                path.read_bytes(), "short.mp4", timestamp_seconds=1.0
+            )
+
+        assert thumb is not None
+        assert thumb.startswith(b"\xff\xd8"), "phải là JPEG"
+
+    def test_thumbnail_bytes_returns_none_for_garbage(
+        self, processor: FFmpegVideoProcessor
+    ):
+        assert processor.thumbnail_bytes(b"khong-phai-video") is None
 
 
 def _meta(
