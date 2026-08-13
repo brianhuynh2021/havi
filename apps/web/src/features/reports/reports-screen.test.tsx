@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { writeTokens } from "@/lib/auth/token-store";
+import { LanguageProvider } from "@/lib/i18n/language-context";
 import { ReportsScreen } from "./reports-screen";
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -17,6 +18,14 @@ function signedIn() {
     activeWorkspaceId: "w1",
     needsOnboarding: false,
   });
+}
+
+function renderReports() {
+  return render(
+    <LanguageProvider>
+      <ReportsScreen />
+    </LanguageProvider>
+  );
 }
 
 function mockReports() {
@@ -52,7 +61,7 @@ function mockReports() {
           channel: "facebook_page",
           customers: 5,
           share: 1,
-          note: "Tạm tính theo bài đã đăng; chưa có engagement snapshot.",
+          note: "Tạm tính theo bài đã đăng",
         },
       ]);
     },
@@ -73,14 +82,13 @@ describe("ReportsScreen", () => {
   it("hiện báo cáo từ analytics API thật", async () => {
     const asked = mockReports();
 
-    render(<ReportsScreen />);
+    renderReports();
 
     expect(await screen.findByText("5")).toBeInTheDocument();
     expect(screen.getByText("Bài đã đăng")).toBeInTheDocument();
-    expect(screen.getByText("Lead đã ghi nhận")).toBeInTheDocument();
+    expect(screen.getByText("Khách tiềm năng")).toBeInTheDocument();
     expect(screen.getByText("Facebook Page")).toBeInTheDocument();
     expect(screen.getByText("100%")).toBeInTheDocument();
-    expect(screen.getByText(/lead và engagement snapshot chưa được nối/i)).toBeInTheDocument();
     await waitFor(() =>
       expect(asked).toEqual(
         expect.arrayContaining([
@@ -122,18 +130,16 @@ describe("ReportsScreen", () => {
       },
     );
 
-    render(<ReportsScreen />);
+    renderReports();
 
-    expect(await screen.findByText(/chưa có bài nào được ghi nhận/i)).toBeInTheDocument();
-    expect(screen.getByText(/chưa có bài đã đăng/i)).toBeInTheDocument();
+    expect(await screen.findByText(/chưa có bài đã đăng/i)).toBeInTheDocument();
     expect(screen.queryByText(/lượt tiếp cận/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Google Maps đang tăng/i)).not.toBeInTheDocument();
   });
 
   it("lỗi mạng thì báo rõ và cho thử lại", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fail"));
 
-    render(<ReportsScreen />);
+    renderReports();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /không kết nối được/i,

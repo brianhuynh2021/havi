@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth/session";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { signUp } from "./auth.api";
 import { MIN_PASSWORD_LENGTH, isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
@@ -13,6 +14,7 @@ import styles from "./auth.module.css";
 export function SignupScreen() {
   const router = useRouter();
   const { signIn } = useSession();
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,15 +23,15 @@ export function SignupScreen() {
 
   async function submit() {
     if (!name.trim()) {
-      setError("Nhập tên tiệm hoặc tên chị/anh để Havi xưng hô đúng");
+      setError(t({ vi: "Nhập tên tiệm hoặc tên của bạn", en: "Please enter your name or business name" }));
       return;
     }
     if (!isValidEmail(email)) {
-      setError("Email chưa đúng — kiểm tra lại giúp chị nhé");
+      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp nhé", en: "Invalid email — please check again" }));
       return;
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Mật khẩu cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`);
+      setError(t({ vi: `Mật khẩu cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` }));
       return;
     }
     setError(null);
@@ -40,31 +42,30 @@ export function SignupScreen() {
       setSubmitting(false);
       return;
     }
-    // Đăng ký xong là đã đăng nhập luôn (backend trả token) — không bắt nhập lại.
     signIn(result.tokens);
     router.replace("/onboarding");
   }
 
   return (
     <>
-      <h1 className={styles.title}>Tạo tài khoản Havi</h1>
+      <h1 className={styles.title}>{t("auth.registerTitle", "Tạo tài khoản Havi")}</h1>
       <p className={styles.subtitle}>
-        Chỉ cần tên, email và mật khẩu — 30 giây là xong.
+        {t("auth.registerSubtitle", "Chỉ cần tên, email và mật khẩu — 30 giây là xong.")}
       </p>
 
       <div className={styles.form}>
         <label className={styles.field}>
-          <span className={styles.label}>Tên của bạn</span>
+          <span className={styles.label}>{t("auth.fullName", "Họ và tên")}</span>
           <Input
             scale="large"
-            placeholder="Ví dụ: Chị Hương"
+            placeholder={t({ vi: "Ví dụ: Chị Hương", en: "e.g., Sarah Jenkins" })}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </label>
 
         <label className={styles.field}>
-          <span className={styles.label}>Email</span>
+          <span className={styles.label}>{t("auth.email", "Email")}</span>
           <Input
             scale="large"
             type="email"
@@ -77,12 +78,12 @@ export function SignupScreen() {
         </label>
 
         <label className={styles.field}>
-          <span className={styles.label}>Mật khẩu</span>
+          <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
           <Input
             scale="large"
             type="password"
             autoComplete="new-password"
-            placeholder={`Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`}
+            placeholder={t({ vi: `Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `At least ${MIN_PASSWORD_LENGTH} characters` })}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -100,22 +101,25 @@ export function SignupScreen() {
           onClick={submit}
           disabled={submitting}
         >
-          {submitting ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
+          {submitting
+            ? t({ vi: "Đang tạo tài khoản…", en: "Creating account…" })
+            : t("auth.registerButton", "Tạo tài khoản")}
         </Button>
 
         <p className={styles.consentText}>
-          Bấm nút là chị/anh đồng ý với{" "}
-          <Link href="/dieu-khoan">Điều khoản</Link> &amp;{" "}
-          <Link href="/bao-mat">Bảo mật</Link> của Havi. Số điện thoại thêm sau
-          trong Cài đặt nếu muốn nhận bản nháp qua Zalo.
+          {t({ vi: "Bấm nút là bạn đồng ý với ", en: "By continuing, you agree to Havi's " })}
+          <Link href="/terms">{t("public.terms", "Điều khoản")}</Link> &amp;{" "}
+          <Link href="/privacy">{t("public.privacy", "Bảo mật")}</Link>.
         </p>
       </div>
 
       <div className={styles.footerBlock}>
         <p>
-          Đã có tài khoản? <Link href="/dang-nhap">Đăng nhập</Link>
+          {t("auth.hasAccount", "Đã có tài khoản?")}{" "}
+          <Link href="/login">{t("auth.loginButton", "Đăng nhập")}</Link>
         </p>
       </div>
     </>
   );
 }
+

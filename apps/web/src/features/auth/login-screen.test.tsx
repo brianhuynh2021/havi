@@ -18,13 +18,18 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+import { LanguageProvider } from "@/lib/i18n/language-context";
+
 function renderLogin() {
   return render(
     <SessionProvider>
-      <LoginScreen />
+      <LanguageProvider>
+        <LoginScreen />
+      </LanguageProvider>
     </SessionProvider>,
   );
 }
+
 
 async function fillAndSubmit(email: string, password: string) {
   const user = userEvent.setup();
@@ -56,7 +61,7 @@ describe("LoginScreen", () => {
     renderLogin();
     await fillAndSubmit("huong@spaannhien.vn", "matkhau123");
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/app"));
     expect(readTokens()?.accessToken).toBe("a");
   });
 

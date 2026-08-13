@@ -14,11 +14,11 @@ export function LegalPage({ title, intro, sections }: Props) {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link href="/gioi-thieu" className={styles.brand}>
+          <Link href="/about" className={styles.brand}>
             <Logo size={34} />
             <span className={styles.brandText}>Havi</span>
           </Link>
-          <Link href="/gioi-thieu" className={styles.backLink}>
+          <Link href="/about" className={styles.backLink}>
             ← Về trang chủ
           </Link>
         </div>
@@ -53,8 +53,8 @@ export function LegalPage({ title, intro, sections }: Props) {
         </section>
 
         <nav className={styles.crossLinks} aria-label="Trang pháp lý khác">
-          <Link href="/dieu-khoan">Điều khoản sử dụng</Link>
-          <Link href="/bao-mat">Chính sách bảo mật</Link>
+          <Link href="/terms">Điều khoản sử dụng</Link>
+          <Link href="/privacy">Chính sách bảo mật</Link>
         </nav>
       </main>
     </div>

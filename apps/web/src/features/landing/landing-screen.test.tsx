@@ -62,14 +62,14 @@ describe("LandingScreen", () => {
     const signup = screen.getAllByRole("link", { name: /tạo tài khoản/i });
     expect(signup.length).toBeGreaterThan(0);
     for (const link of signup) {
-      expect(link).toHaveAttribute("href", "/dang-ky");
+      expect(link).toHaveAttribute("href", "/signup");
     }
     // Hai link đăng nhập (header + footer) là cố ý — người cuộn hết trang
     // không phải cuộn ngược lên đầu.
     const login = screen.getAllByRole("link", { name: /^đăng nhập$/i });
     expect(login.length).toBeGreaterThan(0);
     for (const link of login) {
-      expect(link).toHaveAttribute("href", "/dang-nhap");
+      expect(link).toHaveAttribute("href", "/login");
     }
   });
 

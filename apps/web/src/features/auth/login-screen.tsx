@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth/session";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { login } from "./auth.api";
 import { isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
@@ -13,6 +14,7 @@ import styles from "./auth.module.css";
 export function LoginScreen() {
   const router = useRouter();
   const { signIn } = useSession();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +22,11 @@ export function LoginScreen() {
 
   async function submit() {
     if (!isValidEmail(email)) {
-      setError("Email chưa đúng — kiểm tra lại giúp chị nhé");
+      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp chị nhé", en: "Invalid email — please check again" }));
       return;
     }
     if (!password) {
-      setError("Nhập mật khẩu để đăng nhập");
+      setError(t({ vi: "Nhập mật khẩu để đăng nhập", en: "Please enter your password to sign in" }));
       return;
     }
     setError(null);
@@ -36,18 +38,17 @@ export function LoginScreen() {
       return;
     }
     signIn(result.tokens);
-    // Chưa có workspace thì phải đi onboarding trước, không thì app rỗng.
-    router.replace(result.tokens.needsOnboarding ? "/onboarding" : "/");
+    router.replace(result.tokens.needsOnboarding ? "/onboarding" : "/app");
   }
 
   return (
     <>
-      <h1 className={styles.title}>Chào bạn trở lại</h1>
-      <p className={styles.subtitle}>Đăng nhập để tiếp tục với Havi.</p>
+      <h1 className={styles.title}>{t("auth.loginTitle", "Đăng nhập Havi")}</h1>
+      <p className={styles.subtitle}>{t("auth.loginSubtitle", "Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
 
       <div className={styles.form}>
         <label className={styles.field}>
-          <span className={styles.label}>Email</span>
+          <span className={styles.label}>{t("auth.email", "Email")}</span>
           <Input
             scale="large"
             type="email"
@@ -60,7 +61,7 @@ export function LoginScreen() {
         </label>
 
         <label className={styles.field}>
-          <span className={styles.label}>Mật khẩu</span>
+          <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
           <Input
             scale="large"
             type="password"
@@ -72,7 +73,7 @@ export function LoginScreen() {
         </label>
 
         <Link href="/quen-mat-khau" className={styles.inlineLink}>
-          Quên mật khẩu?
+          {t("auth.forgotPassword", "Quên mật khẩu?")}
         </Link>
 
         {error ? (
@@ -87,20 +88,21 @@ export function LoginScreen() {
           onClick={submit}
           disabled={submitting}
         >
-          {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
+          {submitting
+            ? t({ vi: "Đang đăng nhập…", en: "Signing in…" })
+            : t("auth.loginButton", "Đăng nhập")}
         </Button>
       </div>
 
-      {/* Prototype có "Tiếp tục với Google" nhưng đăng nhập Google là P1 chưa
-          làm (ROADMAP §4). Không dựng nút bấm vào không chạy — thà thiếu còn
-          hơn hứa capability chưa có (§2). */}
-
       <div className={styles.footerBlock}>
         <p>
-          Lần đầu dùng Havi?{" "}
-          <Link href="/dang-ky">Tạo tài khoản miễn phí</Link>
+          {t({ vi: "Lần đầu dùng Havi? ", en: "First time using Havi? " })}
+          <Link href="/signup">
+            {t("auth.registerButton", "Tạo tài khoản miễn phí")}
+          </Link>
         </p>
       </div>
     </>
   );
 }
+

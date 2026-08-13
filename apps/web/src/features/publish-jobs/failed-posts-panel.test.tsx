@@ -98,7 +98,7 @@ describe("FailedPostsPanel", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /nối lại kênh/i })).toHaveAttribute(
       "href",
-      "/cai-dat",
+      "/app/settings",
     );
   });
 

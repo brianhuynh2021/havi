@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
   heroChannels,
   heroStats,
@@ -42,11 +43,14 @@ const PREVIEW_DRAFTS: Record<
   },
 };
 
+import { useLanguage } from "@/lib/i18n/language-context";
+
 export function LandingScreen() {
   const [activeChannel, setActiveChannel] = useState("Facebook");
   const [activeStep, setActiveStep] = useState(0);
   const [activeIndustry, setActiveIndustry] = useState(0);
-  const [lang, setLang] = useState<"VN" | "EN">("VN");
+  const { lang } = useLanguage();
+
 
   const currentDraft = PREVIEW_DRAFTS[activeChannel] || PREVIEW_DRAFTS.Facebook;
   const currentInd = industries[activeIndustry] || industries[0];
@@ -56,7 +60,7 @@ export function LandingScreen() {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link href="/gioi-thieu" className={styles.brand}>
+          <Link href="/about" className={styles.brand}>
             <Logo size={38} />
             <span className={styles.brandText}>Havi</span>
           </Link>
@@ -68,33 +72,12 @@ export function LandingScreen() {
           </nav>
 
           <div className={styles.headerActions}>
-            {/* Language Switcher Pill */}
-            <button
-              type="button"
-              onClick={() => setLang(lang === "VN" ? "EN" : "VN")}
-              style={{
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "99px",
-                padding: "6px 14px",
-                color: "#f8fafc",
-                fontSize: "13px",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <span>{lang === "VN" ? "🇻🇳 VN" : "🇬🇧 EN"}</span>
-              <span style={{ color: "#64748b", fontSize: "11px" }}>▼</span>
-            </button>
+            <LanguageSwitcher variant="pill" />
 
-            <Link href="/dang-nhap" className={styles.loginLink}>
+            <Link href="/login" className={styles.loginLink}>
               {lang === "VN" ? "Đăng nhập" : "Login"}
             </Link>
-            <Link href="/dang-ky" className={styles.ctaButton}>
+            <Link href="/signup" className={styles.ctaButton}>
               {lang === "VN" ? "Tạo tài khoản" : "Get Started"}
             </Link>
           </div>
@@ -117,7 +100,7 @@ export function LandingScreen() {
           </p>
 
           <div className={styles.heroActions}>
-            <Link href="/dang-ky" className={styles.ctaButton}>
+            <Link href="/signup" className={styles.ctaButton}>
               Tạo tài khoản miễn phí
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
@@ -261,7 +244,7 @@ export function LandingScreen() {
                     <span>Havi biên soạn sẵn — <strong style={{ color: "#fff" }}>Bạn đọc lướt rồi bấm duyệt 1-chạm</strong></span>
                   </div>
                   <div style={{ display: "flex", gap: "12px" }}>
-                    <Link href="/dang-ky" className={styles.ctaButton}>
+                    <Link href="/signup" className={styles.ctaButton}>
                       Duyệt bài này 1-chạm
                     </Link>
                   </div>
@@ -416,11 +399,11 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>PHÁP LÝ &amp; TÀI KHOẢN</div>
               <ul className={styles.footerLinkList}>
-                <li><Link href="/gioi-thieu">Về Havi</Link></li>
-                <li><Link href="/dieu-khoan">Điều khoản sử dụng</Link></li>
-                <li><Link href="/bao-mat">Chính sách bảo mật</Link></li>
-                <li><Link href="/dang-nhap">Đăng nhập</Link></li>
-                <li><Link href="/dang-ky">Tạo tài khoản</Link></li>
+                <li><Link href="/about">Về Havi</Link></li>
+                <li><Link href="/terms">Điều khoản sử dụng</Link></li>
+                <li><Link href="/privacy">Chính sách bảo mật</Link></li>
+                <li><Link href="/login">Đăng nhập</Link></li>
+                <li><Link href="/signup">Tạo tài khoản</Link></li>
               </ul>
             </div>
 
@@ -430,29 +413,6 @@ export function LandingScreen() {
               <div style={{ fontSize: "13.5px", color: "#b8c0d0", lineHeight: 1.6 }}>
                 <div>Email: <a href="mailto:hotro@havi.vn" style={{ color: "#38bdf8" }}>hotro@havi.vn</a></div>
                 <div style={{ marginTop: "4px" }}>Khu vực: TP. Hồ Chí Minh, Việt Nam</div>
-              </div>
-
-              {/* Language Switcher Footer Pill */}
-              <div style={{ marginTop: "16px" }}>
-                <button
-                  type="button"
-                  onClick={() => setLang(lang === "VN" ? "EN" : "VN")}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.06)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    borderRadius: "8px",
-                    padding: "6px 12px",
-                    color: "#34d399",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <span>{lang === "VN" ? "🇻🇳 Tiếng Việt (VN)" : "🇬🇧 English (EN)"}</span>
-                </button>
               </div>
 
               <div className={styles.statusIndicator}>

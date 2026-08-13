@@ -28,7 +28,7 @@ describe("RouteGuard", () => {
 
   it("chưa đăng nhập mà vào app thì bị đá về đăng nhập", async () => {
     renderGuard("app");
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/dang-nhap"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
     expect(screen.queryByText("nội dung")).not.toBeInTheDocument();
   });
 
@@ -80,7 +80,7 @@ describe("RouteGuard", () => {
       needsOnboarding: false,
     });
     renderGuard("guest");
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/app"));
   });
 
   it("khách vãng lai xem được màn đăng nhập", async () => {

@@ -81,12 +81,23 @@ function notify(): void {
   for (const listener of listeners) listener();
 }
 
+function syncCookie(hasTokens: boolean): void {
+  if (typeof document === "undefined") return;
+  if (hasTokens) {
+    document.cookie = "havi_session=1; path=/; max-age=2592000; SameSite=Lax";
+  } else {
+    document.cookie = "havi_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }
+}
+
 export function writeTokens(tokens: StoredTokens): void {
   storage()?.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  syncCookie(true);
   notify();
 }
 
 export function clearTokens(): void {
   storage()?.removeItem(STORAGE_KEY);
+  syncCookie(false);
   notify();
 }

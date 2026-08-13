@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { channelLabels } from "@/features/content-creation/content-creation.fixture";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { FailedPostsPanel } from "@/features/publish-jobs/failed-posts-panel";
 import {
   addDays,
@@ -105,30 +106,35 @@ function canReschedule(status: string): boolean {
 }
 
 export function CalendarScreen() {
-  const [weekStart, setWeekStart] = useState(() => startOfVnWeek(new Date()));
+  const { lang, t } = useLanguage();
+  const [weekStart, setWeekStart] = useState<string>(() => toVnDateString(startOfVnWeek(new Date())));
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Modal xem chi tiết & đổi giờ bài viết
   const [selectedItem, setSelectedItem] = useState<{
     item: CalendarDay["items"][number];
-    fallbackDate: string;
+    date: string;
   } | null>(null);
 
-  const [draftTime, setDraftTime] = useState("");
+  const [targetIso, setTargetIso] = useState("");
+  const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
-  const [savingId, setSavingId] = useState<string | null>(null);
+
+  const weekdayLabels = lang === "VN"
+    ? ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"]
+    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const today = toVnDateString(new Date());
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     async function run() {
+      setLoading(true);
       const result = await fetchCalendar(
-        toVnDateString(weekStart),
-        toVnDateString(addDays(weekStart, 6)),
+        weekStart,
+        toVnDateString(addDays(new Date(weekStart), 6)),
       );
       if (cancelled) return;
       if (result.ok) {
@@ -145,21 +151,18 @@ export function CalendarScreen() {
     };
   }, [weekStart, reloadKey]);
 
-  function openDetailModal(item: CalendarDay["items"][number], fallbackDate: string) {
-    setSelectedItem({ item, fallbackDate });
-    setDraftTime(datetimeLocalValue(item.scheduled_at, fallbackDate));
+  function openDetailModal(item: CalendarDay["items"][number], date: string) {
+    setSelectedItem({ item, date });
+    setTargetIso(datetimeLocalValue(item.scheduled_at, date));
     setRescheduleError(null);
   }
 
-  async function submitReschedule(itemId: string) {
-    if (!draftTime) {
-      setRescheduleError("Chọn ngày giờ đăng mới trước đã nhé.");
-      return;
-    }
-    setSavingId(itemId);
+  async function submitReschedule() {
+    if (!selectedItem) return;
+    setRescheduling(true);
     setRescheduleError(null);
-    const result = await rescheduleItem(itemId, toVnOffsetIso(draftTime));
-    setSavingId(null);
+    const result = await rescheduleItem(selectedItem.item.id, toVnOffsetIso(targetIso));
+    setRescheduling(false);
     if (!result.ok) {
       setRescheduleError(result.message);
       setReloadKey((k) => k + 1);
@@ -170,11 +173,11 @@ export function CalendarScreen() {
   }
 
   async function handleRepublish(itemId: string) {
-    setSavingId(itemId);
+    setRescheduling(true);
     setRescheduleError(null);
     const nowIso = toVnOffsetIso(datetimeLocalValue(new Date().toISOString(), today));
     const result = await rescheduleItem(itemId, nowIso);
-    setSavingId(null);
+    setRescheduling(false);
     if (!result.ok) {
       setRescheduleError(result.message);
       return;
@@ -191,9 +194,12 @@ export function CalendarScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Lịch đăng</h1>
+        <h1 className={styles.title}>{t("calendar.title", "Lịch Đăng Bài")}</h1>
         <p className={styles.subtitle}>
-          Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh. Bấm vào bài để xem chi tiết.
+          {t({
+            vi: "Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh. Bấm vào bài để xem chi tiết.",
+            en: "Approved posts auto-scheduled by date/time (Asia/Ho_Chi_Minh). Click a post to view details.",
+          })}
         </p>
       </header>
 
@@ -202,23 +208,23 @@ export function CalendarScreen() {
       <div className={styles.weekBar}>
         <Button
           variant="outline"
-          onClick={() => setWeekStart((w) => addDays(w, -7))}
+          onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), -7)))}
         >
-          ← Tuần trước
+          ← {t({ vi: "Tuần trước", en: "Prev Week" })}
         </Button>
         <span className={styles.weekRange}>{rangeLabel}</span>
         <div className={styles.weekActions}>
           <Button
             variant="outline"
-            onClick={() => setWeekStart(startOfVnWeek(new Date()))}
+            onClick={() => setWeekStart(toVnDateString(startOfVnWeek(new Date())))}
           >
-            Tuần này
+            {t({ vi: "Tuần này", en: "This Week" })}
           </Button>
           <Button
             variant="outline"
-            onClick={() => setWeekStart((w) => addDays(w, 7))}
+            onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), 7)))}
           >
-            Tuần sau →
+            {t({ vi: "Tuần sau", en: "Next Week" })} →
           </Button>
         </div>
       </div>
@@ -228,15 +234,15 @@ export function CalendarScreen() {
           title={error}
           action={
             <Button variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
-              Thử lại
+              {t({ vi: "Thử lại", en: "Retry" })}
             </Button>
           }
         />
       ) : loading ? (
-        <LoadingState title="Đang tải lịch…" />
+        <LoadingState title={t({ vi: "Đang tải lịch…", en: "Loading calendar…" })} />
       ) : (
         <>
-          <section className={styles.grid} aria-label="Lịch đăng theo tuần">
+          <section className={styles.grid} aria-label={t("calendar.title", "Lịch đăng theo tuần")}>
             {days.map((day, index) => (
               <div
                 key={day.date}
@@ -250,7 +256,7 @@ export function CalendarScreen() {
                 </div>
 
                 {day.items.length === 0 ? (
-                  <p className={styles.dayEmpty}>Chưa có bài</p>
+                  <p className={styles.dayEmpty}>{t({ vi: "Chưa có bài", en: "No posts" })}</p>
                 ) : (
                   <div className={styles.postList}>
                     {day.items.map((item) => (
@@ -358,18 +364,16 @@ export function CalendarScreen() {
               </div>
             ) : null}
 
-            <div className={styles.rescheduleSection}>
               <Button
                 type="button"
                 variant="outline"
-                disabled={savingId === selectedItem.item.id}
-                onClick={() => void handleRepublish(selectedItem.item.id)}
+                disabled={rescheduling}
+                onClick={() => void submitReschedule()}
               >
-                {savingId === selectedItem.item.id
-                  ? "🔄 Đang phát lệnh đăng lại…"
-                  : "🔄 Đăng lại bài này ngay (0 Token AI)"}
+                {rescheduling
+                  ? t({ vi: "🔄 Đang đổi lịch…", en: "🔄 Rescheduling…" })
+                  : t({ vi: "🔄 Đổi ngày/giờ đăng", en: "🔄 Reschedule post" })}
               </Button>
-            </div>
 
             {canReschedule(selectedItem.item.status) ? (
               <div className={styles.rescheduleSection}>
@@ -378,13 +382,13 @@ export function CalendarScreen() {
                   className={styles.rescheduleForm}
                   onSubmit={(e) => {
                     e.preventDefault();
-                    void submitReschedule(selectedItem.item.id);
+                    void submitReschedule();
                   }}
                 >
                   <Input
                     type="datetime-local"
-                    value={draftTime}
-                    onChange={(e) => setDraftTime(e.target.value)}
+                    value={targetIso}
+                    onChange={(e) => setTargetIso(e.target.value)}
                     aria-label="Giờ đăng mới"
                   />
                   {rescheduleError ? (
@@ -402,9 +406,9 @@ export function CalendarScreen() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={savingId === selectedItem.item.id}
+                      disabled={rescheduling}
                     >
-                      {savingId === selectedItem.item.id
+                      {rescheduling
                         ? "Đang lưu…"
                         : "Lưu giờ mới"}
                     </Button>

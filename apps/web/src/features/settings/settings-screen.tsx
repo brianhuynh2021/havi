@@ -16,7 +16,9 @@ import {
   type Industry,
   type SettingsData,
 } from "./settings.api";
+import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./settings-screen.module.css";
+
 
 type FormState = {
   workspaceId: string;
@@ -45,6 +47,7 @@ function toFormState(data: SettingsData): FormState {
 }
 
 export function SettingsScreen() {
+  const { t } = useLanguage();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,7 +91,7 @@ export function SettingsScreen() {
 
     const name = form.name.trim();
     if (name.length < 2) {
-      setError("Tên tiệm cần ít nhất 2 ký tự.");
+      setError(t({ vi: "Tên tiệm cần ít nhất 2 ký tự.", en: "Business name must be at least 2 characters." }));
       return;
     }
 
@@ -100,19 +103,23 @@ export function SettingsScreen() {
       tone: form.tone.trim(),
       bannedClaims: parseBannedClaims(form.bannedClaimsText),
     });
+    setSaving(false);
+
     if (result.ok) {
       setForm(toFormState(result.data));
-      setSuccess("Đã lưu giọng thương hiệu.");
+      setSuccess(t({ vi: "Đã lưu cài đặt giọng thương hiệu thành công.", en: "Settings updated successfully." }));
     } else {
       setError(result.message);
     }
-    setSaving(false);
   }
 
   async function handleDeleteWorkspace() {
     if (!form.workspaceId) return;
     const confirmed = window.confirm(
-      `Chị có chắc chắn muốn xoá tiệm "${form.name}"? Hành động này sẽ xoá vĩnh viễn toàn bộ bài viết, cấu hình thương hiệu và kết nối kênh.`,
+      t({
+        vi: "Bạn có chắc chắn muốn xoá workspace này? Tất cả kênh đã kết nối và dữ liệu bài đăng sẽ bị xoá.",
+        en: "Are you sure you want to delete this workspace? Connected channels and post history will be deleted.",
+      }),
     );
     if (!confirmed) return;
 
@@ -130,7 +137,10 @@ export function SettingsScreen() {
 
   async function handleDeleteAccount() {
     const confirmed = window.confirm(
-      "Chị có chắc chắn muốn xoá tài khoản Havi? Hành động này sẽ thu hồi toàn bộ phiên làm việc và xoá dữ liệu tài khoản.",
+      t({
+        vi: "Bạn có chắc chắn muốn xoá tài khoản Havi? Hành động này không thể hoàn tác.",
+        en: "Are you sure you want to delete your Havi account? This action cannot be undone.",
+      }),
     );
     if (!confirmed) return;
 
@@ -149,20 +159,21 @@ export function SettingsScreen() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Cài đặt</h1>
+        <h1 className={styles.title}>{t("settings.title", "Cài Đặt Hệ Thống")}</h1>
         <p className={styles.subtitle}>
-          Những thông tin này giúp Havi viết đúng cách xưng hô, ngành hàng và
-          tránh các câu cam kết quá mức.
+          {t("settings.subtitle", "Quản lý doanh nghiệp, tài khoản và kết nối kênh")}
         </p>
       </header>
 
       <section className={styles.section} aria-labelledby="brand-voice-title">
         <h2 className={styles.sectionTitle} id="brand-voice-title">
-          Giọng thương hiệu
+          {t("settings.brandKitTab", "Bộ nhận diện thương hiệu")}
         </h2>
         <p className={styles.sectionHint}>
-          Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi chỉ dùng phần này
-          làm nền khi tạo bản nháp mới.
+          {t({
+            vi: "Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi chỉ dùng phần này làm nền khi tạo bản nháp mới.",
+            en: "Havi uses brand voice guidelines when generating drafts for your review.",
+          })}
         </p>
 
         {error ? (
@@ -174,7 +185,7 @@ export function SettingsScreen() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.grid}>
             <label className={styles.field}>
-              <span className={styles.label}>Tên tiệm</span>
+              <span className={styles.label}>{t("auth.businessName", "Tên doanh nghiệp / Cửa hàng")}</span>
               <Input
                 value={form.name}
                 disabled={loading || saving}
@@ -185,7 +196,7 @@ export function SettingsScreen() {
             </label>
 
             <label className={styles.field}>
-              <span className={styles.label}>Ngành</span>
+              <span className={styles.label}>{t({ vi: "Ngành nghề", en: "Industry" })}</span>
               <select
                 className={styles.select}
                 value={form.industry}
@@ -207,11 +218,14 @@ export function SettingsScreen() {
           </div>
 
           <label className={styles.field}>
-            <span className={styles.label}>Cách Havi nên viết</span>
+            <span className={styles.label}>{t({ vi: "Giọng văn của Havi", en: "Tone of Voice" })}</span>
             <Textarea
               value={form.tone}
               disabled={loading || saving}
-              placeholder="Ví dụ: thân thiện, gọi khách là chị/em, nói ngắn gọn và không dùng từ quá chuyên môn."
+              placeholder={t({
+                vi: "Ví dụ: thân thiện, gần gũi, nói ngắn gọn...",
+                en: "e.g., professional yet warm, concise and engaging...",
+              })}
               onChange={(event) =>
                 setForm((current) => ({ ...current, tone: event.target.value }))
               }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import { SessionProvider } from "@/lib/auth/session";
+import { LanguageProvider } from "@/lib/i18n/language-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,8 +20,13 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: "Havi",
-  description: "AI marketing dashboard for small businesses",
+  title: "Havi — Trợ lý Marketing AI",
+  description: "Hệ thống tự động hóa marketing dành cho chủ doanh nghiệp",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -34,8 +40,11 @@ export default function RootLayout({
       className={`${inter.variable} ${merriweather.variable}`}
     >
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </SessionProvider>
       </body>
     </html>
   );
 }
+

@@ -152,7 +152,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
                   </Button>
                 ) : null}
                 {copy.needsReconnect ? (
-                  <Link className={styles.reconnect} href="/cai-dat">
+                  <Link className={styles.reconnect} href="/app/settings">
                     Nối lại kênh
                   </Link>
                 ) : null}

@@ -30,13 +30,13 @@ export function RouteGuard({ require, children }: Props) {
 
     if (require === "guest") {
       if (status === "authenticated") {
-        router.replace(needsOnboarding ? "/onboarding" : "/");
+        router.replace(needsOnboarding ? "/onboarding" : "/app");
       }
       return;
     }
 
     if (status === "guest") {
-      router.replace("/dang-nhap");
+      router.replace("/login");
       return;
     }
 

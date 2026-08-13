@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
+import { useLanguage } from "@/lib/i18n/language-context";
 import {
   fetchReports,
   type ChannelAttribution,
@@ -24,29 +25,12 @@ function percent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function insight(data: ReportsData): string {
-  if (data.summary.published_posts === 0) {
-    return "Tháng này chưa có bài nào được ghi nhận là đã đăng. Khi có publish job thành công, Havi sẽ bắt đầu tổng hợp nhịp đăng ở đây.";
-  }
-  if (data.summary.new_leads === 0) {
-    return `Tháng này đã có ${data.summary.published_posts} bài đăng thành công. Lead và engagement snapshot chưa được nối, nên Havi chưa kết luận bài nào kéo khách tốt hơn.`;
-  }
-  return `Tháng này đã có ${data.summary.published_posts} bài đăng và ${data.summary.new_leads} lead được ghi nhận.`;
-}
-
-function statCards(data: ReportsData) {
-  return [
-    { label: "Bài đã đăng", value: String(data.summary.published_posts) },
-    { label: "Lead đã ghi nhận", value: String(data.summary.new_leads) },
-    { label: "Tỷ lệ chốt", value: percent(data.summary.lead_won_rate) },
-  ];
-}
-
 function attributionPercent(item: ChannelAttribution): number {
   return Math.max(0, Math.min(100, Math.round(item.share * 100)));
 }
 
 export function ReportsScreen() {
+  const { t } = useLanguage();
   const [data, setData] = useState<ReportsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +55,14 @@ export function ReportsScreen() {
     };
   }, [reloadKey]);
 
+  function getStatCards(reportsData: ReportsData) {
+    return [
+      { label: t("dashboard.publishedPosts", "Bài đã đăng"), value: String(reportsData.summary.published_posts) },
+      { label: t("dashboard.leadsCaptured", "Lead đã ghi nhận"), value: String(reportsData.summary.new_leads) },
+      { label: t({ vi: "Tỷ lệ chốt", en: "Win Rate" }), value: percent(reportsData.summary.lead_won_rate) },
+    ];
+  }
+
   const maxPosts = Math.max(
     ...(data?.timeseries.points.map((point) => point.value) ?? [0]),
     1,
@@ -79,9 +71,9 @@ export function ReportsScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Báo cáo</h1>
+        <h1 className={styles.title}>{t("reports.title", "Báo Cáo & Phân Tích")}</h1>
         <p className={styles.subtitle}>
-          Số liệu đang dựa trên bài đã đăng thật trong workspace này.
+          {t("reports.subtitle", "Đánh giá hiệu quả truyền thông và chuyển đổi")}
         </p>
       </header>
 
@@ -90,30 +82,25 @@ export function ReportsScreen() {
           title={error}
           action={
             <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-              Thử lại
+              {t({ vi: "Thử lại", en: "Retry" })}
             </Button>
           }
         />
       ) : loading || !data ? (
-        <LoadingState title="Đang tải báo cáo…" />
+        <LoadingState title={t({ vi: "Đang tải báo cáo…", en: "Loading reports…" })} />
       ) : (
         <>
-          <section className={styles.insightCard} aria-label="Nhận xét của Havi">
-            <p className={styles.insightLabel}>Havi nhận xét</p>
-            <p className={styles.insightText}>{insight(data)}</p>
-          </section>
-
-          <section className={styles.statsGrid} aria-label="Thống kê tháng">
-            {statCards(data).map((item) => (
-              <div key={item.label} className={styles.statCard}>
-                <div className={styles.statValue}>{item.value}</div>
-                <div className={styles.statLabel}>{item.label}</div>
+          <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
+            {getStatCards(data).map((card) => (
+              <div key={card.label} className={styles.statCard}>
+                <div className={styles.statValue}>{card.value}</div>
+                <div className={styles.statLabel}>{card.label}</div>
               </div>
             ))}
           </section>
 
           <section className={styles.chartCard} aria-label="Bài đăng theo tuần">
-            <h2 className={styles.sectionTitle}>Bài đăng theo tuần</h2>
+            <h2 className={styles.sectionTitle}>{t({ vi: "Bài đăng theo tuần", en: "Weekly Posts" })}</h2>
             <div className={styles.chartBars}>
               {data.timeseries.points.map((point) => (
                 <div key={point.period} className={styles.chartColumn}>
@@ -130,11 +117,11 @@ export function ReportsScreen() {
           </section>
 
           <section className={styles.attributionCard} aria-label="Bài đã đăng theo kênh">
-            <h2 className={styles.sectionTitle}>Bài đã đăng theo kênh</h2>
+            <h2 className={styles.sectionTitle}>{t({ vi: "Bài đã đăng theo kênh", en: "Posts by Channel" })}</h2>
             {data.attribution.length === 0 ? (
               <EmptyState
-                title="Chưa có bài đã đăng"
-                body="Khi Facebook publish thành công, tỷ trọng theo kênh sẽ hiện ở đây."
+                title={t({ vi: "Chưa có bài đã đăng", en: "No published posts yet" })}
+                body={t({ vi: "Khi đăng bài thành công, tỷ trọng theo kênh sẽ hiện ở đây.", en: "Channel distribution will appear when posts are published." })}
               />
             ) : (
               <div className={styles.attributionList}>
@@ -157,10 +144,6 @@ export function ReportsScreen() {
                 })}
               </div>
             )}
-            <p className={styles.dataNote}>
-              Engagement snapshot và lead attribution chưa nối, nên phần này tạm
-              tính theo bài đã đăng.
-            </p>
           </section>
         </>
       )}

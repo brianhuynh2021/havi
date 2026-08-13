@@ -44,10 +44,10 @@ describe("Trang pháp lý", () => {
     renderTerms();
     expect(
       screen.getByRole("link", { name: /điều khoản sử dụng/i }),
-    ).toHaveAttribute("href", "/dieu-khoan");
+    ).toHaveAttribute("href", "/terms");
     expect(
       screen.getByRole("link", { name: /chính sách bảo mật/i }),
-    ).toHaveAttribute("href", "/bao-mat");
+    ).toHaveAttribute("href", "/privacy");
   });
 });
 

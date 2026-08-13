@@ -27,7 +27,7 @@
 .cardButton,
 .zaloBanner,
 .activityCard {
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: var(--shadow-card);
 }
 
@@ -114,9 +114,262 @@
   box-shadow: 0 10px 32px rgba(0, 210, 255, 0.4);
 }
 
+/* Dark Card: "Việc cần xem tiếp" */
+.darkCard {
+  margin-top: 28px;
+  padding: 32px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #0b1324 0%, #111c35 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px -8px rgba(9, 13, 22, 0.4);
+  color: #ffffff;
+}
+
+.darkHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.darkTitle {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.darkMeta {
+  font-size: 13.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.suggestionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.suggestionCard {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  transition: all 0.25s ease;
+}
+
+.suggestionCard:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(0, 102, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.suggestionTag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 102, 255, 0.2);
+  border: 1px solid rgba(0, 102, 255, 0.35);
+  color: #388bfd;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.suggestionText {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.ghostButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+.successPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.successPill:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #6ee7b7;
+}
+
+/* Zalo Banner */
+.zaloBanner {
+  margin-top: 28px;
+  padding: 22px 28px;
+  border-radius: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.2s ease;
+}
+
+.zaloBanner:hover {
+  border-color: rgba(0, 104, 255, 0.3);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.zaloBadge {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0068ff 0%, #0045ab 100%);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  flex: none;
+  box-shadow: 0 4px 14px rgba(0, 104, 255, 0.25);
+}
+
+.zaloTitle {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.zaloBody {
+  font-size: 13.5px;
+  color: var(--color-muted);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.statusPill {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
+/* Activity Card: "Hoạt động gần đây" */
+.activityCard {
+  margin-top: 28px;
+  padding: 32px;
+  border-radius: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.sectionEyebrow {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin-bottom: 20px;
+}
+
+.activityError {
+  color: var(--color-danger);
+  font-size: 14px;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-soft);
+  transition: all 0.2s ease;
+}
+
+.activityItem:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  transform: translateX(2px);
+}
+
+.activityTime {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-muted);
+  flex: none;
+  min-width: 95px;
+  font-variant-numeric: tabular-nums;
+}
+
+.activityText {
+  font-size: 14px;
+  color: var(--color-body);
+  flex: 1;
+  font-weight: 500;
+}
+
+.activityTag {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-body);
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
 @media (max-width: 720px) {
   .statsGrid {
     grid-template-columns: 1fr;
   }
+  .zaloBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .statusPill {
+    margin-left: 0;
+  }
+  .activityItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
+
 

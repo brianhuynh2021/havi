@@ -1,4 +1,7 @@
+import type { TranslationKey } from "@/lib/i18n/translations";
+
 export type NavItem = {
+  key: TranslationKey;
   label: string;
   href: string;
   count?: number;
@@ -7,13 +10,11 @@ export type NavItem = {
 // count là số việc "chờ chị" trên mỗi tab — khớp fixture của từng feature.
 // Tuần 5 nối API thật thì đổi sang lấy từ dashboard summary.
 export const navItems: NavItem[] = [
-  { label: "Tổng quan", href: "/" },
-  { label: "Tạo nội dung", href: "/noi-dung" },
-  { label: "Lịch đăng", href: "/lich-dang", count: 3 },
-  { label: "Khách tiềm năng", href: "/khach-tiem-nang", count: 2 },
-  { label: "Báo cáo", href: "/bao-cao" },
-  // Prototype có 5 tab; Cài đặt là tab thứ 6 thêm ngoài thiết kế. Lý do: token
-  // Facebook hết hạn sau onboarding thì phải có chỗ thường trực để nối lại,
-  // không thì lịch đăng chết mà chủ tiệm không có đường sửa (ROADMAP Tuần 7).
-  { label: "Cài đặt", href: "/cai-dat" },
+  { key: "nav.dashboard", label: "Tổng quan", href: "/app" },
+  { key: "nav.content", label: "Tạo nội dung", href: "/app/content" },
+  { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar", count: 3 },
+  { key: "nav.leads", label: "Khách tiềm năng", href: "/app/leads", count: 2 },
+  { key: "nav.reports", label: "Báo cáo", href: "/app/reports" },
+  { key: "nav.settings", label: "Cài đặt", href: "/app/settings" },
 ];
+

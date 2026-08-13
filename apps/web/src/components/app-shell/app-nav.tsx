@@ -4,14 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navItems } from "./nav-items";
 import styles from "./app-shell.module.css";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
+  if (href === "/app" || href === "/") return pathname === "/app" || pathname === "/";
   return pathname.startsWith(href);
 }
 
 export function AppNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <>
@@ -28,7 +30,7 @@ export function AppNav() {
               aria-current={active ? "page" : undefined}
             >
               <span className={styles.navDot} aria-hidden="true" />
-              <span>{item.label}</span>
+              <span>{t(item.key, item.label)}</span>
               {typeof item.count === "number" ? (
                 <span className={styles.navBadge}>{item.count}</span>
               ) : null}
@@ -49,7 +51,7 @@ export function AppNav() {
               }`}
               aria-current={active ? "page" : undefined}
             >
-              {item.label}
+              {t(item.key, item.label)}
             </Link>
           );
         })}
@@ -57,3 +59,4 @@ export function AppNav() {
     </>
   );
 }
+
