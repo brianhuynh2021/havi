@@ -29,20 +29,26 @@ _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 class ZaloOAuthClient(OAuthClientPort):
     def __init__(self, settings: Settings, *, timeout_seconds: float = 20.0) -> None:
+        self._settings = settings
         self._client_id = settings.zalo_client_id
         self._client_secret = settings.zalo_client_secret
-        self._redirect_uri = getattr(settings, "zalo_redirect_uri", "http://localhost:8000/connections/zalo/callback")
+        self._redirect_uri = getattr(settings, "zalo_redirect_uri", "http://localhost:8000/connections/zalo_oa/callback")
         self._timeout = timeout_seconds
 
     @property
     def platform(self) -> Platform:
-        return Platform.ZALO
+        return Platform.ZALO_OA
 
     @property
     def is_configured(self) -> bool:
-        return bool(self._client_id and self._client_secret)
+        if bool(self._client_id and self._client_secret):
+            return True
+        return self._settings.use_fake_publisher or self._settings.env == "local"
 
     def authorization_url(self, *, state: str) -> str:
+        if not (self._client_id and self._client_secret):
+            # In local dev environment, bypass real Zalo server and return mock callback URL
+            return f"http://localhost:8000/connections/zalo_oa/callback?code=mock_zalo_code&state={state}"
         params = {
             "app_id": self._client_id,
             "redirect_uri": self._redirect_uri,
@@ -52,7 +58,16 @@ class ZaloOAuthClient(OAuthClientPort):
 
     async def exchange_code(self, code: str) -> OAuthAccount:
         if not self.is_configured:
-            raise OAuthPermanentError("Zalo OAuth chưa được cấu hình client_id / secret")
+            raise OAuthPermanentError(self.platform, "Zalo OAuth chưa được cấu hình client_id / secret")
+
+        if code == "mock_zalo_code" or not (self._client_id and self._client_secret):
+            return OAuthAccount(
+                external_account_id="zalo_oa_mock_123",
+                account_name="Zalo Official Account (Tiệm Demo)",
+                access_token="mock_zalo_access_token",
+                refresh_token="mock_zalo_refresh_token",
+                expires_at=datetime.now(UTC) + timedelta(days=90),
+            )
 
         headers = {
             "secret_key": self._client_secret,

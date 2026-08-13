@@ -79,7 +79,10 @@ def _override(client: AsyncClient, db_session, *, configured: bool = True) -> No
         return ConnectionService(
             connections=ConnectionRepository(db_session),
             members=WorkspaceMemberRepository(db_session),
-            oauth_clients={Platform.FACEBOOK: _StubOAuthClient(configured=configured)},
+            oauth_clients={
+                Platform.FACEBOOK: _StubOAuthClient(configured=configured),
+                Platform.ZALO_OA: _StubOAuthClient(configured=configured),
+            },
             settings=get_settings(),
         )
 
@@ -103,12 +106,12 @@ class TestStartOAuth:
         assert (await client.post("/connections/facebook/start")).status_code == 401
 
     async def test_kenh_chua_co_adapter_tra_501(self, client: AsyncClient, db_session):
-        """Zalo chưa có adapter — 501 để UI không hiện "đã nối" cho kênh fixture."""
+        """YouTube chưa có adapter — 501 để UI không hiện "đã nối" cho kênh fixture."""
         token = await _onboard(client, email="conn0002@havi.vn")
         _override(client, db_session)
 
         response = await client.post(
-            "/connections/zalo_oa/start", headers=_headers(token)
+            "/connections/youtube/start", headers=_headers(token)
         )
 
         assert response.status_code == 501, response.text

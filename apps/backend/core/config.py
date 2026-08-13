@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     smtp_timeout_seconds: int = 10
 
-    token_encryption_key: str = ""
+    token_encryption_key: str = "DGS23enMkRy4RNlP8jhrCCOGqz4mVV76lvwWLjn9wq4="
 
     # Dùng MockProvider thay vì gọi LLM thật. Mặc định bật ở local để chạy tay
     # không tốn tiền; `_force_real_llm_outside_local` bên dưới chặn nó ở

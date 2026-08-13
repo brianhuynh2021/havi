@@ -208,7 +208,7 @@ def _oauth_clients() -> dict[Platform, OAuthClientPort]:
     settings = get_settings()
     return {
         Platform.FACEBOOK: FacebookOAuthClient(settings),
-        Platform.ZALO: ZaloOAuthClient(settings),
+        Platform.ZALO_OA: ZaloOAuthClient(settings),
     }
 
 
