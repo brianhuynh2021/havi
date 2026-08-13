@@ -66,8 +66,8 @@ async def update_lead(
             stage=payload.stage,
             notes=payload.notes,
         )
-    except LeadNotFound:
+    except LeadNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy khách hàng này",
-        )
+        ) from exc

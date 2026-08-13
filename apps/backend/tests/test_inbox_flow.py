@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
-from core.enums import LeadReplyStatus, LeadStage
+from core.enums import LeadStage
 
 
 async def _onboard(client: AsyncClient, email: str) -> dict:

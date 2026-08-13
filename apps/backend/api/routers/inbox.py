@@ -51,11 +51,11 @@ async def send_reply(
             item_id=item_id,
             text=payload.text,
         )
-    except InboxItemNotFound:
+    except InboxItemNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy tin nhắn/bình luận này",
-        )
+        ) from exc
 
 
 @router.post("/{item_id}/dismiss", status_code=status.HTTP_204_NO_CONTENT)
@@ -69,8 +69,8 @@ async def dismiss(
     del auth
     try:
         await inbox_service.dismiss_item(workspace_id=workspace_id, item_id=item_id)
-    except InboxItemNotFound:
+    except InboxItemNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy tin nhắn/bình luận này",
-        )
+        ) from exc

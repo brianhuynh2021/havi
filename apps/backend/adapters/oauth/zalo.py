@@ -2,7 +2,8 @@
 
 Triển khai `OAuthClientPort` theo chuẩn OpenAPI v4 của Zalo Platform:
 1. `authorization_url`: redirect người dùng tới màn hình xin cấp quyền của Zalo.
-2. `exchange_code`: gửi POST request tới `https://oauth.zaloapp.com/v4/oa/access_token` với secret_key & code để lấy access_token + refresh_token.
+2. `exchange_code`: POST tới `https://oauth.zaloapp.com/v4/oa/access_token` kèm
+   secret_key & code để lấy access_token + refresh_token.
 """
 
 import logging
@@ -22,7 +23,7 @@ from core.enums import Platform
 
 logger = logging.getLogger(__name__)
 
-ZALO_AUTH_URL = "https://oauth.zaloapp.com/v4/permission"
+ZALO_AUTH_URL = "https://oauth.zaloapp.com/v4/oa/permission"
 ZALO_TOKEN_URL = "https://oauth.zaloapp.com/v4/oa/access_token"
 _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
@@ -58,7 +59,9 @@ class ZaloOAuthClient(OAuthClientPort):
 
     async def exchange_code(self, code: str) -> OAuthAccount:
         if not self.is_configured:
-            raise OAuthPermanentError(self.platform, "Zalo OAuth chưa được cấu hình client_id / secret")
+            raise OAuthPermanentError(
+                self.platform, "Zalo OAuth chưa được cấu hình client_id / secret"
+            )
 
         if code == "mock_zalo_code" or not (self._client_id and self._client_secret):
             return OAuthAccount(
@@ -96,7 +99,11 @@ class ZaloOAuthClient(OAuthClientPort):
             raise OAuthTemporaryError("Zalo OAuth trả dữ liệu không phải JSON") from exc
 
         if "error" in data and data["error"] != 0 and "access_token" not in data:
-            msg = data.get("message") or data.get("error_description") or f"Code {data.get('error')}"
+            msg = (
+                data.get("message")
+                or data.get("error_description")
+                or f"Code {data.get('error')}"
+            )
             raise OAuthPermanentError(f"Zalo OAuth thất bại: {msg}")
 
         access_token = data.get("access_token")
@@ -130,7 +137,12 @@ class ZaloOAuthClient(OAuthClientPort):
                 pass
 
         final_oa_id = str(oa_id or "zalo_oa_default")
-        final_oa_name = str(oa_name or (f"Zalo OA ({final_oa_id})" if final_oa_id != "zalo_oa_default" else "Zalo Official Account"))
+        fallback_name = (
+            f"Zalo OA ({final_oa_id})"
+            if final_oa_id != "zalo_oa_default"
+            else "Zalo Official Account"
+        )
+        final_oa_name = str(oa_name or fallback_name)
 
         return OAuthAccount(
             access_token=access_token,

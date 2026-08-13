@@ -2,16 +2,16 @@
 
 Verifies:
 1. Successful publishing payload formatting and external post ID return.
-2. Error classification hierarchy (AuthPermissionError for 401/403, TemporaryPublishError for 429/5xx).
+2. Error classification hierarchy (AuthPermissionError for 401/403,
+   TemporaryPublishError for 429/5xx).
 3. Missing access token handling.
 """
 
-import pytest
 import httpx
+import pytest
 
 from adapters.publishers.google_business import GoogleBusinessPublisher
 from adapters.publishers.zalo import ZaloPublisher
-from core.enums import Channel
 from domain.ports.publisher import (
     AuthPermissionError,
     PublishRequest,
@@ -31,7 +31,14 @@ async def test_zalo_publisher_missing_token():
 async def test_zalo_publisher_success():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.headers.get("access_token") == "valid_zalo_token"
-        return httpx.Response(200, json={"error": 0, "message": "Success", "data": {"message_id": "zalo_12345"}})
+        return httpx.Response(
+            200,
+            json={
+                "error": 0,
+                "message": "Success",
+                "data": {"message_id": "zalo_12345"},
+            },
+        )
 
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as client:

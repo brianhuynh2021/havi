@@ -7,8 +7,9 @@ Enforces strict error classification into:
 - ValidationPublishError (Content format rejected or media quota exceeded)
 """
 
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
+
 import httpx
 
 from core.enums import Channel
@@ -74,12 +75,23 @@ class ZaloPublisher(PublisherPort):
 
             data = resp.json()
             error_code = data.get("error", 0)
-            if error_code == -216 or error_code == -201:
-                raise AuthPermissionError(self.channel, f"Zalo Auth Error {error_code}: {data.get('message')}")
+            message = data.get("message")
+            if error_code in (-216, -201):
+                raise AuthPermissionError(
+                    self.channel, f"Zalo Auth Error {error_code}: {message}"
+                )
             if error_code != 0:
-                raise ValidationPublishError(self.channel, f"Zalo Error {error_code}: {data.get('message')}")
+                raise ValidationPublishError(
+                    self.channel, f"Zalo Error {error_code}: {message}"
+                )
 
-            msg_id = data.get("data", {}).get("message_id") or f"zalo_msg_{int(datetime.now(UTC).timestamp())}"
-            return PublishResult(external_post_id=msg_id, published_at=datetime.now(UTC))
+            now = datetime.now(UTC)
+            msg_id = (
+                data.get("data", {}).get("message_id")
+                or f"zalo_msg_{int(now.timestamp())}"
+            )
+            return PublishResult(external_post_id=msg_id, published_at=now)
         except httpx.RequestError as exc:
-            raise TemporaryPublishError(self.channel, f"Network error contacting Zalo OpenAPI: {exc}")
+            raise TemporaryPublishError(
+                self.channel, f"Network error contacting Zalo OpenAPI: {exc}"
+            ) from exc

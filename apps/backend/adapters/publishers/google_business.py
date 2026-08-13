@@ -7,8 +7,9 @@ Maps status codes to Havi error classification hierarchy:
 - ValidationPublishError (Content violation or invalid media attachment)
 """
 
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
+
 import httpx
 
 from core.enums import Channel
@@ -63,16 +64,26 @@ class GoogleBusinessPublisher(PublisherPort):
         try:
             resp = await client.post(url, json=payload, headers=headers)
             if resp.status_code in (401, 403):
-                raise AuthPermissionError(self.channel, "Google Business token expired or permissions revoked")
+                raise AuthPermissionError(
+                    self.channel, "Google Business token expired or permissions revoked"
+                )
             if resp.status_code == 429 or resp.status_code >= 500:
-                raise TemporaryPublishError(self.channel, f"Google Business API HTTP {resp.status_code}")
+                raise TemporaryPublishError(
+                    self.channel, f"Google Business API HTTP {resp.status_code}"
+                )
             if resp.status_code >= 400:
                 data = resp.json() if resp.content else {}
                 err_msg = data.get("error", {}).get("message") or resp.text
-                raise ValidationPublishError(self.channel, f"Google API Error {resp.status_code}: {err_msg}")
+                raise ValidationPublishError(
+                    self.channel, f"Google API Error {resp.status_code}: {err_msg}"
+                )
 
             data = resp.json()
-            post_id = data.get("name") or f"google_post_{int(datetime.now(UTC).timestamp())}"
-            return PublishResult(external_post_id=post_id, published_at=datetime.now(UTC))
+            now = datetime.now(UTC)
+            post_id = data.get("name") or f"google_post_{int(now.timestamp())}"
+            return PublishResult(external_post_id=post_id, published_at=now)
         except httpx.RequestError as exc:
-            raise TemporaryPublishError(self.channel, f"Network error contacting Google My Business API: {exc}")
+            raise TemporaryPublishError(
+                self.channel,
+                f"Network error contacting Google My Business API: {exc}",
+            ) from exc

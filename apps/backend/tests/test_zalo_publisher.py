@@ -11,7 +11,6 @@ import httpx
 import pytest
 
 from adapters.publishers.zalo import ZaloPublisher
-from core.enums import Channel
 from domain.ports.publisher import (
     AuthPermissionError,
     PublishRequest,
@@ -31,7 +30,10 @@ class TestZaloPublisher:
         pub = _zalo_publisher()
         with pytest.raises(AuthPermissionError, match="Missing Zalo OA access token"):
             await pub.publish(
-                PublishRequest(text="Chào chị, tiệm gội đầu ưu đãi", external_account_id="zalo_123"),
+                PublishRequest(
+                    text="Chào chị, tiệm gội đầu ưu đãi",
+                    external_account_id="zalo_123",
+                ),
                 access_token="",
             )
 

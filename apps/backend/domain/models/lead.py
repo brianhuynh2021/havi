@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import Enum, ForeignKey
+from sqlalchemy import Enum, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import LeadReplyStatus, LeadSource, LeadStage
@@ -13,7 +13,7 @@ class Lead(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __tablename__ = "leads"
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces.id"), index=True
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str]
     phone: Mapped[str | None] = mapped_column(default=None)
@@ -26,6 +26,9 @@ class Lead(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     reply_status: Mapped[LeadReplyStatus] = mapped_column(
         Enum(LeadReplyStatus, native_enum=False), default=LeadReplyStatus.NEW
     )
-    message: Mapped[str | None] = mapped_column(default=None)
-    suggested_reply: Mapped[str | None] = mapped_column(default=None)
-    notes: Mapped[str | None] = mapped_column(default=None)
+    # Text chứ không String: tin nhắn khách và ghi chú của chủ tiệm không có
+    # trần độ dài hợp lý nào, và migration đã tạo cột là TEXT — model phải
+    # khớp, nếu không `alembic check` báo drift mãi.
+    message: Mapped[str | None] = mapped_column(Text, default=None)
+    suggested_reply: Mapped[str | None] = mapped_column(Text, default=None)
+    notes: Mapped[str | None] = mapped_column(Text, default=None)
