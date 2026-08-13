@@ -7,13 +7,15 @@ export type NavItem = {
   count?: number;
 };
 
-// count là số việc "chờ chị" trên mỗi tab — khớp fixture của từng feature.
-// Tuần 5 nối API thật thì đổi sang lấy từ dashboard summary.
+// `count` là số việc "chờ chị" trên mỗi tab. Bỏ trống cho tới khi có nguồn thật
+// từ dashboard summary: số fixture cứng (3 và 2) từng chạy thẳng trong app thật,
+// nên chủ tiệm thấy huy hiệu "3 việc cần làm" ở tab Lịch đăng kể cả khi lịch
+// trống — đúng loại số giả mà §4 tuần 8 đã dọn khỏi Dashboard và Báo cáo.
 export const navItems: NavItem[] = [
   { key: "nav.dashboard", label: "Tổng quan", href: "/app" },
   { key: "nav.content", label: "Tạo nội dung", href: "/app/content" },
-  { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar", count: 3 },
-  { key: "nav.leads", label: "Khách tiềm năng", href: "/app/leads", count: 2 },
+  { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar" },
+  { key: "nav.leads", label: "Khách tiềm năng", href: "/app/leads" },
   { key: "nav.reports", label: "Báo cáo", href: "/app/reports" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings" },
 ];

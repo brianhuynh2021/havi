@@ -692,6 +692,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connections/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Capabilities
+         * @description Các kênh Havi thực sự nối được, kèm ràng buộc nội dung của từng kênh.
+         *
+         *     Danh sách suy ra từ OAuth client đã đăng ký chứ không viết tay. Bản viết tay
+         *     trước đó quảng cáo Google Business trong khi `_oauth_clients()` không có
+         *     client nào cho nó — onboarding hiện kênh, chủ tiệm bấm nối, và nhận 501.
+         *     Danh sách tự suy thì thêm publisher mà quên OAuth sẽ không lộ ra ngoài được.
+         */
+        get: operations["list_capabilities_connections_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/connections/{platform}/start": {
         parameters: {
             query?: never;
@@ -822,72 +847,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Lead */
-        get: operations["get_lead_leads__lead_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update Lead
-         * @description Kéo-thả kanban đổi `stage`.
-         */
-        patch: operations["update_lead_leads__lead_id__patch"];
-        trace?: never;
-    };
-    "/leads/{lead_id}/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Lead Messages */
-        get: operations["list_lead_messages_leads__lead_id__messages_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/crm-messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Crm Messages */
-        get: operations["list_crm_messages_crm_messages_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/crm-messages/{message_id}/send": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         get?: never;
         put?: never;
-        /**
-         * Send Crm Message
-         * @description Nút "Gửi trả lời này" — chủ duyệt từng tin, không có gửi hàng loạt tự động.
-         */
-        post: operations["send_crm_message_crm_messages__message_id__send_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Lead */
+        patch: operations["update_lead_leads__lead_id__patch"];
         trace?: never;
     };
     "/analytics/dashboard": {
@@ -963,6 +930,10 @@ export interface paths {
         /**
          * Summary
          * @description 3 stat card ở tab Báo cáo, kèm ▲ so kỳ trước.
+         *
+         *     Số liệu dựng từ `leads`, `inbox_items` và `content_items` thật. Trước đây
+         *     hàm này trả 0 cứng cho mọi chỉ số kết quả — không sai kiểu bịa số, nhưng
+         *     cũng không chứng minh được điều Havi bán.
          */
         get: operations["summary_analytics_summary_get"];
         put?: never;
@@ -1315,38 +1286,6 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending_approval" | "approved" | "scheduled" | "publishing" | "published" | "failed" | "dead_letter";
-        /**
-         * CrmChannel
-         * @enum {string}
-         */
-        CrmChannel: "zalo" | "email";
-        /** CrmMessage */
-        CrmMessage: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Lead Id
-             * Format: uuid
-             */
-            lead_id: string;
-            channel: components["schemas"]["CrmChannel"];
-            /** Draft Text */
-            draft_text: string;
-            status: components["schemas"]["CrmMessageStatus"];
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /**
-         * CrmMessageStatus
-         * @enum {string}
-         */
-        CrmMessageStatus: "pending_approval" | "sent";
         /** CurrentUser */
         CurrentUser: {
             /**
@@ -1489,7 +1428,7 @@ export interface components {
          * InboxItemStatus
          * @enum {string}
          */
-        InboxItemStatus: "new" | "drafted" | "sent";
+        InboxItemStatus: "new" | "drafted" | "sent" | "dismissed";
         /**
          * InboxItemType
          * @enum {string}
@@ -1627,6 +1566,18 @@ export interface components {
             size_bytes?: number | null;
             /** Uploaded At */
             uploaded_at?: string | null;
+            /** Duration Seconds */
+            duration_seconds?: number | null;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+            /** Aspect Ratio */
+            aspect_ratio?: string | null;
+            /** Has Audio */
+            has_audio?: boolean | null;
+            /** Eligible Channels */
+            eligible_channels?: components["schemas"]["Channel"][];
         };
         /**
          * MediaStatus
@@ -1774,23 +1725,6 @@ export interface components {
         Page_ContentItem_: {
             /** Items */
             items: components["schemas"]["ContentItem"][];
-            /** Total */
-            total: number;
-            /**
-             * Limit
-             * @default 50
-             */
-            limit: number;
-            /**
-             * Offset
-             * @default 0
-             */
-            offset: number;
-        };
-        /** Page[CrmMessage] */
-        Page_CrmMessage_: {
-            /** Items */
-            items: components["schemas"]["CrmMessage"][];
             /** Total */
             total: number;
             /**
@@ -2024,7 +1958,7 @@ export interface components {
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
-            refresh_token: string;
+            refresh_token?: string | null;
         };
         /** RescheduleRequest */
         RescheduleRequest: {
@@ -2412,9 +2346,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["RefreshRequest"];
+                "application/json": components["schemas"]["RefreshRequest"] | null;
             };
         };
         responses: {
@@ -2445,9 +2379,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["RefreshRequest"];
+                "application/json": components["schemas"]["RefreshRequest"] | null;
             };
         };
         responses: {
@@ -3434,6 +3368,28 @@ export interface operations {
             };
         };
     };
+    list_capabilities_connections_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     start_oauth_connections__platform__start_post: {
         parameters: {
             query?: {
@@ -3598,6 +3554,7 @@ export interface operations {
         parameters: {
             query?: {
                 stage?: components["schemas"]["LeadStage"] | null;
+                reply_status?: components["schemas"]["LeadReplyStatus"] | null;
                 limit?: number;
                 offset?: number;
             };
@@ -3660,37 +3617,6 @@ export interface operations {
             };
         };
     };
-    get_lead_leads__lead_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lead_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Lead"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     update_lead_leads__lead_id__patch: {
         parameters: {
             query?: never;
@@ -3713,101 +3639,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Lead"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_lead_messages_leads__lead_id__messages_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lead_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CrmMessage"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_crm_messages_crm_messages_get: {
-        parameters: {
-            query?: {
-                status?: components["schemas"]["CrmMessageStatus"] | null;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Page_CrmMessage_"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    send_crm_message_crm_messages__message_id__send_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                message_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CrmMessage"];
                 };
             };
             /** @description Validation Error */
