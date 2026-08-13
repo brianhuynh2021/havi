@@ -27,6 +27,7 @@ from api.routers import (
     inbox,
     leads,
     media,
+    webhooks,
     workspaces,
 )
 from core.config import get_settings
@@ -62,6 +63,7 @@ ROUTERS = (
     leads.router,
     analytics.router,
     billing.router,
+    webhooks.router,
 )
 
 

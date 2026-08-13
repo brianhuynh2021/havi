@@ -116,6 +116,11 @@ class Settings(BaseSettings):
     web_base_url: str = "http://localhost:3000"
     google_client_id: str = ""
     google_client_secret: str = ""
+    # Chuỗi tự đặt, khai cùng lúc ở Meta App Dashboard và ở đây. Meta gọi
+    # `GET /webhooks/meta` một lần với chuỗi này để xác nhận endpoint là của
+    # Havi. Để trống thì endpoint webhook trả 503 — chưa cấu hình thì không nhận
+    # dữ liệu, thay vì nhận bừa.
+    meta_webhook_verify_token: str = ""
     zalo_client_id: str = ""
     zalo_client_secret: str = ""
     zalo_redirect_uri: str = "http://localhost:8000/connections/zalo_oa/callback"

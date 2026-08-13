@@ -30,6 +30,29 @@ class ConnectionRepository:
         )
         return result.scalar_one_or_none()
 
+    async def find_by_external_account(
+        self, *, platform: Platform, external_account_id: str
+    ) -> PlatformConnection | None:
+        """Tra ngược từ ID trang của nền tảng về workspace.
+
+        Webhook đến không kèm JWT và không biết workspace nào — thứ duy nhất nó
+        mang theo là ID trang. Đây là chỗ duy nhất trong hệ thống truy vấn
+        connection mà không lọc theo `workspace_id`, nên nó phải nằm gọn ở đây và
+        chỉ dùng cho đường webhook; caller lấy `workspace_id` từ kết quả rồi mọi
+        truy vấn sau đó quay lại lọc theo workspace như bình thường.
+
+        Chỉ nhận kết nối đang `CONNECTED`: trang đã ngắt kết nối thì tin nhắn của
+        nó không còn là dữ liệu Havi được phép nhận.
+        """
+        result = await self._session.execute(
+            select(PlatformConnection).where(
+                PlatformConnection.platform == platform,
+                PlatformConnection.external_account_id == external_account_id,
+                PlatformConnection.status == ConnectionStatus.CONNECTED,
+            )
+        )
+        return result.scalars().first()
+
     async def list_for_workspace(self, workspace_id: UUID) -> list[PlatformConnection]:
         result = await self._session.execute(
             select(PlatformConnection)

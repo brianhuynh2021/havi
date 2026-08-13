@@ -150,6 +150,10 @@ class InboxItemStatus(StrEnum):
     NEW = "new"
     DRAFTED = "drafted"
     SENT = "sent"
+    #: Chủ tiệm bấm "Bỏ qua". Phải là trạng thái riêng chứ không dùng lại `SENT`:
+    #: gộp hai thứ vào một thì báo cáo đếm tin đã bỏ qua thành tin đã trả lời, và
+    #: không cách nào tách lại sau này.
+    DISMISSED = "dismissed"
 
 
 class LeadSource(StrEnum):

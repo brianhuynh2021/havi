@@ -1,5 +1,6 @@
 """Repository cho InboxItem — lưu trữ và truy vấn tin nhắn/bình luận khách hàng."""
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -22,6 +23,37 @@ class InboxRepository:
         )
         return result.scalar_one_or_none()
 
+    async def count_in_range(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> int:
+        """Số tin nhắn/bình luận khách gửi tới trong kỳ — "khách hỏi giá".
+
+        Đếm mọi inquiry chứ không lọc theo từ khoá giá: phân loại ý định là việc
+        của classifier chưa có, và lọc bằng danh sách từ khoá sẽ vừa sót vừa
+        thừa mà không ai biết sai bao nhiêu.
+        """
+        result = await self._session.execute(
+            select(func.count(InboxItem.id)).where(
+                InboxItem.workspace_id == workspace_id,
+                InboxItem.created_at >= start,
+                InboxItem.created_at < end,
+            )
+        )
+        return result.scalar_one()
+
+    async def get_by_external_id(
+        self, *, workspace_id: UUID, platform: Platform, external_message_id: str
+    ) -> InboxItem | None:
+        """Item đã tạo từ đúng sự kiện này chưa — dùng cho webhook gửi lại."""
+        result = await self._session.execute(
+            select(InboxItem).where(
+                InboxItem.workspace_id == workspace_id,
+                InboxItem.platform == platform,
+                InboxItem.external_message_id == external_message_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def create(
         self,
         *,
@@ -32,6 +64,7 @@ class InboxRepository:
         type: str = "message",
         ai_suggested_reply: str | None = None,
         status: InboxItemStatus = InboxItemStatus.NEW,
+        external_message_id: str | None = None,
     ) -> InboxItem:
         item = InboxItem(
             workspace_id=workspace_id,
@@ -40,6 +73,7 @@ class InboxRepository:
             author_name=author_name,
             ai_suggested_reply=ai_suggested_reply,
             status=status,
+            external_message_id=external_message_id,
         )
         self._session.add(item)
         await self._session.flush()
