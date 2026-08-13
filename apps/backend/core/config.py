@@ -118,6 +118,19 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     zalo_client_id: str = ""
     zalo_client_secret: str = ""
+    zalo_redirect_uri: str = "http://localhost:8000/connections/zalo_oa/callback"
+    # Mã Zalo cấp để xác minh quyền sở hữu domain. Nằm trong config chứ không
+    # hardcode trong `api/main.py`: mỗi môi trường một domain nên một mã khác
+    # nhau, và mã trong source là thứ không xoay được khi cần đổi.
+    zalo_site_verification: str = ""
+    # Phần đuôi của file xác minh Zalo yêu cầu đặt ở gốc domain, ví dụ
+    # `zalo_verifierAbC123.html` thì đây là `AbC123.html`.
+    #
+    # So khớp tuyệt đối với giá trị này rồi trả nội dung dựng sẵn — không ghép
+    # input của request vào đường dẫn file. Bản trước đó dùng `{rest:path}` +
+    # `FileResponse`, tức là một request khéo léo đọc được `.env` (JWT secret,
+    # khoá mã hoá token, API key provider).
+    zalo_verifier_suffix: str = ""
 
     @field_validator("cors_origins", mode="before")
     @classmethod

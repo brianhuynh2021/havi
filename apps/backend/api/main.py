@@ -7,10 +7,13 @@ OpenAPI contract cho frontend: http://localhost:8000/openapi.json
 """
 
 import logging
+import secrets
 import time
+from html import escape
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from api.routers import (
     analytics,
@@ -132,6 +135,37 @@ def create_app() -> FastAPI:
 
     for router in ROUTERS:
         app.include_router(router)
+
+    @app.get("/", include_in_schema=False)
+    async def root_handler() -> HTMLResponse:
+        """Trang gốc — chỉ để Zalo xác minh domain, không phải endpoint dữ liệu.
+
+        Thẻ meta chỉ xuất hiện khi `HAVI_ZALO_SITE_VERIFICATION` được đặt, và mã
+        được escape trước khi ghép vào HTML.
+        """
+        verification = settings.zalo_site_verification
+        meta = ""
+        if verification:
+            content = escape(verification, quote=True)
+            meta = f'<meta name="zalo-platform-site-verification" content="{content}" />'
+        return HTMLResponse(
+            f"<!DOCTYPE html><html><head>{meta}</head><body>Havi Backend API</body></html>"
+        )
+
+    @app.get("/zalo_verifier{suffix}", include_in_schema=False)
+    async def zalo_verifier_handler(suffix: str) -> PlainTextResponse:
+        """File xác minh domain của Zalo.
+
+        So khớp tuyệt đối `suffix` với cấu hình rồi trả nội dung dựng sẵn. Không
+        đọc file theo input của request: `{suffix}` không nuốt dấu `/`, và không
+        có `os.path.join` nào ở đây, nên không tồn tại đường traversal.
+        """
+        expected = settings.zalo_verifier_suffix
+        if not expected or not secrets.compare_digest(suffix, expected):
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+        return PlainTextResponse(
+            f"zalo-platform-site-verification={settings.zalo_site_verification}"
+        )
 
     return app
 
