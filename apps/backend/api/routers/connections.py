@@ -56,32 +56,48 @@ async def list_connections(
     return await connections.list_connections(workspace_id)
 
 
+#: Ràng buộc nội dung của từng nền tảng. Chỉ là dữ liệu mô tả — nền tảng nào
+#: thực sự nối được thì do `ConnectionService` quyết, xem `list_capabilities`.
+PLATFORM_CAPABILITIES: dict[Platform, dict] = {
+    Platform.FACEBOOK: {
+        "name": "Facebook Page",
+        "supported_media": ["image", "video"],
+        "max_text_length": 63206,
+        "supported_features": [
+            "feed_posts",
+            "photo_attachments",
+            "data_deletion_callback",
+        ],
+    },
+    Platform.ZALO_OA: {
+        "name": "Zalo Official Account",
+        "supported_media": ["image"],
+        "max_text_length": 2000,
+        "supported_features": ["paragraph_messages", "broadcast_care"],
+    },
+    Platform.GOOGLE_BUSINESS: {
+        "name": "Google Business Profile",
+        "supported_media": ["image"],
+        "max_text_length": 1500,
+        "supported_features": ["local_posts", "call_to_action_buttons"],
+    },
+}
+
+
 @router.get("/capabilities")
-async def list_capabilities() -> dict:
-    """Return platform publishing capabilities, constraints, and supported media formats."""
+async def list_capabilities(connections: ConnectionServiceDep) -> dict:
+    """Các kênh Havi thực sự nối được, kèm ràng buộc nội dung của từng kênh.
+
+    Danh sách suy ra từ OAuth client đã đăng ký chứ không viết tay. Bản viết tay
+    trước đó quảng cáo Google Business trong khi `_oauth_clients()` không có
+    client nào cho nó — onboarding hiện kênh, chủ tiệm bấm nối, và nhận 501.
+    Danh sách tự suy thì thêm publisher mà quên OAuth sẽ không lộ ra ngoài được.
+    """
     return {
         "platforms": [
-            {
-                "platform": "facebook",
-                "name": "Facebook Page",
-                "supported_media": ["image", "video"],
-                "max_text_length": 63206,
-                "supported_features": ["feed_posts", "photo_attachments", "data_deletion_callback"],
-            },
-            {
-                "platform": "zalo_oa",
-                "name": "Zalo Official Account",
-                "supported_media": ["image"],
-                "max_text_length": 2000,
-                "supported_features": ["paragraph_messages", "broadcast_care"],
-            },
-            {
-                "platform": "google_business",
-                "name": "Google Business Profile",
-                "supported_media": ["image"],
-                "max_text_length": 1500,
-                "supported_features": ["local_posts", "call_to_action_buttons"],
-            },
+            {"platform": platform.value, **PLATFORM_CAPABILITIES[platform]}
+            for platform in connections.supported_platforms()
+            if platform in PLATFORM_CAPABILITIES
         ]
     }
 
@@ -238,7 +254,9 @@ async def facebook_data_deletion(request: Request) -> JSONResponse:
         except Exception:
             logger.warning("Failed to parse Facebook signed_request in data deletion callback")
 
-    status_url = f"{settings.web_base_url}/huong-dan-xoa-du-lieu?confirmation_code={confirmation_code}"
+    status_url = (
+        f"{settings.web_base_url}/data-deletion?confirmation_code={confirmation_code}"
+    )
     return JSONResponse(
         content={
             "url": status_url,

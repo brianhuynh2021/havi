@@ -373,3 +373,29 @@ class TestListAndDisconnect:
         response = await client.delete("/connections/facebook", headers=_headers(token))
 
         assert response.status_code == 404, response.text
+
+    async def test_capabilities_chi_liet_ke_kenh_that_su_noi_duoc(
+        self, client: AsyncClient, db_session
+    ):
+        """Danh sách kênh phải suy từ OAuth client đã đăng ký.
+
+        Bản viết tay trước đó quảng cáo `google_business` trong khi không có
+        OAuth client nào cho nó — chủ tiệm bấm nối và nhận 501. Ràng buộc ở đây:
+        mọi kênh xuất hiện trong `/capabilities` phải nối được thật.
+        """
+        token = await _onboard(client, email="conn0010@havi.vn")
+        _override(client, db_session)
+
+        response = await client.get("/connections/capabilities", headers=_headers(token))
+
+        assert response.status_code == 200, response.text
+        advertised = [item["platform"] for item in response.json()["platforms"]]
+        assert advertised, "phải có ít nhất một kênh nối được"
+
+        for platform in advertised:
+            start = await client.post(
+                f"/connections/{platform}/start", headers=_headers(token)
+            )
+            assert start.status_code != 501, (
+                f"{platform} được quảng cáo nhưng /start trả 501"
+            )

@@ -717,9 +717,11 @@ class TestTokenRedaction:
 
 
 async def test_facebook_data_deletion_callback():
-    """Endpoint /connections/facebook/data-deletion trả JSON url & confirmation_code đúng chuẩn Meta."""
-    from api.main import create_app
+    """Endpoint /connections/facebook/data-deletion trả JSON url &
+    confirmation_code đúng chuẩn Meta."""
     from httpx import ASGITransport, AsyncClient
+
+    from api.main import create_app
 
     app = create_app()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -729,6 +731,9 @@ async def test_facebook_data_deletion_callback():
         assert "url" in data
         assert "confirmation_code" in data
         assert data["confirmation_code"].startswith("del_")
-        assert "/huong-dan-xoa-du-lieu" in data["url"]
+        # Route chuẩn sau khi đổi tên sang tiếng Anh. `/huong-dan-xoa-du-lieu`
+        # vẫn sống nhờ alias trong `apps/web/src/middleware.ts`, nhưng URL Havi
+        # tự sinh ra thì phải trỏ vào đường chính thức.
+        assert "/data-deletion" in data["url"]
 
 

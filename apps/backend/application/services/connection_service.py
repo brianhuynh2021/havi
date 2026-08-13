@@ -79,6 +79,15 @@ class ConnectionService:
 
     # --- Đọc -----------------------------------------------------------------
 
+    def supported_platforms(self) -> list[Platform]:
+        """Nền tảng có OAuth client đăng ký — tức là nối được thật.
+
+        Một nguồn sự thật cho cả `/connections/capabilities` và `start()`: không
+        có client thì `start()` ném `PlatformNotSupported`, nên danh sách quảng
+        cáo ra ngoài phải lấy từ đúng cái dict đó.
+        """
+        return sorted(self._oauth_clients, key=lambda platform: platform.value)
+
     async def list_connections(self, workspace_id: UUID) -> list[PlatformConnectionSchema]:
         rows = await self._connections.list_for_workspace(workspace_id)
         return [to_schema(row) for row in rows]
