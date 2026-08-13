@@ -56,6 +56,36 @@ async def list_connections(
     return await connections.list_connections(workspace_id)
 
 
+@router.get("/capabilities")
+async def list_capabilities() -> dict:
+    """Return platform publishing capabilities, constraints, and supported media formats."""
+    return {
+        "platforms": [
+            {
+                "platform": "facebook",
+                "name": "Facebook Page",
+                "supported_media": ["image", "video"],
+                "max_text_length": 63206,
+                "supported_features": ["feed_posts", "photo_attachments", "data_deletion_callback"],
+            },
+            {
+                "platform": "zalo_oa",
+                "name": "Zalo Official Account",
+                "supported_media": ["image"],
+                "max_text_length": 2000,
+                "supported_features": ["paragraph_messages", "broadcast_care"],
+            },
+            {
+                "platform": "google_business",
+                "name": "Google Business Profile",
+                "supported_media": ["image"],
+                "max_text_length": 1500,
+                "supported_features": ["local_posts", "call_to_action_buttons"],
+            },
+        ]
+    }
+
+
 @router.post("/{platform}/start", response_model=OAuthStartResponse)
 async def start_oauth(
     platform: Platform,
