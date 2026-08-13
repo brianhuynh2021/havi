@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n/language-context";
 import {
   disconnect,
   startConnect,
@@ -16,21 +17,11 @@ import styles from "./connections.module.css";
 type Props = {
   platform: Platform;
   label: string;
-  /** `undefined` = chưa nối bao giờ. Khác `revoked` (đã nối rồi mất quyền) — hai
-   * trạng thái này cần hai câu khác nhau, nên không gộp thành boolean. */
   connection: PlatformConnection | undefined;
-  /** Màn đang đứng, để cấp quyền xong quay về đúng đây. */
   returnTo: OAuthReturnTarget;
   onChanged: () => void;
 };
 
-/**
- * Một hàng kênh: trạng thái + hành động tương ứng.
- *
- * Dùng chung cho onboarding bước 2 và trang Cài đặt — cùng một kênh không được
- * hiện hai kiểu ở hai chỗ, nhất là khi một chỗ nói "Đã nối" mà chỗ kia nói "Hết
- * hạn".
- */
 export function ConnectionCard({
   platform,
   label,
@@ -38,6 +29,7 @@ export function ConnectionCard({
   returnTo,
   onChanged,
 }: Props) {
+  const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,8 +39,6 @@ export function ConnectionCard({
     setError(null);
     setBusy(true);
     const result = await startConnect(platform, returnTo);
-    // Thành công thì trang đang điều hướng sang Facebook — giữ `busy` để chủ
-    // tiệm không bấm lần nữa trong lúc chờ chuyển trang.
     if (!result.ok) {
       setError(result.message);
       setBusy(false);
@@ -74,14 +64,14 @@ export function ConnectionCard({
         {connection && copy ? (
           <>
             <Badge tone={copy.needsReconnect ? "warning" : "success"}>
-              {copy.label}
+              {t({ vi: copy.label, en: copy.label === "Đã nối" ? "Connected" : copy.label === "Hết hạn" ? "Expired" : "Revoked" })}
             </Badge>
             {connection.account_name ? (
               <span className={styles.accountName}>{connection.account_name}</span>
             ) : null}
           </>
         ) : (
-          <Badge tone="neutral">Chưa nối</Badge>
+          <Badge tone="neutral">{t("settings.notConnected", "Chưa kết nối")}</Badge>
         )}
       </div>
 
@@ -92,16 +82,20 @@ export function ConnectionCard({
           <>
             {copy?.needsReconnect ? (
               <Button variant="primary" onClick={connect} disabled={busy}>
-                {busy ? "Đang mở Facebook…" : "Nối lại"}
+                {busy
+                  ? t({ vi: `Đang mở ${label}…`, en: `Connecting ${label}…` })
+                  : t({ vi: "Nối lại", en: "Reconnect" })}
               </Button>
             ) : null}
             <Button variant="outline" onClick={remove} disabled={busy}>
-              Ngắt kênh
+              {t({ vi: "Ngắt kết nối", en: "Disconnect" })}
             </Button>
           </>
         ) : (
           <Button variant="primary" onClick={connect} disabled={busy}>
-            {busy ? "Đang mở Facebook…" : `Kết nối ${label}`}
+            {busy
+              ? t({ vi: `Đang mở ${label}…`, en: `Connecting ${label}…` })
+              : t({ vi: `Kết nối ${label}`, en: `Connect ${label}` })}
           </Button>
         )}
       </div>
@@ -114,3 +108,4 @@ export function ConnectionCard({
     </div>
   );
 }
+

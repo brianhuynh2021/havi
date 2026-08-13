@@ -5,7 +5,8 @@ export type ChannelKey =
   | "zalo_oa"
   | "google_business"
   | "reels"
-  | "tiktok";
+  | "tiktok"
+  | "youtube";
 
 /** Nhãn tiếng Việt cho `Channel` của backend. Không phải fixture dữ liệu —
  * đây là bảng dịch, màn nào hiện tên kênh cũng dùng chung. */
@@ -15,4 +16,5 @@ export const channelLabels: Record<ChannelKey, string> = {
   google_business: "Google Business",
   reels: "Reels",
   tiktok: "TikTok",
+  youtube: "YouTube",
 };

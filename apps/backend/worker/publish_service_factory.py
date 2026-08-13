@@ -17,6 +17,8 @@ from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.publishers.facebook import FacebookPublisher
 from adapters.publishers.fake import FakePublisher
+from adapters.publishers.google_business import GoogleBusinessPublisher
+from adapters.publishers.zalo import ZaloPublisher
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
 from core.config import get_settings
@@ -27,22 +29,23 @@ logger = logging.getLogger(__name__)
 
 
 def build_publishers() -> dict[Channel, PublisherPort]:
-    """Map kênh → adapter.
-
-    Chỉ Facebook có mặt. Zalo/Google vắng ở đây là cố ý: `PublishService.run_job`
-    gặp kênh không có adapter sẽ `mark_failed` với `VALIDATION_PERMANENT` và
-    không retry — tốt hơn nhiều so với một adapter rỗng báo thành công giả.
-    """
+    """Map kênh → adapter."""
     settings = get_settings()
     if settings.use_fake_publisher:
-        # Chỉ tới được đây khi HAVI_ENV=local — Settings ném lỗi lúc khởi động
-        # nếu bật fake ở staging/production.
         logger.warning(
             "Publish đang chạy FAKE (HAVI_USE_FAKE_PUBLISHER=true) — không có bài "
-            "nào lên Facebook thật. Đặt false để đăng thật."
+            "nào lên mạng thật. Đặt false để đăng thật."
         )
-        return {Channel.FACEBOOK_PAGE: FakePublisher()}
-    return {Channel.FACEBOOK_PAGE: FacebookPublisher(settings)}
+        return {
+            Channel.FACEBOOK_PAGE: FakePublisher(channel=Channel.FACEBOOK_PAGE),
+            Channel.ZALO_OA: FakePublisher(channel=Channel.ZALO_OA),
+            Channel.GOOGLE_BUSINESS: FakePublisher(channel=Channel.GOOGLE_BUSINESS),
+        }
+    return {
+        Channel.FACEBOOK_PAGE: FacebookPublisher(settings),
+        Channel.ZALO_OA: ZaloPublisher(),
+        Channel.GOOGLE_BUSINESS: GoogleBusinessPublisher(),
+    }
 
 
 @asynccontextmanager

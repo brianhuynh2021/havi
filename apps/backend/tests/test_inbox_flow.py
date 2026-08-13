@@ -1,11 +1,37 @@
 import pytest
 from httpx import AsyncClient
 
-from core.enums import InboxItemStatus, LeadReplyStatus, LeadStage, Platform
+from core.enums import LeadReplyStatus, LeadStage
+
+
+async def _onboard(client: AsyncClient, email: str) -> dict:
+    signup = await client.post(
+        "/auth/sign-up", json={"name": "Chị Mai", "email": email, "password": "matkhau123"}
+    )
+    assert signup.status_code == 201, signup.text
+    token_pair = signup.json()
+
+    headers = {"Authorization": f"Bearer {token_pair['access_token']}"}
+    create = await client.post(
+        "/workspaces",
+        json={"name": "Tiệm Mai Q7", "industry": "spa"},
+        headers=headers,
+    )
+    assert create.status_code == 201, create.text
+
+    refreshed = await client.post(
+        "/auth/refresh",
+        headers={"Authorization": f"Bearer {token_pair['refresh_token']}"},
+    )
+    assert refreshed.status_code == 200, refreshed.text
+    new_access = refreshed.json()["access_token"]
+    return {"Authorization": f"Bearer {new_access}"}
 
 
 @pytest.mark.asyncio
-async def test_inbox_faq_auto_reply(client: AsyncClient, auth_headers: dict):
+async def test_inbox_faq_auto_reply(client: AsyncClient):
+    auth_headers = await _onboard(client, "mai.inbox@havi.vn")
+
     # 1. Update brand profile with approved FAQ
     faq_payload = {
         "faq": [
@@ -26,7 +52,9 @@ async def test_inbox_faq_auto_reply(client: AsyncClient, auth_headers: dict):
 
 
 @pytest.mark.asyncio
-async def test_leads_crud_flow(client: AsyncClient, auth_headers: dict):
+async def test_leads_crud_flow(client: AsyncClient):
+    auth_headers = await _onboard(client, "mai.leads@havi.vn")
+
     # 1. Create a lead
     create_payload = {
         "name": "Chị Mai Q7",

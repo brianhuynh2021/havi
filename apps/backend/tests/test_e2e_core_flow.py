@@ -117,46 +117,63 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         headers=_headers(token_pair),
     )
     assert content.status_code == 200, content.text
-    first_item = next(
+    fb_item = next(
         item for item in content.json()["items"] if item["channel"] == "facebook_page"
+    )
+    zalo_item = next(
+        item for item in content.json()["items"] if item["channel"] == "zalo_oa"
     )
 
     scheduled_at = datetime.now(UTC) - timedelta(minutes=1)
-    approve = await client.post(
-        f"/content/{first_item['id']}/approve",
-        json={"scheduled_at": scheduled_at.isoformat()},
-        headers=_headers(token_pair),
-    )
-    assert approve.status_code == 200, approve.text
-    assert approve.json()["status"] == "scheduled"
+    for item in (fb_item, zalo_item):
+        approve = await client.post(
+            f"/content/{item['id']}/approve",
+            json={"scheduled_at": scheduled_at.isoformat()},
+            headers=_headers(token_pair),
+        )
+        assert approve.status_code == 200, approve.text
+        assert approve.json()["status"] == "scheduled"
 
     await ConnectionRepository(db_session).upsert(
         workspace_id=workspace_id,
         platform=Platform.FACEBOOK,
         access_token="fake-page-token",
         external_account_id="page-e2e",
-        account_name="E2E Page",
+        account_name="E2E Facebook Page",
+    )
+    await ConnectionRepository(db_session).upsert(
+        workspace_id=workspace_id,
+        platform=Platform.ZALO_OA,
+        access_token="fake-zalo-token",
+        external_account_id="zalo-e2e",
+        account_name="E2E Zalo OA",
     )
 
-    publisher = FakePublisher(post_id="e2e_post")
+    fb_publisher = FakePublisher(channel=Channel.FACEBOOK_PAGE, post_id="e2e_fb_post")
+    zalo_publisher = FakePublisher(channel=Channel.ZALO_OA, post_id="e2e_zalo_post")
     publish_service = PublishService(
         content=ContentRepository(db_session),
         connections=ConnectionRepository(db_session),
         publishes=PublishRepository(db_session),
         events=EventLogRepository(db_session),
-        publishers={Channel.FACEBOOK_PAGE: publisher},
+        publishers={
+            Channel.FACEBOOK_PAGE: fb_publisher,
+            Channel.ZALO_OA: zalo_publisher,
+        },
     )
     dispatch = await publish_service.dispatch_due(now=datetime.now(UTC))
-    assert dispatch.enqueued == 1
+    assert dispatch.enqueued == 2
     jobs = await publish_service.run_due(now=datetime.now(UTC))
-    assert len(jobs) == 1
-    assert len(publisher.calls) == 1
+    assert len(jobs) == 2
+    assert len(fb_publisher.calls) == 1
+    assert len(zalo_publisher.calls) == 1
 
-    published = await client.get(
-        f"/content/{first_item['id']}", headers=_headers(token_pair)
-    )
-    assert published.status_code == 200, published.text
-    assert published.json()["status"] == "published"
+    for item in (fb_item, zalo_item):
+        published = await client.get(
+            f"/content/{item['id']}", headers=_headers(token_pair)
+        )
+        assert published.status_code == 200, published.text
+        assert published.json()["status"] == "published"
 
     today = date.today().isoformat()
     summary = await client.get(
@@ -165,7 +182,7 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         headers=_headers(token_pair),
     )
     assert summary.status_code == 200, summary.text
-    assert summary.json()["published_posts"] == 1
+    assert summary.json()["published_posts"] == 2
 
     operations = await client.get(
         "/analytics/operations",
@@ -173,4 +190,4 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         headers=_headers(token_pair),
     )
     assert operations.status_code == 200, operations.text
-    assert operations.json()["publish"]["succeeded"] == 1
+    assert operations.json()["publish"]["succeeded"] == 2

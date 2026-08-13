@@ -200,18 +200,16 @@ def get_approval_service(session: DbSessionDep) -> ApprovalService:
 ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
 
 
+from adapters.oauth.zalo import ZaloOAuthClient
+
+
 @lru_cache
 def _oauth_clients() -> dict[Platform, OAuthClientPort]:
-    """Chỉ Facebook có adapter ở pilot — Zalo/Google vắng mặt ở đây là cố ý.
-
-    `ConnectionService` sẽ ném `PlatformNotSupported` cho nền tảng không có
-    trong dict, và router dịch thành 501. Như vậy UI không bao giờ hiện
-    "đã nối" cho một kênh chưa có adapter thật (ROADMAP Tuần 7, mục frontend).
-
-    Cùng lý do lru_cache như `_object_storage`: không nhận `Settings` làm tham
-    số vì BaseSettings không hashable; `get_settings()` đã cache sẵn.
-    """
-    return {Platform.FACEBOOK: FacebookOAuthClient(get_settings())}
+    settings = get_settings()
+    return {
+        Platform.FACEBOOK: FacebookOAuthClient(settings),
+        Platform.ZALO: ZaloOAuthClient(settings),
+    }
 
 
 def get_connection_service(session: DbSessionDep, settings: SettingsDep) -> ConnectionService:

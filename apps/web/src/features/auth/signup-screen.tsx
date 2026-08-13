@@ -53,7 +53,13 @@ export function SignupScreen() {
         {t("auth.registerSubtitle", "Chỉ cần tên, email và mật khẩu — 30 giây là xong.")}
       </p>
 
-      <div className={styles.form}>
+      <form
+        className={styles.form}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
         <label className={styles.field}>
           <span className={styles.label}>{t("auth.fullName", "Họ và tên")}</span>
           <Input
@@ -96,6 +102,7 @@ export function SignupScreen() {
         ) : null}
 
         <Button
+          type="button"
           variant="primary"
           scale="large"
           onClick={submit}
@@ -111,7 +118,7 @@ export function SignupScreen() {
           <Link href="/terms">{t("public.terms", "Điều khoản")}</Link> &amp;{" "}
           <Link href="/privacy">{t("public.privacy", "Bảo mật")}</Link>.
         </p>
-      </div>
+      </form>
 
       <div className={styles.footerBlock}>
         <p>

@@ -51,6 +51,19 @@ This starts:
 
 ---
 
+### Development Test Accounts
+
+Use these pre-configured test credentials to sign in directly at `http://localhost:3000/login`:
+
+| Account Name | Email | Password | Industry | Workspace Status |
+|---|---|---|---|---|
+| **Chị Hương** | `huong@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
+| **Chị Mai** | `testuser@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
+| **Mai Inbox** | `mai.inbox@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
+| **Mai Leads** | `mai.leads@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
+
+---
+
 ### Manual Step-by-Step Setup
 
 If you prefer to start services individually:

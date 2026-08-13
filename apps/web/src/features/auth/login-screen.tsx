@@ -46,7 +46,13 @@ export function LoginScreen() {
       <h1 className={styles.title}>{t("auth.loginTitle", "Đăng nhập Havi")}</h1>
       <p className={styles.subtitle}>{t("auth.loginSubtitle", "Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
 
-      <div className={styles.form}>
+      <form
+        className={styles.form}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
         <label className={styles.field}>
           <span className={styles.label}>{t("auth.email", "Email")}</span>
           <Input
@@ -83,6 +89,7 @@ export function LoginScreen() {
         ) : null}
 
         <Button
+          type="button"
           variant="primary"
           scale="large"
           onClick={submit}
@@ -92,7 +99,7 @@ export function LoginScreen() {
             ? t({ vi: "Đang đăng nhập…", en: "Signing in…" })
             : t("auth.loginButton", "Đăng nhập")}
         </Button>
-      </div>
+      </form>
 
       <div className={styles.footerBlock}>
         <p>

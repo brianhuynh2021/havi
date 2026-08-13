@@ -73,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // Đăng xuất phía client vẫn phải hoàn tất nếu API/network đang lỗi.
     } finally {
       clearTokens();
-      router.replace("/dang-nhap");
+      router.replace("/login");
     }
   }, [router]);
 

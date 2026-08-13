@@ -1923,7 +1923,7 @@ export interface components {
          * @description Nền tảng có OAuth connection (tập con của Channel).
          * @enum {string}
          */
-        Platform: "facebook" | "google_business" | "zalo_oa";
+        Platform: "facebook" | "google_business" | "zalo_oa" | "youtube" | "tiktok";
         /**
          * PlatformConnection
          * @description Token mã hoá bằng TOKEN_ENCRYPTION_KEY — không bao giờ xuất ra response.

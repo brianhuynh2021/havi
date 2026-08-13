@@ -51,6 +51,8 @@ class Platform(StrEnum):
     FACEBOOK = "facebook"
     GOOGLE_BUSINESS = "google_business"
     ZALO_OA = "zalo_oa"
+    YOUTUBE = "youtube"
+    TIKTOK = "tiktok"
 
 
 class PublishMode(StrEnum):

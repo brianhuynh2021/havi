@@ -40,6 +40,7 @@ export function readTokens(): StoredTokens | null {
 
   cachedRaw = raw;
   cachedTokens = raw ? parseTokens(raw) : null;
+  syncCookie(Boolean(cachedTokens));
   return cachedTokens;
 }
 

@@ -117,10 +117,12 @@ export function readCallbackOutcome(search: string): CallbackOutcome {
   return { kind: "error", message: CALLBACK_ERRORS[lyDo] ?? GENERIC_ERROR };
 }
 
-/** Kênh cần nối ở pilot. Chỉ Facebook Page — Zalo/Google là P1 và backend còn
- * trả 501, nên không liệt kê ở đây để không hứa thứ chưa có. */
 export const PILOT_PLATFORMS: { platform: Platform; label: string }[] = [
   { platform: "facebook", label: "Facebook Page" },
+  { platform: "zalo_oa", label: "Zalo Official Account" },
+  { platform: "google_business", label: "Google Business Profile" },
+  { platform: "youtube", label: "YouTube Channel" },
+  { platform: "tiktok", label: "TikTok Account" },
 ];
 
 export function isUsable(connection: PlatformConnection | undefined): boolean {
