@@ -12,6 +12,8 @@ from fastapi import APIRouter, HTTPException, Query, status
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.inbox_repository import InboxRepository
+from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import WorkspaceDep
 from core.enums import ContentStatus, PublishStatus
@@ -124,23 +126,73 @@ async def operations(
     )
 
 
+def _percent_change(current: float, previous: float) -> float:
+    """Phần trăm thay đổi so kỳ trước.
+
+    Kỳ trước bằng 0 thì không có phần trăm nào đúng cả (chia cho 0), nên trả 0 và
+    để UI hiển thị con số tuyệt đối — bịa ra "+100%" từ 0→1 là phóng đại.
+    """
+    if previous <= 0:
+        return 0.0
+    return round((current - previous) / previous * 100, 1)
+
+
+async def _outcomes_for(
+    session, *, workspace_id: UUID, start: datetime, end: datetime
+) -> dict[str, float]:
+    leads = await LeadRepository(session).outcomes_in_range(
+        workspace_id=workspace_id, start=start, end=end
+    )
+    inquiries = await InboxRepository(session).count_in_range(
+        workspace_id=workspace_id, start=start, end=end
+    )
+    published = await ContentRepository(session).count_published_posts(
+        workspace_id=workspace_id, start=start, end=end
+    )
+    return {
+        "price_inquiries": inquiries,
+        # Chưa nối POS/check-in, nên "khách đến tiệm" lấy lead đã chốt làm bằng
+        # chứng gần nhất. Xem `LeadOutcomes` để biết vì sao không đếm cách khác.
+        "walk_ins": leads.won_leads,
+        "returning_customers": leads.returning_customers,
+        "published_posts": published,
+        "new_leads": leads.new_leads,
+        "lead_won_rate": leads.won_rate,
+    }
+
+
 @router.get("/summary", response_model=AnalyticsSummary)
 async def summary(
     workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
 ) -> AnalyticsSummary:
-    """3 stat card ở tab Báo cáo, kèm ▲ so kỳ trước."""
+    """3 stat card ở tab Báo cáo, kèm ▲ so kỳ trước.
+
+    Số liệu dựng từ `leads`, `inbox_items` và `content_items` thật. Trước đây
+    hàm này trả 0 cứng cho mọi chỉ số kết quả — không sai kiểu bịa số, nhưng
+    cũng không chứng minh được điều Havi bán.
+    """
     range_start, range_end = _date_range(start, end)
-    published_posts = await ContentRepository(session).count_published_posts(
-        workspace_id=workspace_id, start=range_start, end=range_end
+    span = range_end - range_start
+    current = await _outcomes_for(
+        session, workspace_id=workspace_id, start=range_start, end=range_end
     )
+    previous = await _outcomes_for(
+        session,
+        workspace_id=workspace_id,
+        start=range_start - span,
+        end=range_start,
+    )
+
     return AnalyticsSummary(
-        price_inquiries=0,
-        walk_ins=0,
-        returning_customers=0,
-        published_posts=published_posts,
-        new_leads=0,
-        lead_won_rate=0,
-        change_vs_previous_period={},
+        price_inquiries=int(current["price_inquiries"]),
+        walk_ins=int(current["walk_ins"]),
+        returning_customers=int(current["returning_customers"]),
+        published_posts=int(current["published_posts"]),
+        new_leads=int(current["new_leads"]),
+        lead_won_rate=current["lead_won_rate"],
+        change_vs_previous_period={
+            key: _percent_change(current[key], previous[key]) for key in current
+        },
     )
 
 

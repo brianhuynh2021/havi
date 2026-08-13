@@ -1,5 +1,7 @@
 """Repository cho Lead — quản lý danh sách khách hàng tiềm năng và CRM state."""
 
+from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -9,9 +11,79 @@ from core.enums import LeadReplyStatus, LeadSource, LeadStage
 from domain.models.lead import Lead
 
 
+@dataclass(frozen=True)
+class LeadOutcomes:
+    """Số liệu kết quả kinh doanh trong một khoảng thời gian.
+
+    `walk_ins` đếm lead đã chốt (`WON`) chứ không phải một nguồn check-in riêng:
+    Havi chưa nối POS, và `WON` là bằng chứng gần nhất mà hệ thống thực sự có
+    rằng khách đã tới tiệm. `/analytics` phải nói rõ điều đó ra thay vì để con số
+    trông như đếm được từ cửa.
+    """
+
+    new_leads: int
+    won_leads: int
+    closed_leads: int
+    returning_customers: int
+
+    @property
+    def won_rate(self) -> float:
+        if self.closed_leads <= 0:
+            return 0.0
+        return round(self.won_leads / self.closed_leads, 4)
+
+
 class LeadRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    async def outcomes_in_range(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> LeadOutcomes:
+        """Gom số liệu lead của một kỳ bằng một lượt quét bảng."""
+        window = [
+            Lead.workspace_id == workspace_id,
+            Lead.created_at >= start,
+            Lead.created_at < end,
+        ]
+
+        totals = await self._session.execute(
+            select(
+                func.count(Lead.id),
+                func.count(Lead.id).filter(Lead.stage == LeadStage.WON),
+                func.count(Lead.id).filter(
+                    Lead.stage.in_((LeadStage.WON, LeadStage.LOST))
+                ),
+            ).where(*window)
+        )
+        new_leads, won_leads, closed_leads = totals.one()
+
+        # Khách quay lại = số điện thoại đã từng xuất hiện trước kỳ này. Số điện
+        # thoại là khoá duy nhất nhận diện được người thật mà Havi đang có; lead
+        # không có số thì không tính, còn hơn đoán theo tên trùng.
+        earlier_phones = (
+            select(Lead.phone)
+            .where(
+                Lead.workspace_id == workspace_id,
+                Lead.created_at < start,
+                Lead.phone.is_not(None),
+            )
+            .scalar_subquery()
+        )
+        returning = await self._session.execute(
+            select(func.count(func.distinct(Lead.phone))).where(
+                *window,
+                Lead.phone.is_not(None),
+                Lead.phone.in_(earlier_phones),
+            )
+        )
+
+        return LeadOutcomes(
+            new_leads=new_leads,
+            won_leads=won_leads,
+            closed_leads=closed_leads,
+            returning_customers=returning.scalar_one(),
+        )
 
     async def get(self, *, workspace_id: UUID, lead_id: UUID) -> Lead | None:
         result = await self._session.execute(
