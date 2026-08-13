@@ -495,6 +495,32 @@
         "npm run test:web"
       ],
       "prompt": "Build Station 4 Lead & Care Loop with exact FAQ auto-matching and approval-first AI reply generation."
+    },
+    {
+      "id": "phase2-multichannel-publishers",
+      "title": "Phase 2 Multi-Channel Expansion (Zalo OA & Google Business Adapters & Capabilities API)",
+      "status": "completed",
+      "priority": "P1",
+      "area": "publishers",
+      "why": "Phase 2 expands Havi distribution from single-channel Facebook Page to multi-channel Zalo OA and Google Business Profile localPosts.",
+      "files_to_read": [
+        "apps/backend/adapters/publishers/zalo.py",
+        "apps/backend/adapters/publishers/google_business.py",
+        "apps/backend/api/routers/connections.py",
+        "apps/backend/tests/test_multichannel_publishers.py"
+      ],
+      "acceptance_criteria": [
+        "ZaloOA publisher adapter implements official OpenAPI v3 paragraph message contract",
+        "GoogleBusiness publisher adapter implements official My Business API v4 localPosts contract",
+        "GET /connections/capabilities endpoint returns per-platform text and media rules",
+        "All publisher error paths map to Havi's strict exception hierarchy",
+        "100% of publisher unit tests pass cleanly"
+      ],
+      "verify_commands": [
+        "cd apps/backend && uv run pytest tests/test_multichannel_publishers.py",
+        "npm run test:web"
+      ],
+      "prompt": "Implement Zalo OA and Google Business publisher adapters with capabilities API and backend unit tests."
     }
   ]
 }

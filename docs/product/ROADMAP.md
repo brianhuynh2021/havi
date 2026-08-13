@@ -267,11 +267,11 @@ Acceptance criteria:
 - [x] local-only flags verified as blocked outside local
 - [x] dependency and deployment secret handling reviewed
 
-Open follow-ups before external beta:
+Follow-ups completed for external beta:
 
-- data deletion and consent policy remains P1
-- dependency vulnerability scanning should be added
-- refresh-token storage should move from `localStorage` to HTTP-only cookies
+- [x] Data deletion, account deletion, and consent policy implemented (`DELETE /auth/me`, `DELETE /workspaces/{id}`, `/huong-dan-xoa-du-lieu` page, Meta signed request callback API).
+- [x] Dependency vulnerability scanning audit (`npm audit` & `pip-audit` verified cleanly with 0 vulnerabilities).
+- [x] Refresh-token storage moved from `localStorage` to HTTP-only cookies (`havi_refresh_token`).
 
 ### P1: Visual Regression and Accessibility Baseline
 
