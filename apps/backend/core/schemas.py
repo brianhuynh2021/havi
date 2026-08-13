@@ -191,6 +191,17 @@ class MediaAsset(HaviModel):
     # None khi status là `pending` — client chưa gọi /media/{id}/complete.
     uploaded_at: datetime | None = None
 
+    # Chỉ có với video, đọc bằng ffprobe lúc complete. None = chưa/không đọc
+    # được, KHÔNG phải bằng 0 — UI phải phân biệt "chưa biết" với "không có".
+    duration_seconds: float | None = None
+    width: int | None = None
+    height: int | None = None
+    aspect_ratio: str | None = None
+    has_audio: bool | None = None
+    #: Kênh video clip này đăng được, suy từ thông số trên
+    #: (`domain/policies/video_constraints.py`). Rỗng với ảnh/audio.
+    eligible_channels: list[Channel] = Field(default_factory=list)
+
 
 class MediaUploadTicket(HaviModel):
     """Client upload thẳng lên object storage; API chỉ lưu metadata."""

@@ -6,6 +6,8 @@ gọi `/media/{id}/complete` để API xác nhận object có thật rồi mới
 đã tồn tại, và Content Engine sẽ đọc phải asset rỗng.
 """
 
+import asyncio
+import logging
 import uuid
 from dataclasses import dataclass
 from uuid import UUID
@@ -15,6 +17,9 @@ from adapters.storage.object_storage import ObjectStorage, UploadTicket
 from core.enums import MediaStatus, MediaType
 from core.file_signatures import PREFIX_BYTES_NEEDED, matches_media_type
 from domain.models.media import MediaAsset
+from domain.ports.media import VideoMetadata, VideoProcessorPort
+
+logger = logging.getLogger("havi.media")
 
 # Whitelist theo TECHNICAL_SPEC §3 (image|audio|video). Chặn ở đây thay vì tin
 # `content_type` client gửi — presigned POST condition sẽ khoá đúng type này.
@@ -57,9 +62,20 @@ class UploadTicketResult:
 
 
 class MediaService:
-    def __init__(self, *, media: MediaRepository, storage: ObjectStorage) -> None:
+    def __init__(
+        self,
+        *,
+        media: MediaRepository,
+        storage: ObjectStorage,
+        video: VideoProcessorPort | None = None,
+        max_probe_bytes: int = 200 * 1024 * 1024,
+    ) -> None:
         self._media = media
         self._storage = storage
+        # `None` = không probe. Giữ optional để test hiện có dựng service không
+        # cần ffmpeg, và để môi trường không có ffmpeg vẫn upload được.
+        self._video = video
+        self._max_probe_bytes = max_probe_bytes
 
     async def create_upload_ticket(
         self, *, workspace_id: UUID, filename: str, content_type: str, type: MediaType
@@ -103,7 +119,45 @@ class MediaService:
             await self._storage.delete_object(asset.object_key)
             raise ContentDoesNotMatchType(asset.type)
 
-        return await self._media.mark_uploaded(asset, size_bytes=stored.size_bytes)
+        video = await self._probe_video(asset, size_bytes=stored.size_bytes)
+        return await self._media.mark_uploaded(
+            asset, size_bytes=stored.size_bytes, video=video
+        )
+
+    async def _probe_video(
+        self, asset: MediaAsset, *, size_bytes: int
+    ) -> VideoMetadata | None:
+        """Đọc thông số clip ngay lúc upload xong.
+
+        Kiểm sớm để chủ tiệm biết clip quay ngang / dài quá ngay lúc còn quay lại
+        được, thay vì phát hiện lúc scheduler gọi API nền tảng và đã lỡ giờ đăng
+        (`domain/policies/video_constraints.py`).
+
+        Không đọc được thì trả `None` và asset vẫn `RAW`: probe hỏng là sự cố vận
+        hành của Havi, không phải lỗi của người dùng, nên không được làm hỏng một
+        lần upload đã thành công. Thông số NULL sẽ khiến kiểm ràng buộc kênh từ
+        chối một cách rõ ràng thay vì đoán bừa.
+        """
+        if asset.type is not MediaType.VIDEO or self._video is None:
+            return None
+        if not self._video.is_available:
+            return None
+        if size_bytes > self._max_probe_bytes:
+            logger.warning(
+                "media.probe_skipped_too_large object_key=%s size_bytes=%d",
+                asset.object_key,
+                size_bytes,
+            )
+            return None
+
+        try:
+            data = await self._storage.read_object(asset.object_key)
+            return await asyncio.to_thread(
+                self._video.probe_bytes, data, asset.filename
+            )
+        except Exception:
+            logger.exception("media.probe_failed object_key=%s", asset.object_key)
+            return None
 
     async def list_media(
         self,

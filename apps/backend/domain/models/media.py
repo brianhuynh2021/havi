@@ -34,3 +34,14 @@ class MediaAsset(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     size_bytes: Mapped[int | None] = mapped_column(default=None)
     # Chỉ set khi client gọi /media/{id}/complete và API xác nhận object có thật.
     uploaded_at: Mapped[datetime | None] = mapped_column(default=None)
+
+    # --- Thông số video, đọc bằng ffprobe lúc complete_upload ------------------
+    #
+    # NULL có nghĩa "chưa/không đọc được", không phải "bằng 0". Phân biệt được hai
+    # thứ đó là điều kiện để `video_constraints` từ chối kiểm một video mù thay vì
+    # tưởng nó hợp lệ. Asset ảnh/audio luôn để NULL.
+    duration_seconds: Mapped[float | None] = mapped_column(default=None)
+    width: Mapped[int | None] = mapped_column(default=None)
+    height: Mapped[int | None] = mapped_column(default=None)
+    aspect_ratio: Mapped[str | None] = mapped_column(default=None)
+    has_audio: Mapped[bool | None] = mapped_column(default=None)

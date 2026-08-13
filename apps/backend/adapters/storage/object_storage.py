@@ -97,6 +97,23 @@ class ObjectStorage:
 
         return await asyncio.to_thread(_read)
 
+    async def read_object(self, object_key: str) -> bytes:
+        """Tải toàn bộ object về bộ nhớ.
+
+        Chỉ dùng cho probe video: ffprobe cần file thật, không đọc được từ vài
+        byte đầu như kiểm magic bytes. Caller phải tự chặn theo kích thước trước
+        khi gọi — `media_max_upload_bytes` là trần đã ký trong presigned POST,
+        nên không có object nào lớn hơn thế lọt vào bucket.
+        """
+
+        def _read() -> bytes:
+            response = self._client.get_object(
+                Bucket=self._settings.media_bucket, Key=object_key
+            )
+            return response["Body"].read()
+
+        return await asyncio.to_thread(_read)
+
     async def delete_object(self, object_key: str) -> None:
         def _delete() -> None:
             self._client.delete_object(Bucket=self._settings.media_bucket, Key=object_key)

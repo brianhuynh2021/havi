@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import MediaStatus, MediaType
 from domain.models.media import MediaAsset
+from domain.ports.media import VideoMetadata
 
 
 class MediaRepository:
@@ -69,10 +70,22 @@ class MediaRepository:
         )
         return list(rows.scalars().all()), total.scalar_one()
 
-    async def mark_uploaded(self, asset: MediaAsset, *, size_bytes: int) -> MediaAsset:
+    async def mark_uploaded(
+        self,
+        asset: MediaAsset,
+        *,
+        size_bytes: int,
+        video: VideoMetadata | None = None,
+    ) -> MediaAsset:
         asset.status = MediaStatus.RAW
         asset.size_bytes = size_bytes
         asset.uploaded_at = datetime.now(UTC)
+        if video is not None:
+            asset.duration_seconds = video.duration_seconds
+            asset.width = video.width
+            asset.height = video.height
+            asset.aspect_ratio = video.aspect_ratio
+            asset.has_audio = video.has_audio
         await self._session.flush()
         return asset
 

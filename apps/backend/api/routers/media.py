@@ -16,11 +16,32 @@ from application.services.media_service import (
 from core.enums import MediaStatus, MediaType
 from core.schemas import MediaAsset, MediaUpdate, MediaUploadRequest, MediaUploadTicket, Page
 from domain.policies import rate_limits
+from domain.policies.video_constraints import eligible_channels
+from domain.ports.media import VideoMetadata
 
 router = APIRouter(prefix="/media", tags=["media"])
 
 
+def _video_metadata(asset) -> VideoMetadata | None:
+    """Dựng lại value object từ hàng DB — `None` nếu chưa probe được.
+
+    Kiểm `aspect_ratio is None` chứ không kiểm truthiness của các số: một clip
+    thật có thể dài 0.0 giây theo ffprobe, và `if not duration` sẽ coi nó như
+    chưa probe.
+    """
+    if asset.aspect_ratio is None:
+        return None
+    return VideoMetadata(
+        duration_seconds=asset.duration_seconds or 0.0,
+        width=asset.width or 0,
+        height=asset.height or 0,
+        aspect_ratio=asset.aspect_ratio,
+        has_audio=bool(asset.has_audio),
+    )
+
+
 def _to_schema(asset, media_service: MediaServiceDep) -> MediaAsset:
+    metadata = _video_metadata(asset)
     return MediaAsset(
         id=asset.id,
         workspace_id=asset.workspace_id,
@@ -32,6 +53,12 @@ def _to_schema(asset, media_service: MediaServiceDep) -> MediaAsset:
         status=asset.status,
         size_bytes=asset.size_bytes,
         uploaded_at=asset.uploaded_at,
+        duration_seconds=asset.duration_seconds,
+        width=asset.width,
+        height=asset.height,
+        aspect_ratio=asset.aspect_ratio,
+        has_audio=asset.has_audio,
+        eligible_channels=eligible_channels(metadata) if metadata else [],
     )
 
 

@@ -14,8 +14,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from adapters.email.debug import DebugEmailSender
 from adapters.email.smtp import SmtpEmailSender
+from adapters.media.ffmpeg_processor import FFmpegVideoProcessor
 from adapters.oauth.base import OAuthClientPort
 from adapters.oauth.facebook import FacebookOAuthClient
+from adapters.oauth.zalo import ZaloOAuthClient
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -162,8 +164,22 @@ RateLimiterDep = Annotated[
 ]
 
 
-def get_media_service(session: DbSessionDep) -> MediaService:
-    return MediaService(media=MediaRepository(session), storage=_object_storage())
+@lru_cache
+def _video_processor() -> FFmpegVideoProcessor:
+    """Một instance dùng chung: `__init__` chỉ chạy `shutil.which` hai lần, không
+    giữ state, nên không cần dựng lại mỗi request."""
+    return FFmpegVideoProcessor()
+
+
+def get_media_service(session: DbSessionDep, settings: SettingsDep) -> MediaService:
+    return MediaService(
+        media=MediaRepository(session),
+        storage=_object_storage(),
+        video=_video_processor(),
+        # Trần probe bám theo trần upload đã ký trong presigned POST — không có
+        # object nào lớn hơn thế lọt được vào bucket, nên đây là biên đúng.
+        max_probe_bytes=settings.media_max_upload_bytes,
+    )
 
 
 MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
@@ -198,9 +214,6 @@ def get_approval_service(session: DbSessionDep) -> ApprovalService:
 
 
 ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
-
-
-from adapters.oauth.zalo import ZaloOAuthClient
 
 
 @lru_cache
