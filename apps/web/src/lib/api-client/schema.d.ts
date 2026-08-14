@@ -1018,6 +1018,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/billing/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Plan */
+        post: operations["change_plan_billing_plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1146,6 +1163,10 @@ export interface components {
         CalendarView: {
             /** Days */
             days: components["schemas"]["CalendarDay"][];
+        };
+        /** ChangePlanRequest */
+        ChangePlanRequest: {
+            plan: components["schemas"]["Plan"];
         };
         /**
          * Channel
@@ -1460,6 +1481,7 @@ export interface components {
              * Format: uuid
              */
             workspace_id: string;
+            plan: components["schemas"]["Plan"];
             /** Amount Vnd */
             amount_vnd: number;
             /** Status */
@@ -3892,7 +3914,10 @@ export interface operations {
     };
     list_invoices_billing_invoices_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3906,6 +3931,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Invoice"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_plan_billing_plan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

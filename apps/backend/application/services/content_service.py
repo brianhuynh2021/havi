@@ -36,6 +36,10 @@ class CreatedJob:
     created: bool
 
 
+class SubscriptionExpired(Exception):
+    """Gói cước hoặc hạn dùng thử của workspace đã hết."""
+
+
 class ContentService:
     def __init__(
         self,
@@ -80,7 +84,25 @@ class ContentService:
         Quota kiểm **trước khi** tạo job và enqueue, tức trước khi worker gọi LLM.
         Kiểm sau khi enqueue thì tiền đã tiêu rồi mới báo "hết quota" — vô nghĩa.
         """
-        status = await self.quota_status(workspace_id=workspace_id, now=now)
+        now_dt = now or datetime.now(UTC)
+        workspace = await self._workspaces.get_by_id(workspace_id)
+        if workspace is None:
+            raise WorkspaceNotFound()
+
+        from domain.policies import subscription
+        sub_state = subscription.state_for(
+            plan=workspace.plan,
+            trial_ends_at=workspace.trial_ends_at,
+            paid_until=workspace.paid_until,
+            now=now_dt,
+        )
+        if not sub_state.is_active:
+            raise SubscriptionExpired(
+                "Hạn dùng thử hoặc gói cước đã hết. Vui lòng nâng cấp gói cước để tiếp tục."
+            )
+
+        status = await self.quota_status(workspace_id=workspace_id, now=now_dt)
+
         if status.exceeded:
             await self._alerts.send(
                 Alert(

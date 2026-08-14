@@ -16,7 +16,7 @@ import {
   toVnDateString,
   type CalendarDay,
 } from "./calendar.api";
-import { statusLabel, statusTone, weekdayLabels } from "./calendar.fixture";
+import { statusLabel, statusTone } from "./calendar.fixture";
 import styles from "./calendar.module.css";
 
 /** Giờ đăng hiện theo giờ VN, không theo giờ máy — chủ tiệm ở VN và backend
@@ -172,19 +172,16 @@ export function CalendarScreen() {
     setReloadKey((k) => k + 1);
   }
 
-  async function handleRepublish(itemId: string) {
-    setRescheduling(true);
-    setRescheduleError(null);
-    const nowIso = toVnOffsetIso(datetimeLocalValue(new Date().toISOString(), today));
-    const result = await rescheduleItem(itemId, nowIso);
-    setRescheduling(false);
-    if (!result.ok) {
-      setRescheduleError(result.message);
-      return;
-    }
-    setSelectedItem(null);
-    setReloadKey((k) => k + 1);
+  function applyPresetTime(timeStr: string) {
+    if (!targetIso) return;
+    const datePart = targetIso.split("T")[0];
+    setTargetIso(`${datePart}T${timeStr}`);
   }
+
+  const totalItems = days.reduce((sum, d) => sum + d.items.length, 0);
+  const uniqueChannels = Array.from(
+    new Set(days.flatMap((d) => d.items.map((i) => i.channel))),
+  );
 
   const empty = days.every((day) => day.items.length === 0);
   const rangeLabel = days.length
@@ -194,13 +191,35 @@ export function CalendarScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("calendar.title", "Lịch Đăng Bài")}</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{t("calendar.title", "Lịch Đăng Bài")}</h1>
+          <Badge tone="success">✨ Múi giờ Asia/Ho_Chi_Minh (UTC+7)</Badge>
+        </div>
         <p className={styles.subtitle}>
           {t({
             vi: "Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh. Bấm vào bài để xem chi tiết.",
             en: "Approved posts auto-scheduled by date/time (Asia/Ho_Chi_Minh). Click a post to view details.",
           })}
         </p>
+
+        {/* Executive Telemetry Dashboard Bar */}
+        <div className={styles.metricsBar}>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>📅 Tổng bài lên lịch</span>
+            <span className={styles.metricValue}>{totalItems} bài</span>
+            <span className={styles.metricSubtext}>Tuần hiển thị hiện tại</span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>📢 Kênh hoạt động</span>
+            <span className={styles.metricValue}>{uniqueChannels.length || 0} kênh</span>
+            <span className={styles.metricSubtext}>Facebook, Zalo, Google</span>
+          </div>
+          <div className={styles.metricCard}>
+            <span className={styles.metricLabel}>🛡️ Chế độ an toàn</span>
+            <span className={styles.metricValue}>Bán tự động</span>
+            <span className={styles.metricSubtext}>Duyệt trước khi phát sóng</span>
+          </div>
+        </div>
       </header>
 
       <FailedPostsPanel onPublished={() => setReloadKey((k) => k + 1)} />
@@ -212,7 +231,7 @@ export function CalendarScreen() {
         >
           ← {t({ vi: "Tuần trước", en: "Prev Week" })}
         </Button>
-        <span className={styles.weekRange}>{rangeLabel}</span>
+        <span className={styles.weekRange}>📅 {rangeLabel}</span>
         <div className={styles.weekActions}>
           <Button
             variant="outline"
@@ -251,12 +270,22 @@ export function CalendarScreen() {
                 }`}
               >
                 <div className={styles.dayHeader}>
-                  <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
+                  <div className={styles.dayHeaderTitleRow}>
+                    <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
+                    {day.date === today ? (
+                      <span className={styles.todayPill}>Hôm nay</span>
+                    ) : null}
+                  </div>
                   <span className={styles.dayDate}>{dayLabel(day.date)}</span>
                 </div>
 
                 {day.items.length === 0 ? (
-                  <p className={styles.dayEmpty}>{t({ vi: "Chưa có bài", en: "No posts" })}</p>
+                  <div className={styles.emptySlot} title="Chưa có bài lên lịch cho ngày này">
+                    <span className={styles.emptySlotIcon}>+</span>
+                    <span className={styles.emptySlotText}>
+                      {t({ vi: "Chưa có bài", en: "No posts" })}
+                    </span>
+                  </div>
                 ) : (
                   <div className={styles.postList}>
                     {day.items.map((item) => (
@@ -272,9 +301,9 @@ export function CalendarScreen() {
                               ? vnTime.format(new Date(item.scheduled_at))
                               : "--:--"}
                           </span>
-                          <span className={styles.postId}>
-                            #{item.id.slice(0, 6)}
-                          </span>
+                          <Badge tone={statusTone[item.status]}>
+                            {statusLabel[item.status]}
+                          </Badge>
                         </div>
                         <p className={styles.postTitleSnippet}>{item.text}</p>
                         <div className={styles.postMeta}>
@@ -283,9 +312,9 @@ export function CalendarScreen() {
                               item.channel as keyof typeof channelLabels
                             ] ?? item.channel}
                           </span>
-                          <Badge tone={statusTone[item.status]}>
-                            {statusLabel[item.status]}
-                          </Badge>
+                          <span className={styles.postId}>
+                            #{item.id.slice(0, 6)}
+                          </span>
                         </div>
                       </article>
                     ))}
@@ -304,7 +333,7 @@ export function CalendarScreen() {
         </>
       )}
 
-      {/* Modal Chi tiết & Đổi giờ bài đăng */}
+      {/* Modal Chi tiết & Đổi giờ bài đăng (Glassmorphic FAANG Aesthetic) */}
       {selectedItem ? (
         <div
           className={styles.modalOverlay}
@@ -364,20 +393,42 @@ export function CalendarScreen() {
               </div>
             ) : null}
 
-              <Button
-                type="button"
-                variant="outline"
-                disabled={rescheduling}
-                onClick={() => void submitReschedule()}
-              >
-                {rescheduling
-                  ? t({ vi: "🔄 Đang đổi lịch…", en: "🔄 Rescheduling…" })
-                  : t({ vi: "🔄 Đổi ngày/giờ đăng", en: "🔄 Reschedule post" })}
-              </Button>
-
             {canReschedule(selectedItem.item.status) ? (
               <div className={styles.rescheduleSection}>
                 <h4 className={styles.rescheduleTitle}>📅 Đổi ngày giờ đăng</h4>
+
+                {/* Quick Presets for Shop Owners */}
+                <div className={styles.presetGrid}>
+                  <button
+                    type="button"
+                    className={styles.presetBtn}
+                    onClick={() => applyPresetTime("09:00")}
+                  >
+                    🌅 Sáng (09:00)
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.presetBtn}
+                    onClick={() => applyPresetTime("12:00")}
+                  >
+                    ☀️ Trưa (12:00)
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.presetBtn}
+                    onClick={() => applyPresetTime("19:30")}
+                  >
+                    🌆 Tối (19:30)
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.presetBtn}
+                    onClick={() => applyPresetTime("21:30")}
+                  >
+                    🌙 Đêm (21:30)
+                  </button>
+                </div>
+
                 <form
                   className={styles.rescheduleForm}
                   onSubmit={(e) => {
@@ -408,9 +459,7 @@ export function CalendarScreen() {
                       type="submit"
                       disabled={rescheduling}
                     >
-                      {rescheduling
-                        ? "Đang lưu…"
-                        : "Lưu giờ mới"}
+                      {rescheduling ? "Đang lưu…" : "Lưu giờ mới"}
                     </Button>
                   </div>
                 </form>

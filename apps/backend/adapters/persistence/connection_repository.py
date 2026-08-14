@@ -4,9 +4,17 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.enums import ConnectionStatus, Platform
+from core.enums import Channel, ConnectionStatus, Platform
 from core.token_crypto import decrypt_token, encrypt_token
 from domain.models.connection import PlatformConnection
+
+PLATFORM_TO_CHANNELS: dict[Platform, list[Channel]] = {
+    Platform.FACEBOOK: [Channel.FACEBOOK_PAGE],
+    Platform.ZALO_OA: [Channel.ZALO_OA],
+    Platform.GOOGLE_BUSINESS: [Channel.GOOGLE_BUSINESS],
+    Platform.TIKTOK: [Channel.TIKTOK],
+    Platform.YOUTUBE: [Channel.YOUTUBE],
+}
 
 
 class ConnectionRepository:
@@ -60,6 +68,21 @@ class ConnectionRepository:
             .order_by(PlatformConnection.platform)
         )
         return list(result.scalars().all())
+
+    async def get_connected_channels(self, workspace_id: UUID) -> list[Channel]:
+        """Lấy danh sách các Channel tương ứng với những nền tảng đang ở trạng thái CONNECTED.
+
+        Nếu chưa kết nối nền tảng nào, trả về danh sách rỗng [].
+        """
+        connections = await self.list_for_workspace(workspace_id)
+        connected: list[Channel] = []
+        for conn in connections:
+            if conn.status == ConnectionStatus.CONNECTED:
+                channels = PLATFORM_TO_CHANNELS.get(conn.platform, [])
+                for c in channels:
+                    if c not in connected:
+                        connected.append(c)
+        return connected
 
     async def upsert(
         self,

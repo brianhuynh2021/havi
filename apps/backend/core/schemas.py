@@ -566,12 +566,18 @@ class Subscription(HaviModel):
     token_quota_limit: int = 0
 
 
+class ChangePlanRequest(HaviModel):
+    plan: Plan
+
+
 class Invoice(HaviModel):
     id: UUID
     workspace_id: UUID
+    plan: Plan
     amount_vnd: int
     status: str
     issued_at: datetime
+
 
 
 BrandProfile.model_rebuild()

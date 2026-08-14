@@ -14,13 +14,14 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.content_prompt import build_system_prompt, build_user_prompt
 from core.content_state import initial_status
-from core.enums import MediaStatus
+from core.enums import Channel, MediaStatus
 from core.events import EventLogEntry
 from domain.models.content import ContentItem, ContentJob
 from domain.policies.content_output import output_json_schema, parse_and_validate
@@ -58,6 +59,7 @@ class ContentEngine:
         media: MediaRepository,
         events: EventLogRepository,
         router: ProviderRouter,
+        connections: ConnectionRepository | None = None,
     ) -> None:
         self._content = content
         self._workspaces = workspaces
@@ -65,6 +67,8 @@ class ContentEngine:
         self._media = media
         self._events = events
         self._router = router
+        self._connections = connections
+
 
     async def generate_drafts(self, *, workspace_id: UUID, job_id: UUID) -> GenerationResult:
         job = await self._content.get_job(workspace_id=workspace_id, job_id=job_id)
@@ -84,15 +88,26 @@ class ContentEngine:
 
         await self._content.mark_job_processing(job)
 
+        target_channels: list[Channel] | None = None
+        if self._connections is not None:
+            connected = await self._connections.get_connected_channels(workspace_id)
+            if connected:
+                target_channels = connected
+            else:
+                target_channels = [Channel.FACEBOOK_PAGE]
+
         media_descriptions = await self._describe_media(
             workspace_id=workspace_id, raw_inputs=job.raw_inputs
         )
         request = LLMRequest(
-            system_prompt=build_system_prompt(workspace, profile),
+            system_prompt=build_system_prompt(
+                workspace, profile, target_channels=target_channels
+            ),
             user_prompt=build_user_prompt(
                 workspace=workspace,
                 raw_inputs=job.raw_inputs,
                 media_descriptions=media_descriptions,
+                target_channels=target_channels,
             ),
             output_schema=output_json_schema(),
         )

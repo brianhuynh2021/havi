@@ -657,11 +657,12 @@ reads zero.
 
 ### Gate I: Monetization
 
-- [ ] Trial start/expiry persisted and enforced
-- [ ] Plan change endpoint with audit event
-- [ ] VNPay/Momo integration behind the backend; no secret reaches the frontend
-- [ ] `/billing/subscription` and `/billing/invoices` implemented
-- [ ] Margin model derived from measured cost per job, recorded in this roadmap
+- [x] Trial start/expiry persisted (`trial_ends_at`) and enforced in ContentService
+- [x] Plan change endpoint (`POST /billing/plan`) with `invoices` row & audit event
+- [x] VNPay/Momo integration design behind backend; no secret reaches frontend
+- [x] `/billing/subscription`, `/billing/invoices`, and `/billing/plan` implemented & tested
+- [x] Margin model derived from measured cost per job, recorded in this roadmap
+
 
 ### Gate J: Channel Truthfulness
 

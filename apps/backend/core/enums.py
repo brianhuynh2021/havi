@@ -203,6 +203,21 @@ class SubscriptionStatus(StrEnum):
     CANCELED = "canceled"
 
 
+class InvoiceStatus(StrEnum):
+    """Vòng đời một hoá đơn.
+
+    `PENDING` là trạng thái duy nhất hoá đơn đạt tới hôm nay: chưa nối cổng thanh
+    toán nào nên không có gì xác nhận được đã thu tiền. Chỉ adapter cổng thanh
+    toán mới được chuyển sang `PAID` — không có đường nào khác trong code làm
+    việc đó, vì đánh dấu đã trả mà chưa nhận tiền là ghi sai sổ.
+    """
+
+    PENDING = "pending"
+    PAID = "paid"
+    FAILED = "failed"
+    VOID = "void"
+
+
 class OAuthReturnTarget(StrEnum):
     """Màn hình đưa người dùng về sau khi cấp quyền OAuth xong.
 

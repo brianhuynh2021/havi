@@ -1,0 +1,65 @@
+"""Repository cho gói cước và hoá đơn."""
+
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.enums import InvoiceStatus, Plan
+from domain.models.workspace import Invoice, Workspace
+
+
+class BillingRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def set_plan(
+        self, workspace: Workspace, *, plan: Plan, paid_until: datetime | None
+    ) -> Workspace:
+        """Ghi gói mới. `trial_ends_at` KHÔNG bị chạm tới.
+
+        Giữ nguyên mốc dùng thử là có chủ đích: nó ghi lại việc tiệm này đã dùng
+        hết lượt dùng thử của mình. Xoá nó đi khi nâng gói thì hạ gói xuống sau đó
+        sẽ trông như một tiệm chưa từng dùng thử.
+        """
+        workspace.plan = plan
+        workspace.paid_until = paid_until
+        await self._session.flush()
+        return workspace
+
+    async def create_invoice(
+        self,
+        *,
+        workspace_id: UUID,
+        plan: Plan,
+        amount_vnd: int,
+        issued_at: datetime,
+        status: InvoiceStatus = InvoiceStatus.PENDING,
+    ) -> Invoice:
+        invoice = Invoice(
+            workspace_id=workspace_id,
+            plan=plan,
+            amount_vnd=amount_vnd,
+            issued_at=issued_at,
+            status=status,
+        )
+        self._session.add(invoice)
+        await self._session.flush()
+        return invoice
+
+    async def list_invoices(
+        self, *, workspace_id: UUID, limit: int = 50, offset: int = 0
+    ) -> tuple[list[Invoice], int]:
+        from sqlalchemy import func
+
+        filters = [Invoice.workspace_id == workspace_id]
+        total = await self._session.execute(select(func.count()).where(*filters))
+        rows = await self._session.execute(
+            select(Invoice)
+            .where(*filters)
+            .order_by(Invoice.issued_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(rows.scalars().all()), total.scalar_one()

@@ -14,6 +14,7 @@ from adapters.llm.gemini import GeminiProvider
 from adapters.llm.mock import MockProvider
 from adapters.llm.openai import OpenAIProvider
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import session_scope
 from adapters.persistence.event_log_repository import EventLogRepository
@@ -57,4 +58,6 @@ async def content_engine_scope() -> AsyncGenerator[ContentEngine]:
             media=MediaRepository(session),
             events=EventLogRepository(session),
             router=build_provider_router(),
+            connections=ConnectionRepository(session),
         )
+

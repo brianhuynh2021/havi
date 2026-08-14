@@ -68,20 +68,30 @@ _RAW_INPUT_LABELS: dict[RawInputKind, str] = {
 }
 
 
-def build_system_prompt(workspace: Workspace, profile: BrandProfile) -> str:
+def build_system_prompt(
+    workspace: Workspace,
+    profile: BrandProfile,
+    target_channels: list[Channel] | None = None,
+) -> str:
+    channels = target_channels if target_channels is not None else list(PILOT_CHANNELS)
     tone = profile.tone.strip() or "thân thiện, gần gũi, gọi khách là chị/anh"
     banned = ", ".join(profile.banned_claims) if profile.banned_claims else "(chưa có)"
     return _SYSTEM_PROMPT.format(
         industry=_INDUSTRY_LABELS.get(workspace.industry, "kinh doanh nhỏ"),
         tone=tone,
         banned=banned,
-        num_channels=len(PILOT_CHANNELS),
+        num_channels=len(channels),
     )
 
 
 def build_user_prompt(
-    *, workspace: Workspace, raw_inputs: list[dict], media_descriptions: list[str]
+    *,
+    workspace: Workspace,
+    raw_inputs: list[dict],
+    media_descriptions: list[str],
+    target_channels: list[Channel] | None = None,
 ) -> str:
+    channels = target_channels if target_channels is not None else list(PILOT_CHANNELS)
     lines = [f"Tên tiệm: {workspace.name}", "", "Liệu thô chủ tiệm vừa nạp:"]
 
     for item in raw_inputs:
@@ -94,5 +104,10 @@ def build_user_prompt(
         lines += ["", "File đã nạp:"] + [f"- {d}" for d in media_descriptions]
 
     lines += ["", "Viết nội dung cho các kênh sau:"]
-    lines += [f"- {_CHANNEL_GUIDANCE[channel]}" for channel in PILOT_CHANNELS]
+    lines += [
+        f"- {_CHANNEL_GUIDANCE[channel]}"
+        for channel in channels
+        if channel in _CHANNEL_GUIDANCE
+    ]
     return "\n".join(lines)
+

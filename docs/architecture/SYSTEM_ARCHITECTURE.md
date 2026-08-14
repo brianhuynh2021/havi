@@ -1,7 +1,7 @@
 # Havi System Architecture
 
 This is the canonical MVP deployment architecture, derived from the architecture
-prototype, repository strategy, and technical spec.
+prototype, repository strategy, technical spec, and [AI Agent Principles](agent_principles/AGENT_PRINCIPLES.md).
 
 ## 0. Engineering Principles
 

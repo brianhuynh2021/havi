@@ -1,9 +1,11 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import Industry, PublishMode
+from domain.policies.subscription import trial_end_for
 from domain.models.audit import EventLog
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
@@ -33,7 +35,17 @@ class WorkspaceRepository:
         return list(result.scalars().all())
 
     async def create(self, *, name: str, industry: Industry, owner_user_id: UUID) -> Workspace:
-        workspace = Workspace(name=name, industry=industry, owner_user_id=owner_user_id)
+        # Đồng hồ dùng thử chạy từ lúc tạo workspace, và mốc được ghi ngay ở đây.
+        # Tính lười ("created_at + 14 ngày") thì mọi chỗ đọc phải nhớ cùng một
+        # công thức, và đổi độ dài dùng thử sau này sẽ lặng lẽ gia hạn cho cả
+        # những tiệm đã hết hạn từ lâu.
+        now = datetime.now(UTC)
+        workspace = Workspace(
+            name=name,
+            industry=industry,
+            owner_user_id=owner_user_id,
+            trial_ends_at=trial_end_for(now),
+        )
         self._session.add(workspace)
         await self._session.flush()
         return workspace

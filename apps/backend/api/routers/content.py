@@ -22,7 +22,7 @@ from api.deps import (
 from api.errors import transition_conflict
 from api.rate_limit import limit_by_workspace
 from application.services.approval_service import ContentItemNotFound, NotReschedulable
-from application.services.content_service import ContentJobNotFound
+from application.services.content_service import ContentJobNotFound, SubscriptionExpired
 from application.services.publish_service import (
     AlreadyRunning,
     NotRetryable,
@@ -97,6 +97,11 @@ async def create_content_job(
             raw_inputs=[item.model_dump(mode="json") for item in payload.raw_inputs],
             idempotency_key=idempotency_key,
         )
+    except SubscriptionExpired as exc:
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            str(exc),
+        ) from exc
     except QuotaExceeded as exc:
         # 429 chứ không 402/403: đây là "vượt mức trong khoảng thời gian này", và
         # nó tự hết khi sang tháng — cùng nghĩa với rate limit. 402 hàm ý phải trả
@@ -108,6 +113,7 @@ async def create_content_job(
             str(exc),
             headers={"Retry-After": str(retry_after)},
         ) from exc
+
     item_ids = [i.id for i in await content_service.list_items_for_job(created.job.id)]
     return _job_to_schema(created.job, item_ids)
 

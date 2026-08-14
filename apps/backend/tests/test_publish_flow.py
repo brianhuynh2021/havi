@@ -373,6 +373,25 @@ class TestConnectionRepository:
         assert token not in conn.access_token_encrypted
         assert repo.read_access_token(conn) == token
 
+    async def test_get_connected_channels_returns_only_connected_platforms(
+        self, db_session: AsyncSession
+    ):
+        from adapters.persistence.connection_repository import ConnectionRepository
+
+        ws = await _workspace(db_session)
+        repo = ConnectionRepository(db_session)
+
+        assert await repo.get_connected_channels(ws.id) == []
+
+        conn = await repo.upsert(
+            workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="token-fb"
+        )
+        assert await repo.get_connected_channels(ws.id) == [Channel.FACEBOOK_PAGE]
+
+        await repo.mark_unusable(conn, status=ConnectionStatus.REVOKED, reason="revoked")
+        assert await repo.get_connected_channels(ws.id) == []
+
+
     async def test_noi_lai_kenh_cap_nhat_chu_khong_tao_ban_ghi_thu_hai(
         self, db_session: AsyncSession
     ):

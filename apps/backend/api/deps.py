@@ -18,6 +18,7 @@ from adapters.media.ffmpeg_processor import FFmpegVideoProcessor
 from adapters.oauth.base import OAuthClientPort
 from adapters.oauth.facebook import FacebookOAuthClient
 from adapters.oauth.zalo import ZaloOAuthClient
+from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -36,6 +37,7 @@ from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
 from adapters.storage.object_storage import ObjectStorage
 from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
+from application.services.billing_service import BillingService
 from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
@@ -45,6 +47,7 @@ from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.workspace_service import WorkspaceService
+
 from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
 from core.enums import Platform
@@ -104,6 +107,18 @@ def get_brand_profile_service(session: DbSessionDep) -> BrandProfileService:
 
 
 BrandProfileServiceDep = Annotated[BrandProfileService, Depends(get_brand_profile_service)]
+
+
+def get_billing_service(session: DbSessionDep) -> BillingService:
+    return BillingService(
+        billing=BillingRepository(session),
+        workspaces=WorkspaceRepository(session),
+        events=EventLogRepository(session),
+    )
+
+
+BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
+
 
 
 def get_inbox_service(session: DbSessionDep) -> InboxService:

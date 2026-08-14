@@ -102,13 +102,21 @@ class MockProvider(LLMProviderPort):
             "tiệm vừa có dịch vụ mới, mời chị ghé trải nghiệm."
         )
 
+        templates = [
+            (channel, kind, template)
+            for channel, kind, template in _TEMPLATES
+            if channel in request.user_prompt or channel.replace("_", " ") in request.user_prompt.lower()
+        ]
+        if not templates:
+            templates = _TEMPLATES
+
         drafts = [
             {
                 "channel": channel,
                 "kind": kind,
                 "text": template.format(tiem=tiem, noi_dung=noi_dung),
             }
-            for channel, kind, template in _TEMPLATES
+            for channel, kind, template in templates
         ]
         text = json.dumps({"drafts": drafts}, ensure_ascii=False)
 

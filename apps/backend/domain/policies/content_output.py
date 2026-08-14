@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, ValidationError
 from core.enums import Channel
 from domain.policies.provider_router import OutputValidationError
 
-MIN_DRAFTS = 3
+MIN_DRAFTS = 1
 MAX_DRAFTS = 6
 
 

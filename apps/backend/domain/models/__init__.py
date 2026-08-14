@@ -14,7 +14,12 @@ from domain.models.lead import Lead
 from domain.models.media import MediaAsset
 from domain.models.publish import PublishJob
 from domain.models.user import OtpChallenge, RefreshSession, User
-from domain.models.workspace import BrandProfile, Workspace, WorkspaceMember
+from domain.models.workspace import (
+    BrandProfile,
+    Invoice,
+    Workspace,
+    WorkspaceMember,
+)
 
 __all__ = [
     "Base",
@@ -33,4 +38,5 @@ __all__ = [
     "PublishJob",
     "InboxItem",
     "Lead",
+    "Invoice",
 ]
