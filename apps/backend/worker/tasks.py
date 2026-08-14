@@ -5,11 +5,14 @@ chấm điểm ý định → ~1% → LLM soạn trả lời → dừng ở pend
 """
 
 import asyncio
+import logging
 from uuid import UUID
 
-from application.services.content_engine import GenerationFailed
+from application.services.content_engine import ContentJobNotFound, GenerationFailed
 from core.request_context import reset_request_id, set_request_id
 from worker.celery_app import celery_app
+
+logger = logging.getLogger("havi.worker.tasks")
 
 
 @celery_app.task(name="havi.content.generate_drafts", bind=True, max_retries=3)
@@ -40,9 +43,13 @@ def generate_drafts(
             asyncio.run(_run())
         except GenerationFailed:
             return
+        except ContentJobNotFound:
+            logger.warning("Job %s không tồn tại trong workspace %s", job_id, workspace_id)
+            return
     finally:
         if token is not None:
             reset_request_id(token)
+
 
 
 @celery_app.task(name="havi.listening.classify", bind=True)

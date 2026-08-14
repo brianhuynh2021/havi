@@ -12,8 +12,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from httpx import AsyncClient
 
-TODAY = datetime.now(UTC).date()
-RANGE = {"start": (TODAY - timedelta(days=7)).isoformat(), "end": TODAY.isoformat()}
+from domain.policies.scheduling import VIETNAM_TZ
 
 
 async def _onboard(client: AsyncClient, email: str) -> dict:
@@ -51,9 +50,15 @@ async def _create_lead(
 
 
 async def _summary(client: AsyncClient, headers: dict) -> dict:
-    resp = await client.get("/analytics/summary", params=RANGE, headers=headers)
+    now_vn = datetime.now(VIETNAM_TZ).date()
+    params = {
+        "start": (now_vn - timedelta(days=7)).isoformat(),
+        "end": (now_vn + timedelta(days=1)).isoformat(),
+    }
+    resp = await client.get("/analytics/summary", params=params, headers=headers)
     assert resp.status_code == 200, resp.text
     return resp.json()
+
 
 
 @pytest.mark.asyncio
