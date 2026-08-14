@@ -28,19 +28,14 @@ from domain.policies.content_output import output_json_schema, parse_and_validat
 from domain.policies.provider_router import AllProvidersFailed, ProviderRouter
 from domain.ports.llm import LLMRequest
 
+from application.services.content_service import ContentJobNotFound, WorkspaceNotFound
+
 logger = logging.getLogger("havi.content_engine")
-
-
-class WorkspaceNotFound(Exception):
-    pass
-
-
-class ContentJobNotFound(Exception):
-    pass
 
 
 class GenerationFailed(Exception):
     """Mọi provider đều thất bại — job chuyển sang `failed` với reason rõ."""
+
 
 
 @dataclass

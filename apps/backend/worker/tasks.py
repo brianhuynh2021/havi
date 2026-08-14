@@ -8,7 +8,9 @@ import asyncio
 import logging
 from uuid import UUID
 
-from application.services.content_engine import ContentJobNotFound, GenerationFailed
+from application.services.content_engine import GenerationFailed
+from application.services.content_service import ContentJobNotFound, WorkspaceNotFound
+
 from core.request_context import reset_request_id, set_request_id
 from worker.celery_app import celery_app
 
@@ -32,23 +34,30 @@ def generate_drafts(
     from worker.content_engine_factory import content_engine_scope
 
     async def _run() -> None:
-        async with content_engine_scope() as engine:
-            await engine.generate_drafts(
-                workspace_id=UUID(workspace_id), job_id=UUID(job_id)
-            )
+        ws_id = UUID(workspace_id)
+        j_id = UUID(job_id)
+        for attempt in range(3):
+            try:
+                async with content_engine_scope() as engine:
+                    await engine.generate_drafts(workspace_id=ws_id, job_id=j_id)
+                    return
+            except ContentJobNotFound:
+                if attempt < 2:
+                    await asyncio.sleep(0.3)
+                else:
+                    raise
 
     token = set_request_id(request_id) if request_id else None
     try:
         try:
             asyncio.run(_run())
-        except GenerationFailed:
-            return
-        except ContentJobNotFound:
-            logger.warning("Job %s không tồn tại trong workspace %s", job_id, workspace_id)
+        except (GenerationFailed, ContentJobNotFound, WorkspaceNotFound) as exc:
+            logger.warning("Worker bỏ qua job %s (%s)", job_id, type(exc).__name__)
             return
     finally:
         if token is not None:
             reset_request_id(token)
+
 
 
 
