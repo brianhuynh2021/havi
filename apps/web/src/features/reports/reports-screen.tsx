@@ -29,6 +29,10 @@ function attributionPercent(item: ChannelAttribution): number {
   return Math.max(0, Math.min(100, Math.round(item.share * 100)));
 }
 
+function formatVnd(amount: number): string {
+  return `${amount.toLocaleString("vi-VN")} đ`;
+}
+
 export function ReportsScreen() {
   const { t } = useLanguage();
   const [data, setData] = useState<ReportsData | null>(null);
@@ -55,19 +59,13 @@ export function ReportsScreen() {
     };
   }, [reloadKey]);
 
-  /** Nhãn nói đúng thứ backend đo.
-   *
-   * `won_leads` là lead ở stage "đã chốt", không phải khách bước qua cửa tiệm —
-   * Havi chưa nối POS hay check-in nào. Trước đây trường này tên `walk_ins`, và
-   * gọi nó là "khách đến tiệm" ở đây sẽ là con số duy nhất trên màn Báo cáo hứa
-   * một phép đo mà hệ thống không thực hiện.
-   */
   function getStatCards(reportsData: ReportsData) {
     return [
       { label: t("dashboard.publishedPosts", "Bài đã đăng"), value: String(reportsData.summary.published_posts) },
       { label: t("dashboard.leadsCaptured", "Lead đã ghi nhận"), value: String(reportsData.summary.new_leads) },
-      { label: t({ vi: "Lead đã chốt", en: "Won Leads" }), value: String(reportsData.summary.won_leads) },
+      { label: t({ vi: "Lead đã chốt (POS)", en: "Won Leads (POS)" }), value: String(reportsData.summary.won_leads) },
       { label: t({ vi: "Tỷ lệ chốt", en: "Win Rate" }), value: percent(reportsData.summary.lead_won_rate) },
+      { label: t({ vi: "Doanh thu POS", en: "POS Revenue" }), value: formatVnd(reportsData.summary.total_revenue_vnd || 0) },
     ];
   }
 

@@ -13,25 +13,25 @@ from domain.models.lead import Lead
 
 @dataclass(frozen=True)
 class LeadOutcomes:
-    """Số liệu kết quả kinh doanh trong một khoảng thời gian.
-
-    `won_leads` đếm lead ở stage `WON` và `/analytics/summary` phơi ra đúng cái
-    tên đó. Trước đây nó được gọi là `walk_ins`, nhưng Havi chưa nối POS hay
-    check-in nào — không có nguồn nào ở đây đếm được người bước qua cửa tiệm, nên
-    cái tên cũ hứa một phép đo mà hệ thống không thực hiện. Nếu sau này có nguồn
-    check-in thật thì nó là một trường riêng, không phải trường này đổi nghĩa.
-    """
+    """Số liệu kết quả kinh doanh trong một khoảng thời gian."""
 
     new_leads: int
     won_leads: int
     closed_leads: int
     returning_customers: int
+    total_revenue_vnd: int = 0
 
     @property
     def won_rate(self) -> float:
         if self.closed_leads <= 0:
             return 0.0
         return round(self.won_leads / self.closed_leads, 4)
+
+    @property
+    def average_order_value_vnd(self) -> int:
+        if self.won_leads <= 0:
+            return 0
+        return int(self.total_revenue_vnd / self.won_leads)
 
 
 class LeadRepository:
@@ -53,13 +53,12 @@ class LeadRepository:
                 func.count(Lead.id),
                 func.count(Lead.id).filter(Lead.stage == LeadStage.WON),
                 func.count(Lead.id).filter(Lead.stage.in_((LeadStage.WON, LeadStage.LOST))),
+                func.coalesce(func.sum(Lead.revenue_vnd), 0),
             ).where(*window)
         )
-        new_leads, won_leads, closed_leads = totals.one()
+        new_leads, won_leads, closed_leads, total_revenue = totals.one()
 
-        # Khách quay lại = số điện thoại đã từng xuất hiện trước kỳ này. Số điện
-        # thoại là khoá duy nhất nhận diện được người thật mà Havi đang có; lead
-        # không có số thì không tính, còn hơn đoán theo tên trùng.
+        # Khách quay lại = số điện thoại đã từng xuất hiện trước kỳ này.
         earlier_phones = (
             select(Lead.phone)
             .where(
@@ -82,7 +81,23 @@ class LeadRepository:
             won_leads=won_leads,
             closed_leads=closed_leads,
             returning_customers=returning.scalar_one(),
+            total_revenue_vnd=int(total_revenue),
         )
+
+    async def find_by_phone(self, *, workspace_id: UUID, phone: str) -> Lead | None:
+        result = await self._session.execute(
+            select(Lead)
+            .where(Lead.workspace_id == workspace_id, Lead.phone == phone)
+            .order_by(Lead.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def find_by_order_id(self, *, workspace_id: UUID, order_id: str) -> Lead | None:
+        result = await self._session.execute(
+            select(Lead).where(Lead.workspace_id == workspace_id, Lead.order_id == order_id)
+        )
+        return result.scalar_one_or_none()
 
     async def get(self, *, workspace_id: UUID, lead_id: UUID) -> Lead | None:
         result = await self._session.execute(

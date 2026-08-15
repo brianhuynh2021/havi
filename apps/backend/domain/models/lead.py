@@ -32,6 +32,8 @@ class Lead(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     message: Mapped[str | None] = mapped_column(Text, default=None)
     suggested_reply: Mapped[str | None] = mapped_column(Text, default=None)
     notes: Mapped[str | None] = mapped_column(Text, default=None)
+    revenue_vnd: Mapped[int] = mapped_column(default=0, server_default="0")
+    order_id: Mapped[str | None] = mapped_column(default=None, nullable=True)
     content_item_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("content_items.id", ondelete="SET NULL"), index=True, default=None
     )

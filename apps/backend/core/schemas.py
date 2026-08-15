@@ -469,6 +469,7 @@ class AnalyticsSummary(HaviModel):
     published_posts: int
     new_leads: int
     lead_won_rate: float
+    total_revenue_vnd: int = 0
     change_vs_previous_period: dict[str, float] = Field(default_factory=dict)
 
 

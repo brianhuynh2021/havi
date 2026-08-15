@@ -52,6 +52,7 @@ from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
+from application.services.sales_service import SalesService
 from application.services.video_render_service import VideoRenderService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
@@ -152,6 +153,16 @@ def get_crm_nudge_service(session: DbSessionDep) -> CrmNudgeService:
 
 
 CrmNudgeServiceDep = Annotated[CrmNudgeService, Depends(get_crm_nudge_service)]
+
+
+def get_sales_service(session: DbSessionDep) -> SalesService:
+    return SalesService(
+        lead_repo=LeadRepository(session),
+        event_repo=EventLogRepository(session),
+    )
+
+
+SalesServiceDep = Annotated[SalesService, Depends(get_sales_service)]
 
 
 @lru_cache

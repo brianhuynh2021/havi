@@ -24,6 +24,7 @@ from domain.policies.oauth_state import (
 )
 from domain.policies.phone import InvalidPhoneNumber, normalize_vietnamese_phone
 from domain.policies.provider_router import AllProvidersFailed, ProviderRouter
+from domain.policies.sales_attribution import PosOrder, format_pos_notes
 from domain.policies.quota import (
     MONTHLY_TOKEN_QUOTA,
     QuotaExceeded,

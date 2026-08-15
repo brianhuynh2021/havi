@@ -17,16 +17,18 @@ Ba tính chất bắt buộc của mọi endpoint ở đây, vì chúng public v
 import hashlib
 import hmac
 import logging
+import uuid
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
-from api.deps import InboxServiceDep, SettingsDep, WorkspaceDep
+from api.deps import InboxServiceDep, SalesServiceDep, SettingsDep, WorkspaceDep
 from core.enums import Platform
 from core.events import EventLogEntry
 from core.schemas import HaviModel
+from domain.policies.sales_attribution import PosOrder
 
 logger = logging.getLogger(__name__)
 
@@ -223,3 +225,61 @@ def _iter_inquiries(payload: dict):
                 author_name=author,
                 text=text,
             )
+
+
+class PosOrderPayload(HaviModel):
+    """Payload nhận đơn hàng / hóa đơn từ máy POS hoặc phần mềm bán hàng."""
+
+    order_id: str
+    customer_name: str = "Khách tại quầy"
+    customer_phone: str | None = None
+    amount_vnd: int
+    source: str = "pos"
+    items: list[str] = []
+
+
+class PosIngestResponse(HaviModel):
+    success: bool
+    lead_id: str
+    customer_name: str
+    amount_vnd: int
+    stage: str
+
+
+@router.post(
+    "/pos",
+    response_model=PosIngestResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Tiếp nhận đơn hàng POS bán hàng tại quầy (Station 5)",
+)
+async def ingest_pos_webhook(
+    payload: PosOrderPayload,
+    workspace_id: str,
+    sales_service: SalesServiceDep,
+    workspace_dep: WorkspaceDep,
+) -> PosIngestResponse:
+    """Tiếp nhận đơn hàng từ máy POS, gắn doanh thu vào Lead và chuyển sang stage WON."""
+    try:
+        ws_uuid = uuid.UUID(workspace_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="workspace_id không hợp lệ.",
+        )
+
+    order = PosOrder(
+        order_id=payload.order_id,
+        customer_name=payload.customer_name,
+        customer_phone=payload.customer_phone,
+        amount_vnd=payload.amount_vnd,
+        source=payload.source,
+        items=payload.items,
+    )
+    lead = await sales_service.ingest_pos_order(workspace_id=ws_uuid, order=order)
+    return PosIngestResponse(
+        success=True,
+        lead_id=str(lead.id),
+        customer_name=lead.name,
+        amount_vnd=lead.revenue_vnd or payload.amount_vnd,
+        stage=lead.stage.value if hasattr(lead.stage, "value") else str(lead.stage),
+    )

@@ -187,6 +187,7 @@ class LeadSource(StrEnum):
     MAPS = "maps"
     GROUP = "group"
     CRM = "crm"
+    POS = "pos"
 
 
 class LeadStage(StrEnum):

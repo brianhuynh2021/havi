@@ -149,6 +149,7 @@ async def _outcomes_for(
         "published_posts": published,
         "new_leads": leads.new_leads,
         "lead_won_rate": leads.won_rate,
+        "total_revenue_vnd": leads.total_revenue_vnd,
     }
 
 
@@ -181,6 +182,7 @@ async def summary(
         published_posts=int(current["published_posts"]),
         new_leads=int(current["new_leads"]),
         lead_won_rate=current["lead_won_rate"],
+        total_revenue_vnd=int(current["total_revenue_vnd"]),
         change_vs_previous_period={
             key: _percent_change(current[key], previous[key]) for key in current
         },
