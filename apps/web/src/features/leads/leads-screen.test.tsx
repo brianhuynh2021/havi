@@ -105,4 +105,42 @@ describe("LeadsScreen", () => {
     );
     expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
   });
+
+  it("hiển thị danh sách tin nhắn chăm sóc khách cũ và duyệt gửi", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const url = new URL(input instanceof Request ? input.url : String(input));
+        if (url.pathname.endsWith("/inbox")) {
+          return jsonResponse({ items: [], total: 0 });
+        }
+        if (url.pathname.endsWith("/leads")) {
+          return jsonResponse({ items: [], total: 0 });
+        }
+        if (url.pathname.includes("/crm/nudges")) {
+          return jsonResponse({
+            items: [
+              {
+                id: "nudge-1",
+                workspace_id: "w1",
+                lead_id: "lead-1",
+                nudge_type: "inactive_30_days",
+                status: "pending_approval",
+                message: "Chào chị Lan, tiệm tặng chị voucher giảm 20% khi ghé tuần này nhé!",
+                created_at: "2026-08-13T10:00:00Z",
+              },
+            ],
+            total: 1,
+          });
+        }
+        return jsonResponse({});
+      }
+    );
+
+    renderLeads();
+
+    expect(
+      await screen.findByText(/Chào chị Lan, tiệm tặng chị voucher/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /duyệt & gửi tin nhắn/i })).toBeInTheDocument();
+  });
 });

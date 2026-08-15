@@ -23,6 +23,13 @@ class WorkspaceRepository:
         result = await self._session.execute(select(Workspace).where(Workspace.id == workspace_id))
         return result.scalar_one_or_none()
 
+    async def get(self, workspace_id: UUID) -> Workspace | None:
+        return await self.get_by_id(workspace_id)
+
+    async def list_all(self) -> list[Workspace]:
+        result = await self._session.execute(select(Workspace).order_by(Workspace.created_at))
+        return list(result.scalars().all())
+
     async def list_for_user(self, user_id: UUID) -> list[Workspace]:
         result = await self._session.execute(
             select(Workspace)

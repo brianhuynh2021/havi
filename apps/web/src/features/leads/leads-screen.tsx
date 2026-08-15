@@ -5,10 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import {
+  approveNudge,
   dismissInboxItem,
+  dismissNudge,
+  getActiveWorkspaceId,
   listInbox,
   listLeads,
+  listNudges,
   sendInboxReply,
+  triggerNudgeScan,
+  type CrmNudge,
   type InboxItem,
   type Lead,
 } from "./leads.api";
@@ -20,19 +26,24 @@ const statusTone: Record<string, BadgeTone> = {
   new: "neutral",
   drafted: "warning",
   awaiting_approval: "warning",
+  pending_approval: "warning",
   sent: "success",
   dismissed: "neutral",
 };
 
 export function LeadsScreen() {
   const { t } = useLanguage();
+  const workspaceId = getActiveWorkspaceId();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [nudges, setNudges] = useState<CrmNudge[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [scanningNudges, setScanningNudges] = useState(false);
+  const [processingNudgeId, setProcessingNudgeId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -48,6 +59,15 @@ export function LeadsScreen() {
 
     if (leadRes.ok) {
       setLeads(leadRes.data);
+    }
+
+    if (workspaceId) {
+      const nudgeRes = await listNudges(workspaceId);
+      if (nudgeRes.ok && Array.isArray(nudgeRes.data?.items)) {
+        setNudges(nudgeRes.data.items);
+      } else {
+        setNudges([]);
+      }
     }
     setLoading(false);
   };
@@ -66,13 +86,22 @@ export function LeadsScreen() {
       if (leadRes.ok) {
         setLeads(leadRes.data);
       }
+
+      if (workspaceId) {
+        const nudgeRes = await listNudges(workspaceId);
+        if (isMounted && nudgeRes.ok && Array.isArray(nudgeRes.data?.items)) {
+          setNudges(nudgeRes.data.items);
+        } else if (isMounted) {
+          setNudges([]);
+        }
+      }
       setLoading(false);
     }
     init();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [workspaceId]);
 
   const handleSend = async (id: string, text: string) => {
     setSendingId(id);
@@ -99,12 +128,56 @@ export function LeadsScreen() {
     }
   };
 
+  const handleScanNudges = async () => {
+    if (!workspaceId) return;
+    setScanningNudges(true);
+    const res = await triggerNudgeScan(workspaceId, 30);
+    setScanningNudges(false);
+    if (res.ok) {
+      const nudgeRes = await listNudges(workspaceId);
+      if (nudgeRes.ok) {
+        setNudges(nudgeRes.data.items);
+      }
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const handleApproveNudge = async (nudgeId: string) => {
+    if (!workspaceId) return;
+    setProcessingNudgeId(nudgeId);
+    const res = await approveNudge(workspaceId, nudgeId);
+    setProcessingNudgeId(null);
+    if (res.ok) {
+      setNudges((prev) =>
+        prev.map((n) => (n.id === nudgeId ? { ...n, status: "sent" } : n))
+      );
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const handleDismissNudge = async (nudgeId: string) => {
+    if (!workspaceId) return;
+    setProcessingNudgeId(nudgeId);
+    const res = await dismissNudge(workspaceId, nudgeId);
+    setProcessingNudgeId(null);
+    if (res.ok) {
+      setNudges((prev) =>
+        prev.map((n) => (n.id === nudgeId ? { ...n, status: "dismissed" } : n))
+      );
+    } else {
+      alert(res.message);
+    }
+  };
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "new":
         return t({ vi: "Mới", en: "New" });
       case "drafted":
       case "awaiting_approval":
+      case "pending_approval":
         return t({ vi: "Chờ bạn duyệt", en: "Awaiting review" });
       case "sent":
         return t({ vi: "Đã gửi", en: "Sent" });
@@ -136,91 +209,176 @@ export function LeadsScreen() {
           <p>{t({ vi: "Đang tải hộp thư...", en: "Loading inbox..." })}</p>
         </div>
       ) : (
-        <section className={styles.leadsList} aria-label="Inbox list">
-          {items.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>{t({ vi: "Chưa có tin nhắn hoặc bình luận nào.", en: "No messages or comments yet." })}</p>
-            </div>
-          ) : (
-            items.map((item) => {
-              const currentReply = replyTextMap[item.id] ?? item.ai_suggested_reply ?? "";
-              const isEditing = editingId === item.id;
-              const isPending = item.status === "drafted";
+        <>
+          <section className={styles.leadsList} aria-label="Inbox list">
+            {items.length === 0 ? (
+              <div className={styles.emptyState}>
+                <p>{t({ vi: "Chưa có tin nhắn hoặc bình luận nào.", en: "No messages or comments yet." })}</p>
+              </div>
+            ) : (
+              items.map((item) => {
+                const currentReply = replyTextMap[item.id] ?? item.ai_suggested_reply ?? "";
+                const isEditing = editingId === item.id;
+                const isPending = item.status === "drafted";
 
-              return (
-                <article key={item.id} className={styles.leadCard}>
-                  <div className={styles.leadHeader}>
-                    <div>
-                      <p className={styles.leadName}>{item.author_name}</p>
-                      <p className={styles.leadMeta}>
-                        {item.platform} · {new Date(item.created_at).toLocaleString("vi-VN")}
-                      </p>
+                return (
+                  <article key={item.id} className={styles.leadCard}>
+                    <div className={styles.leadHeader}>
+                      <div>
+                        <p className={styles.leadName}>{item.author_name}</p>
+                        <p className={styles.leadMeta}>
+                          {item.platform} · {new Date(item.created_at).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
+                      <Badge tone={statusTone[item.status] || "neutral"}>
+                        {getStatusLabel(item.status)}
+                      </Badge>
                     </div>
-                    <Badge tone={statusTone[item.status] || "neutral"}>
-                      {getStatusLabel(item.status)}
-                    </Badge>
-                  </div>
 
-                  <p className={styles.leadMessage}>&ldquo;{item.content}&rdquo;</p>
+                    <p className={styles.leadMessage}>&ldquo;{item.content}&rdquo;</p>
 
-                  {item.ai_suggested_reply ? (
-                    <div className={styles.replyBox}>
-                      <p className={styles.replyLabel}>
-                        {t({ vi: "Havi gợi ý trả lời", en: "Havi Suggested Reply" })}
-                      </p>
-                      {isEditing ? (
-                        <textarea
-                          className={styles.replyInput}
-                          value={currentReply}
-                          onChange={(e) =>
-                            setReplyTextMap((prev) => ({ ...prev, [item.id]: e.target.value }))
-                          }
-                          rows={3}
-                        />
-                      ) : (
-                        <p className={styles.replyText}>{currentReply}</p>
-                      )}
-                    </div>
-                  ) : null}
+                    {item.ai_suggested_reply ? (
+                      <div className={styles.replyBox}>
+                        <p className={styles.replyLabel}>
+                          {t({ vi: "Havi gợi ý trả lời", en: "Havi Suggested Reply" })}
+                        </p>
+                        {isEditing ? (
+                          <textarea
+                            className={styles.replyInput}
+                            value={currentReply}
+                            onChange={(e) =>
+                              setReplyTextMap((prev) => ({ ...prev, [item.id]: e.target.value }))
+                            }
+                            rows={3}
+                          />
+                        ) : (
+                          <p className={styles.replyText}>{currentReply}</p>
+                        )}
+                      </div>
+                    ) : null}
 
-                  {isPending ? (
-                    <div className={styles.leadActions}>
-                      <Button
-                        variant="primary"
-                        disabled={sendingId === item.id}
-                        onClick={() => handleSend(item.id, currentReply)}
-                      >
-                        {sendingId === item.id
-                          ? t({ vi: "Đang gửi...", en: "Sending..." })
-                          : t({ vi: "Duyệt & gửi", en: "Approve & Send" })}
-                      </Button>
-
-                      {isEditing ? (
-                        <Button variant="outline" onClick={() => setEditingId(null)}>
-                          {t({ vi: "Huỷ", en: "Cancel" })}
+                    {isPending ? (
+                      <div className={styles.leadActions}>
+                        <Button
+                          variant="primary"
+                          disabled={sendingId === item.id}
+                          onClick={() => handleSend(item.id, currentReply)}
+                        >
+                          {sendingId === item.id
+                            ? t({ vi: "Đang gửi...", en: "Sending..." })
+                            : t({ vi: "Duyệt & gửi", en: "Approve & Send" })}
                         </Button>
-                      ) : (
-                        <Button variant="outline" onClick={() => setEditingId(item.id)}>
-                          {t({ vi: "Sửa câu trả lời", en: "Edit reply" })}
+
+                        {isEditing ? (
+                          <Button variant="outline" onClick={() => setEditingId(null)}>
+                            {t({ vi: "Huỷ", en: "Cancel" })}
+                          </Button>
+                        ) : (
+                          <Button variant="outline" onClick={() => setEditingId(item.id)}>
+                            {t({ vi: "Sửa câu trả lời", en: "Edit reply" })}
+                          </Button>
+                        )}
+
+                        <Button variant="ghost" onClick={() => handleDismiss(item.id)}>
+                          {t({ vi: "Bỏ qua", en: "Dismiss" })}
                         </Button>
-                      )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })
+            )}
 
-                      <Button variant="ghost" onClick={() => handleDismiss(item.id)}>
-                        {t({ vi: "Bỏ qua", en: "Dismiss" })}
-                      </Button>
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })
-          )}
+            {leads.length > 0 ? (
+              <div className={styles.leadSectionHeader}>
+                <h2>{t({ vi: "Khách hàng ghi nhận", en: "Captured Leads" })} ({leads.length})</h2>
+              </div>
+            ) : null}
+          </section>
 
-          {leads.length > 0 ? (
-            <div className={styles.leadSectionHeader}>
-              <h2>{t({ vi: "Khách hàng ghi nhận", en: "Captured Leads" })} ({leads.length})</h2>
+          {/* CRM Re-engagement Nudge Section */}
+          <section className={styles.nudgeSection} aria-label="CRM Nudges">
+            <div className={styles.nudgeHeader}>
+              <div>
+                <h2>{t({ vi: "🔔 Chăm sóc khách cũ tự động (>30 ngày)", en: "🔔 CRM Re-engagement (>30 Days)" })}</h2>
+                <p className={styles.subtitle}>
+                  {t({
+                    vi: "Havi tự động soạn tin nhắn ưu đãi cá nhân hoá để kéo khách quay lại tiệm.",
+                    en: "Havi auto-generates personalized discount messages to bring customers back.",
+                  })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                disabled={scanningNudges || !workspaceId}
+                onClick={handleScanNudges}
+              >
+                {scanningNudges
+                  ? t({ vi: "Đang quét...", en: "Scanning..." })
+                  : t({ vi: "⚡ Quét khách cũ ngay", en: "⚡ Scan Inactive Leads" })}
+              </Button>
             </div>
-          ) : null}
-        </section>
+
+            {(nudges ?? []).length === 0 ? (
+              <div className={styles.emptyState}>
+                <p>
+                  {t({
+                    vi: "Chưa có tin nhắn chăm sóc khách cũ nào cần duyệt. Bấm 'Quét khách cũ ngay' để tìm khách chưa quay lại.",
+                    en: "No pending re-engagement nudges. Click 'Scan Inactive Leads' to find inactive customers.",
+                  })}
+                </p>
+              </div>
+            ) : (
+              (nudges ?? []).map((nudge) => {
+                const isPending = nudge.status === "pending_approval";
+                const isProcessing = processingNudgeId === nudge.id;
+
+                return (
+                  <article key={nudge.id} className={styles.nudgeCard}>
+                    <div className={styles.leadHeader}>
+                      <div>
+                        <p className={styles.leadName}>
+                          {t({ vi: "Khách hàng thân thiết", en: "Valued Customer" })}
+                        </p>
+                        <p className={styles.leadMeta}>
+                          {t({ vi: "Loại: Khách >30 ngày chưa ghé", en: "Type: >30 Days Inactive" })} · {new Date(nudge.created_at).toLocaleDateString("vi-VN")}
+                        </p>
+                      </div>
+                      <Badge tone={statusTone[nudge.status] || "neutral"}>
+                        {getStatusLabel(nudge.status)}
+                      </Badge>
+                    </div>
+
+                    <div className={styles.nudgeMessage}>
+                      <p>{nudge.message}</p>
+                    </div>
+
+                    {isPending ? (
+                      <div className={styles.leadActions}>
+                        <Button
+                          variant="primary"
+                          disabled={isProcessing}
+                          onClick={() => handleApproveNudge(nudge.id)}
+                        >
+                          {isProcessing
+                            ? t({ vi: "Đang xử lý...", en: "Processing..." })
+                            : t({ vi: "Duyệt & Gửi tin nhắn", en: "Approve & Send" })}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          disabled={isProcessing}
+                          onClick={() => handleDismissNudge(nudge.id)}
+                        >
+                          {t({ vi: "Bỏ qua", en: "Dismiss" })}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })
+            )}
+          </section>
+        </>
       )}
     </>
   );

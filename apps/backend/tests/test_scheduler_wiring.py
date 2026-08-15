@@ -40,7 +40,6 @@ class TestBeatSchedule:
         traceback trong log worker thì biết là đã biết, không phải regression."""
         chua_lam = {
             "havi.scheduler.refresh_platform_tokens",
-            "havi.scheduler.crm_lifecycle_nudges",
             "havi.scheduler.poll_engagement",
         }
         for name in chua_lam:

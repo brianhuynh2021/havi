@@ -17,6 +17,7 @@ from adapters.email.smtp import SmtpEmailSender
 from adapters.media.ffmpeg_processor import FFmpegVideoProcessor
 from adapters.oauth.base import OAuthClientPort
 from adapters.oauth.facebook import FacebookOAuthClient
+from adapters.oauth.google_business import GoogleBusinessOAuthClient
 from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
 from adapters.oauth.tiktok import TikTokOAuthClient
 from adapters.oauth.zalo import ZaloOAuthClient
@@ -24,6 +25,7 @@ from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
+from adapters.persistence.crm_nudge_repository import CrmNudgeRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
@@ -44,6 +46,7 @@ from application.services.billing_service import BillingService
 from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
+from application.services.crm_nudge_service import CrmNudgeService
 from application.services.inbox_service import InboxService
 from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.lead_service import LeadService
@@ -139,6 +142,18 @@ def get_lead_service(session: DbSessionDep) -> LeadService:
 LeadServiceDep = Annotated[LeadService, Depends(get_lead_service)]
 
 
+def get_crm_nudge_service(session: DbSessionDep) -> CrmNudgeService:
+    return CrmNudgeService(
+        nudge_repo=CrmNudgeRepository(session),
+        workspace_repo=WorkspaceRepository(session),
+        profile_repo=BrandProfileRepository(session),
+        event_repo=EventLogRepository(session),
+    )
+
+
+CrmNudgeServiceDep = Annotated[CrmNudgeService, Depends(get_crm_nudge_service)]
+
+
 @lru_cache
 def _alert_sink() -> AlertSink:
     return LoggingAlertSink()
@@ -232,6 +247,7 @@ def _oauth_clients() -> dict[Platform, OAuthClientPort]:
     settings = get_settings()
     return {
         Platform.FACEBOOK: FacebookOAuthClient(settings),
+        Platform.GOOGLE_BUSINESS: GoogleBusinessOAuthClient(settings),
         Platform.TIKTOK: TikTokOAuthClient(settings),
         Platform.YOUTUBE: GoogleYouTubeOAuthClient(settings),
         Platform.ZALO_OA: ZaloOAuthClient(settings),

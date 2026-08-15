@@ -16,6 +16,67 @@
   font-size: 14px;
 }
 
+.loadingState,
+.emptyState,
+.errorBox {
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+}
+
+.errorBox {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.nudgeSection {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nudgeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nudgeHeader h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.nudgeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 22px;
+  border: 1px solid #e0e7ff;
+  border-radius: 14px;
+  background: #f8fafc;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.05);
+}
+
+.nudgeMessage {
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #1e293b;
+}
+
 .faqStrip {
   margin-top: 20px;
   padding: 14px 18px;

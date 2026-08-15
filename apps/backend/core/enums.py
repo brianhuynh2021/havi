@@ -217,9 +217,16 @@ class CrmChannel(StrEnum):
     EMAIL = "email"
 
 
+class CrmNudgeType(StrEnum):
+    INACTIVE_30_DAYS = "inactive_30_days"
+    FOLLOWUP_14_DAYS = "followup_14_days"
+    BIRTHDAY_SPECIAL = "birthday_special"
+
+
 class CrmMessageStatus(StrEnum):
     PENDING_APPROVAL = "pending_approval"
     SENT = "sent"
+    DISMISSED = "dismissed"
 
 
 class SubscriptionStatus(StrEnum):

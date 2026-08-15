@@ -9,6 +9,7 @@ from domain.models.audit import EventLog
 from domain.models.base import Base
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
+from domain.models.crm_nudge import CrmNudge
 from domain.models.inbox import InboxItem
 from domain.models.lead import Lead
 from domain.models.media import MediaAsset
@@ -40,5 +41,6 @@ __all__ = [
     "PublishJob",
     "InboxItem",
     "Lead",
+    "CrmNudge",
     "Invoice",
 ]
