@@ -481,11 +481,11 @@ export function ContentCreationScreen() {
     // Job vừa tạo sẽ tiêu token — nạp lại số còn lại sau khi worker chạy xong.
     setQuotaKey((k) => k + 1);
 
-    // Hiển thị Toast góc phải màn hình theo chuẩn MIT
+    // Hiển thị Toast góc phải màn hình
     addToast({
       type: "loading",
-      title: "⚡ Havi đang viết bài cho tiệm",
-      description: "Đang chạy ngầm trong nền — Chị có thể tạo tiếp bài khác hoặc chuyển màn hình thoải mái.",
+      title: "⚡ Havi đang viết bài cho tiệm...",
+      description: "Đang hoàn thiện bài viết và tối ưu cho từng kênh. Bản nháp sẽ sẵn sàng trong giây lát!",
     });
   }
 
@@ -505,8 +505,8 @@ export function ContentCreationScreen() {
         ? "🚀 Đã phát lệnh đăng bài thành công!"
         : "📅 Đã xếp bài vào Lịch đăng!",
       body: scheduledAt
-        ? "Bài viết đang được Havi gửi trực tiếp lên trang Facebook Fanpage của tiệm chị. Chị có thể sang Facebook kiểm tra hoặc chuyển sang tab Lịch đăng nhé!"
-        : "Bài viết đã được duyệt và xếp lịch tự động. Havi sẽ tự động xuất bản bài viết đúng giờ chị đã chọn.",
+        ? "Nội dung đang được Havi gửi trực tiếp lên kênh của tiệm. Anh/chị có thể kiểm tra trực tiếp trên kênh hoặc theo dõi trong Lịch đăng bài nhé!"
+        : "Bài viết đã được duyệt và xếp lịch tự động. Havi sẽ tự động xuất bản bài viết đúng giờ đã chọn.",
       isInstant: !!scheduledAt,
     });
     setNotice(
