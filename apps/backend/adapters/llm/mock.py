@@ -31,6 +31,24 @@ _TEMPLATES: list[tuple[str, str, str]] = [
         "Chị nào quan tâm thì nhắn tiệm để được tư vấn thêm ạ!",
     ),
     (
+        "youtube",
+        "YouTube Shorts",
+        "{tiem} chia sẻ kỹ thuật thực tế: {noi_dung} "
+        "Theo dõi kênh để xem thêm nhiều bài học bổ ích nhé! #Shorts",
+    ),
+    (
+        "tiktok",
+        "TikTok Clip",
+        "Góc thực chiến tại {tiem}! {noi_dung} "
+        "Bạn thấy thế nào? Hãy bình luận bên dưới nhé! #fyp #viral",
+    ),
+    (
+        "reels",
+        "Facebook Reels",
+        "{tiem} bật mí phương pháp mới: {noi_dung} "
+        "Thả tim và lưu lại clip để áp dụng ngay nhé!",
+    ),
+    (
         "zalo_oa",
         "Tin Zalo",
         "Chào chị, {tiem} gửi chị thông tin ạ: {noi_dung} "

@@ -30,9 +30,12 @@ async def test_mock_tra_output_dung_schema():
     response = await MockProvider().generate(_request())
 
     drafts = parse_and_validate(response.text, banned_claims=[])
-    assert len(drafts.drafts) == 3
+    assert len(drafts.drafts) == 6
     assert {d.channel.value for d in drafts.drafts} == {
         "facebook_page",
+        "youtube",
+        "tiktok",
+        "reels",
         "zalo_oa",
         "google_business",
     }
@@ -74,7 +77,7 @@ async def test_mock_chi_nap_anh_van_ra_bai_doc_duoc():
     response = await MockProvider().generate(_request(prompt))
 
     drafts = parse_and_validate(response.text, banned_claims=[])
-    assert len(drafts.drafts) == 3
+    assert len(drafts.drafts) == 6
     assert all(len(d.text) > 40 for d in drafts.drafts)
 
 
