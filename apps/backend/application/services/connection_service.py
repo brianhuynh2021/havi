@@ -76,7 +76,6 @@ class ConnectionService:
         self._settings = settings
         self._events = events
 
-
     # --- Đọc -----------------------------------------------------------------
 
     def supported_platforms(self) -> list[Platform]:
@@ -129,9 +128,7 @@ class ConnectionService:
         họ bấm từ đó. State hỏng thì về mặc định, không ném thêm lỗi ở đây.
         """
         try:
-            payload = verify_oauth_state(
-                state, platform=platform, settings=self._settings
-            )
+            payload = verify_oauth_state(state, platform=platform, settings=self._settings)
         except InvalidOAuthState:
             return RETURN_PATHS[DEFAULT_RETURN_KEY]
         return payload.return_path
@@ -195,9 +192,7 @@ class ConnectionService:
         Khác `mark_unusable` (giữ bản ghi để hiện nút "Nối lại"): đây là chủ
         tiệm chủ động ngắt, giữ token lại không còn lý do gì.
         """
-        connection = await self._connections.get(
-            workspace_id=workspace_id, platform=platform
-        )
+        connection = await self._connections.get(workspace_id=workspace_id, platform=platform)
         if connection is None:
             raise ConnectionNotFound()
         if self._events is not None:

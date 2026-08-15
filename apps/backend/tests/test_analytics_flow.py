@@ -50,9 +50,7 @@ async def _add_item(
         text="Ưu đãi gội đầu thảo dược cuối tuần này.",
         status=status,
         published_at=(
-            datetime(2026, 8, 9, 6, 30, tzinfo=UTC)
-            if status == ContentStatus.PUBLISHED
-            else None
+            datetime(2026, 8, 9, 6, 30, tzinfo=UTC) if status == ContentStatus.PUBLISHED else None
         ),
     )
     session.add(item)
@@ -97,9 +95,7 @@ async def _add_publish_job(
     status: PublishStatus,
     updated_at: datetime,
 ) -> None:
-    item = await _add_item(
-        session, workspace_id=workspace_id, status=ContentStatus.SCHEDULED
-    )
+    item = await _add_item(session, workspace_id=workspace_id, status=ContentStatus.SCHEDULED)
     job = PublishJob(
         workspace_id=UUID(workspace_id),
         content_item_id=item.id,
@@ -196,9 +192,7 @@ async def test_analytics_summary_va_attribution_khong_lan_workspace_khac(
     )
     params = {"start": "2026-08-01", "end": "2026-08-31"}
 
-    summary = await client.get(
-        "/analytics/summary", params=params, headers=_headers(token_a)
-    )
+    summary = await client.get("/analytics/summary", params=params, headers=_headers(token_a))
     attribution = await client.get(
         "/analytics/attribution", params=params, headers=_headers(token_a)
     )

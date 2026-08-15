@@ -20,6 +20,7 @@ from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.content_prompt import build_system_prompt, build_user_prompt
+from application.services.content_service import ContentJobNotFound, WorkspaceNotFound
 from core.content_state import initial_status
 from core.enums import Channel, MediaStatus
 from core.events import EventLogEntry
@@ -28,14 +29,11 @@ from domain.policies.content_output import output_json_schema, parse_and_validat
 from domain.policies.provider_router import AllProvidersFailed, ProviderRouter
 from domain.ports.llm import LLMRequest
 
-from application.services.content_service import ContentJobNotFound, WorkspaceNotFound
-
 logger = logging.getLogger("havi.content_engine")
 
 
 class GenerationFailed(Exception):
     """Mọi provider đều thất bại — job chuyển sang `failed` với reason rõ."""
-
 
 
 @dataclass
@@ -63,7 +61,6 @@ class ContentEngine:
         self._events = events
         self._router = router
         self._connections = connections
-
 
     async def generate_drafts(self, *, workspace_id: UUID, job_id: UUID) -> GenerationResult:
         job = await self._content.get_job(workspace_id=workspace_id, job_id=job_id)
@@ -95,9 +92,7 @@ class ContentEngine:
             workspace_id=workspace_id, raw_inputs=job.raw_inputs
         )
         request = LLMRequest(
-            system_prompt=build_system_prompt(
-                workspace, profile, target_channels=target_channels
-            ),
+            system_prompt=build_system_prompt(workspace, profile, target_channels=target_channels),
             user_prompt=build_user_prompt(
                 workspace=workspace,
                 raw_inputs=job.raw_inputs,
@@ -181,7 +176,7 @@ class ContentEngine:
             if asset is None:
                 continue
             if asset.status == MediaStatus.PENDING:
-                logger.warning("job dùng asset %s chưa upload xong", asset.id)
+                logger.warning("Job using uncompleted media asset %s", asset.id)
                 continue
             descriptions.append(f"{asset.type.value}: {asset.filename}")
         return descriptions

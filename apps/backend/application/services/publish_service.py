@@ -40,7 +40,15 @@ def select_topic_image(media_note: str | None, text: str | None) -> str:
     """Chọn ảnh chủ đề chất lượng cao phù hợp với media_note hoặc nội dung bài AI sinh."""
     combined = f"{media_note or ''} {text or ''}".lower()
     keywords_gift = (
-        "quà", "gift", "thưởng", "khuyến mãi", "ưu đãi", "bốc thăm", "voucher", "trò chơi", "game"
+        "quà",
+        "gift",
+        "thưởng",
+        "khuyến mãi",
+        "ưu đãi",
+        "bốc thăm",
+        "voucher",
+        "trò chơi",
+        "game",
     )
     keywords_food = ("cafe", "cà phê", "trà", "ăn", "uống", "food", "drink", "nhà hàng")
     if any(k in combined for k in keywords_gift):
@@ -55,9 +63,12 @@ def select_topic_image(media_note: str | None, text: str | None) -> str:
     return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80"
 
 
-#: Kênh nào đăng qua nền tảng nào. Chỉ Facebook có adapter thật ở pilot.
+#: Kênh nào đăng qua nền tảng nào.
 CHANNEL_TO_PLATFORM: dict[Channel, Platform] = {
     Channel.FACEBOOK_PAGE: Platform.FACEBOOK,
+    Channel.REELS: Platform.FACEBOOK,
+    Channel.TIKTOK: Platform.TIKTOK,
+    Channel.YOUTUBE: Platform.YOUTUBE,
     Channel.ZALO_OA: Platform.ZALO_OA,
     Channel.GOOGLE_BUSINESS: Platform.GOOGLE_BUSINESS,
 }
@@ -193,9 +204,7 @@ class PublishService:
 
         media_urls: list[str] = []
         if self._media:
-            job_obj = await self._content.get_job(
-                workspace_id=job.workspace_id, job_id=item.job_id
-            )
+            job_obj = await self._content.get_job(workspace_id=job.workspace_id, job_id=item.job_id)
             if job_obj and job_obj.raw_inputs:
                 for inp in job_obj.raw_inputs:
                     asset_id_str = inp.get("media_asset_id")
@@ -229,13 +238,9 @@ class PublishService:
             await self._connections.mark_unusable(
                 connection, status=ConnectionStatus.EXPIRED, reason=exc.detail
             )
-            return await self._mark_failed_with_event(
-                job, kind=exc.kind, detail=exc.detail
-            )
+            return await self._mark_failed_with_event(job, kind=exc.kind, detail=exc.detail)
         except PublishError as exc:
-            return await self._mark_failed_with_event(
-                job, kind=exc.kind, detail=exc.detail
-            )
+            return await self._mark_failed_with_event(job, kind=exc.kind, detail=exc.detail)
 
         await self._content.mark_published(item, published_at=result.published_at)
         succeeded = await self._publishes.mark_succeeded(
@@ -243,10 +248,7 @@ class PublishService:
             external_post_id=result.external_post_id,
             published_at=result.published_at,
         )
-        summary = (
-            f"status={succeeded.status.value} "
-            f"external_post_id={result.external_post_id}"
-        )
+        summary = f"status={succeeded.status.value} external_post_id={result.external_post_id}"
         await self._record_event(
             succeeded,
             output_summary=summary,
@@ -256,13 +258,9 @@ class PublishService:
     async def list_jobs(
         self, *, workspace_id: UUID, status: PublishStatus | None = None
     ) -> list[PublishJob]:
-        return await self._publishes.list_for_workspace(
-            workspace_id=workspace_id, status=status
-        )
+        return await self._publishes.list_for_workspace(workspace_id=workspace_id, status=status)
 
-    async def retry_dead_letter(
-        self, *, workspace_id: UUID, job_id: UUID
-    ) -> PublishJob:
+    async def retry_dead_letter(self, *, workspace_id: UUID, job_id: UUID) -> PublishJob:
         """Chủ tiệm bấm "Thử lại" trên một job đã dead-letter.
 
         Reset rồi chạy ngay trong cùng transaction, không đẩy qua hàng đợi: người
@@ -283,15 +281,11 @@ class PublishService:
             )
 
         await self._publishes.reset_for_manual_retry(job)
-        claimed = await self._publishes.claim_one(
-            job_id=job_id, workspace_id=workspace_id
-        )
+        claimed = await self._publishes.claim_one(job_id=job_id, workspace_id=workspace_id)
         if claimed is None:
             # Scheduler nhận trước trong khoảnh khắc giữa reset và claim. Không
             # phải lỗi: job sẽ chạy, chỉ là không phải ở lượt này.
-            raise AlreadyRunning(
-                "Havi đang thử đăng lại bài này — chị đợi chút rồi xem lại nhé"
-            )
+            raise AlreadyRunning("Havi đang thử đăng lại bài này — chị đợi chút rồi xem lại nhé")
         return await self.run_job(claimed)
 
     async def run_due(self, *, now: datetime | None = None, limit: int = 20) -> list[PublishJob]:
@@ -302,7 +296,7 @@ class PublishService:
             try:
                 await self.run_job(job)
             except Exception:
-                logger.exception("publish job %s lỗi ngoài dự kiến", job.id)
+                logger.exception("publish job %s unexpected error", job.id)
                 await self._mark_failed_with_event(
                     job,
                     kind=PublishFailureKind.TEMPORARY,

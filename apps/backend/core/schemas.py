@@ -579,6 +579,5 @@ class Invoice(HaviModel):
     issued_at: datetime
 
 
-
 BrandProfile.model_rebuild()
 BulkApproveResult.model_rebuild()

@@ -28,12 +28,8 @@ class PublishJob(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Base):
         Index("ix_publish_jobs_status_scheduled", "status", "scheduled_at"),
     )
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces.id"), index=True
-    )
-    content_item_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("content_items.id"), index=True
-    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), index=True)
+    content_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("content_items.id"), index=True)
     channel: Mapped[Channel] = mapped_column(Enum(Channel, native_enum=False))
 
     # Khoá idempotency dựng từ (content_item_id, channel, scheduled_at) — cùng
@@ -50,18 +46,14 @@ class PublishJob(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Base):
     attempt_count: Mapped[int] = mapped_column(default=0)
     # Backoff: lần thử kế tiếp sớm nhất là lúc nào. Scheduler bỏ qua job chưa
     # tới hạn thử lại thay vì đập vào API nền tảng liên tục.
-    next_attempt_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     # --- Kết quả -------------------------------------------------------------
     # ID bài trên nền tảng, có sau khi đăng thành công. Dùng để đối soát: nếu
     # job ở trạng thái mập mờ (worker chết giữa chừng) thì tra ID này để biết
     # bài đã lên hay chưa, thay vì đăng lại và tạo bài trùng.
     external_post_id: Mapped[str | None] = mapped_column(default=None)
-    published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     failure_kind: Mapped[PublishFailureKind | None] = mapped_column(
         Enum(PublishFailureKind, native_enum=False), default=None

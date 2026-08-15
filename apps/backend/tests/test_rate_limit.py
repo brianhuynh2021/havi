@@ -74,9 +74,7 @@ class TestDemVaChan:
             rule = RateLimitRule(limit=3, window_seconds=60)
             who = _identity()
 
-            verdicts = [
-                await limiter.hit(rule_name="t", identity=who, rule=rule) for _ in range(4)
-            ]
+            verdicts = [await limiter.hit(rule_name="t", identity=who, rule=rule) for _ in range(4)]
 
             assert [v.allowed for v in verdicts] == [True, True, True, False]
 
@@ -176,9 +174,7 @@ class TestRedisHongThiChoQua:
         """
         # Cổng không có ai lắng nghe → mọi lệnh Redis ném.
         alerts = RecordingAlerts()
-        broken = RedisRateLimiter(
-            Redis.from_url("redis://127.0.0.1:1/0"), alerts=alerts
-        )
+        broken = RedisRateLimiter(Redis.from_url("redis://127.0.0.1:1/0"), alerts=alerts)
 
         verdict = await broken.hit(
             rule_name="t", identity="x", rule=RateLimitRule(limit=1, window_seconds=60)
@@ -313,9 +309,7 @@ class TestGanVaoEndpoint:
 
             statuses = [
                 (
-                    await client.get(
-                        "/content", headers={"Authorization": f"Bearer {token}"}
-                    )
+                    await client.get("/content", headers={"Authorization": f"Bearer {token}"})
                 ).status_code
                 for _ in range(rate_limits.CONTENT_JOB.limit + 3)
             ]
@@ -337,8 +331,6 @@ async def _onboard(client, *, email: str) -> str:
         headers={"Authorization": f"Bearer {tokens['access_token']}"},
     )
     assert create.status_code == 201, create.text
-    refreshed = await client.post(
-        "/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
-    )
+    refreshed = await client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
     assert refreshed.status_code == 200, refreshed.text
     return refreshed.json()["access_token"]

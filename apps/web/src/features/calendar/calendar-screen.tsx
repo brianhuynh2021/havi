@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,7 @@ import {
 import { statusLabel, statusTone } from "./calendar.fixture";
 import styles from "./calendar.module.css";
 
-/** Giờ đăng hiện theo giờ VN, không theo giờ máy — chủ tiệm ở VN và backend
- * cũng gom nhóm theo múi giờ đó. Máy đặt lệch múi giờ vẫn phải thấy đúng giờ. */
+/** Giờ đăng hiện theo giờ VN, không theo giờ máy. */
 const vnTime = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
   hour: "2-digit",
@@ -113,6 +112,11 @@ export function CalendarScreen() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  // View switch: "week" (lưới 7 ngày) | "timeline" (danh sách dòng thời gian)
+  const [viewMode, setViewMode] = useState<"week" | "timeline">("week");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   const [selectedItem, setSelectedItem] = useState<{
     item: CalendarDay["items"][number];
     date: string;
@@ -125,6 +129,10 @@ export function CalendarScreen() {
   const weekdayLabels = lang === "VN"
     ? ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const fullWeekdayLabels = lang === "VN"
+    ? ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
+    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   const today = toVnDateString(new Date());
 
@@ -178,6 +186,22 @@ export function CalendarScreen() {
     setTargetIso(`${datePart}T${timeStr}`);
   }
 
+  // Lọc bài theo Kênh và Trạng thái
+  const filteredDays = useMemo(() => {
+    return days.map((day) => ({
+      ...day,
+      items: day.items.filter((item) => {
+        const matchesChannel =
+          channelFilter === "all" ||
+          item.channel === channelFilter ||
+          (channelFilter === "facebook_page" && item.channel === "reels");
+        const matchesStatus =
+          statusFilter === "all" || item.status === statusFilter;
+        return matchesChannel && matchesStatus;
+      }),
+    }));
+  }, [days, channelFilter, statusFilter]);
+
   const totalItems = days.reduce((sum, d) => sum + d.items.length, 0);
   const uniqueChannels = Array.from(
     new Set(days.flatMap((d) => d.items.map((i) => i.channel))),
@@ -197,54 +221,109 @@ export function CalendarScreen() {
         </div>
         <p className={styles.subtitle}>
           {t({
-            vi: "Bài đã duyệt tự xếp vào đúng ngày/giờ — múi giờ Asia/Ho_Chi_Minh. Bấm vào bài để xem chi tiết.",
-            en: "Approved posts auto-scheduled by date/time (Asia/Ho_Chi_Minh). Click a post to view details.",
+            vi: "Bài đã duyệt tự động xếp vào khung giờ vàng (08:00, 12:00, 20:00 ICT) và xuất bản đa kênh Facebook, TikTok, YouTube.",
+            en: "Approved posts auto-scheduled to golden hours (Asia/Ho_Chi_Minh) across Facebook, TikTok, and YouTube.",
           })}
         </p>
 
-        {/* Executive Telemetry Dashboard Bar */}
+        {/* Dashboard Thống Kê Tổng Quan */}
         <div className={styles.metricsBar}>
           <div className={styles.metricCard}>
             <span className={styles.metricLabel}>📅 Tổng bài lên lịch</span>
             <span className={styles.metricValue}>{totalItems} bài</span>
-            <span className={styles.metricSubtext}>Tuần hiển thị hiện tại</span>
+            <span className={styles.metricSubtext}>Tuần đang hiển thị</span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>📢 Kênh hoạt động</span>
+            <span className={styles.metricLabel}>📢 Kênh kết nối</span>
             <span className={styles.metricValue}>{uniqueChannels.length || 0} kênh</span>
-            <span className={styles.metricSubtext}>Facebook, Zalo, Google</span>
+            <span className={styles.metricSubtext}>Facebook, TikTok, YouTube</span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>🛡️ Chế độ an toàn</span>
-            <span className={styles.metricValue}>Bán tự động</span>
-            <span className={styles.metricSubtext}>Duyệt trước khi phát sóng</span>
+            <span className={styles.metricLabel}>⚡ Tự động đăng</span>
+            <span className={styles.metricValue}>Giờ Vàng VN</span>
+            <span className={styles.metricSubtext}>08:00 • 12:00 • 20:00 ICT</span>
           </div>
         </div>
       </header>
 
       <FailedPostsPanel onPublished={() => setReloadKey((k) => k + 1)} />
 
-      <div className={styles.weekBar}>
-        <Button
-          variant="outline"
-          onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), -7)))}
-        >
-          ← {t({ vi: "Tuần trước", en: "Prev Week" })}
-        </Button>
-        <span className={styles.weekRange}>📅 {rangeLabel}</span>
-        <div className={styles.weekActions}>
+      {/* Control Panel: Tuần, Bộ Lọc và Chuyển đổi View */}
+      <div className={styles.controlPanel}>
+        <div className={styles.weekBar}>
           <Button
             variant="outline"
-            onClick={() => setWeekStart(toVnDateString(startOfVnWeek(new Date())))}
+            onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), -7)))}
           >
-            {t({ vi: "Tuần này", en: "This Week" })}
+            ← {t({ vi: "Tuần trước", en: "Prev Week" })}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), 7)))}
-          >
-            {t({ vi: "Tuần sau", en: "Next Week" })} →
-          </Button>
+          <span className={styles.weekRange}>📅 {rangeLabel}</span>
+          <div className={styles.weekActions}>
+            <Button
+              variant="outline"
+              onClick={() => setWeekStart(toVnDateString(startOfVnWeek(new Date())))}
+            >
+              {t({ vi: "Tuần này", en: "This Week" })}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), 7)))}
+            >
+              {t({ vi: "Tuần sau", en: "Next Week" })} →
+            </Button>
+          </div>
+        </div>
+
+        <div className={styles.filterBar}>
+          <div className={styles.filterGroup}>
+            <span className={styles.filterLabel}>Kênh:</span>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${channelFilter === "all" ? styles.filterChipActive : ""}`}
+              onClick={() => setChannelFilter("all")}
+            >
+              Tất cả
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${channelFilter === "facebook_page" ? styles.filterChipActive : ""}`}
+              onClick={() => setChannelFilter("facebook_page")}
+            >
+              Facebook
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${channelFilter === "tiktok" ? styles.filterChipActive : ""}`}
+              onClick={() => setChannelFilter("tiktok")}
+            >
+              TikTok
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${channelFilter === "youtube" ? styles.filterChipActive : ""}`}
+              onClick={() => setChannelFilter("youtube")}
+            >
+              YouTube
+            </button>
+          </div>
+
+          {/* View Mode Switcher */}
+          <div className={styles.viewSwitcher}>
+            <button
+              type="button"
+              className={`${styles.viewBtn} ${viewMode === "week" ? styles.viewBtnActive : ""}`}
+              onClick={() => setViewMode("week")}
+            >
+              📊 Lưới tuần
+            </button>
+            <button
+              type="button"
+              className={`${styles.viewBtn} ${viewMode === "timeline" ? styles.viewBtnActive : ""}`}
+              onClick={() => setViewMode("timeline")}
+            >
+              📋 Dòng thời gian
+            </button>
+          </div>
         </div>
       </div>
 
@@ -261,68 +340,142 @@ export function CalendarScreen() {
         <LoadingState title={t({ vi: "Đang tải lịch…", en: "Loading calendar…" })} />
       ) : (
         <>
-          <section className={styles.grid} aria-label={t("calendar.title", "Lịch đăng theo tuần")}>
-            {days.map((day, index) => (
-              <div
-                key={day.date}
-                className={`${styles.dayColumn} ${
-                  day.date === today ? styles.dayColumnToday : ""
-                }`}
-              >
-                <div className={styles.dayHeader}>
-                  <div className={styles.dayHeaderTitleRow}>
-                    <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
-                    {day.date === today ? (
-                      <span className={styles.todayPill}>Hôm nay</span>
-                    ) : null}
+          {/* CHẾ ĐỘ 1: LƯỚI TUẦN (WEEK GRID) */}
+          {viewMode === "week" ? (
+            <section className={styles.grid} aria-label={t("calendar.title", "Lịch đăng theo tuần")}>
+              {filteredDays.map((day, index) => (
+                <div
+                  key={day.date}
+                  className={`${styles.dayColumn} ${
+                    day.date === today ? styles.dayColumnToday : ""
+                  }`}
+                >
+                  <div className={styles.dayHeader}>
+                    <div className={styles.dayHeaderTitleRow}>
+                      <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
+                      {day.date === today ? (
+                        <span className={styles.todayPill}>Hôm nay</span>
+                      ) : null}
+                    </div>
+                    <span className={styles.dayDate}>{dayLabel(day.date)}</span>
                   </div>
-                  <span className={styles.dayDate}>{dayLabel(day.date)}</span>
-                </div>
 
-                {day.items.length === 0 ? (
-                  <div className={styles.emptySlot} title="Chưa có bài lên lịch cho ngày này">
-                    <span className={styles.emptySlotIcon}>+</span>
-                    <span className={styles.emptySlotText}>
-                      {t({ vi: "Chưa có bài", en: "No posts" })}
-                    </span>
-                  </div>
-                ) : (
-                  <div className={styles.postList}>
-                    {day.items.map((item) => (
-                      <article
-                        key={item.id}
-                        className={styles.postCard}
-                        onClick={() => openDetailModal(item, day.date)}
-                        title="Bấm để xem chi tiết bài đăng"
-                      >
-                        <div className={styles.postMeta}>
-                          <span className={styles.postTime}>
-                            {item.scheduled_at
-                              ? vnTime.format(new Date(item.scheduled_at))
-                              : "--:--"}
-                          </span>
-                          <Badge tone={statusTone[item.status]}>
-                            {statusLabel[item.status]}
-                          </Badge>
+                  {day.items.length === 0 ? (
+                    <div className={styles.emptySlot} title="Chưa có bài lên lịch cho ngày này">
+                      <span className={styles.emptySlotIcon}>+</span>
+                      <span className={styles.emptySlotText}>
+                        {t({ vi: "Chưa có bài", en: "No posts" })}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={styles.postList}>
+                      {day.items.map((item) => (
+                        <article
+                          key={item.id}
+                          className={styles.postCard}
+                          onClick={() => openDetailModal(item, day.date)}
+                          title="Bấm để xem chi tiết bài đăng"
+                        >
+                          <div className={styles.postMeta}>
+                            <span className={styles.postTime}>
+                              {item.scheduled_at
+                                ? vnTime.format(new Date(item.scheduled_at))
+                                : "--:--"}
+                            </span>
+                            <Badge tone={statusTone[item.status]}>
+                              {statusLabel[item.status]}
+                            </Badge>
+                          </div>
+                          <p className={styles.postTitleSnippet}>{item.text}</p>
+                          <div className={styles.postFooter}>
+                            <span className={styles.channelBadge}>
+                              {channelLabels[
+                                item.channel as keyof typeof channelLabels
+                              ] ?? item.channel}
+                            </span>
+                            <span className={styles.postId}>
+                              #{item.id.slice(0, 6)}
+                            </span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </section>
+          ) : (
+            /* CHẾ ĐỘ 2: DÒNG THỜI GIAN CHI TIẾT (TIMELINE / DEBUG LIST VIEW) */
+            <section className={styles.timelineContainer} aria-label="Dòng thời gian bài đăng">
+              {filteredDays.filter((d) => d.items.length > 0).length === 0 ? (
+                <EmptyState
+                  title="Không có bài nào khớp với bộ lọc"
+                  body="Hãy chọn 'Tất cả' hoặc duyệt bài mới để xem dòng thời gian bài đăng."
+                />
+              ) : (
+                filteredDays
+                  .filter((day) => day.items.length > 0)
+                  .map((day, dIdx) => (
+                    <div key={day.date} className={styles.timelineDaySection}>
+                      <div className={styles.timelineDayHeader}>
+                        <div className={styles.timelineDayTitle}>
+                          <span>📅 {fullWeekdayLabels[dIdx % 7]}, {dayLabel(day.date)}</span>
+                          {day.date === today ? (
+                            <span className={styles.todayPill}>Hôm nay</span>
+                          ) : null}
                         </div>
-                        <p className={styles.postTitleSnippet}>{item.text}</p>
-                        <div className={styles.postMeta}>
-                          <span className={styles.postChannel}>
-                            {channelLabels[
-                              item.channel as keyof typeof channelLabels
-                            ] ?? item.channel}
-                          </span>
-                          <span className={styles.postId}>
-                            #{item.id.slice(0, 6)}
-                          </span>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </section>
+                        <span className={styles.timelineDayCount}>{day.items.length} bài đăng</span>
+                      </div>
+
+                      <div className={styles.timelineList}>
+                        {day.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className={styles.timelineRow}
+                            onClick={() => openDetailModal(item, day.date)}
+                          >
+                            <div className={styles.timelineRowLeft}>
+                              <div className={styles.timelineTimeBox}>
+                                <span className={styles.timelineTime}>
+                                  {item.scheduled_at
+                                    ? vnTime.format(new Date(item.scheduled_at))
+                                    : "--:--"}
+                                </span>
+                                <span className={styles.timelineChannelText}>
+                                  {item.channel.includes("facebook") ? "FB" : item.channel.includes("tiktok") ? "TikTok" : item.channel.includes("youtube") ? "YouTube" : "Kênh"}
+                                </span>
+                              </div>
+                              <img
+                                src={getTopicImage(item.media_note, item.text)}
+                                alt="Thumb"
+                                className={styles.timelineThumb}
+                              />
+                              <div className={styles.timelineContent}>
+                                <div className={styles.timelineSnippet}>{item.text}</div>
+                                <div className={styles.timelineRowMeta}>
+                                  <span className={styles.postId}>ID: #{item.id.slice(0, 8)}</span>
+                                  <span>•</span>
+                                  <span>{channelLabels[item.channel as keyof typeof channelLabels] ?? item.channel}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.timelineRowRight}>
+                              <Badge tone={statusTone[item.status]}>
+                                {statusLabel[item.status]}
+                              </Badge>
+                              <Button variant="outline">
+                                Xem & Đổi giờ
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+              )}
+            </section>
+          )}
 
           {empty ? (
             <EmptyState
@@ -333,7 +486,7 @@ export function CalendarScreen() {
         </>
       )}
 
-      {/* Modal Chi tiết & Đổi giờ bài đăng (Glassmorphic FAANG Aesthetic) */}
+      {/* Modal Chi tiết & Đổi giờ bài đăng */}
       {selectedItem ? (
         <div
           className={styles.modalOverlay}
@@ -353,7 +506,6 @@ export function CalendarScreen() {
               </div>
               <Button
                 variant="ghost"
-                className={styles.compactButton}
                 onClick={() => setSelectedItem(null)}
               >
                 ✕ Đóng
@@ -395,16 +547,16 @@ export function CalendarScreen() {
 
             {canReschedule(selectedItem.item.status) ? (
               <div className={styles.rescheduleSection}>
-                <h4 className={styles.rescheduleTitle}>📅 Đổi ngày giờ đăng</h4>
+                <h4 className={styles.rescheduleTitle}>📅 Đổi ngày giờ đăng (Giờ vàng ICT)</h4>
 
                 {/* Quick Presets for Shop Owners */}
                 <div className={styles.presetGrid}>
                   <button
                     type="button"
                     className={styles.presetBtn}
-                    onClick={() => applyPresetTime("09:00")}
+                    onClick={() => applyPresetTime("08:00")}
                   >
-                    🌅 Sáng (09:00)
+                    🌅 Sáng (08:00)
                   </button>
                   <button
                     type="button"
@@ -416,9 +568,9 @@ export function CalendarScreen() {
                   <button
                     type="button"
                     className={styles.presetBtn}
-                    onClick={() => applyPresetTime("19:30")}
+                    onClick={() => applyPresetTime("20:00")}
                   >
-                    🌆 Tối (19:30)
+                    🌆 Tối (20:00)
                   </button>
                   <button
                     type="button"

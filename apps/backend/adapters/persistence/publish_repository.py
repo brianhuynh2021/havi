@@ -98,8 +98,7 @@ class PublishRepository:
                 PublishJob.status == PublishStatus.PENDING,
                 PublishJob.scheduled_at <= now,
                 # Job đang chờ backoff thì chưa tới lượt.
-                (PublishJob.next_attempt_at.is_(None))
-                | (PublishJob.next_attempt_at <= now),
+                (PublishJob.next_attempt_at.is_(None)) | (PublishJob.next_attempt_at <= now),
             )
             .order_by(PublishJob.scheduled_at)
             .limit(limit)
@@ -191,9 +190,7 @@ class PublishRepository:
         if status is not None:
             filters.append(PublishJob.status == status)
         result = await self._session.execute(
-            select(PublishJob)
-            .where(*filters)
-            .order_by(PublishJob.scheduled_at.desc())
+            select(PublishJob).where(*filters).order_by(PublishJob.scheduled_at.desc())
         )
         return list(result.scalars().all())
 

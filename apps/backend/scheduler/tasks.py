@@ -30,9 +30,7 @@ def dispatch_due_posts() -> None:
             return result.enqueued, result.skipped
 
     enqueued, skipped = asyncio.run(_run())
-    logger.info(
-        "dispatch_due_posts: %d job mới, %d bỏ qua (đã có job)", enqueued, skipped
-    )
+    logger.info("dispatch_due_posts: %d new jobs, %d skipped (existing jobs)", enqueued, skipped)
     publish_run_due.delay()
 
 

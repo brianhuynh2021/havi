@@ -27,6 +27,7 @@ from api.routers import (
     inbox,
     leads,
     media,
+    video_render,
     webhooks,
     workspaces,
 )
@@ -56,6 +57,7 @@ ROUTERS = (
     workspaces.router,
     brand_profile.router,
     media.router,
+    video_render.router,
     content.router,
     calendar.router,
     connections.router,

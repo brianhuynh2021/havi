@@ -17,6 +17,8 @@ from adapters.email.smtp import SmtpEmailSender
 from adapters.media.ffmpeg_processor import FFmpegVideoProcessor
 from adapters.oauth.base import OAuthClientPort
 from adapters.oauth.facebook import FacebookOAuthClient
+from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
+from adapters.oauth.tiktok import TikTokOAuthClient
 from adapters.oauth.zalo import ZaloOAuthClient
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
@@ -31,6 +33,7 @@ from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
+from adapters.persistence.video_render_repository import VideoRenderRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
@@ -46,8 +49,8 @@ from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
+from application.services.video_render_service import VideoRenderService
 from application.services.workspace_service import WorkspaceService
-
 from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
 from core.enums import Platform
@@ -83,9 +86,7 @@ def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthServic
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
-def get_workspace_service(
-    session: DbSessionDep, auth_service: AuthServiceDep
-) -> WorkspaceService:
+def get_workspace_service(session: DbSessionDep, auth_service: AuthServiceDep) -> WorkspaceService:
     return WorkspaceService(
         workspaces=WorkspaceRepository(session),
         members=WorkspaceMemberRepository(session),
@@ -118,7 +119,6 @@ def get_billing_service(session: DbSessionDep) -> BillingService:
 
 
 BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
-
 
 
 def get_inbox_service(session: DbSessionDep) -> InboxService:
@@ -174,9 +174,7 @@ def _rate_limiter() -> RedisRateLimiter | NullRateLimiter:
     return RedisRateLimiter(Redis.from_url(settings.redis_url), alerts=_alert_sink())
 
 
-RateLimiterDep = Annotated[
-    RedisRateLimiter | NullRateLimiter, Depends(_rate_limiter)
-]
+RateLimiterDep = Annotated[RedisRateLimiter | NullRateLimiter, Depends(_rate_limiter)]
 
 
 @lru_cache
@@ -223,9 +221,7 @@ ContentServiceDep = Annotated[ContentService, Depends(get_content_service)]
 
 
 def get_approval_service(session: DbSessionDep) -> ApprovalService:
-    return ApprovalService(
-        content=ContentRepository(session), events=EventLogRepository(session)
-    )
+    return ApprovalService(content=ContentRepository(session), events=EventLogRepository(session))
 
 
 ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
@@ -236,6 +232,8 @@ def _oauth_clients() -> dict[Platform, OAuthClientPort]:
     settings = get_settings()
     return {
         Platform.FACEBOOK: FacebookOAuthClient(settings),
+        Platform.TIKTOK: TikTokOAuthClient(settings),
+        Platform.YOUTUBE: GoogleYouTubeOAuthClient(settings),
         Platform.ZALO_OA: ZaloOAuthClient(settings),
     }
 
@@ -275,6 +273,17 @@ def get_publish_service(session: DbSessionDep) -> PublishService:
 
 
 PublishServiceDep = Annotated[PublishService, Depends(get_publish_service)]
+
+
+def get_video_render_service(session: DbSessionDep) -> VideoRenderService:
+    return VideoRenderService(
+        render_repo=VideoRenderRepository(session),
+        media_repo=MediaRepository(session),
+        event_repo=EventLogRepository(session),
+    )
+
+
+VideoRenderServiceDep = Annotated[VideoRenderService, Depends(get_video_render_service)]
 
 
 class AuthContext:

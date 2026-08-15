@@ -55,9 +55,7 @@ class GeminiProvider(LLMProviderPort):
         started = time.monotonic()
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(
-                    url, params={"key": self._api_key}, json=payload
-                )
+                response = await client.post(url, params={"key": self._api_key}, json=payload)
         except httpx.TimeoutException as exc:
             raise LLMTransientError(self.provider, f"timeout sau {self._timeout}s") from exc
         except httpx.HTTPError as exc:

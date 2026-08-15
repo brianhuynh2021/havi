@@ -164,9 +164,7 @@ class FacebookOAuthClient(OAuthClientPort):
                 self.platform, "Không đổi được token dài hạn — chị nối lại từ đầu nhé"
             )
         expires_in = body.get("expires_in")
-        expires_at = (
-            datetime.now(UTC) + timedelta(seconds=int(expires_in)) if expires_in else None
-        )
+        expires_at = datetime.now(UTC) + timedelta(seconds=int(expires_in)) if expires_in else None
         return token, expires_at
 
     async def _list_pages(self, client: httpx.AsyncClient, user_token: str) -> list[dict]:

@@ -8,9 +8,7 @@ không đọc thấy profile của nhau.
 from httpx import AsyncClient
 
 
-async def _sign_up_and_login(
-    client: AsyncClient, *, name: str = "Chị Hương", email: str
-) -> dict:
+async def _sign_up_and_login(client: AsyncClient, *, name: str = "Chị Hương", email: str) -> dict:
     signup = await client.post(
         "/auth/sign-up", json={"name": name, "email": email, "password": "matkhau123"}
     )
@@ -39,9 +37,7 @@ def _headers(token_pair: dict) -> dict:
 
 
 async def test_get_lan_dau_tu_tao_profile_rong_theo_nganh_workspace(client: AsyncClient):
-    token_pair = await _onboard(
-        client, email="b0001@havi.vn", name="Hương", industry="spa"
-    )
+    token_pair = await _onboard(client, email="b0001@havi.vn", name="Hương", industry="spa")
 
     response = await client.get("/brand-profile", headers=_headers(token_pair))
     assert response.status_code == 200, response.text
@@ -63,9 +59,7 @@ async def test_chua_co_workspace_thi_bi_chan_409(client: AsyncClient):
 
 
 async def test_put_ghi_duoc_tone_banned_claims_va_faq(client: AsyncClient):
-    token_pair = await _onboard(
-        client, email="b0003@havi.vn", name="Hương", industry="spa"
-    )
+    token_pair = await _onboard(client, email="b0003@havi.vn", name="Hương", industry="spa")
     headers = _headers(token_pair)
 
     update = await client.put(
@@ -106,9 +100,7 @@ async def test_put_ghi_xong_get_doc_lai_dung_du_lieu(client: AsyncClient):
 
 
 async def test_put_field_khong_gui_thi_giu_nguyen_gia_tri_cu(client: AsyncClient):
-    token_pair = await _onboard(
-        client, email="b0005@havi.vn", name="Hương", industry="spa"
-    )
+    token_pair = await _onboard(client, email="b0005@havi.vn", name="Hương", industry="spa")
     headers = _headers(token_pair)
 
     await client.put(
@@ -125,13 +117,9 @@ async def test_put_field_khong_gui_thi_giu_nguyen_gia_tri_cu(client: AsyncClient
 
 async def test_hai_workspace_khong_doc_thay_profile_cua_nhau(client: AsyncClient):
     token_a = await _onboard(client, email="b0006@havi.vn", name="A", industry="spa")
-    token_b = await _onboard(
-        client, email="b0007@havi.vn", name="B", industry="real_estate"
-    )
+    token_b = await _onboard(client, email="b0007@havi.vn", name="B", industry="real_estate")
 
-    await client.put(
-        "/brand-profile", json={"tone": "giọng của tiệm A"}, headers=_headers(token_a)
-    )
+    await client.put("/brand-profile", json={"tone": "giọng của tiệm A"}, headers=_headers(token_a))
 
     profile_b = await client.get("/brand-profile", headers=_headers(token_b))
     assert profile_b.status_code == 200

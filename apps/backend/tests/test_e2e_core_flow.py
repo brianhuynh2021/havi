@@ -62,9 +62,7 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
     client: AsyncClient, db_session: AsyncSession
 ):
     """Core beta smoke test, isolated by email/workspace and rolled back by fixture."""
-    os.environ["HAVI_TOKEN_ENCRYPTION_KEY"] = (
-        "3Vn8Qm2xLp7YtZa1Rk4Wc6Bd9Ef0Gh5Jj2Kl3Mn4Op8="
-    )
+    os.environ["HAVI_TOKEN_ENCRYPTION_KEY"] = "3Vn8Qm2xLp7YtZa1Rk4Wc6Bd9Ef0Gh5Jj2Kl3Mn4Op8="
     get_settings.cache_clear()
 
     email = f"e2e-{uuid4().hex[:12]}@havi.vn"
@@ -106,9 +104,7 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         events=EventLogRepository(db_session),
         router=ProviderRouter({llm.provider: llm}),
     )
-    generated = await engine.generate_drafts(
-        workspace_id=workspace_id, job_id=UUID(job["id"])
-    )
+    generated = await engine.generate_drafts(workspace_id=workspace_id, job_id=UUID(job["id"]))
     assert len(generated.items) == 3
 
     content = await client.get(
@@ -117,12 +113,8 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         headers=_headers(token_pair),
     )
     assert content.status_code == 200, content.text
-    fb_item = next(
-        item for item in content.json()["items"] if item["channel"] == "facebook_page"
-    )
-    zalo_item = next(
-        item for item in content.json()["items"] if item["channel"] == "zalo_oa"
-    )
+    fb_item = next(item for item in content.json()["items"] if item["channel"] == "facebook_page")
+    zalo_item = next(item for item in content.json()["items"] if item["channel"] == "zalo_oa")
 
     scheduled_at = datetime.now(UTC) - timedelta(minutes=1)
     for item in (fb_item, zalo_item):
@@ -169,9 +161,7 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
     assert len(zalo_publisher.calls) == 1
 
     for item in (fb_item, zalo_item):
-        published = await client.get(
-            f"/content/{item['id']}", headers=_headers(token_pair)
-        )
+        published = await client.get(f"/content/{item['id']}", headers=_headers(token_pair))
         assert published.status_code == 200, published.text
         assert published.json()["status"] == "published"
 

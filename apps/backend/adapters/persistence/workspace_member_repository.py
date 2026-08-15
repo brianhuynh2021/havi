@@ -78,4 +78,3 @@ class WorkspaceMemberRepository:
             .where(WorkspaceMember.workspace_id == workspace_id)
         )
         return [(member, user) for member, user in result.all()]
-

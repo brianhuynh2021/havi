@@ -53,8 +53,7 @@ class GoogleBusinessPublisher(PublisherPort):
             "summary": request.text,
             "topicType": "STANDARD",
             "media": [
-                {"mediaFormat": "PHOTO", "sourceUrl": media_url}
-                for media_url in request.media_urls
+                {"mediaFormat": "PHOTO", "sourceUrl": media_url} for media_url in request.media_urls
             ]
             if request.media_urls
             else [],

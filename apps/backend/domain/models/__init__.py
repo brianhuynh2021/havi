@@ -14,6 +14,7 @@ from domain.models.lead import Lead
 from domain.models.media import MediaAsset
 from domain.models.publish import PublishJob
 from domain.models.user import OtpChallenge, RefreshSession, User
+from domain.models.video_render import VideoRenderJob
 from domain.models.workspace import (
     BrandProfile,
     Invoice,
@@ -30,6 +31,7 @@ __all__ = [
     "WorkspaceMember",
     "BrandProfile",
     "MediaAsset",
+    "VideoRenderJob",
     "ContentJob",
     "ContentItem",
     "ContentItemVersion",

@@ -33,7 +33,9 @@ class ZaloOAuthClient(OAuthClientPort):
         self._settings = settings
         self._client_id = settings.zalo_client_id
         self._client_secret = settings.zalo_client_secret
-        self._redirect_uri = getattr(settings, "zalo_redirect_uri", "http://localhost:8000/connections/zalo_oa/callback")
+        self._redirect_uri = getattr(
+            settings, "zalo_redirect_uri", "http://localhost:8000/connections/zalo_oa/callback"
+        )
         self._timeout = timeout_seconds
 
     @property
@@ -100,9 +102,7 @@ class ZaloOAuthClient(OAuthClientPort):
 
         if "error" in data and data["error"] != 0 and "access_token" not in data:
             msg = (
-                data.get("message")
-                or data.get("error_description")
-                or f"Code {data.get('error')}"
+                data.get("message") or data.get("error_description") or f"Code {data.get('error')}"
             )
             raise OAuthPermanentError(f"Zalo OAuth thất bại: {msg}")
 
@@ -112,11 +112,7 @@ class ZaloOAuthClient(OAuthClientPort):
 
         refresh_token = data.get("refresh_token")
         expires_in = data.get("expires_in")
-        expires_at = (
-            datetime.now(UTC) + timedelta(seconds=int(expires_in))
-            if expires_in
-            else None
-        )
+        expires_at = datetime.now(UTC) + timedelta(seconds=int(expires_in)) if expires_in else None
 
         oa_id = data.get("oa_id")
         oa_name = data.get("oa_name")

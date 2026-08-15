@@ -36,16 +36,14 @@ def _date_range(start: date, end: date) -> tuple[datetime, datetime]:
     if end < start:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "`end` phải sau `start`")
     range_start = datetime.combine(start, time.min, tzinfo=VIETNAM_TZ).astimezone(UTC)
-    range_end = datetime.combine(
-        end + timedelta(days=1), time.min, tzinfo=VIETNAM_TZ
-    ).astimezone(UTC)
+    range_end = datetime.combine(end + timedelta(days=1), time.min, tzinfo=VIETNAM_TZ).astimezone(
+        UTC
+    )
     return range_start, range_end
 
 
 @router.get("/dashboard", response_model=DashboardContentSummary)
-async def dashboard(
-    workspace_id: WorkspaceDep, session: DbSessionDep
-) -> DashboardContentSummary:
+async def dashboard(workspace_id: WorkspaceDep, session: DbSessionDep) -> DashboardContentSummary:
     """Số liệu thật tối thiểu cho tab Tổng quan."""
     counts = await ContentRepository(session).count_items_by_status(workspace_id=workspace_id)
     return DashboardContentSummary(
@@ -53,8 +51,7 @@ async def dashboard(
         pending_approval=counts.get(ContentStatus.PENDING_APPROVAL, 0),
         scheduled=counts.get(ContentStatus.SCHEDULED, 0),
         published=counts.get(ContentStatus.PUBLISHED, 0),
-        failed=counts.get(ContentStatus.FAILED, 0)
-        + counts.get(ContentStatus.DEAD_LETTER, 0),
+        failed=counts.get(ContentStatus.FAILED, 0) + counts.get(ContentStatus.DEAD_LETTER, 0),
     )
 
 
@@ -115,12 +112,8 @@ async def operations(
             total=publish_total,
             succeeded=publish_succeeded,
             dead_letter=publish_dead_letter,
-            success_rate=round(publish_succeeded / publish_total, 4)
-            if publish_total
-            else 0,
-            dead_letter_rate=round(publish_dead_letter / publish_total, 4)
-            if publish_total
-            else 0,
+            success_rate=round(publish_succeeded / publish_total, 4) if publish_total else 0,
+            dead_letter_rate=round(publish_dead_letter / publish_total, 4) if publish_total else 0,
         ),
         **event_metrics,
     )

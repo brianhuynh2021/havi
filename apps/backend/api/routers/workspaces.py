@@ -27,11 +27,8 @@ from core.schemas import (
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
 
-
 @router.get("", response_model=list[Workspace])
-async def list_workspaces(
-    auth: AuthDep, workspace_service: WorkspaceServiceDep
-) -> list[Workspace]:
+async def list_workspaces(auth: AuthDep, workspace_service: WorkspaceServiceDep) -> list[Workspace]:
     workspaces = await workspace_service.list_workspaces(auth.user_id)
     return [Workspace.model_validate(w) for w in workspaces]
 
@@ -160,4 +157,3 @@ async def delete_workspace(
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, "Chỉ owner mới có quyền xoá workspace"
         ) from exc
-

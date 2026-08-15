@@ -70,9 +70,7 @@ def find_banned_claims(text: str, banned_claims: list[str]) -> list[str]:
     return [claim for claim in banned_claims if claim.strip() and _normalize(claim) in haystack]
 
 
-def parse_and_validate(
-    raw_text: str, *, banned_claims: list[str]
-) -> GeneratedDrafts:
+def parse_and_validate(raw_text: str, *, banned_claims: list[str]) -> GeneratedDrafts:
     """Parse JSON → validate schema → chặn banned claims.
 
     Ném `OutputValidationError` để `ProviderRouter` hiểu là nên thử provider khác

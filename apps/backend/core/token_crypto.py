@@ -44,8 +44,7 @@ def _cipher() -> Fernet:
         return Fernet(key.encode())
     except (ValueError, TypeError) as exc:
         raise TokenEncryptionUnavailable(
-            "HAVI_TOKEN_ENCRYPTION_KEY không đúng định dạng Fernet "
-            "(cần 32 byte urlsafe-base64)"
+            "HAVI_TOKEN_ENCRYPTION_KEY không đúng định dạng Fernet (cần 32 byte urlsafe-base64)"
         ) from exc
 
 

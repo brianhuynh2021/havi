@@ -105,7 +105,10 @@ class MockProvider(LLMProviderPort):
         templates = [
             (channel, kind, template)
             for channel, kind, template in _TEMPLATES
-            if channel in request.user_prompt or channel.replace("_", " ") in request.user_prompt.lower()
+            if (
+                channel in request.user_prompt
+                or channel.replace("_", " ") in request.user_prompt.lower()
+            )
         ]
         if not templates:
             templates = _TEMPLATES

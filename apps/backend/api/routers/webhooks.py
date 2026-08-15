@@ -50,9 +50,7 @@ def _signature_matches(*, app_secret: str, raw_body: bytes, header: str | None) 
     """
     if not header or not header.startswith("sha256="):
         return False
-    expected = hmac.new(
-        app_secret.encode("utf-8"), raw_body, hashlib.sha256
-    ).hexdigest()
+    expected = hmac.new(app_secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, header.removeprefix("sha256="))
 
 

@@ -12,6 +12,9 @@ from domain.models.workspace import BrandProfile, Workspace
 #: không hứa capability chưa có).
 PILOT_CHANNELS: tuple[Channel, ...] = (
     Channel.FACEBOOK_PAGE,
+    Channel.REELS,
+    Channel.TIKTOK,
+    Channel.YOUTUBE,
     Channel.ZALO_OA,
     Channel.GOOGLE_BUSINESS,
 )
@@ -39,7 +42,8 @@ Quy tắc bắt buộc:
 - Không hứa hẹn quá mức, không cam kết kết quả tuyệt đối.
 - KHÔNG được dùng những cách nói sau, kể cả viết khác dấu hay khác cách: {banned}
 - Mỗi kênh một bản riêng, viết đúng đặc thù kênh, KHÔNG copy y nguyên giữa các kênh.
-- `media_note` là gợi ý cho chủ tiệm về ảnh/video cần chuẩn bị, viết ngắn.
+- `media_note` là gợi ý cho chủ tiệm về ảnh/video cần chuẩn bị (với video thì \
+ghi rõ gợi ý góc quay/hành động), viết ngắn.
 
 Trả về JSON đúng schema đã cho, gồm {num_channels} bản — mỗi kênh trong danh sách \
 một bản.\
@@ -48,15 +52,27 @@ một bản.\
 _CHANNEL_GUIDANCE: dict[Channel, str] = {
     Channel.FACEBOOK_PAGE: (
         "Facebook Page: 3-6 câu, có thể dùng emoji vừa phải, kết bằng lời mời ghé tiệm "
-        "hoặc nhắn tin. `kind` đặt là \"Bài ảnh\"."
+        'hoặc nhắn tin. `kind` đặt là "Bài ảnh".'
+    ),
+    Channel.REELS: (
+        "Facebook Reels: kịch bản video ngắn 15-30s bắt trend, có Hook 3s đầu ấn tượng "
+        'và lời bình tự nhiên. `kind` đặt là "Facebook Reels".'
+    ),
+    Channel.TIKTOK: (
+        "TikTok: kịch bản video ngắn (Hook 3s đầu kích thích tò mò, nội dung cô đọng 15-30s, "
+        'lời kêu gọi follow/ghé tiệm, 3-5 hashtag ngành). `kind` đặt là "Video TikTok".'
+    ),
+    Channel.YOUTUBE: (
+        "YouTube Shorts: kịch bản video dọc dưới 60s (Hook mở đầu, hướng dẫn/chia sẻ mẹo hữu ích, "
+        'kết bằng tag #Shorts). `kind` đặt là "YouTube Shorts".'
     ),
     Channel.ZALO_OA: (
         "Zalo OA: nhắn như nói với khách quen, xưng hô đúng (chị/anh), rất ngắn "
-        "(2-3 câu), có lời mời cụ thể. `kind` đặt là \"Tin Zalo\"."
+        '(2-3 câu), có lời mời cụ thể. `kind` đặt là "Tin Zalo".'
     ),
     Channel.GOOGLE_BUSINESS: (
         "Google Business: mô tả dịch vụ rõ ràng, không emoji, giọng trung tính, "
-        "nêu điểm khác biệt. `kind` đặt là \"Cập nhật Google\"."
+        'nêu điểm khác biệt. `kind` đặt là "Cập nhật Google".'
     ),
 }
 
@@ -105,9 +121,6 @@ def build_user_prompt(
 
     lines += ["", "Viết nội dung cho các kênh sau:"]
     lines += [
-        f"- {_CHANNEL_GUIDANCE[channel]}"
-        for channel in channels
-        if channel in _CHANNEL_GUIDANCE
+        f"- {_CHANNEL_GUIDANCE[channel]}" for channel in channels if channel in _CHANNEL_GUIDANCE
     ]
     return "\n".join(lines)
-

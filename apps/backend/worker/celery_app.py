@@ -25,6 +25,11 @@ celery_app.conf.update(
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
     task_default_queue="havi.default",
+    task_routes={
+        "havi.video.render": {"queue": "havi.video_render"},
+        "havi.content.*": {"queue": "havi.content"},
+        "havi.publish.*": {"queue": "havi.publish"},
+    },
     timezone="Asia/Ho_Chi_Minh",
     enable_utc=True,
 )

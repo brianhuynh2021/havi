@@ -94,9 +94,7 @@ class TestStartOAuth:
         token = await _onboard(client, email="conn0001@havi.vn")
         _override(client, db_session)
 
-        response = await client.post(
-            "/connections/facebook/start", headers=_headers(token)
-        )
+        response = await client.post("/connections/facebook/start", headers=_headers(token))
 
         assert response.status_code == 200, response.text
         body = response.json()
@@ -110,31 +108,23 @@ class TestStartOAuth:
         token = await _onboard(client, email="conn0002@havi.vn")
         _override(client, db_session)
 
-        response = await client.post(
-            "/connections/youtube/start", headers=_headers(token)
-        )
+        response = await client.post("/connections/youtube/start", headers=_headers(token))
 
         assert response.status_code == 501, response.text
 
-    async def test_thieu_cau_hinh_tra_503_chu_khong_phai_501(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_thieu_cau_hinh_tra_503_chu_khong_phai_501(self, client: AsyncClient, db_session):
         """Thiếu env là lỗi vận hành, khác hẳn "chưa làm tính năng" — hai thứ
         này cần hai hành động khác nhau nên không được trả cùng mã."""
         token = await _onboard(client, email="conn0003@havi.vn")
         _override(client, db_session, configured=False)
 
-        response = await client.post(
-            "/connections/facebook/start", headers=_headers(token)
-        )
+        response = await client.post("/connections/facebook/start", headers=_headers(token))
 
         assert response.status_code == 503, response.text
 
 
 class TestCallback:
-    async def test_callback_redirect_ve_app_khi_thanh_cong(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_callback_redirect_ve_app_khi_thanh_cong(self, client: AsyncClient, db_session):
         """Callback là điều hướng trình duyệt — trả JSON ở đây thì chủ tiệm
         nhìn thấy một trang chữ thô sau khi bấm cấp quyền."""
         token = await _onboard(client, email="conn0004@havi.vn")
@@ -166,9 +156,7 @@ class TestCallback:
         assert response.status_code == 302, response.text
         assert "ket_noi=loi" in response.headers["location"]
 
-    async def test_state_hong_van_redirect_kem_ly_do(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_state_hong_van_redirect_kem_ly_do(self, client: AsyncClient, db_session):
         _override(client, db_session)
 
         response = await client.get(
@@ -203,9 +191,7 @@ class TestDuongVeSauCallback:
         assert start.status_code == 200, start.text
         return start.json()["state"]
 
-    async def test_noi_tu_cai_dat_thi_quay_ve_cai_dat(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_noi_tu_cai_dat_thi_quay_ve_cai_dat(self, client: AsyncClient, db_session):
         token = await _onboard(client, email="conn0020@havi.vn")
         _override(client, db_session)
         state = await self._state(client, token, "settings")
@@ -219,9 +205,7 @@ class TestDuongVeSauCallback:
         assert "/cai-dat?ket_noi=ok" in location
         assert "/onboarding" not in location
 
-    async def test_noi_tu_onboarding_thi_quay_ve_onboarding(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_noi_tu_onboarding_thi_quay_ve_onboarding(self, client: AsyncClient, db_session):
         token = await _onboard(client, email="conn0021@havi.vn")
         _override(client, db_session)
         state = await self._state(client, token, "onboarding")
@@ -233,9 +217,7 @@ class TestDuongVeSauCallback:
 
         assert "/onboarding?ket_noi=ok" in response.headers["location"]
 
-    async def test_khong_khai_tro_ve_thi_mac_dinh_onboarding(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_khong_khai_tro_ve_thi_mac_dinh_onboarding(self, client: AsyncClient, db_session):
         """Giữ hành vi cũ cho mọi caller chưa truyền tham số này."""
         token = await _onboard(client, email="conn0022@havi.vn")
         _override(client, db_session)
@@ -256,9 +238,7 @@ class TestDuongVeSauCallback:
         state = await self._state(client, token, "settings")
 
         # Thiếu `code` = một lỗi thật (Facebook trả về thiếu tham số).
-        response = await client.get(
-            "/connections/facebook/callback", params={"state": state}
-        )
+        response = await client.get("/connections/facebook/callback", params={"state": state})
 
         location = response.headers["location"]
         assert "/cai-dat?ket_noi=loi" in location
@@ -276,9 +256,7 @@ class TestDuongVeSauCallback:
 
         assert response.status_code == 422, response.text
 
-    async def test_state_bi_sua_khong_doi_duoc_duong_ve(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_state_bi_sua_khong_doi_duoc_duong_ve(self, client: AsyncClient, db_session):
         """Chốt chặn cuối cho open redirect: kể cả khi ai đó dựng được state
         mang `ret` là một URL đầy đủ, callback vẫn chỉ ghép đường trong
         allow-list — không bao giờ redirect ra ngoài domain Havi."""
@@ -315,16 +293,12 @@ class TestDuongVeSauCallback:
 
 
 class TestListAndDisconnect:
-    async def test_list_chi_thay_ket_noi_cua_workspace_minh(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_list_chi_thay_ket_noi_cua_workspace_minh(self, client: AsyncClient, db_session):
         token_a = await _onboard(client, email="conn0005@havi.vn")
         token_b = await _onboard(client, email="conn0006@havi.vn")
         _override(client, db_session)
 
-        start = await client.post(
-            "/connections/facebook/start", headers=_headers(token_a)
-        )
+        start = await client.post("/connections/facebook/start", headers=_headers(token_a))
         await client.get(
             "/connections/facebook/callback",
             params={"code": "code", "state": start.json()["state"]},
@@ -336,9 +310,7 @@ class TestListAndDisconnect:
         assert [c["platform"] for c in list_a.json()] == ["facebook"]
         assert list_b.json() == [], "tiệm khác không được thấy kết nối này"
 
-    async def test_response_khong_bao_gio_chua_token(
-        self, client: AsyncClient, db_session
-    ):
+    async def test_response_khong_bao_gio_chua_token(self, client: AsyncClient, db_session):
         token = await _onboard(client, email="conn0007@havi.vn")
         _override(client, db_session)
         start = await client.post("/connections/facebook/start", headers=_headers(token))
@@ -393,9 +365,5 @@ class TestListAndDisconnect:
         assert advertised, "phải có ít nhất một kênh nối được"
 
         for platform in advertised:
-            start = await client.post(
-                f"/connections/{platform}/start", headers=_headers(token)
-            )
-            assert start.status_code != 501, (
-                f"{platform} được quảng cáo nhưng /start trả 501"
-            )
+            start = await client.post(f"/connections/{platform}/start", headers=_headers(token))
+            assert start.status_code != 501, f"{platform} được quảng cáo nhưng /start trả 501"

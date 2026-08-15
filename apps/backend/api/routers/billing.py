@@ -57,9 +57,7 @@ async def change_plan(
     body: ChangePlanRequest,
 ) -> Subscription:
     try:
-        state, _ = await billing_service.change_plan(
-            workspace_id=workspace_id, target=body.plan
-        )
+        state, _ = await billing_service.change_plan(workspace_id=workspace_id, target=body.plan)
     except PlanChangeNotAllowed as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

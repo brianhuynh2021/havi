@@ -56,8 +56,7 @@ class ZaloPublisher(PublisherPort):
                     "payload": {
                         "template_type": "media",
                         "elements": [
-                            {"media_type": "image", "url": url}
-                            for url in request.media_urls[:1]
+                            {"media_type": "image", "url": url} for url in request.media_urls[:1]
                         ]
                         if request.media_urls
                         else [],
@@ -77,19 +76,12 @@ class ZaloPublisher(PublisherPort):
             error_code = data.get("error", 0)
             message = data.get("message")
             if error_code in (-216, -201):
-                raise AuthPermissionError(
-                    self.channel, f"Zalo Auth Error {error_code}: {message}"
-                )
+                raise AuthPermissionError(self.channel, f"Zalo Auth Error {error_code}: {message}")
             if error_code != 0:
-                raise ValidationPublishError(
-                    self.channel, f"Zalo Error {error_code}: {message}"
-                )
+                raise ValidationPublishError(self.channel, f"Zalo Error {error_code}: {message}")
 
             now = datetime.now(UTC)
-            msg_id = (
-                data.get("data", {}).get("message_id")
-                or f"zalo_msg_{int(now.timestamp())}"
-            )
+            msg_id = data.get("data", {}).get("message_id") or f"zalo_msg_{int(now.timestamp())}"
             return PublishResult(external_post_id=msg_id, published_at=now)
         except httpx.RequestError as exc:
             raise TemporaryPublishError(

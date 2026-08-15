@@ -47,9 +47,7 @@ class BulkApproveOutcome:
 
 
 class ApprovalService:
-    def __init__(
-        self, *, content: ContentRepository, events: EventLogRepository
-    ) -> None:
+    def __init__(self, *, content: ContentRepository, events: EventLogRepository) -> None:
         self._content = content
         self._events = events
 
@@ -76,9 +74,7 @@ class ApprovalService:
             edited_by=user_id,
         )
 
-    async def list_versions(
-        self, *, workspace_id: UUID, item_id: UUID
-    ) -> list[ContentItemVersion]:
+    async def list_versions(self, *, workspace_id: UUID, item_id: UUID) -> list[ContentItemVersion]:
         await self._require_item(workspace_id=workspace_id, item_id=item_id)
         return await self._content.list_versions(item_id)
 
@@ -96,9 +92,7 @@ class ApprovalService:
         vẫn là nguồn sự thật duy nhất; `approved_by`/`approved_at` được ghi ở bước
         đầu nên dù có lỗi sau đó vẫn biết ai đã duyệt.
         """
-        item = await self._require_item(
-            workspace_id=workspace_id, item_id=item_id, for_update=True
-        )
+        item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         assert_transition(item.status, ContentStatus.APPROVED)
         await self._content.set_item_status(
             item, status=ContentStatus.APPROVED, approved_by=user_id
@@ -117,13 +111,9 @@ class ApprovalService:
         )
         return item
 
-    async def reject(
-        self, *, workspace_id: UUID, item_id: UUID, user_id: UUID
-    ) -> ContentItem:
+    async def reject(self, *, workspace_id: UUID, item_id: UUID, user_id: UUID) -> ContentItem:
         """pending_approval → draft. Giữ lại bài để chủ sửa, không xoá."""
-        item = await self._require_item(
-            workspace_id=workspace_id, item_id=item_id, for_update=True
-        )
+        item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         assert_transition(item.status, ContentStatus.DRAFT)
         await self._content.set_item_status(item, status=ContentStatus.DRAFT)
         await self._audit(
@@ -168,14 +158,10 @@ class ApprovalService:
         user_id: UUID,
         scheduled_at: datetime,
     ) -> ContentItem:
-        item = await self._require_item(
-            workspace_id=workspace_id, item_id=item_id, for_update=True
-        )
+        item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         if item.status not in RESCHEDULABLE_STATUSES:
             raise NotReschedulable(item.status)
-        await self._content.set_item_status(
-            item, status=item.status, scheduled_at=scheduled_at
-        )
+        await self._content.set_item_status(item, status=item.status, scheduled_at=scheduled_at)
         await self._audit(
             workspace_id=workspace_id,
             item=item,
@@ -199,9 +185,7 @@ class ApprovalService:
                 workspace_id=workspace_id, item_id=item_id
             )
         else:
-            item = await self._content.get_item(
-                workspace_id=workspace_id, item_id=item_id
-            )
+            item = await self._content.get_item(workspace_id=workspace_id, item_id=item_id)
         if item is None:
             raise ContentItemNotFound()
         return item

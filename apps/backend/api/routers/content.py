@@ -119,9 +119,7 @@ async def create_content_job(
 
 
 @router.get("/quota", response_model=TokenQuota)
-async def get_quota(
-    workspace_id: WorkspaceDep, content_service: ContentServiceDep
-) -> TokenQuota:
+async def get_quota(workspace_id: WorkspaceDep, content_service: ContentServiceDep) -> TokenQuota:
     """Token đã dùng / trần tháng này.
 
     Frontend đọc để cảnh báo *trước* khi chủ tiệm bị chặn giữa lúc đang cần đăng
@@ -207,9 +205,7 @@ async def retry_publish_job(
     try:
         job = await publishes.retry_dead_letter(workspace_id=workspace_id, job_id=job_id)
     except PublishJobNotFound as exc:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, "Không tìm thấy lượt đăng này"
-        ) from exc
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy lượt đăng này") from exc
     except NotRetryable as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     except AlreadyRunning as exc:
@@ -262,9 +258,7 @@ async def list_versions(
     content_id: UUID, workspace_id: WorkspaceDep, approvals: ApprovalServiceDep
 ) -> list[ContentItemVersion]:
     try:
-        versions = await approvals.list_versions(
-            workspace_id=workspace_id, item_id=content_id
-        )
+        versions = await approvals.list_versions(workspace_id=workspace_id, item_id=content_id)
     except ContentItemNotFound as exc:
         raise _not_found() from exc
     return [ContentItemVersion.model_validate(v) for v in versions]
@@ -285,9 +279,10 @@ async def approve_all(
     )
     try:
         from scheduler.tasks import dispatch_due_posts
+
         dispatch_due_posts.delay()
     except Exception as exc:
-        logger.warning("Không thể kích hoạt dispatch_due_posts: %s", exc)
+        logger.warning("Failed to trigger dispatch_due_posts: %s", exc)
     return BulkApproveResult(
         approved=outcome.approved,
         rejected=[
@@ -323,9 +318,10 @@ async def approve_content(
         raise transition_conflict(exc) from exc
     try:
         from scheduler.tasks import dispatch_due_posts
+
         dispatch_due_posts.delay()
     except Exception as exc:
-        logger.warning("Không thể kích hoạt dispatch_due_posts: %s", exc)
+        logger.warning("Failed to trigger dispatch_due_posts: %s", exc)
     return ContentItem.model_validate(item)
 
 

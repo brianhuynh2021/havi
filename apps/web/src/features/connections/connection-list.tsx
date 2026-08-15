@@ -72,6 +72,35 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
     };
   }, [onUsableChange]);
 
+  // Tự động thông báo cho cửa sổ chính và đóng popup nếu đang trong cửa sổ popup OAuth
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.opener && window.opener !== window) {
+      const search = window.location.search;
+      if (search.includes("ket_noi=")) {
+        try {
+          window.opener.postMessage({ type: "havi:oauth_complete" }, window.location.origin);
+        } catch {
+          // Bỏ qua lỗi cross-origin nếu có
+        }
+        setTimeout(() => {
+          window.close();
+        }, 400);
+      }
+    }
+  }, []);
+
+  // Lắng nghe tín hiệu kết nối xong từ popup để cập nhật ngay danh sách kênh
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data?.type === "havi:oauth_complete") {
+        void load();
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [load]);
+
   // Xoá `?ket_noi=...` khỏi URL sau khi đã đọc: để nguyên thì chủ tiệm bấm F5
   // lại thấy "Đã nối kênh" dù lần đó chẳng nối gì, và link dán cho người khác
   // cũng mang theo thông báo sai. Chỉ đụng vào URL (hệ thống bên ngoài React),

@@ -40,9 +40,7 @@ class WorkspaceMember(CreatedAtMixin, Base):
 
     __tablename__ = "workspace_members"
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces.id"), primary_key=True
-    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
     role: Mapped[WorkspaceRole] = mapped_column(Enum(WorkspaceRole, native_enum=False))
 
@@ -60,9 +58,7 @@ class Invoice(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     """
 
     __tablename__ = "invoices"
-    __table_args__ = (
-        Index("ix_invoices_workspace_issued", "workspace_id", "issued_at"),
-    )
+    __table_args__ = (Index("ix_invoices_workspace_issued", "workspace_id", "issued_at"),)
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
@@ -83,9 +79,7 @@ class BrandProfile(UpdatedAtMixin, Base):
 
     __tablename__ = "brand_profiles"
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces.id"), primary_key=True
-    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), primary_key=True)
     industry: Mapped[Industry] = mapped_column(Enum(Industry, native_enum=False))
     tone: Mapped[str] = mapped_column(default="")
     banned_claims: Mapped[list[str]] = mapped_column(JSONB, default=list)

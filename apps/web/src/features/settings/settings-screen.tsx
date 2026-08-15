@@ -19,7 +19,6 @@ import {
 import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./settings-screen.module.css";
 
-
 type FormState = {
   workspaceId: string;
   name: string;
@@ -159,22 +158,34 @@ export function SettingsScreen() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
+        <div className={styles.headerBadge}>⚙️ Thiết lập hệ thống</div>
         <h1 className={styles.title}>{t("settings.title", "Cài Đặt Hệ Thống")}</h1>
         <p className={styles.subtitle}>
-          {t("settings.subtitle", "Quản lý doanh nghiệp, tài khoản và kết nối kênh")}
+          {t("settings.subtitle", "Quản lý hồ sơ thương hiệu, phong cách viết bài của AI và các kênh xuất bản")}
         </p>
       </header>
 
-      <section className={styles.section} aria-labelledby="brand-voice-title">
-        <h2 className={styles.sectionTitle} id="brand-voice-title">
-          {t("settings.brandKitTab", "Bộ nhận diện thương hiệu")}
-        </h2>
-        <p className={styles.sectionHint}>
-          {t({
-            vi: "Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi chỉ dùng phần này làm nền khi tạo bản nháp mới.",
-            en: "Havi uses brand voice guidelines when generating drafts for your review.",
-          })}
-        </p>
+      {/* Card 1: Bộ nhận diện thương hiệu */}
+      <section className={styles.sectionCard} aria-labelledby="brand-voice-title">
+        <div className={styles.cardHeader}>
+          <div className={styles.cardIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+          </div>
+          <div className={styles.cardHeaderText}>
+            <h2 className={styles.sectionTitle} id="brand-voice-title">
+              {t("settings.brandKitTab", "Bộ nhận diện thương hiệu")}
+            </h2>
+            <p className={styles.sectionHint}>
+              {t({
+                vi: "Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi dùng thông tin này làm nền tảng khi AI sáng tạo nội dung.",
+                en: "Havi uses brand voice guidelines when generating drafts for your review.",
+              })}
+            </p>
+          </div>
+        </div>
 
         {error ? (
           <p className={styles.alert} role="alert">
@@ -223,7 +234,7 @@ export function SettingsScreen() {
               value={form.tone}
               disabled={loading || saving}
               placeholder={t({
-                vi: "Ví dụ: thân thiện, gần gũi, nói ngắn gọn...",
+                vi: "Ví dụ: thân thiện, gần gũi, ấm áp, xưng chị em, ngắn gọn súc tích...",
                 en: "e.g., professional yet warm, concise and engaging...",
               })}
               onChange={(event) =>
@@ -233,11 +244,11 @@ export function SettingsScreen() {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Không được hứa</span>
+            <span className={styles.label}>Không được hứa (Banned Claims)</span>
             <Textarea
               value={form.bannedClaimsText}
               disabled={loading || saving}
-              placeholder={"Mỗi dòng một câu, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo tăng doanh thu"}
+              placeholder={"Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo tăng doanh thu 100%"}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -259,30 +270,55 @@ export function SettingsScreen() {
         </form>
       </section>
 
-      <section className={styles.section} aria-labelledby="connections-title">
-        <h2 className={styles.sectionTitle} id="connections-title">
-          Kênh đã nối
-        </h2>
-        <p className={styles.sectionHint}>
-          Kênh nào hết hạn hoặc mất quyền, chị nối lại ở đây để lịch đăng chạy tiếp.
-        </p>
+      {/* Card 2: Kênh đã nối */}
+      <section className={styles.sectionCard} aria-labelledby="connections-title">
+        <div className={styles.cardHeader}>
+          <div className={styles.cardIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </div>
+          <div className={styles.cardHeaderText}>
+            <h2 className={styles.sectionTitle} id="connections-title">
+              Kênh xuất bản đã kết nối
+            </h2>
+            <p className={styles.sectionHint}>
+              Kênh nào hết hạn hoặc mất quyền, chị kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động.
+            </p>
+          </div>
+        </div>
         <ConnectionList returnTo="settings" />
       </section>
 
-      <section className={`${styles.section} ${styles.dangerSection}`} aria-labelledby="danger-title">
-        <h2 className={styles.sectionTitle} id="danger-title">
-          Vùng nguy hiểm
-        </h2>
-        <p className={styles.sectionHint}>
-          Xoá tiệm hoặc tài khoản sẽ gỡ bỏ dữ liệu vĩnh viễn và không thể khôi phục.
-        </p>
-
-        <div className={styles.dangerCard}>
-          <div className={styles.dangerTitle}>Xoá tiệm hiện tại</div>
-          <div className={styles.dangerText}>
-            Xoá toàn bộ bài nháp, kết nối Facebook, hình ảnh và cài đặt của tiệm này.
+      {/* Card 3: Vùng nguy hiểm */}
+      <section className={`${styles.sectionCard} ${styles.dangerCardContainer}`} aria-labelledby="danger-title">
+        <div className={styles.cardHeader}>
+          <div className={`${styles.cardIcon} ${styles.dangerIcon}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
           </div>
-          <div className={styles.dangerActions}>
+          <div className={styles.cardHeaderText}>
+            <h2 className={styles.sectionTitle} id="danger-title">
+              Vùng nguy hiểm
+            </h2>
+            <p className={styles.sectionHint}>
+              Chỉ xoá dữ liệu và ngắt kết nối bên trong ứng dụng Havi. Fanpage, kênh TikTok/YouTube và các bài đã đăng trên mạng xã hội của bạn KHÔNG bị ảnh hưởng.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.dangerGrid}>
+          <div className={styles.dangerSubCard}>
+            <div className={styles.dangerSubInfo}>
+              <div className={styles.dangerTitle}>Xoá tiệm trên Havi</div>
+              <div className={styles.dangerText}>
+                Xoá toàn bộ bài nháp, ngắt kết nối các kênh và xoá cài đặt của tiệm này trên Havi (Fanpage và kênh mạng xã hội thật của bạn vẫn an toàn 100%).
+              </div>
+            </div>
             <button
               type="button"
               className={styles.dangerButtonOutline}
@@ -292,14 +328,14 @@ export function SettingsScreen() {
               {deletingWorkspace ? "Đang xoá tiệm..." : "Xoá tiệm này"}
             </button>
           </div>
-        </div>
 
-        <div className={styles.dangerCard}>
-          <div className={styles.dangerTitle}>Xoá tài khoản người dùng</div>
-          <div className={styles.dangerText}>
-            Xoá vĩnh viễn tài khoản Havi của chị và thu hồi toàn bộ đăng nhập.
-          </div>
-          <div className={styles.dangerActions}>
+          <div className={styles.dangerSubCard}>
+            <div className={styles.dangerSubInfo}>
+              <div className={styles.dangerTitle}>Xoá tài khoản Havi</div>
+              <div className={styles.dangerText}>
+                Xoá vĩnh viễn tài khoản đăng nhập Havi của bạn và thu hồi mọi phiên đăng nhập trên hệ thống Havi.
+              </div>
+            </div>
             <button
               type="button"
               className={styles.dangerButton}
@@ -314,4 +350,3 @@ export function SettingsScreen() {
     </div>
   );
 }
-

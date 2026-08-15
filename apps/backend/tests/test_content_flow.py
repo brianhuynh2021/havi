@@ -218,9 +218,7 @@ async def test_khong_doc_duoc_job_cua_workspace_khac(
         json={"raw_inputs": [{"kind": "text", "text": "x"}]},
         headers=_headers(token_a),
     )
-    response = await client.get(
-        f"/content/jobs/{job.json()['id']}", headers=_headers(token_b)
-    )
+    response = await client.get(f"/content/jobs/{job.json()['id']}", headers=_headers(token_b))
     assert response.status_code == 404
 
 
@@ -274,9 +272,7 @@ async def test_full_auto_thi_draft_vao_thang_scheduled(
     ).json()
 
     engine = _engine(db_session, FakeProvider(response_text=GOOD_OUTPUT))
-    result = await engine.generate_drafts(
-        workspace_id=UUID(workspace_id), job_id=UUID(job["id"])
-    )
+    result = await engine.generate_drafts(workspace_id=UUID(workspace_id), job_id=UUID(job["id"]))
 
     assert {i.status for i in result.items} == {ContentStatus.SCHEDULED}
     # Sanity: workspace phải đúng là full_auto, không phải test pass vì lý do khác.
@@ -363,9 +359,7 @@ async def test_moi_provider_that_bai_thi_job_failed_co_reason(
         ),
     )
     with pytest.raises(GenerationFailed):
-        await engine.generate_drafts(
-            workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
-        )
+        await engine.generate_drafts(workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"]))
 
     stored = await ContentRepository(db_session).get_job(
         workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
@@ -396,23 +390,21 @@ async def test_malformed_output_cua_moi_provider_khong_tao_draft_rac(
         FakeProvider(
             provider=LLMProvider.OPENAI,
             response_text=json.dumps(
-                    {
-                        "drafts": [
-                            {"channel": "threads", "kind": "Threads", "text": "x"},
-                            {"channel": "threads", "kind": "Threads", "text": "x"},
-                            {"channel": "threads", "kind": "Threads", "text": "x"},
-                        ]
-                    }
-                ),
+                {
+                    "drafts": [
+                        {"channel": "threads", "kind": "Threads", "text": "x"},
+                        {"channel": "threads", "kind": "Threads", "text": "x"},
+                        {"channel": "threads", "kind": "Threads", "text": "x"},
+                    ]
+                }
+            ),
         ),
     )
 
     with pytest.raises(GenerationFailed):
         await engine.generate_drafts(workspace_id=workspace_id, job_id=job_id)
 
-    stored = await ContentRepository(db_session).get_job(
-        workspace_id=workspace_id, job_id=job_id
-    )
+    stored = await ContentRepository(db_session).get_job(workspace_id=workspace_id, job_id=job_id)
     assert stored is not None
     assert stored.status == ContentJobStatus.FAILED
     assert stored.failure_reason
@@ -420,13 +412,17 @@ async def test_malformed_output_cua_moi_provider_khong_tao_draft_rac(
     assert "output sai schema" in stored.failure_reason
 
     items = (
-        await db_session.execute(select(ContentItem).where(ContentItem.job_id == job_id))
-    ).scalars().all()
+        (await db_session.execute(select(ContentItem).where(ContentItem.job_id == job_id)))
+        .scalars()
+        .all()
+    )
     assert items == []
 
     events = (
-        await db_session.execute(select(EventLog).where(EventLog.job_id == job_id))
-    ).scalars().all()
+        (await db_session.execute(select(EventLog).where(EventLog.job_id == job_id)))
+        .scalars()
+        .all()
+    )
     assert len(events) == 1
     assert events[0].error and "invalid_output" in events[0].error
 
@@ -459,13 +455,13 @@ async def test_event_log_ghi_token_va_provider_vao_db(
             tokens_out=44,
         ),
     )
-    await engine.generate_drafts(
-        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
-    )
+    await engine.generate_drafts(workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"]))
 
     rows = (
-        await db_session.execute(select(EventLog).where(EventLog.job_id == UUID(job["id"])))
-    ).scalars().all()
+        (await db_session.execute(select(EventLog).where(EventLog.job_id == UUID(job["id"]))))
+        .scalars()
+        .all()
+    )
     assert len(rows) == 1
     entry = rows[0]
     assert entry.job_kind == "content.generate_drafts"
@@ -495,9 +491,7 @@ async def test_prompt_chua_brand_voice_va_banned_claims(
 
     provider = FakeProvider(response_text=GOOD_OUTPUT)
     engine = _engine(db_session, provider)
-    await engine.generate_drafts(
-        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
-    )
+    await engine.generate_drafts(workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"]))
 
     assert len(provider.calls) == 1
     system_prompt = provider.calls[0].system_prompt
@@ -545,9 +539,7 @@ async def test_job_failed_song_sot_khi_worker_rollback(
     # Đúng việc `session_scope` làm khi thấy exception.
     await db_session.rollback()
 
-    stored = await ContentRepository(db_session).get_job(
-        workspace_id=workspace_id, job_id=job_id
-    )
+    stored = await ContentRepository(db_session).get_job(workspace_id=workspace_id, job_id=job_id)
     assert stored is not None
     assert stored.status == ContentJobStatus.FAILED, (
         "job phải còn `failed` sau rollback — nếu là `queued` thì mark_job_failed "

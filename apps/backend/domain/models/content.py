@@ -32,9 +32,7 @@ class ContentJob(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     raw_inputs: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     idempotency_key: Mapped[str]
     failure_reason: Mapped[str | None] = mapped_column(default=None)
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
@@ -59,16 +57,10 @@ class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     # timezone=True bắt buộc: sản phẩm chạy ở Asia/Ho_Chi_Minh nhưng lưu UTC. Cột
     # naive sẽ nuốt offset khi ghi datetime aware — bài hẹn 20h VN thành 20h UTC,
     # tức 3h sáng hôm sau, và không có cách nào phát hiện sau khi đã ghi.
-    scheduled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
-    published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), default=None)
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
 class ContentItemVersion(UUIDPrimaryKeyMixin, Base):
@@ -79,9 +71,7 @@ class ContentItemVersion(UUIDPrimaryKeyMixin, Base):
         UniqueConstraint("content_item_id", "version_no", name="uq_content_item_versions_no"),
     )
 
-    content_item_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("content_items.id"), index=True
-    )
+    content_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("content_items.id"), index=True)
     version_no: Mapped[int]
     text: Mapped[str]
     edited_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), default=None)

@@ -56,9 +56,7 @@ VIDEO_REQUIREMENTS: dict[Channel, VideoRequirement] = {
 }
 
 
-def check_video_for_channel(
-    metadata: VideoMetadata | None, channel: Channel
-) -> list[str]:
+def check_video_for_channel(metadata: VideoMetadata | None, channel: Channel) -> list[str]:
     """Trả danh sách lý do video KHÔNG đăng được lên kênh này. Rỗng = hợp lệ.
 
     `metadata is None` nghĩa là chưa đọc được thông số (ffprobe vắng mặt, hoặc
@@ -77,14 +75,12 @@ def check_video_for_channel(
     if requirement.aspect_ratios and metadata.aspect_ratio not in requirement.aspect_ratios:
         wanted = " hoặc ".join(sorted(requirement.aspect_ratios))
         reasons.append(
-            f"{requirement.label} cần khung hình {wanted}, video này là "
-            f"{metadata.aspect_ratio}"
+            f"{requirement.label} cần khung hình {wanted}, video này là {metadata.aspect_ratio}"
         )
 
     if metadata.duration_seconds < requirement.min_duration_seconds:
         reasons.append(
-            f"{requirement.label} cần video dài ít nhất "
-            f"{requirement.min_duration_seconds:g} giây"
+            f"{requirement.label} cần video dài ít nhất {requirement.min_duration_seconds:g} giây"
         )
     elif metadata.duration_seconds > requirement.max_duration_seconds:
         reasons.append(
@@ -102,7 +98,5 @@ def check_video_for_channel(
 def eligible_channels(metadata: VideoMetadata | None) -> list[Channel]:
     """Kênh video mà clip này đăng được — dùng để UI gợi ý ngay sau khi upload."""
     return [
-        channel
-        for channel in VIDEO_REQUIREMENTS
-        if not check_video_for_channel(metadata, channel)
+        channel for channel in VIDEO_REQUIREMENTS if not check_video_for_channel(metadata, channel)
     ]

@@ -30,9 +30,7 @@ def test_request_id_header_duoc_giu_lai(client: TestClient):
 def test_http_request_log_la_json_va_khong_log_query(client: TestClient, caplog):
     caplog.set_level(logging.INFO, logger="havi.http")
 
-    response = client.get(
-        "/health?token=khong-duoc-log", headers={"X-Request-ID": "req_log_123"}
-    )
+    response = client.get("/health?token=khong-duoc-log", headers={"X-Request-ID": "req_log_123"})
 
     assert response.status_code == 200
     records = [record for record in caplog.records if record.name == "havi.http"]

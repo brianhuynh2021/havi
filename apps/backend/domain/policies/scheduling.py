@@ -25,9 +25,7 @@ def next_golden_hour(*, now: datetime | None = None) -> datetime:
     """
     current = (now or datetime.now(UTC)).astimezone(VIETNAM_TZ)
     for slot in GOLDEN_HOURS:
-        candidate = current.replace(
-            hour=slot.hour, minute=slot.minute, second=0, microsecond=0
-        )
+        candidate = current.replace(hour=slot.hour, minute=slot.minute, second=0, microsecond=0)
         if candidate > current:
             return candidate.astimezone(UTC)
     # Qua hết khung giờ hôm nay thì đẩy sang khung đầu tiên của ngày mai.

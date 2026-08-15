@@ -67,9 +67,7 @@ class AnthropicProvider(LLMProviderPort):
             "max_tokens": request.max_output_tokens,
             "system": request.system_prompt,
             "messages": [{"role": "user", "content": request.user_prompt}],
-            "output_config": {
-                "format": {"type": "json_schema", "schema": sanitized_schema}
-            },
+            "output_config": {"format": {"type": "json_schema", "schema": sanitized_schema}},
         }
         headers = {
             "x-api-key": self._api_key,

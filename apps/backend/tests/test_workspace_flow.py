@@ -3,9 +3,7 @@
 from httpx import AsyncClient
 
 
-async def _sign_up_and_login(
-    client: AsyncClient, *, name: str = "Chị Hương", email: str
-) -> dict:
+async def _sign_up_and_login(client: AsyncClient, *, name: str = "Chị Hương", email: str) -> dict:
     signup = await client.post(
         "/auth/sign-up", json={"name": name, "email": email, "password": "matkhau123"}
     )

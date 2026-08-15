@@ -52,9 +52,7 @@ class LeadRepository:
             select(
                 func.count(Lead.id),
                 func.count(Lead.id).filter(Lead.stage == LeadStage.WON),
-                func.count(Lead.id).filter(
-                    Lead.stage.in_((LeadStage.WON, LeadStage.LOST))
-                ),
+                func.count(Lead.id).filter(Lead.stage.in_((LeadStage.WON, LeadStage.LOST))),
             ).where(*window)
         )
         new_leads, won_leads, closed_leads = totals.one()
@@ -193,4 +191,3 @@ class LeadRepository:
             .group_by(ContentItem.channel)
         )
         return {row[0]: row[1] for row in result.all()}
-

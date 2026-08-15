@@ -188,4 +188,3 @@ class WorkspaceService:
             if owner_count <= 1:
                 raise CannotRemoveLastOwner()
         await self._members.remove(member)
-

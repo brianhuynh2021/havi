@@ -58,9 +58,7 @@ class EventLogRepository:
         quota.
         """
         result = await self._session.execute(
-            select(
-                func.coalesce(func.sum(EventLog.tokens_in + EventLog.tokens_out), 0)
-            ).where(
+            select(func.coalesce(func.sum(EventLog.tokens_in + EventLog.tokens_out), 0)).where(
                 EventLog.workspace_id == workspace_id, EventLog.created_at >= since
             )
         )
@@ -172,7 +170,6 @@ class EventLogRepository:
             "approved_draft_count": approved_draft_count,
             "est_cost_per_approved_draft_vnd": est_cost_per_approved_draft_vnd,
             "providers": [
-                {"provider": provider, **metrics}
-                for provider, metrics in sorted(providers.items())
+                {"provider": provider, **metrics} for provider, metrics in sorted(providers.items())
             ],
         }

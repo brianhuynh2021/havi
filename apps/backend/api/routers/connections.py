@@ -34,9 +34,7 @@ router = APIRouter(prefix="/connections", tags=["connections"])
 
 
 def _unsupported(exc: PlatformNotSupported) -> HTTPException:
-    return HTTPException(
-        status.HTTP_501_NOT_IMPLEMENTED, f"Chưa hỗ trợ nối {exc.platform.value}"
-    )
+    return HTTPException(status.HTTP_501_NOT_IMPLEMENTED, f"Chưa hỗ trợ nối {exc.platform.value}")
 
 
 def _not_configured() -> HTTPException:
@@ -74,6 +72,18 @@ PLATFORM_CAPABILITIES: dict[Platform, dict] = {
         "supported_media": ["image"],
         "max_text_length": 2000,
         "supported_features": ["paragraph_messages", "broadcast_care"],
+    },
+    Platform.TIKTOK: {
+        "name": "TikTok Account",
+        "supported_media": ["video"],
+        "max_text_length": 4000,
+        "supported_features": ["short_form_video", "direct_post"],
+    },
+    Platform.YOUTUBE: {
+        "name": "YouTube Channel",
+        "supported_media": ["video"],
+        "max_text_length": 5000,
+        "supported_features": ["shorts_video", "video_upload"],
     },
     Platform.GOOGLE_BUSINESS: {
         "name": "Google Business Profile",
@@ -158,9 +168,7 @@ async def oauth_callback(
     # chủ tiệm bấm "Nối lại" từ trang Cài đặt phải quay về Cài đặt. Hardcode
     # `/onboarding` là đá người đã dùng app hàng tháng vào lại wizard onboarding.
     # State thiếu/hỏng thì `return_path_for` trả mặc định, không ném.
-    return_path = (
-        connections.return_path_for(state, platform=platform) if state else "/onboarding"
-    )
+    return_path = connections.return_path_for(state, platform=platform) if state else "/onboarding"
     return_url = f"{web_base}{return_path}"
 
     if error:
@@ -172,25 +180,17 @@ async def oauth_callback(
     # Thiếu `state` cũng phải xử như lỗi thường: đây là endpoint public, ai
     # cũng gọi được, và trả 422 vào mặt trình duyệt là hiện JSON thô cho chủ tiệm.
     if not code or not state:
-        return RedirectResponse(
-            f"{return_url}?ket_noi=loi&ly_do=thieu_thong_tin", status_code=302
-        )
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=thieu_thong_tin", status_code=302)
 
     try:
         await connections.complete(platform=platform, code=code, state=state)
     except InvalidOAuthState:
-        return RedirectResponse(
-            f"{return_url}?ket_noi=loi&ly_do=het_han", status_code=302
-        )
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=het_han", status_code=302)
     except (PlatformNotSupported, PlatformNotConfigured, TokenEncryptionUnavailable):
-        return RedirectResponse(
-            f"{return_url}?ket_noi=loi&ly_do=chua_cau_hinh", status_code=302
-        )
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=chua_cau_hinh", status_code=302)
     except Exception:  # noqa: BLE001 — callback không được trả 500 vào mặt user
-        logger.exception("OAuth callback %s lỗi ngoài dự kiến", platform.value)
-        return RedirectResponse(
-            f"{return_url}?ket_noi=loi&ly_do=he_thong", status_code=302
-        )
+        logger.exception("OAuth callback %s unexpected error", platform.value)
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=he_thong", status_code=302)
 
     return RedirectResponse(f"{return_url}?ket_noi=ok", status_code=302)
 
@@ -207,9 +207,7 @@ async def disconnect(
     try:
         await connections.disconnect(workspace_id=workspace_id, platform=platform)
     except ConnectionNotFound as exc:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, "Kênh này chưa được nối"
-        ) from exc
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Kênh này chưa được nối") from exc
 
 
 @router.post("/facebook/data-deletion", include_in_schema=False)
@@ -254,14 +252,10 @@ async def facebook_data_deletion(request: Request) -> JSONResponse:
         except Exception:
             logger.warning("Failed to parse Facebook signed_request in data deletion callback")
 
-    status_url = (
-        f"{settings.web_base_url}/data-deletion?confirmation_code={confirmation_code}"
-    )
+    status_url = f"{settings.web_base_url}/data-deletion?confirmation_code={confirmation_code}"
     return JSONResponse(
         content={
             "url": status_url,
             "confirmation_code": confirmation_code,
         }
     )
-
-

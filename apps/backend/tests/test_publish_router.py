@@ -56,9 +56,7 @@ def _headers(token_pair: dict) -> dict:
     return {"Authorization": f"Bearer {token_pair['access_token']}"}
 
 
-def _override(
-    client: AsyncClient, db_session: AsyncSession, publisher: FakePublisher
-) -> None:
+def _override(client: AsyncClient, db_session: AsyncSession, publisher: FakePublisher) -> None:
     """Thay adapter Facebook thật bằng fake, giữ nguyên repository và DB session."""
     app = client._transport.app  # type: ignore[attr-defined]
 
@@ -83,9 +81,7 @@ def _workspace_id(token_pair: dict) -> uuid.UUID:
     return decoded.active_workspace_id
 
 
-async def _dead_letter_job(
-    db_session: AsyncSession, workspace_id: uuid.UUID, *, at: datetime
-):
+async def _dead_letter_job(db_session: AsyncSession, workspace_id: uuid.UUID, *, at: datetime):
     """Một bài đã duyệt + kênh đã nối + một job đã dừng hẳn sau nhiều lần lỗi.
 
     Đi qua `mark_failed` thật thay vì set `status` bằng tay: nếu luật retry đổi
@@ -131,9 +127,7 @@ def _at(hours_ago: int = 1) -> datetime:
 
 
 class TestListPublishJobs:
-    async def test_route_khong_bi_doc_nhu_uuid(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_route_khong_bi_doc_nhu_uuid(self, client: AsyncClient, db_session: AsyncSession):
         """`/content/publish-jobs` phải khớp route riêng, không rơi vào
         `/content/{content_id}` và trả 422 vì "publish-jobs" không phải UUID."""
         token = await _onboard(client, email="pub0001@havi.vn")
@@ -143,9 +137,7 @@ class TestListPublishJobs:
         assert response.status_code == 200, response.text
         assert response.json() == []
 
-    async def test_loc_theo_dead_letter(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_loc_theo_dead_letter(self, client: AsyncClient, db_session: AsyncSession):
         token = await _onboard(client, email="pub0002@havi.vn")
         _override(client, db_session, FakePublisher())
         await _dead_letter_job(db_session, _workspace_id(token), at=_at())
@@ -183,9 +175,7 @@ class TestListPublishJobs:
         _override(client, db_session, FakePublisher())
         await _dead_letter_job(db_session, _workspace_id(chi_huong), at=_at())
 
-        response = await client.get(
-            "/content/publish-jobs", headers=_headers(chi_lan)
-        )
+        response = await client.get("/content/publish-jobs", headers=_headers(chi_lan))
         assert response.status_code == 200
         assert response.json() == []
 
@@ -211,9 +201,7 @@ class TestRetryPublishJob:
         assert item.status is ContentStatus.PUBLISHED
         assert len(publisher.calls) == 1
 
-    async def test_thu_lai_dat_lai_so_lan_thu(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_thu_lai_dat_lai_so_lan_thu(self, client: AsyncClient, db_session: AsyncSession):
         """Người đã sửa nguyên nhân thì cho đủ lượt thử như job mới — nhưng lượt
         này cũng tính một lần, nên `attempt_count` là 1 chứ không 0."""
         token = await _onboard(client, email="pub0011@havi.vn")
@@ -279,9 +267,7 @@ class TestRetryPublishJob:
         assert response.status_code == 409, response.text
         assert publisher.calls == []
 
-    async def test_job_khong_ton_tai_tra_404(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_job_khong_ton_tai_tra_404(self, client: AsyncClient, db_session: AsyncSession):
         token = await _onboard(client, email="pub0015@havi.vn")
         _override(client, db_session, FakePublisher())
 

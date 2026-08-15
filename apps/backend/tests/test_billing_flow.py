@@ -1,6 +1,5 @@
 """Test Billing Service & API routes (/billing/subscription, /billing/invoices, /billing/plan)."""
 
-import pytest
 from httpx import AsyncClient
 
 from core.enums import Plan, SubscriptionStatus

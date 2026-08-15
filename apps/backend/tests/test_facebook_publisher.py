@@ -68,7 +68,9 @@ class TestPhanLoaiLoi:
         assert isinstance(err, ValidationPublishError)
 
     def test_response_khong_phai_json_van_phan_loai_duoc(self):
-        raw = httpx.Response(500, text="<html>gateway</html>", request=httpx.Request("POST", "https://x"))
+        raw = httpx.Response(
+            500, text="<html>gateway</html>", request=httpx.Request("POST", "https://x")
+        )
         assert isinstance(_publisher()._classify_error(raw), TemporaryPublishError)
 
     def test_thong_bao_loi_giu_ma_de_support_tra_duoc(self):

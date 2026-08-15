@@ -182,12 +182,16 @@ class TestChongDangTrung:
         item = await _item(db_session, ws.id)
 
         _, created_1 = await repo.enqueue(
-            workspace_id=ws.id, content_item_id=item,
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(20),
+            workspace_id=ws.id,
+            content_item_id=item,
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(20),
         )
         _, created_2 = await repo.enqueue(
-            workspace_id=ws.id, content_item_id=item,
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(21),
+            workspace_id=ws.id,
+            content_item_id=item,
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(21),
         )
 
         assert created_1 is True
@@ -199,12 +203,16 @@ class TestClaimDue:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(20),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(20),
         )
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(23),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(23),
         )
 
         claimed = await repo.claim_due(now=_at(21))
@@ -217,8 +225,10 @@ class TestClaimDue:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
 
         claimed = await repo.claim_due(now=_at(21))
@@ -231,8 +241,10 @@ class TestClaimDue:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         job, _ = await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
         job.next_attempt_at = datetime.now(UTC) + timedelta(minutes=5)
         await db_session.flush()
@@ -245,8 +257,10 @@ class TestPhanLoaiLoi:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
         job = (await repo.claim_due(now=_at(21)))[0]
 
@@ -255,22 +269,20 @@ class TestPhanLoaiLoi:
         assert job.status is PublishStatus.PENDING
         assert job.next_attempt_at is not None, "phải hẹn giờ thử lại"
 
-    async def test_loi_mat_quyen_khong_retry_di_thang_dead_letter(
-        self, db_session: AsyncSession
-    ):
+    async def test_loi_mat_quyen_khong_retry_di_thang_dead_letter(self, db_session: AsyncSession):
         """Retry khi token hết hạn chỉ đập vào API và vẫn hỏng — cần chủ tiệm
         nối lại kênh, không phải thử lại."""
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
         job = (await repo.claim_due(now=_at(21)))[0]
 
-        await repo.mark_failed(
-            job, kind=PublishFailureKind.AUTH_PERMISSION, detail="token hết hạn"
-        )
+        await repo.mark_failed(job, kind=PublishFailureKind.AUTH_PERMISSION, detail="token hết hạn")
 
         assert job.status is PublishStatus.DEAD_LETTER
         assert job.next_attempt_at is None
@@ -279,8 +291,10 @@ class TestPhanLoaiLoi:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
         job = (await repo.claim_due(now=_at(21)))[0]
 
@@ -295,8 +309,10 @@ class TestPhanLoaiLoi:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
 
         for _ in range(MAX_ATTEMPTS):
@@ -314,13 +330,13 @@ class TestPhanLoaiLoi:
         ws = await _workspace(db_session)
         repo = PublishRepository(db_session)
         await repo.enqueue(
-            workspace_id=ws.id, content_item_id=await _item(db_session, ws.id),
-            channel=Channel.FACEBOOK_PAGE, scheduled_at=_at(),
+            workspace_id=ws.id,
+            content_item_id=await _item(db_session, ws.id),
+            channel=Channel.FACEBOOK_PAGE,
+            scheduled_at=_at(),
         )
         job = (await repo.claim_due(now=_at(21)))[0]
-        await repo.mark_failed(
-            job, kind=PublishFailureKind.AUTH_PERMISSION, detail="token hết hạn"
-        )
+        await repo.mark_failed(job, kind=PublishFailureKind.AUTH_PERMISSION, detail="token hết hạn")
 
         await repo.reset_for_manual_retry(job)
 
@@ -352,9 +368,9 @@ class TestFakePublisher:
         """Worker dựa vào `kind` để quyết định retry — sai phân loại là sai hết."""
         assert auth_error().kind is PublishFailureKind.AUTH_PERMISSION
         assert validation_error().kind is PublishFailureKind.VALIDATION_PERMANENT
-        assert TemporaryPublishError(
-            Channel.FACEBOOK_PAGE, "429"
-        ).kind is PublishFailureKind.TEMPORARY
+        assert (
+            TemporaryPublishError(Channel.FACEBOOK_PAGE, "429").kind is PublishFailureKind.TEMPORARY
+        )
 
 
 class TestConnectionRepository:
@@ -366,9 +382,7 @@ class TestConnectionRepository:
         repo = ConnectionRepository(db_session)
         token = "EAAGm0PX4ZCpsBA-facebook-page-token"
 
-        conn = await repo.upsert(
-            workspace_id=ws.id, platform=Platform.FACEBOOK, access_token=token
-        )
+        conn = await repo.upsert(workspace_id=ws.id, platform=Platform.FACEBOOK, access_token=token)
 
         assert token not in conn.access_token_encrypted
         assert repo.read_access_token(conn) == token
@@ -390,7 +404,6 @@ class TestConnectionRepository:
 
         await repo.mark_unusable(conn, status=ConnectionStatus.REVOKED, reason="revoked")
         assert await repo.get_connected_channels(ws.id) == []
-
 
     async def test_noi_lai_kenh_cap_nhat_chu_khong_tao_ban_ghi_thu_hai(
         self, db_session: AsyncSession
@@ -418,12 +431,8 @@ class TestConnectionRepository:
 
         ws = await _workspace(db_session)
         repo = ConnectionRepository(db_session)
-        conn = await repo.upsert(
-            workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="t"
-        )
-        await repo.mark_unusable(
-            conn, status=ConnectionStatus.EXPIRED, reason="token hết hạn"
-        )
+        conn = await repo.upsert(workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="t")
+        await repo.mark_unusable(conn, status=ConnectionStatus.EXPIRED, reason="token hết hạn")
 
         again = await repo.upsert(
             workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="token-moi"
@@ -432,16 +441,12 @@ class TestConnectionRepository:
         assert again.status is ConnectionStatus.CONNECTED
         assert again.failure_reason is None
 
-    async def test_hai_workspace_khong_thay_ket_noi_cua_nhau(
-        self, db_session: AsyncSession
-    ):
+    async def test_hai_workspace_khong_thay_ket_noi_cua_nhau(self, db_session: AsyncSession):
         from adapters.persistence.connection_repository import ConnectionRepository
 
         a, b = await _workspace(db_session), await _workspace(db_session)
         repo = ConnectionRepository(db_session)
-        await repo.upsert(
-            workspace_id=a.id, platform=Platform.FACEBOOK, access_token="token-cua-a"
-        )
+        await repo.upsert(workspace_id=a.id, platform=Platform.FACEBOOK, access_token="token-cua-a")
 
         assert await repo.get(workspace_id=b.id, platform=Platform.FACEBOOK) is None
         assert await repo.list_for_workspace(b.id) == []
@@ -477,13 +482,19 @@ class TestPublishServiceEndToEnd:
 
         ws = await _workspace(session)
         await ConnectionRepository(session).upsert(
-            workspace_id=ws.id, platform=Platform.FACEBOOK,
-            access_token="page-token", external_account_id="page_1",
+            workspace_id=ws.id,
+            platform=Platform.FACEBOOK,
+            access_token="page-token",
+            external_account_id="page_1",
         )
         item = ContentItem(
-            workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
-            kind="Bài ảnh", text="Ưu đãi gội đầu thảo dược",
-            status=ContentStatus.SCHEDULED, scheduled_at=at,
+            workspace_id=ws.id,
+            job_id=None,
+            channel=Channel.FACEBOOK_PAGE,
+            kind="Bài ảnh",
+            text="Ưu đãi gội đầu thảo dược",
+            status=ContentStatus.SCHEDULED,
+            scheduled_at=at,
         )
         session.add(item)
         await session.flush()
@@ -547,9 +558,13 @@ class TestPublishServiceEndToEnd:
         ws = await _workspace(db_session)
         db_session.add(
             ContentItem(
-                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
-                kind="Bài ảnh", text="Chưa duyệt",
-                status=ContentStatus.PENDING_APPROVAL, scheduled_at=_at(20),
+                workspace_id=ws.id,
+                job_id=None,
+                channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh",
+                text="Chưa duyệt",
+                status=ContentStatus.PENDING_APPROVAL,
+                scheduled_at=_at(20),
             )
         )
         await db_session.flush()
@@ -569,9 +584,13 @@ class TestPublishServiceEndToEnd:
         ws = await _workspace(db_session)
         db_session.add(
             ContentItem(
-                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
-                kind="Bài ảnh", text="x",
-                status=ContentStatus.SCHEDULED, scheduled_at=_at(20),
+                workspace_id=ws.id,
+                job_id=None,
+                channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh",
+                text="x",
+                status=ContentStatus.SCHEDULED,
+                scheduled_at=_at(20),
             )
         )
         await db_session.flush()
@@ -647,11 +666,16 @@ class TestPublishServiceEndToEnd:
         # Bài thứ hai cùng workspace: một bài hỏng không được chặn bài kia.
         from core.enums import ContentStatus
         from domain.models.content import ContentItem
+
         db_session.add(
             ContentItem(
-                workspace_id=ws.id, job_id=None, channel=Channel.FACEBOOK_PAGE,
-                kind="Bài ảnh", text="Bài thứ hai",
-                status=ContentStatus.SCHEDULED, scheduled_at=_at(20),
+                workspace_id=ws.id,
+                job_id=None,
+                channel=Channel.FACEBOOK_PAGE,
+                kind="Bài ảnh",
+                text="Bài thứ hai",
+                status=ContentStatus.SCHEDULED,
+                scheduled_at=_at(20),
             )
         )
         await db_session.flush()

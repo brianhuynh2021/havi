@@ -111,7 +111,6 @@ class AuthService:
         self._workspaces = workspaces
         self._events = events
 
-
     async def sign_up(self, *, name: str, email: str, password: str) -> TokenPairResult:
         """Đăng ký xong đăng nhập luôn — email chưa cần xác minh để dùng app.
 
@@ -289,4 +288,3 @@ class AuthService:
     def _normalize_email(email: str) -> str:
         """Lowercase để "Huong@x.vn" và "huong@x.vn" không tạo 2 tài khoản."""
         return email.strip().lower()
-

@@ -58,9 +58,7 @@ def _message_payload(*, mid: str, text: str, page_id: str = PAGE_ID) -> dict:
 
 class TestSignatureVerification:
     def test_rejects_missing_header(self):
-        assert not _signature_matches(
-            app_secret=APP_SECRET, raw_body=b"{}", header=None
-        )
+        assert not _signature_matches(app_secret=APP_SECRET, raw_body=b"{}", header=None)
 
     def test_rejects_wrong_digest(self):
         assert not _signature_matches(
@@ -69,15 +67,11 @@ class TestSignatureVerification:
 
     def test_rejects_unprefixed_digest(self):
         digest = hmac.new(APP_SECRET.encode(), b"{}", hashlib.sha256).hexdigest()
-        assert not _signature_matches(
-            app_secret=APP_SECRET, raw_body=b"{}", header=digest
-        )
+        assert not _signature_matches(app_secret=APP_SECRET, raw_body=b"{}", header=digest)
 
     def test_accepts_correct_digest(self):
         digest = hmac.new(APP_SECRET.encode(), b"{}", hashlib.sha256).hexdigest()
-        assert _signature_matches(
-            app_secret=APP_SECRET, raw_body=b"{}", header=f"sha256={digest}"
-        )
+        assert _signature_matches(app_secret=APP_SECRET, raw_body=b"{}", header=f"sha256={digest}")
 
     def test_body_tampering_invalidates_signature(self):
         raw, headers = _signed(_message_payload(mid="m1", text="Bao nhiêu tiền ạ"))
@@ -232,9 +226,7 @@ class TestLocalSimulator:
         assert listing.json()["total"] == 1
 
     @pytest.mark.asyncio
-    async def test_exact_faq_auto_replies_but_substring_does_not(
-        self, client: AsyncClient
-    ):
+    async def test_exact_faq_auto_replies_but_substring_does_not(self, client: AsyncClient):
         headers = await _onboard(client, "webhook.faq@havi.vn")
         await client.put(
             "/brand-profile",

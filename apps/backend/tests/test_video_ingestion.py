@@ -31,13 +31,17 @@ ffmpeg_required = pytest.mark.skipif(
 )
 
 
-def _make_video(
-    path: Path, *, width: int, height: int, seconds: float, audio: bool
-) -> Path:
+def _make_video(path: Path, *, width: int, height: int, seconds: float, audio: bool) -> Path:
     """Dựng một clip thật bằng ffmpeg testsrc."""
     cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-f", "lavfi", "-i", f"testsrc=size={width}x{height}:rate=30:duration={seconds}",
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        f"testsrc=size={width}x{height}:rate=30:duration={seconds}",
     ]
     if audio:
         cmd += ["-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}", "-shortest"]
@@ -58,9 +62,7 @@ class TestAspectRatioClassification:
         assert processor.classify_aspect_ratio(1080, 1080) == "1:1"
         assert processor.classify_aspect_ratio(1080, 1350) == "4:5"
 
-    def test_zero_dimensions_are_unknown_not_a_guess(
-        self, processor: FFmpegVideoProcessor
-    ):
+    def test_zero_dimensions_are_unknown_not_a_guess(self, processor: FFmpegVideoProcessor):
         assert processor.classify_aspect_ratio(0, 0) == "unknown"
         assert processor.classify_aspect_ratio(1920, 0) == "unknown"
 
@@ -110,9 +112,7 @@ class TestProbeRealVideo:
 
     def test_probe_bytes_matches_probe_file(self, processor: FFmpegVideoProcessor):
         with tempfile.TemporaryDirectory() as tmp:
-            path = _make_video(
-                Path(tmp) / "clip.mp4", width=540, height=960, seconds=3, audio=True
-            )
+            path = _make_video(Path(tmp) / "clip.mp4", width=540, height=960, seconds=3, audio=True)
             from_file = processor.probe_file(str(path))
             from_bytes = processor.probe_bytes(path.read_bytes(), "clip.mp4")
 
@@ -152,22 +152,16 @@ class TestProbeRealVideo:
             path = _make_video(
                 Path(tmp) / "short.mp4", width=540, height=960, seconds=0.5, audio=False
             )
-            thumb = processor.thumbnail_bytes(
-                path.read_bytes(), "short.mp4", timestamp_seconds=1.0
-            )
+            thumb = processor.thumbnail_bytes(path.read_bytes(), "short.mp4", timestamp_seconds=1.0)
 
         assert thumb is not None
         assert thumb.startswith(b"\xff\xd8"), "phải là JPEG"
 
-    def test_thumbnail_bytes_returns_none_for_garbage(
-        self, processor: FFmpegVideoProcessor
-    ):
+    def test_thumbnail_bytes_returns_none_for_garbage(self, processor: FFmpegVideoProcessor):
         assert processor.thumbnail_bytes(b"khong-phai-video") is None
 
 
-def _meta(
-    *, ratio: str = "9:16", seconds: float = 20, audio: bool = True
-) -> VideoMetadata:
+def _meta(*, ratio: str = "9:16", seconds: float = 20, audio: bool = True) -> VideoMetadata:
     return VideoMetadata(
         duration_seconds=seconds,
         width=1080,

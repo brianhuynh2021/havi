@@ -424,6 +424,18 @@ export function ContentCreationScreen() {
     upload?.controller.abort();
   }
 
+  function removeUpload(key: string) {
+    const upload = uploads.find((item) => item.key === key);
+    if (upload?.status === "uploading") {
+      upload.controller.abort();
+    }
+    forgetPreviewUrl(upload?.previewUrl);
+    setUploads((prev) => prev.filter((item) => item.key !== key));
+    if (upload?.assetId) {
+      setChips((prev) => prev.filter((c) => c.key !== upload.assetId));
+    }
+  }
+
   const generating = poll.activeCount > 0 || poll.status === "queued" || poll.status === "processing";
   const uploading = uploads.some((upload) => upload.status === "uploading");
 
@@ -602,7 +614,12 @@ export function ContentCreationScreen() {
       {uploads.length ? (
         <section className={styles.uploadList} aria-label="Ảnh và clip đang nạp">
           {uploads.map((upload) => (
-            <article key={upload.key} className={styles.uploadItem}>
+            <article
+              key={upload.key}
+              className={`${styles.uploadItem} ${
+                upload.status === "failed" ? styles.uploadItemFailed : ""
+              }`}
+            >
               {upload.isVideo ? (
                 <video
                   className={styles.uploadPreview}
@@ -622,7 +639,11 @@ export function ContentCreationScreen() {
               <div className={styles.uploadBody}>
                 <div className={styles.uploadTopline}>
                   <span className={styles.uploadName}>{upload.fileName}</span>
-                  <span className={styles.uploadPercent}>
+                  <span
+                    className={`${styles.uploadPercent} ${
+                      upload.status === "failed" ? styles.uploadPercentFailed : ""
+                    }`}
+                  >
                     {upload.status === "uploading"
                       ? `${upload.progress}%`
                       : upload.status === "complete"
@@ -639,8 +660,12 @@ export function ContentCreationScreen() {
                   aria-valuemax={100}
                 >
                   <span
-                    className={styles.progressBar}
-                    style={{ width: `${upload.progress}%` }}
+                    className={`${styles.progressBar} ${
+                      upload.status === "failed" ? styles.progressBarFailed : ""
+                    }`}
+                    style={{
+                      width: `${upload.status === "failed" ? 100 : upload.progress}%`,
+                    }}
                   />
                 </div>
                 {upload.isVideo && upload.status === "complete"
@@ -655,7 +680,17 @@ export function ContentCreationScreen() {
                 >
                   Huỷ
                 </button>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  className={styles.removeUpload}
+                  onClick={() => removeUpload(upload.key)}
+                  aria-label={`Xoá ${upload.fileName}`}
+                  title="Xoá mục này"
+                >
+                  Xoá
+                </button>
+              )}
             </article>
           ))}
         </section>

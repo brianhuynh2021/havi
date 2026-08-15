@@ -97,9 +97,7 @@ async def list_media(
     "/upload-ticket",
     response_model=MediaUploadTicket,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[
-        limit_by_workspace("media_ticket", rate_limits.MEDIA_UPLOAD_TICKET)
-    ],
+    dependencies=[limit_by_workspace("media_ticket", rate_limits.MEDIA_UPLOAD_TICKET)],
 )
 async def create_upload_ticket(
     payload: MediaUploadRequest, workspace_id: WorkspaceDep, media_service: MediaServiceDep
@@ -138,9 +136,7 @@ async def complete_upload(
 ) -> MediaAsset:
     """Xác nhận upload xong — API kiểm object có thật trên storage rồi mới đổi status."""
     try:
-        asset = await media_service.complete_upload(
-            workspace_id=workspace_id, asset_id=asset_id
-        )
+        asset = await media_service.complete_upload(workspace_id=workspace_id, asset_id=asset_id)
     except MediaAssetNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy media asset") from exc
     except AlreadyCompleted as exc:

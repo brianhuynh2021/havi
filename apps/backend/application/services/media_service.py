@@ -125,9 +125,7 @@ class MediaService:
         # lấy từ ticket đã ký, kể cả khi bytes là thứ khác hoàn toàn. Bucket media
         # là public-read nên phải kiểm magic bytes ở đây, không thì thành nơi host
         # file tuỳ ý. Xoá object nếu lệch, đừng để rác public trong bucket.
-        prefix = await self._storage.read_prefix(
-            asset.object_key, num_bytes=PREFIX_BYTES_NEEDED
-        )
+        prefix = await self._storage.read_prefix(asset.object_key, num_bytes=PREFIX_BYTES_NEEDED)
         if not matches_media_type(prefix, asset.type):
             await self._storage.delete_object(asset.object_key)
             raise ContentDoesNotMatchType(asset.type)
@@ -170,9 +168,7 @@ class MediaService:
 
         try:
             data = await self._storage.read_object(asset.object_key)
-            metadata = await asyncio.to_thread(
-                self._video.probe_bytes, data, asset.filename
-            )
+            metadata = await asyncio.to_thread(self._video.probe_bytes, data, asset.filename)
         except Exception:
             logger.exception("media.probe_failed object_key=%s", asset.object_key)
             return ProbedVideo()
@@ -191,15 +187,11 @@ class MediaService:
         if self._video is None:
             return None
         try:
-            frame = await asyncio.to_thread(
-                self._video.thumbnail_bytes, data, asset.filename
-            )
+            frame = await asyncio.to_thread(self._video.thumbnail_bytes, data, asset.filename)
             if frame is None:
                 return None
             thumbnail_key = f"{asset.object_key}.thumb.jpg"
-            await self._storage.put_object(
-                thumbnail_key, data=frame, content_type="image/jpeg"
-            )
+            await self._storage.put_object(thumbnail_key, data=frame, content_type="image/jpeg")
             return thumbnail_key
         except Exception:
             logger.exception("media.thumbnail_failed object_key=%s", asset.object_key)

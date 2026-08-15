@@ -116,6 +116,10 @@ class Settings(BaseSettings):
     web_base_url: str = "http://localhost:3000"
     google_client_id: str = ""
     google_client_secret: str = ""
+    youtube_redirect_uri: str = "http://localhost:8000/connections/youtube/callback"
+    tiktok_client_key: str = ""
+    tiktok_client_secret: str = ""
+    tiktok_redirect_uri: str = "http://localhost:8000/connections/tiktok/callback"
     # Chuỗi tự đặt, khai cùng lúc ở Meta App Dashboard và ở đây. Meta gọi
     # `GET /webhooks/meta` một lần với chuỗi này để xác nhận endpoint là của
     # Havi. Để trống thì endpoint webhook trả 503 — chưa cấu hình thì không nhận
@@ -202,9 +206,7 @@ class Settings(BaseSettings):
                 "Staging/production phải cấu hình provider email thật."
             )
         if self.email_provider == "smtp" and (not self.email_from or not self.smtp_host):
-            raise ValueError(
-                "HAVI_EMAIL_PROVIDER=smtp cần HAVI_EMAIL_FROM và HAVI_SMTP_HOST."
-            )
+            raise ValueError("HAVI_EMAIL_PROVIDER=smtp cần HAVI_EMAIL_FROM và HAVI_SMTP_HOST.")
         return self
 
     @property

@@ -111,15 +111,11 @@ async def login_email(
     payload: EmailLoginRequest, auth_service: AuthServiceDep, response: Response
 ) -> TokenPair:
     try:
-        result = await auth_service.login_with_email(
-            email=payload.email, password=payload.password
-        )
+        result = await auth_service.login_with_email(email=payload.email, password=payload.password)
     except InvalidCredentials as exc:
         # Không phân biệt "email không tồn tại" và "sai mật khẩu" — tránh để
         # người ngoài dò xem email nào đã đăng ký.
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, "Email hoặc mật khẩu không đúng"
-        ) from exc
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email hoặc mật khẩu không đúng") from exc
     res = _to_token_pair(result)
     _set_refresh_cookie(response, result.refresh_token)
     return res
@@ -251,4 +247,3 @@ async def delete_me(auth: AuthDep, auth_service: AuthServiceDep, response: Respo
             "Vui lòng chuyển quyền owner hoặc xoá workspace trước.",
         ) from exc
     _clear_refresh_cookie(response)
-

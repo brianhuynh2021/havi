@@ -48,9 +48,7 @@ def limit_by_ip(rule_name: str, rule: RateLimitRule) -> Callable:
     """Dependency giới hạn theo IP — cho endpoint public."""
 
     async def _guard(request: Request, limiter: RateLimiterDep) -> None:
-        verdict = await limiter.hit(
-            rule_name=rule_name, identity=_client_ip(request), rule=rule
-        )
+        verdict = await limiter.hit(rule_name=rule_name, identity=_client_ip(request), rule=rule)
         if not verdict.allowed:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,
@@ -65,9 +63,7 @@ def limit_by_workspace(rule_name: str, rule: RateLimitRule) -> Callable:
     """Dependency giới hạn theo workspace — cho endpoint đã đăng nhập."""
 
     async def _guard(workspace_id: WorkspaceDep, limiter: RateLimiterDep) -> None:
-        verdict = await limiter.hit(
-            rule_name=rule_name, identity=str(workspace_id), rule=rule
-        )
+        verdict = await limiter.hit(rule_name=rule_name, identity=str(workspace_id), rule=rule)
         if not verdict.allowed:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,

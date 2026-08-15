@@ -80,7 +80,6 @@ async def test_inbox_faq_auto_reply(client: AsyncClient):
     assert reply_resp.json()["ai_suggested_reply"] is not None
 
 
-
 @pytest.mark.asyncio
 async def test_leads_crud_flow(client: AsyncClient):
     auth_headers = await _onboard(client, "mai.leads@havi.vn")
@@ -111,4 +110,3 @@ async def test_leads_crud_flow(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["stage"] == "qualified"
     assert resp.json()["notes"] == "Khách thích hẹn 15:00 thứ Bảy"
-

@@ -7,7 +7,7 @@ bán. Test ở đây khoá lại: mỗi con số phải đổi khi dữ liệu n
 đứng yên khi dữ liệu thuộc workspace khác.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -58,7 +58,6 @@ async def _summary(client: AsyncClient, headers: dict) -> dict:
     resp = await client.get("/analytics/summary", params=params, headers=headers)
     assert resp.status_code == 200, resp.text
     return resp.json()
-
 
 
 @pytest.mark.asyncio

@@ -101,14 +101,10 @@ def month_start_utc(now: datetime) -> datetime:
 def next_month_start_utc(now: datetime) -> datetime:
     """Mốc quota mở lại. Cộng 32 ngày rồi ép về ngày 1 — khỏi phải xử tay số ngày
     của từng tháng và năm nhuận."""
-    vn_start = now.astimezone(VN_TZ).replace(
-        day=1, hour=0, minute=0, second=0, microsecond=0
-    )
+    vn_start = now.astimezone(VN_TZ).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     return (vn_start + timedelta(days=32)).replace(day=1).astimezone(UTC)
 
 
 def evaluate(*, plan: Plan, used: int, now: datetime | None = None) -> QuotaStatus:
     now = now or datetime.now(UTC)
-    return QuotaStatus(
-        used=used, limit=quota_for(plan), resets_at=next_month_start_utc(now)
-    )
+    return QuotaStatus(used=used, limit=quota_for(plan), resets_at=next_month_start_utc(now))

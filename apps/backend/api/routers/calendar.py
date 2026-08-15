@@ -36,13 +36,11 @@ async def get_calendar(
 
     range_start = datetime.combine(start, time.min, tzinfo=VIETNAM_TZ).astimezone(UTC)
     # end exclusive ở tầng query = 00:00 ngày kế tiếp, để bài lúc 23:59 vẫn lọt.
-    range_end = datetime.combine(
-        end + timedelta(days=1), time.min, tzinfo=VIETNAM_TZ
-    ).astimezone(UTC)
-
-    items = await approvals.calendar(
-        workspace_id=workspace_id, start=range_start, end=range_end
+    range_end = datetime.combine(end + timedelta(days=1), time.min, tzinfo=VIETNAM_TZ).astimezone(
+        UTC
     )
+
+    items = await approvals.calendar(workspace_id=workspace_id, start=range_start, end=range_end)
     by_day: dict[str, list[ContentItem]] = defaultdict(list)
     for item in items:
         # scheduled_at đọc từ Postgres là naive UTC (cột TIMESTAMP WITHOUT TIME ZONE).
@@ -82,9 +80,7 @@ async def reschedule(
             scheduled_at=payload.scheduled_at,
         )
     except ContentItemNotFound as exc:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, "Không tìm thấy content item"
-        ) from exc
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy content item") from exc
     except NotReschedulable as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return ContentItem.model_validate(item)

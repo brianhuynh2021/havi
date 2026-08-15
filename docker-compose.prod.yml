@@ -1,0 +1,160 @@
+name: havi-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-havi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-havi_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-havi}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-havi} -d ${POSTGRES_DB:-havi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-prod-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-haviadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-haviadmin_password}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-prod-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-haviadmin} ${MINIO_ROOT_PASSWORD:-haviadmin_password} &&
+      mc mb --ignore-existing local/havi-media &&
+      mc anonymous set download local/havi-media;
+      exit 0;
+      "
+
+  api:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      HAVI_ENV: production
+      HAVI_DEBUG: "false"
+      HAVI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-havi}:${POSTGRES_PASSWORD:-havi_secure_password}@postgres:5432/${POSTGRES_DB:-havi}
+      HAVI_REDIS_URL: redis://redis:6379/0
+      HAVI_JWT_SECRET: ${HAVI_JWT_SECRET:-production-secure-jwt-secret-key-32chars}
+      HAVI_TOKEN_ENCRYPTION_KEY: ${HAVI_TOKEN_ENCRYPTION_KEY:-bm4daS9gAoD4EEfmzDfI1Oq66bDABsdu7VTQ0lklf4A=}
+      HAVI_MEDIA_BUCKET: havi-media
+      HAVI_MEDIA_ENDPOINT_URL: http://minio:9000
+      HAVI_MEDIA_PUBLIC_URL: ${HAVI_MEDIA_PUBLIC_URL:-http://localhost:9000/havi-media}
+      HAVI_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER:-haviadmin}
+      HAVI_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-haviadmin_password}
+      HAVI_GEMINI_API_KEY: ${HAVI_GEMINI_API_KEY}
+      HAVI_FACEBOOK_CLIENT_ID: ${HAVI_FACEBOOK_CLIENT_ID}
+      HAVI_FACEBOOK_CLIENT_SECRET: ${HAVI_FACEBOOK_CLIENT_SECRET}
+      HAVI_FACEBOOK_REDIRECT_URI: ${HAVI_FACEBOOK_REDIRECT_URI}
+      HAVI_TIKTOK_CLIENT_KEY: ${HAVI_TIKTOK_CLIENT_KEY}
+      HAVI_TIKTOK_CLIENT_SECRET: ${HAVI_TIKTOK_CLIENT_SECRET}
+      HAVI_TIKTOK_REDIRECT_URI: ${HAVI_TIKTOK_REDIRECT_URI}
+      HAVI_GOOGLE_CLIENT_ID: ${HAVI_GOOGLE_CLIENT_ID}
+      HAVI_GOOGLE_CLIENT_SECRET: ${HAVI_GOOGLE_CLIENT_SECRET}
+      HAVI_YOUTUBE_REDIRECT_URI: ${HAVI_YOUTUBE_REDIRECT_URI}
+    command: >
+      sh -c "
+      alembic upgrade head &&
+      uvicorn api.main:app --host 0.0.0.0 --port 8000
+      "
+
+  worker:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    environment:
+      HAVI_ENV: production
+      HAVI_DEBUG: "false"
+      HAVI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-havi}:${POSTGRES_PASSWORD:-havi_secure_password}@postgres:5432/${POSTGRES_DB:-havi}
+      HAVI_REDIS_URL: redis://redis:6379/0
+      HAVI_JWT_SECRET: ${HAVI_JWT_SECRET:-production-secure-jwt-secret-key-32chars}
+      HAVI_TOKEN_ENCRYPTION_KEY: ${HAVI_TOKEN_ENCRYPTION_KEY:-bm4daS9gAoD4EEfmzDfI1Oq66bDABsdu7VTQ0lklf4A=}
+      HAVI_MEDIA_BUCKET: havi-media
+      HAVI_MEDIA_ENDPOINT_URL: http://minio:9000
+      HAVI_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER:-haviadmin}
+      HAVI_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-haviadmin_password}
+      HAVI_GEMINI_API_KEY: ${HAVI_GEMINI_API_KEY}
+    command: ["celery", "-A", "worker.celery_app:celery_app", "worker", "-l", "info"]
+
+  beat:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      HAVI_ENV: production
+      HAVI_DEBUG: "false"
+      HAVI_REDIS_URL: redis://redis:6379/0
+    command: ["celery", "-A", "worker.celery_app:celery_app", "beat", "-l", "info"]
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+
+volumes:
+  postgres-prod-data:
+  redis-prod-data:
+  minio-prod-data:

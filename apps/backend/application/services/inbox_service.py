@@ -209,4 +209,3 @@ class InboxService:
             raise InboxItemNotFound()
 
         await self._inbox.update_status(item, status=InboxItemStatus.DISMISSED)
-

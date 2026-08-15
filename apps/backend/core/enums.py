@@ -134,6 +134,32 @@ class MediaStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class VideoRenderStatus(StrEnum):
+    """Trạng thái của tác vụ render video (Phase 3 Video Pipeline)."""
+
+    QUEUED = "queued"
+    RENDERING = "rendering"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class VideoRenderEngine(StrEnum):
+    """Engine được dùng để render video."""
+
+    FFMPEG = "ffmpeg"
+    REMOTION = "remotion"
+
+
+class VideoCaptionStyle(StrEnum):
+    """Preset kiểu chữ phụ đề động trên video."""
+
+    BOLD_YELLOW = "bold_yellow"
+    CLEAN_WHITE = "clean_white"
+    NEON_CYAN = "neon_cyan"
+    BOXED_BLACK = "boxed_black"
+
+
 class ConnectionStatus(StrEnum):
     CONNECTED = "connected"
     EXPIRED = "expired"

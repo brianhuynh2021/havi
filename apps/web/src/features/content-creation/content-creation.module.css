@@ -173,7 +173,22 @@
   transition: width 160ms ease;
 }
 
-.cancelUpload {
+.uploadItemFailed {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.uploadPercentFailed {
+  color: #dc2626 !important;
+  font-weight: 700;
+}
+
+.progressBarFailed {
+  background: #dc2626 !important;
+}
+
+.cancelUpload,
+.removeUpload {
   padding: 8px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -183,12 +198,19 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .cancelUpload:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background: #f8fafc;
+}
+
+.removeUpload:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
 }
 
 /* --- Kênh clip đăng được, hiện ngay sau khi upload -------------------------- */
@@ -513,7 +535,8 @@
     height: 48px;
   }
 
-  .cancelUpload {
+  .cancelUpload,
+  .removeUpload {
     grid-column: 2;
     justify-self: start;
   }

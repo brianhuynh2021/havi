@@ -32,9 +32,7 @@ async def _workspace(session: AsyncSession, *, plan: Plan = Plan.TRIAL) -> Works
     owner = User(email=f"{uuid.uuid4().hex[:10]}@spa.vn", name="Chị Hương")
     session.add(owner)
     await session.flush()
-    ws = Workspace(
-        name="Spa An Nhiên", industry=Industry.SPA, owner_user_id=owner.id, plan=plan
-    )
+    ws = Workspace(name="Spa An Nhiên", industry=Industry.SPA, owner_user_id=owner.id, plan=plan)
     session.add(ws)
     await session.flush()
     session.add(WorkspaceMember(workspace_id=ws.id, user_id=owner.id, role="owner"))
@@ -202,9 +200,7 @@ async def _onboard(client: AsyncClient, *, email: str) -> dict:
         headers={"Authorization": f"Bearer {tokens['access_token']}"},
     )
     assert create.status_code == 201, create.text
-    refreshed = await client.post(
-        "/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
-    )
+    refreshed = await client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
     assert refreshed.status_code == 200, refreshed.text
     return refreshed.json()
 
@@ -291,9 +287,7 @@ class TestChanTruocKhiTonTien:
         )
         assert response.status_code == 202, response.text
 
-    async def test_workspace_moi_chua_dung_gi_van_tao_duoc_job(
-        self, client: AsyncClient
-    ):
+    async def test_workspace_moi_chua_dung_gi_van_tao_duoc_job(self, client: AsyncClient):
         """Quota 0/100k không được chặn — nếu chặn thì không ai dùng được app."""
         token = await _onboard(client, email="quota0004@havi.vn")
         response = await client.post(

@@ -21,9 +21,7 @@ class RecordingEmailSender:
     async def send_password_reset_code(
         self, *, email: str, code: str, expires_in_seconds: int
     ) -> None:
-        self.sent.append(
-            {"email": email, "code": code, "expires_in_seconds": expires_in_seconds}
-        )
+        self.sent.append({"email": email, "code": code, "expires_in_seconds": expires_in_seconds})
 
 
 async def _sign_up(

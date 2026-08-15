@@ -21,9 +21,7 @@ from worker.celery_app import celery_app
 class TestBeatSchedule:
     def test_moi_task_trong_lich_deu_ton_tai_trong_registry(self):
         """Task name gõ sai = lịch đăng chết lặng, không có lỗi nào để lần ra."""
-        scheduled = {
-            entry["task"] for entry in celery_app.conf.beat_schedule.values()
-        }
+        scheduled = {entry["task"] for entry in celery_app.conf.beat_schedule.values()}
         missing = scheduled - set(celery_app.tasks)
         assert not missing, f"beat_schedule trỏ tới task không tồn tại: {missing}"
 
@@ -31,9 +29,7 @@ class TestBeatSchedule:
         """Hai chặng của luồng đăng bài. Thiếu `dispatch` thì không có job nào
         được tạo; thiếu `run_due` thì job nằm mãi ở `pending` và không bài nào lên
         Trang — cả hai đều là "im lặng không đăng gì"."""
-        scheduled = {
-            entry["task"] for entry in celery_app.conf.beat_schedule.values()
-        }
+        scheduled = {entry["task"] for entry in celery_app.conf.beat_schedule.values()}
         assert "havi.scheduler.dispatch_due_posts" in scheduled
         assert "havi.publish.run_due" in scheduled
 
@@ -54,9 +50,7 @@ class TestBeatSchedule:
                 task.run()
             except NotImplementedError:
                 continue
-            raise AssertionError(
-                f"{name} đã được implement — cập nhật test này và ROADMAP"
-            )
+            raise AssertionError(f"{name} đã được implement — cập nhật test này và ROADMAP")
 
 
 class TestDispatchDuePosts:
@@ -80,9 +74,7 @@ class TestDispatchDuePosts:
             "worker.publish_service_factory.publish_service_scope",
             _scope(_FakeService()),
         )
-        monkeypatch.setattr(
-            worker.tasks.publish_run_due, "delay", lambda: calls.append("delay")
-        )
+        monkeypatch.setattr(worker.tasks.publish_run_due, "delay", lambda: calls.append("delay"))
 
         scheduler.tasks.dispatch_due_posts.run()
 
@@ -105,9 +97,7 @@ class TestDispatchDuePosts:
             "worker.publish_service_factory.publish_service_scope",
             _scope(_FakeService()),
         )
-        monkeypatch.setattr(
-            worker.tasks.publish_run_due, "delay", lambda: calls.append("delay")
-        )
+        monkeypatch.setattr(worker.tasks.publish_run_due, "delay", lambda: calls.append("delay"))
 
         scheduler.tasks.dispatch_due_posts.run()
 

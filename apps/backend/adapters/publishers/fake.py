@@ -50,9 +50,7 @@ class FakePublisher(PublisherPort):
     def channel(self) -> Channel:
         return self._channel
 
-    async def publish(
-        self, request: PublishRequest, *, access_token: str
-    ) -> PublishResult:
+    async def publish(self, request: PublishRequest, *, access_token: str) -> PublishResult:
         self.calls.append(request)
         self.tokens_seen.append(access_token)
 

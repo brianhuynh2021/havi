@@ -22,9 +22,7 @@ class SmtpEmailSender(EmailSender):
             expires_in_seconds,
         )
 
-    def _send_password_reset_code(
-        self, email: str, code: str, expires_in_seconds: int
-    ) -> None:
+    def _send_password_reset_code(self, email: str, code: str, expires_in_seconds: int) -> None:
         message = EmailMessage()
         message["From"] = self._settings.email_from
         message["To"] = email

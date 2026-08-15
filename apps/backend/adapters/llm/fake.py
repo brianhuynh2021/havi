@@ -47,9 +47,7 @@ class FakeProvider(LLMProviderPort):
         if self._error is not None:
             raise self._error
         text = (
-            self._response_text(request)
-            if callable(self._response_text)
-            else self._response_text
+            self._response_text(request) if callable(self._response_text) else self._response_text
         )
         return LLMResponse(
             text=text,

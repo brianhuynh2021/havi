@@ -16,75 +16,62 @@
 
 .title {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 900;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: #0f172a;
-  background: linear-gradient(135deg, #0f172a 0%, #1e40af 60%, #0066ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 .subtitle {
-  color: #475569;
-  font-size: 15px;
+  color: #64748b;
+  font-size: 14.5px;
   max-width: 800px;
   line-height: 1.5;
   font-weight: 500;
 }
 
-/* Executive Telemetry Dashboard Bar - Rich Gradient Accents */
+/* Executive Telemetry Dashboard Bar */
 .metricsBar {
-  margin-top: 18px;
+  margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
 }
 
 .metricCard {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #e2e8f0;
   border-radius: 16px;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 4px 20px -2px rgba(0, 102, 255, 0.08);
+  gap: 4px;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.05);
   position: relative;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.metricCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #0066ff, #00d2ff);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .metricCard:hover {
-  transform: translateY(-3px);
-  border-color: #0066ff;
-  box-shadow: 0 12px 30px -4px rgba(0, 102, 255, 0.18);
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
 }
 
 .metricLabel {
   font-size: 12px;
   font-weight: 800;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .metricValue {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   color: #0f172a;
   font-family: var(--font-display);
@@ -93,217 +80,263 @@
 
 .metricSubtext {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: #0284c7;
 }
 
-/* Navigation Week Bar - Sleek Elevated Bar */
+/* Navigation & Controls Bar */
+.controlPanel {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .weekBar {
-  margin-top: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 12px 16px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1.5px solid #e2e8f0;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+  flex-wrap: wrap;
 }
 
 .weekRange {
-  font-size: 16px;
-  font-weight: 900;
+  font-size: 15px;
+  font-weight: 800;
   color: #0f172a;
-  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .weekActions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
-/* 7-Day Matrix Grid Container */
+/* Filter & View Switcher Bar */
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.filterChip {
+  padding: 6px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filterChip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.filterChipActive {
+  border-color: #0066ff;
+  background: #eff6ff;
+  color: #0066ff;
+}
+
+.viewSwitcher {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.viewBtn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.viewBtnActive {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+/* --- GRID VIEW (LƯỚI 7 NGÀY) --- */
 .grid {
-  margin-top: 20px;
+  margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
+  align-items: start;
 }
 
 .dayColumn {
-  min-height: 260px;
-  padding: 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
+  min-height: 480px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  transition: border-color 0.2s ease;
   overflow: hidden;
 }
 
 .dayColumn:hover {
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   border-color: #cbd5e1;
 }
 
 .dayColumnToday {
-  border: 2px solid #0066ff;
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
-  box-shadow: 0 8px 28px rgba(0, 102, 255, 0.15);
-}
-
-.dayColumnToday::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #0066ff, #00d2ff);
+  border-color: #0066ff;
+  background: #fcfdff;
+  box-shadow: 0 4px 20px -2px rgba(0, 102, 255, 0.12);
 }
 
 .dayHeader {
+  padding: 14px 12px;
+  border-bottom: 1.5px solid #f1f5f9;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f1f5f9;
+  gap: 2px;
+}
+
+.dayColumnToday .dayHeader {
+  background: #eff6ff;
+  border-bottom-color: #dbeafe;
 }
 
 .dayHeaderTitleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
-  width: 100%;
 }
 
 .dayLabel {
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 13.5px;
+  font-weight: 800;
   color: #0f172a;
+}
+
+.todayPill {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #0066ff;
+  color: #ffffff;
 }
 
 .dayDate {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   color: #64748b;
-  font-family: var(--font-mono, monospace);
 }
 
-.todayPill {
-  font-size: 9.5px;
-  font-weight: 900;
-  padding: 3px 7px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3);
-}
-
-/* Empty Slot - Vibrant Interactive Action Box */
 .emptySlot {
-  margin-top: 14px;
-  padding: 18px 10px;
-  border: 1.5px dashed #cbd5e1;
+  flex: 1;
+  min-height: 120px;
+  margin: 12px;
+  border: 1.5px dashed #e2e8f0;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: #f8fafc;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-}
-
-.emptySlot:hover {
-  border-color: #0066ff;
-  border-style: solid;
-  background: #eff6ff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 102, 255, 0.1);
+  gap: 6px;
+  color: #94a3b8;
+  background: #fafafa;
 }
 
 .emptySlotIcon {
-  font-size: 14px;
+  font-size: 18px;
   color: #0066ff;
-  font-weight: 900;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 1.5px solid #bfdbfe;
+  background: #eff6ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.1);
-  transition: all 0.2s ease;
-}
-
-.emptySlot:hover .emptySlotIcon {
-  color: #ffffff;
-  background: #0066ff;
-  border-color: #0066ff;
-  transform: scale(1.1);
+  font-weight: bold;
 }
 
 .emptySlotText {
-  color: #475569;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-/* Post Cards */
 .postList {
-  margin-top: 14px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.postList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.postList::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 .postCard {
+  padding: 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-}
-
-.postCard::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: #0066ff;
-  border-radius: 4px 0 0 4px;
 }
 
 .postCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0, 102, 255, 0.16);
   border-color: #0066ff;
+  box-shadow: 0 6px 16px -2px rgba(0, 102, 255, 0.15);
 }
 
 .postMeta {
@@ -314,67 +347,229 @@
 }
 
 .postTime {
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 800;
   color: #0066ff;
-  font-family: var(--font-mono, monospace);
-  font-size: 13px;
   background: #eff6ff;
   padding: 2px 6px;
   border-radius: 6px;
 }
 
+.postTitleSnippet {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #1e293b;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.postFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.channelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: #334155;
+}
+
 .postId {
-  font-family: var(--font-mono, monospace);
-  font-weight: 800;
-  font-size: 11.5px;
+  font-family: monospace;
+  font-weight: 700;
   color: #0284c7;
 }
 
-.postChannel {
-  font-size: 12px;
-  font-weight: 800;
-  color: #1e293b;
-}
-
-.postTitleSnippet {
-  font-size: 13px;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 2px 0;
-}
-
-/* Modal Overlay & Detailed Reschedule Dialog */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modalCard {
-  width: 100%;
-  max-width: 580px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 24px;
-  box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.3);
-  padding: 28px;
+/* --- TIMELINE / FEED LIST VIEW (CHẾ ĐỘ DÒNG THỜI GIAN SCALE & DEBUG) --- */
+.timelineContainer {
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.timelineDaySection {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+}
+
+.timelineDayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+.timelineDayTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timelineDayCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timelineRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timelineRow:hover {
+  border-color: #0066ff;
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.08);
+}
+
+.timelineRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.timelineTimeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 52px;
+  background: #eff6ff;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  flex-shrink: 0;
+}
+
+.timelineTime {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0066ff;
+}
+
+.timelineChannelText {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1e40af;
+  text-transform: uppercase;
+}
+
+.timelineThumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.timelineContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.timelineSnippet {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timelineRowMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.timelineRowRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* --- MODAL INSPECTOR --- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modalCard {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modalHeader {
@@ -382,34 +577,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid #f1f5f9;
 }
 
 .modalTitle {
-  font-size: 19px;
-  font-weight: 900;
-  color: #0f172a;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .modalBody {
-  font-size: 15px;
+  font-size: 14.5px;
+  line-height: 1.6;
   color: #1e293b;
-  line-height: 1.65;
-  white-space: pre-wrap;
   background: #f8fafc;
-  padding: 18px;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .imagePreviewBox {
   position: relative;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
 }
 
 .modalPreviewImage {
@@ -421,121 +615,107 @@
 
 .imageBadge {
   position: absolute;
-  bottom: 12px;
-  left: 12px;
-  background: rgba(15, 23, 42, 0.9);
+  bottom: 8px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.75);
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 6px 14px;
-  border-radius: 8px;
-  backdrop-filter: blur(8px);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
 }
 
 .modalMediaNote {
-  font-size: 13.5px;
-  color: #92400e;
-  background: #fffbe6;
-  border: 1px solid #ffe58f;
-  padding: 14px 18px;
-  border-radius: 12px;
-  line-height: 1.55;
-  font-weight: 600;
+  font-size: 13px;
+  color: #475569;
+  background: #eff6ff;
+  border-left: 3px solid #0066ff;
+  padding: 10px 14px;
+  border-radius: 6px;
 }
 
 .rescheduleSection {
-  margin-top: 10px;
-  padding-top: 18px;
-  border-top: 2px solid #f1f5f9;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1.5px solid #f1f5f9;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .rescheduleTitle {
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 800;
   color: #0f172a;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-/* Quick Time Presets */
 .presetGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-bottom: 4px;
 }
 
 .presetBtn {
-  font-size: 12.5px;
-  font-weight: 800;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1.5px solid #cbd5e1;
+  padding: 8px 6px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
   color: #1e293b;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
+  text-align: center;
 }
 
 .presetBtn:hover {
-  background: #0066ff;
   border-color: #0066ff;
-  color: #ffffff;
-  transform: translateY(-1px);
+  background: #eff6ff;
+  color: #0066ff;
 }
 
 .rescheduleForm {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.inlineError {
-  margin: 0;
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.4;
-  background: #fef2f2;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
+  gap: 12px;
 }
 
 .rescheduleActions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.compactButton {
-  padding: 6px 12px;
+.inlineError {
   font-size: 13px;
+  color: #dc2626;
   font-weight: 700;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@media (max-width: 1080px) {
+@media (max-width: 1024px) {
   .grid {
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-width: 720px) {
   .grid {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
+
   .presetGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .timelineRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .timelineRowRight {
+    width: 100%;
+    justify-content: space-between;
   }
 }

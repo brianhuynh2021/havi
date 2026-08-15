@@ -18,6 +18,8 @@ from adapters.persistence.publish_repository import PublishRepository
 from adapters.publishers.facebook import FacebookPublisher
 from adapters.publishers.fake import FakePublisher
 from adapters.publishers.google_business import GoogleBusinessPublisher
+from adapters.publishers.tiktok import TikTokPublisher
+from adapters.publishers.youtube import YouTubePublisher
 from adapters.publishers.zalo import ZaloPublisher
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
@@ -33,16 +35,22 @@ def build_publishers() -> dict[Channel, PublisherPort]:
     settings = get_settings()
     if settings.use_fake_publisher:
         logger.warning(
-            "Publish đang chạy FAKE (HAVI_USE_FAKE_PUBLISHER=true) — không có bài "
-            "nào lên mạng thật. Đặt false để đăng thật."
+            "Publishing is running in FAKE mode (HAVI_USE_FAKE_PUBLISHER=true) — posts will "
+            "not go live. Set to false for live publishing."
         )
         return {
             Channel.FACEBOOK_PAGE: FakePublisher(channel=Channel.FACEBOOK_PAGE),
+            Channel.REELS: FakePublisher(channel=Channel.REELS, post_id="fb_reel_123"),
+            Channel.TIKTOK: FakePublisher(channel=Channel.TIKTOK, post_id="tiktok_post_123"),
+            Channel.YOUTUBE: FakePublisher(channel=Channel.YOUTUBE, post_id="yt_shorts_123"),
             Channel.ZALO_OA: FakePublisher(channel=Channel.ZALO_OA),
             Channel.GOOGLE_BUSINESS: FakePublisher(channel=Channel.GOOGLE_BUSINESS),
         }
     return {
         Channel.FACEBOOK_PAGE: FacebookPublisher(settings),
+        Channel.REELS: FacebookPublisher(settings),
+        Channel.TIKTOK: TikTokPublisher(),
+        Channel.YOUTUBE: YouTubePublisher(),
         Channel.ZALO_OA: ZaloPublisher(),
         Channel.GOOGLE_BUSINESS: GoogleBusinessPublisher(),
     }

@@ -90,6 +90,7 @@ class ContentService:
             raise WorkspaceNotFound()
 
         from domain.policies import subscription
+
         sub_state = subscription.state_for(
             plan=workspace.plan,
             trial_ends_at=workspace.trial_ends_at,

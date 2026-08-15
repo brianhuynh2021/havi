@@ -27,9 +27,7 @@ class PlatformConnection(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Ba
         UniqueConstraint("workspace_id", "platform", name="uq_connection_workspace_platform"),
     )
 
-    workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces.id"), index=True
-    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), index=True)
     platform: Mapped[Platform] = mapped_column(Enum(Platform, native_enum=False))
     status: Mapped[ConnectionStatus] = mapped_column(
         Enum(ConnectionStatus, native_enum=False), default=ConnectionStatus.CONNECTED
@@ -40,9 +38,7 @@ class PlatformConnection(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Ba
     # Facebook Page token dài hạn không có refresh token; Google thì có. Nullable
     # để không ép nền tảng nào cũng phải có.
     refresh_token_encrypted: Mapped[str | None] = mapped_column(default=None)
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     # --- Thông tin hiển thị --------------------------------------------------
     # Tên Page/OA để chủ tiệm nhận ra mình đang nối đúng trang nào. Không phải

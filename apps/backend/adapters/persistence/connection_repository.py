@@ -27,9 +27,7 @@ class ConnectionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(
-        self, *, workspace_id: UUID, platform: Platform
-    ) -> PlatformConnection | None:
+    async def get(self, *, workspace_id: UUID, platform: Platform) -> PlatformConnection | None:
         result = await self._session.execute(
             select(PlatformConnection).where(
                 PlatformConnection.workspace_id == workspace_id,

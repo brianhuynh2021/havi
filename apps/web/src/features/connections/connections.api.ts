@@ -49,7 +49,8 @@ export async function listConnections(): Promise<Result<PlatformConnection[]>> {
 export async function startConnect(
   platform: Platform,
   returnTo: OAuthReturnTarget,
-): Promise<Result<null>> {
+  options: { openPopup?: boolean } = { openPopup: true },
+): Promise<Result<{ popupOpened: boolean }>> {
   try {
     const { data, error, response } = await apiClient.POST(
       "/connections/{platform}/start",
@@ -60,10 +61,29 @@ export async function startConnect(
       if (response?.status === 503) return { ok: false, message: NOT_CONFIGURED };
       return { ok: false, message: "Chưa mở được trang cấp quyền, thử lại nhé." };
     }
-    // `assign` bắt đầu điều hướng nhưng không dừng JS ngay, nên hàm vẫn trả
-    // một Result — caller dùng nó để biết có cần hiện lỗi hay không.
+
+    if (options.openPopup && typeof window !== "undefined") {
+      try {
+        const width = 620;
+        const height = 750;
+        const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+        const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+        const popup = window.open(
+          data.authorization_url,
+          `havi_oauth_${platform}`,
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=yes`,
+        );
+        if (popup) {
+          popup.focus();
+          return { ok: true, data: { popupOpened: true } };
+        }
+      } catch {
+        // Môi trường test jsdom hoặc trình duyệt chặn popup — fallback điều hướng thường
+      }
+    }
+
     window.location.assign(data.authorization_url);
-    return { ok: true, data: null };
+    return { ok: true, data: { popupOpened: false } };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -118,11 +138,11 @@ export function readCallbackOutcome(search: string): CallbackOutcome {
 }
 
 export const PILOT_PLATFORMS: { platform: Platform; label: string }[] = [
-  { platform: "facebook", label: "Facebook Page" },
+  { platform: "facebook", label: "Facebook Page & Reels" },
+  { platform: "tiktok", label: "TikTok Account" },
+  { platform: "youtube", label: "YouTube Channel (Shorts)" },
   { platform: "zalo_oa", label: "Zalo Official Account" },
   { platform: "google_business", label: "Google Business Profile" },
-  { platform: "youtube", label: "YouTube Channel" },
-  { platform: "tiktok", label: "TikTok Account" },
 ];
 
 export function isUsable(connection: PlatformConnection | undefined): boolean {

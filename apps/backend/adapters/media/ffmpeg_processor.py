@@ -42,8 +42,10 @@ class FFmpegVideoProcessor:
 
         cmd = [
             self.ffprobe_path,
-            "-v", "quiet",
-            "-print_format", "json",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
             "-show_format",
             "-show_streams",
             file_path,
@@ -116,9 +118,7 @@ class FFmpegVideoProcessor:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
 
-    def extract_thumbnail(
-        self, file_path: str, timestamp_seconds: float = 1.0
-    ) -> bytes | None:
+    def extract_thumbnail(self, file_path: str, timestamp_seconds: float = 1.0) -> bytes | None:
         """Extract a single JPEG frame thumbnail from the video using ffmpeg."""
         if not self.ffmpeg_path:
             logger.warning("ffmpeg CLI is not available in environment; thumbnail skipped")
@@ -130,10 +130,14 @@ class FFmpegVideoProcessor:
         cmd = [
             self.ffmpeg_path,
             "-y",
-            "-ss", str(timestamp_seconds),
-            "-i", file_path,
-            "-vframes", "1",
-            "-q:v", "2",
+            "-ss",
+            str(timestamp_seconds),
+            "-i",
+            file_path,
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
             out_path,
         ]
 
@@ -159,8 +163,8 @@ class FFmpegVideoProcessor:
             return "9:16"
         if 1.7 <= ratio <= 1.85:  # ~16:9 (1.7777)
             return "16:9"
-        if 0.9 <= ratio <= 1.1:   # ~1:1 (1.0)
+        if 0.9 <= ratio <= 1.1:  # ~1:1 (1.0)
             return "1:1"
-        if 0.75 <= ratio <= 0.85: # ~4:5 (0.8)
+        if 0.75 <= ratio <= 0.85:  # ~4:5 (0.8)
             return "4:5"
         return f"{width}:{height}"

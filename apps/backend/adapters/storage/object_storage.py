@@ -107,16 +107,12 @@ class ObjectStorage:
         """
 
         def _read() -> bytes:
-            response = self._client.get_object(
-                Bucket=self._settings.media_bucket, Key=object_key
-            )
+            response = self._client.get_object(Bucket=self._settings.media_bucket, Key=object_key)
             return response["Body"].read()
 
         return await asyncio.to_thread(_read)
 
-    async def put_object(
-        self, object_key: str, *, data: bytes, content_type: str
-    ) -> None:
+    async def put_object(self, object_key: str, *, data: bytes, content_type: str) -> None:
         """Ghi bytes do server tự sinh ra (ảnh bìa video) lên bucket.
 
         Upload của người dùng vẫn đi bằng presigned POST — bytes không qua API.

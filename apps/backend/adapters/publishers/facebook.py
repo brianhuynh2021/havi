@@ -57,9 +57,7 @@ class FacebookPublisher(PublisherPort):
     def channel(self) -> Channel:
         return Channel.FACEBOOK_PAGE
 
-    async def publish(
-        self, request: PublishRequest, *, access_token: str
-    ) -> PublishResult:
+    async def publish(self, request: PublishRequest, *, access_token: str) -> PublishResult:
         page_id = request.external_account_id
         if not page_id:
             # Không có Page ID thì không biết đăng lên đâu. Lỗi cấu hình, không
@@ -112,9 +110,7 @@ class FacebookPublisher(PublisherPort):
                 "Facebook không trả mã bài đăng — cần kiểm tra Trang trước khi đăng lại",
             )
 
-        return PublishResult(
-            external_post_id=str(external_id), published_at=datetime.now(UTC)
-        )
+        return PublishResult(external_post_id=str(external_id), published_at=datetime.now(UTC))
 
     async def _post_photo(
         self,
@@ -168,7 +164,9 @@ class FacebookPublisher(PublisherPort):
                     exc, (AuthPermissionError, ValidationPublishError, TemporaryPublishError)
                 ):
                     raise
-                logger.warning("Tải ảnh local thất bại, fallback sang gửi URL: %s", exc)
+                logger.warning(
+                    "Failed to upload local image bytes, falling back to URL upload: %s", exc
+                )
 
         payload: dict[str, str] = {
             "url": media_url,
@@ -287,5 +285,5 @@ class FacebookPublisher(PublisherPort):
 
         # Còn lại (400 với mã lạ) coi là lỗi nội dung: retry cùng payload sẽ
         # hỏng y hệt, nên đưa vào dead-letter để người xem.
-        logger.warning("Graph API lỗi chưa phân loại: %s", detail)
+        logger.warning("Graph API unclassified error: %s", detail)
         return ValidationPublishError(self.channel, detail)

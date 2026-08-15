@@ -72,8 +72,14 @@ def _settings(**overrides) -> Settings:
 def _oauth_transport(*, pages: list[dict] | None = None) -> httpx.MockTransport:
     """Graph API chạy đúng luồng 3 bước: code → short → long → /me/accounts."""
     if pages is None:
-        pages = [{"id": "page-1", "name": "Spa An Nhiên", "access_token": PAGE_TOKEN,
-                  "tasks": ["CREATE_CONTENT", "MANAGE"]}]
+        pages = [
+            {
+                "id": "page-1",
+                "name": "Spa An Nhiên",
+                "access_token": PAGE_TOKEN,
+                "tasks": ["CREATE_CONTENT", "MANAGE"],
+            }
+        ]
 
     def handler(request: httpx.Request) -> httpx.Response:
         params = dict(request.url.params)
@@ -135,9 +141,7 @@ async def _workspace_with_member(session: AsyncSession) -> tuple[Workspace, User
     session.add(ws)
     await session.flush()
 
-    session.add(
-        WorkspaceMember(workspace_id=ws.id, user_id=owner.id, role=WorkspaceRole.OWNER)
-    )
+    session.add(WorkspaceMember(workspace_id=ws.id, user_id=owner.id, role=WorkspaceRole.OWNER))
     await session.flush()
     return ws, owner
 
@@ -190,9 +194,7 @@ class TestAuthorizationUrl:
     def test_luon_kem_state_va_redirect_uri(self):
         """Hai nhánh đều phải mang `state` (chống CSRF) và đúng redirect URI."""
         for settings in (_settings(), _settings(facebook_config_id="cfg-789")):
-            params = self._params(
-                FacebookOAuthClient(settings).authorization_url(state="st-abc")
-            )
+            params = self._params(FacebookOAuthClient(settings).authorization_url(state="st-abc"))
             assert params["state"] == "st-abc"
             assert params["redirect_uri"] == settings.facebook_redirect_uri
             assert params["response_type"] == "code"
@@ -213,9 +215,7 @@ class TestOAuthState:
         ws, owner = await _workspace_with_member(db_session)
         service = _service(db_session, monkeypatch)
 
-        url, state = service.start(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK
-        )
+        url, state = service.start(workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK)
 
         assert "facebook.com" in url and f"state={state}" in url
         for scope in SCOPES:
@@ -243,9 +243,7 @@ class TestOAuthState:
         service = _service(db_session, monkeypatch, transport=_oauth_transport())
 
         with pytest.raises(InvalidOAuthState):
-            await service.complete(
-                platform=Platform.FACEBOOK, code="code", state=state_gia
-            )
+            await service.complete(platform=Platform.FACEBOOK, code="code", state=state_gia)
 
     async def test_state_cua_facebook_khong_dung_lai_o_callback_zalo(self, db_session):
         """State phát cho Facebook không được tái sử dụng ở callback nền tảng khác.
@@ -256,7 +254,9 @@ class TestOAuthState:
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state_fb = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
         service = ConnectionService(
@@ -267,13 +267,9 @@ class TestOAuthState:
         )
 
         with pytest.raises(InvalidOAuthState):
-            await service.complete(
-                platform=Platform.ZALO_OA, code="code", state=state_fb
-            )
+            await service.complete(platform=Platform.ZALO_OA, code="code", state=state_fb)
 
-    async def test_nguoi_da_bi_go_khoi_workspace_khong_noi_duoc(
-        self, db_session, monkeypatch
-    ):
+    async def test_nguoi_da_bi_go_khoi_workspace_khong_noi_duoc(self, db_session, monkeypatch):
         """State sống 10 phút — đủ để ai đó bị gỡ quyền ngay sau khi bấm nối."""
         ws, _ = await _workspace_with_member(db_session)
         nguoi_la = User(email=f"{uuid.uuid4().hex[:8]}@x.vn", name="Người lạ")
@@ -282,11 +278,12 @@ class TestOAuthState:
 
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=nguoi_la.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=nguoi_la.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
-        service = _service(db_session, monkeypatch, transport=_oauth_transport(),
-                           settings=settings)
+        service = _service(db_session, monkeypatch, transport=_oauth_transport(), settings=settings)
 
         with pytest.raises(NotWorkspaceMember):
             await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
@@ -300,11 +297,12 @@ class TestCompleteConnection:
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
-        service = _service(db_session, monkeypatch, transport=_oauth_transport(),
-                           settings=settings)
+        service = _service(db_session, monkeypatch, transport=_oauth_transport(), settings=settings)
 
         result = await service.complete(
             platform=Platform.FACEBOOK, code="code-tu-facebook", state=state
@@ -323,46 +321,40 @@ class TestCompleteConnection:
         # Trong DB là bản mã, không phải chữ thường.
         assert PAGE_TOKEN not in row.access_token_encrypted
 
-    async def test_page_token_khong_bao_gio_ra_response_schema(
-        self, db_session, monkeypatch
-    ):
+    async def test_page_token_khong_bao_gio_ra_response_schema(self, db_session, monkeypatch):
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
-        service = _service(db_session, monkeypatch, transport=_oauth_transport(),
-                           settings=settings)
+        service = _service(db_session, monkeypatch, transport=_oauth_transport(), settings=settings)
 
-        result = await service.complete(
-            platform=Platform.FACEBOOK, code="code", state=state
-        )
+        result = await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
 
         dumped = result.model_dump_json()
         assert PAGE_TOKEN not in dumped and USER_TOKEN not in dumped
         assert "token" not in dumped.lower()
 
-    async def test_noi_lai_cap_nhat_ban_ghi_cu_va_xoa_ly_do_hong(
-        self, db_session, monkeypatch
-    ):
+    async def test_noi_lai_cap_nhat_ban_ghi_cu_va_xoa_ly_do_hong(self, db_session, monkeypatch):
         """Nối lại sau khi token chết: phải về `connected` và sạch failure_reason."""
         ws, owner = await _workspace_with_member(db_session)
         repo = ConnectionRepository(db_session)
         cu = await repo.upsert(
             workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="token-chet"
         )
-        await repo.mark_unusable(
-            cu, status=ConnectionStatus.EXPIRED, reason="Token hết hạn"
-        )
+        await repo.mark_unusable(cu, status=ConnectionStatus.EXPIRED, reason="Token hết hạn")
 
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
-        service = _service(db_session, monkeypatch, transport=_oauth_transport(),
-                           settings=settings)
+        service = _service(db_session, monkeypatch, transport=_oauth_transport(), settings=settings)
         await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
 
         rows = await repo.list_for_workspace(ws.id)
@@ -374,7 +366,9 @@ class TestCompleteConnection:
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
         service = _service(
@@ -392,7 +386,9 @@ class TestCompleteConnection:
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
         service = _service(
@@ -409,7 +405,9 @@ class TestCompleteConnection:
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
-            workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK,
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
             settings=settings,
         )
         transport = httpx.MockTransport(lambda r: httpx.Response(503, json={}))
@@ -443,30 +441,20 @@ class TestPlatformGuards:
         service = _service(db_session, monkeypatch)
 
         with pytest.raises(PlatformNotSupported):
-            service.start(
-                workspace_id=ws.id, user_id=owner.id, platform=Platform.ZALO_OA
-            )
+            service.start(workspace_id=ws.id, user_id=owner.id, platform=Platform.ZALO_OA)
 
-    async def test_thieu_client_id_thi_khong_dua_user_sang_facebook(
-        self, db_session, monkeypatch
-    ):
+    async def test_thieu_client_id_thi_khong_dua_user_sang_facebook(self, db_session, monkeypatch):
         """Thiếu env là lỗi vận hành — chặn ở đây, đừng đẩy chủ tiệm sang trang lỗi."""
         ws, owner = await _workspace_with_member(db_session)
-        service = _service(
-            db_session, monkeypatch, settings=_settings(facebook_client_id="")
-        )
+        service = _service(db_session, monkeypatch, settings=_settings(facebook_client_id=""))
 
         with pytest.raises(PlatformNotConfigured):
-            service.start(
-                workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK
-            )
+            service.start(workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK)
 
     async def test_ngat_ket_noi_xoa_han_ca_token(self, db_session, monkeypatch):
         ws, _ = await _workspace_with_member(db_session)
         repo = ConnectionRepository(db_session)
-        await repo.upsert(
-            workspace_id=ws.id, platform=Platform.FACEBOOK, access_token=PAGE_TOKEN
-        )
+        await repo.upsert(workspace_id=ws.id, platform=Platform.FACEBOOK, access_token=PAGE_TOKEN)
         service = _service(db_session, monkeypatch)
 
         await service.disconnect(workspace_id=ws.id, platform=Platform.FACEBOOK)
@@ -513,6 +501,7 @@ class TestFacebookPublish:
 
     async def test_bai_mot_anh_di_endpoint_photos_va_lay_post_id(self, monkeypatch):
         """/photos trả cả `id` (ảnh) và `post_id` (bài) — lấy nhầm thì tra không ra bài."""
+
         def handler(request: httpx.Request) -> httpx.Response:
             assert request.url.path.endswith("/page-1/photos")
             return httpx.Response(200, json={"id": "anh-1", "post_id": "page-1_post-7"})
@@ -520,7 +509,8 @@ class TestFacebookPublish:
         publisher = _publisher(monkeypatch, handler)
         result = await publisher.publish(
             PublishRequest(
-                text="Ảnh tiệm", media_urls=["https://cdn/a.jpg"],
+                text="Ảnh tiệm",
+                media_urls=["https://cdn/a.jpg"],
                 external_account_id="page-1",
             ),
             access_token=PAGE_TOKEN,
@@ -586,9 +576,7 @@ class TestErrorClassification:
     async def test_ma_loi_token_quyen_khong_retry(self, monkeypatch, code):
         publisher = _publisher(
             monkeypatch,
-            lambda r: httpx.Response(
-                400, json={"error": {"code": code, "message": "Token hỏng"}}
-            ),
+            lambda r: httpx.Response(400, json={"error": {"code": code, "message": "Token hỏng"}}),
         )
 
         with pytest.raises(AuthPermissionError):
@@ -694,9 +682,7 @@ class TestTokenRedaction:
     async def test_loi_oauth_khong_lam_lo_client_secret(self, monkeypatch):
         import adapters.oauth.facebook as fb_module
 
-        transport = httpx.MockTransport(
-            lambda r: httpx.Response(400, text="secret=secret-456 sai")
-        )
+        transport = httpx.MockTransport(lambda r: httpx.Response(400, text="secret=secret-456 sai"))
         _patch_client(monkeypatch, transport, fb_module)
         client = FacebookOAuthClient(_settings())
 
@@ -735,5 +721,3 @@ async def test_facebook_data_deletion_callback():
         # vẫn sống nhờ alias trong `apps/web/src/middleware.ts`, nhưng URL Havi
         # tự sinh ra thì phải trỏ vào đường chính thức.
         assert "/data-deletion" in data["url"]
-
-

@@ -62,8 +62,14 @@ async def test_mock_gom_nhieu_lieu_tho():
 async def test_mock_chi_nap_anh_van_ra_bai_doc_duoc():
     """Ảnh không có text — mock không "xem" được ảnh, phải có câu thay thế."""
     prompt = "\n".join(
-        ["Tên tiệm: Spa An Nhiên", "", "Liệu thô chủ tiệm vừa nạp:",
-         "- Ảnh chủ tiệm vừa gửi", "", "Viết nội dung cho các kênh sau:"]
+        [
+            "Tên tiệm: Spa An Nhiên",
+            "",
+            "Liệu thô chủ tiệm vừa nạp:",
+            "- Ảnh chủ tiệm vừa gửi",
+            "",
+            "Viết nội dung cho các kênh sau:",
+        ]
     )
     response = await MockProvider().generate(_request(prompt))
 

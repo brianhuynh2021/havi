@@ -105,8 +105,6 @@ class NullRateLimiter:
     không cần biết đang chạy limiter nào.
     """
 
-    async def hit(
-        self, *, rule_name: str, identity: str, rule: RateLimitRule
-    ) -> RateLimitVerdict:
+    async def hit(self, *, rule_name: str, identity: str, rule: RateLimitRule) -> RateLimitVerdict:
         del rule_name, identity
         return RateLimitVerdict(allowed=True, remaining=rule.limit, retry_after=0)

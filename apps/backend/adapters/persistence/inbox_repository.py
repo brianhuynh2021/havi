@@ -23,9 +23,7 @@ class InboxRepository:
         )
         return result.scalar_one_or_none()
 
-    async def count_in_range(
-        self, *, workspace_id: UUID, start: datetime, end: datetime
-    ) -> int:
+    async def count_in_range(self, *, workspace_id: UUID, start: datetime, end: datetime) -> int:
         """Số tin nhắn/bình luận khách gửi tới trong kỳ — "khách hỏi giá".
 
         Đếm mọi inquiry chứ không lọc theo từ khoá giá: phân loại ý định là việc

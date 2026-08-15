@@ -266,6 +266,10 @@ describe("ContentCreationScreen", () => {
     expect(
       screen.queryByRole("button", { name: /bỏ goi-dau.jpg/i }),
     ).not.toBeInTheDocument();
+
+    // Bấm nút Xoá để đóng hàng upload đã huỷ/lỗi
+    await userEvent.click(screen.getByRole("button", { name: /xoá goi-dau.jpg/i }));
+    expect(screen.queryByText("goi-dau.jpg")).not.toBeInTheDocument();
   });
 
   it("upload clip xin ticket loại video, không phải image", async () => {

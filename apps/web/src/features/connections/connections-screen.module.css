@@ -1,17 +1,37 @@
 .page {
-  max-width: 640px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 900;
-  color: var(--color-ink);
+  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   margin-top: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
-  color: var(--color-body);
+  color: #475569;
 }

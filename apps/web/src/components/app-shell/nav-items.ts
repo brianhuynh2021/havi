@@ -14,10 +14,12 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { key: "nav.dashboard", label: "Tổng quan", href: "/app" },
   { key: "nav.content", label: "Tạo nội dung", href: "/app/content" },
+  { key: "nav.videoStudio", label: "Studio Video", href: "/app/video-studio" },
   { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar" },
   { key: "nav.inbox", label: "Hộp thư & FAQ", href: "/app/inbox" },
   { key: "nav.leads", label: "Khách tiềm năng", href: "/app/leads" },
   { key: "nav.reports", label: "Báo cáo", href: "/app/reports" },
+  { key: "nav.billing", label: "Gói cước", href: "/app/billing" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings" },
 ];
 

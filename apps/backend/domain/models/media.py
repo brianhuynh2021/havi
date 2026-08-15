@@ -18,9 +18,7 @@ from domain.models.base import Base, CreatedAtMixin, UUIDPrimaryKeyMixin
 
 class MediaAsset(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __tablename__ = "media_assets"
-    __table_args__ = (
-        Index("ix_media_assets_workspace_status", "workspace_id", "status"),
-    )
+    __table_args__ = (Index("ix_media_assets_workspace_status", "workspace_id", "status"),)
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), index=True)
     object_key: Mapped[str] = mapped_column(unique=True)

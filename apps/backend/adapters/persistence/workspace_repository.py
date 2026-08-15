@@ -5,7 +5,6 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import Industry, PublishMode
-from domain.policies.subscription import trial_end_for
 from domain.models.audit import EventLog
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
@@ -13,6 +12,7 @@ from domain.models.media import MediaAsset
 from domain.models.publish import PublishJob
 from domain.models.user import User
 from domain.models.workspace import BrandProfile, Workspace, WorkspaceMember
+from domain.policies.subscription import trial_end_for
 
 
 class WorkspaceRepository:
@@ -20,9 +20,7 @@ class WorkspaceRepository:
         self._session = session
 
     async def get_by_id(self, workspace_id: UUID) -> Workspace | None:
-        result = await self._session.execute(
-            select(Workspace).where(Workspace.id == workspace_id)
-        )
+        result = await self._session.execute(select(Workspace).where(Workspace.id == workspace_id))
         return result.scalar_one_or_none()
 
     async def list_for_user(self, user_id: UUID) -> list[Workspace]:
@@ -112,8 +110,5 @@ class WorkspaceRepository:
             .where(User.active_workspace_id == workspace_id)
             .values(active_workspace_id=None)
         )
-        await self._session.execute(
-            delete(Workspace).where(Workspace.id == workspace_id)
-        )
+        await self._session.execute(delete(Workspace).where(Workspace.id == workspace_id))
         await self._session.flush()
-

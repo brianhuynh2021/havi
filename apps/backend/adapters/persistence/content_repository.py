@@ -123,9 +123,7 @@ class ContentRepository:
 
     async def list_items_for_job(self, job_id: UUID) -> list[ContentItem]:
         result = await self._session.execute(
-            select(ContentItem)
-            .where(ContentItem.job_id == job_id)
-            .order_by(ContentItem.created_at)
+            select(ContentItem).where(ContentItem.job_id == job_id).order_by(ContentItem.created_at)
         )
         return list(result.scalars().all())
 
@@ -206,9 +204,7 @@ class ContentRepository:
         )
         return result.scalar_one()
 
-    async def get_item_for_update(
-        self, *, workspace_id: UUID, item_id: UUID
-    ) -> ContentItem | None:
+    async def get_item_for_update(self, *, workspace_id: UUID, item_id: UUID) -> ContentItem | None:
         """Như `get_item` nhưng khoá hàng (`SELECT ... FOR UPDATE`).
 
         Duyệt lẻ và "Duyệt & đăng hết" có thể chạy song song trên cùng một item
@@ -224,9 +220,7 @@ class ContentRepository:
         )
         return result.scalar_one_or_none()
 
-    async def list_scheduled_due(
-        self, *, now: datetime, limit: int = 200
-    ) -> list[ContentItem]:
+    async def list_scheduled_due(self, *, now: datetime, limit: int = 200) -> list[ContentItem]:
         """Bài đã duyệt tới giờ đăng, MỌI workspace — cho scheduler.
 
         Cố ý không scope theo workspace: scheduler là tiến trình nền của hệ
@@ -248,9 +242,7 @@ class ContentRepository:
         )
         return list(result.scalars().all())
 
-    async def mark_published(
-        self, item: ContentItem, *, published_at: datetime
-    ) -> ContentItem:
+    async def mark_published(self, item: ContentItem, *, published_at: datetime) -> ContentItem:
         item.status = ContentStatus.PUBLISHED
         item.published_at = published_at
         await self._session.flush()

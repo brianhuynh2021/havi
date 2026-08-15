@@ -34,8 +34,8 @@ def build_provider_router() -> ProviderRouter:
         # Chỉ tới được đây khi HAVI_ENV=local — Settings ném lỗi lúc khởi động
         # nếu bật mock ở staging/production.
         logger.warning(
-            "LLM đang chạy MOCK (HAVI_USE_MOCK_LLM=true) — draft là văn mẫu, "
-            "không phải model thật. Đặt false để gọi LLM thật."
+            "Running LLM in MOCK mode (HAVI_USE_MOCK_LLM=true) — drafts use mock templates, "
+            "not live models. Set to false to call live LLMs."
         )
         return ProviderRouter({LLMProvider.GEMINI: MockProvider()})
     return ProviderRouter(
@@ -60,4 +60,3 @@ async def content_engine_scope() -> AsyncGenerator[ContentEngine]:
             router=build_provider_router(),
             connections=ConnectionRepository(session),
         )
-

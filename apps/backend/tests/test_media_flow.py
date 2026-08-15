@@ -25,10 +25,22 @@ def _make_vertical_clip(path: Path) -> Path:
     """Clip dọc 4 giây có tiếng — hợp lệ với cả ba kênh video."""
     subprocess.run(
         [
-            "ffmpeg", "-y", "-loglevel", "error",
-            "-f", "lavfi", "-i", "testsrc=size=540x960:rate=30:duration=4",
-            "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
-            "-shortest", "-pix_fmt", "yuv420p", str(path),
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=540x960:rate=30:duration=4",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440:duration=4",
+            "-shortest",
+            "-pix_fmt",
+            "yuv420p",
+            str(path),
         ],
         check=True,
         capture_output=True,
@@ -143,9 +155,7 @@ async def test_upload_video_thi_complete_tra_thong_so_bia_va_kenh(client: AsyncC
         path = _make_vertical_clip(Path(tmp) / "clip-doc.mp4")
         content = path.read_bytes()
 
-    upload_status = await _upload_to_storage(
-        ticket, content=content, content_type="video/mp4"
-    )
+    upload_status = await _upload_to_storage(ticket, content=content, content_type="video/mp4")
     assert upload_status in (200, 204), f"MinIO từ chối upload: {upload_status}"
 
     completed = await client.post(f"/media/{ticket['asset_id']}/complete", headers=headers)
@@ -180,9 +190,7 @@ async def test_upload_anh_khong_sinh_thong_so_video(client: AsyncClient):
         ticket, content=b"\xff\xd8\xff\xe0" + b"\x00" * 40, content_type="image/jpeg"
     )
 
-    body = (
-        await client.post(f"/media/{ticket['asset_id']}/complete", headers=headers)
-    ).json()
+    body = (await client.post(f"/media/{ticket['asset_id']}/complete", headers=headers)).json()
 
     assert body["duration_seconds"] is None
     assert body["aspect_ratio"] is None
@@ -244,9 +252,7 @@ async def test_storage_tu_choi_file_vuot_gioi_han_dung_luong(client: AsyncClient
     ticket = await _request_ticket(client, headers)
 
     oversized = b"\xff\xd8\xff\xe0" + b"x" * (25 * 1024 * 1024)
-    upload_status = await _upload_to_storage(
-        ticket, content=oversized, content_type="image/jpeg"
-    )
+    upload_status = await _upload_to_storage(ticket, content=oversized, content_type="image/jpeg")
     assert upload_status >= 400, "Storage phải từ chối file vượt giới hạn"
 
 
@@ -338,9 +344,7 @@ async def test_list_filter_theo_tag_va_type(client: AsyncClient):
     audio = await _request_ticket(
         client, headers, filename="b.mp3", content_type="audio/mpeg", type="audio"
     )
-    await client.patch(
-        f"/media/{image['asset_id']}", json={"tags": ["goi-dau"]}, headers=headers
-    )
+    await client.patch(f"/media/{image['asset_id']}", json={"tags": ["goi-dau"]}, headers=headers)
 
     by_tag = await client.get("/media?tag=goi-dau", headers=headers)
     assert [i["id"] for i in by_tag.json()["items"]] == [image["asset_id"]]

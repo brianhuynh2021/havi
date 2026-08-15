@@ -35,8 +35,5 @@ class RefreshSessionRepository:
         await self._session.flush()
 
     async def delete_all_for_user(self, user_id: UUID) -> None:
-        await self._session.execute(
-            delete(RefreshSession).where(RefreshSession.user_id == user_id)
-        )
+        await self._session.execute(delete(RefreshSession).where(RefreshSession.user_id == user_id))
         await self._session.flush()
-

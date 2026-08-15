@@ -35,9 +35,7 @@ class BrandProfileService:
         workspace = await self._workspaces.get_by_id(workspace_id)
         if workspace is None:
             raise WorkspaceNotFound()
-        return await self._profiles.create(
-            workspace_id=workspace_id, industry=workspace.industry
-        )
+        return await self._profiles.create(workspace_id=workspace_id, industry=workspace.industry)
 
     async def update(
         self,

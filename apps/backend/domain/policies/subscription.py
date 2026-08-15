@@ -104,8 +104,6 @@ def state_for(
     return SubscriptionState(plan, SubscriptionStatus.PAST_DUE, trial_ends)
 
 
-
-
 def check_plan_change(*, current: Plan, target: Plan) -> None:
     """Ném `PlanChangeNotAllowed` nếu đổi gói không hợp lệ.
 

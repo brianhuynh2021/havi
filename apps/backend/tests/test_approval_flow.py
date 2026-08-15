@@ -67,9 +67,7 @@ async def _draft(
 # --- Sửa draft và version history ------------------------------------------
 
 
-async def test_sua_text_tao_version_moi_khong_ghi_de(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_sua_text_tao_version_moi_khong_ghi_de(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="a1@havi.vn")
     item = await _draft(db_session, token_pair, text="Bản gốc của Havi")
 
@@ -84,9 +82,7 @@ async def test_sua_text_tao_version_moi_khong_ghi_de(
     assert body["text"] == "Bản chị Hương sửa lại cho gần gũi hơn"
     assert body["version_no"] == 2
 
-    versions = await client.get(
-        f"/content/{item.id}/versions", headers=_headers(token_pair)
-    )
+    versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
     rows = versions.json()
     assert len(rows) == 1
     assert rows[0]["version_no"] == 2
@@ -111,9 +107,7 @@ async def test_patch_khong_gui_text_thi_khong_tang_version(
     assert response.status_code == 200
     assert response.json()["version_no"] == 1
     assert response.json()["media_note"] == "Chụp lúc đang gội"
-    versions = await client.get(
-        f"/content/{item.id}/versions", headers=_headers(token_pair)
-    )
+    versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
     assert versions.json() == []
 
 
@@ -123,12 +117,8 @@ async def test_sua_text_giong_het_ban_cu_khong_tao_version(
     token_pair = await _onboard(client, email="a3@havi.vn")
     item = await _draft(db_session, token_pair, text="Y hệt")
 
-    await client.patch(
-        f"/content/{item.id}", json={"text": "Y hệt"}, headers=_headers(token_pair)
-    )
-    versions = await client.get(
-        f"/content/{item.id}/versions", headers=_headers(token_pair)
-    )
+    await client.patch(f"/content/{item.id}", json={"text": "Y hệt"}, headers=_headers(token_pair))
+    versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
     assert versions.json() == []
 
 
@@ -146,9 +136,7 @@ async def test_khong_sua_duoc_bai_da_dang(client: AsyncClient, db_session: Async
 # --- Duyệt lẻ ---------------------------------------------------------------
 
 
-async def test_duyet_le_ghi_approved_by_va_len_lich(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_duyet_le_ghi_approved_by_va_len_lich(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="a5@havi.vn")
     item = await _draft(db_session, token_pair)
     when = datetime.now(UTC) + timedelta(days=1)
@@ -184,19 +172,13 @@ async def test_duyet_khong_chon_gio_thi_havi_chon_khung_gio_vang(
     assert scheduled.astimezone(VIETNAM_TZ).hour in {8, 12, 20}
 
 
-async def test_duyet_hai_lan_thi_lan_hai_tra_409(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_duyet_hai_lan_thi_lan_hai_tra_409(client: AsyncClient, db_session: AsyncSession):
     """Double-click nút Duyệt không được ghi đè `approved_by` của lần đầu."""
     token_pair = await _onboard(client, email="a7@havi.vn")
     item = await _draft(db_session, token_pair)
 
-    first = await client.post(
-        f"/content/{item.id}/approve", json={}, headers=_headers(token_pair)
-    )
-    second = await client.post(
-        f"/content/{item.id}/approve", json={}, headers=_headers(token_pair)
-    )
+    first = await client.post(f"/content/{item.id}/approve", json={}, headers=_headers(token_pair))
+    second = await client.post(f"/content/{item.id}/approve", json={}, headers=_headers(token_pair))
 
     assert first.status_code == 200
     assert second.status_code == 409
@@ -216,9 +198,7 @@ async def test_tu_choi_dua_bai_ve_draft(client: AsyncClient, db_session: AsyncSe
     token_pair = await _onboard(client, email="a9@havi.vn")
     item = await _draft(db_session, token_pair)
 
-    response = await client.post(
-        f"/content/{item.id}/reject", headers=_headers(token_pair)
-    )
+    response = await client.post(f"/content/{item.id}/reject", headers=_headers(token_pair))
 
     assert response.status_code == 200
     assert response.json()["status"] == "draft"
@@ -234,9 +214,7 @@ async def test_khong_duyet_duoc_bai_cua_workspace_khac(
     token_b = await _onboard(client, email="a11@havi.vn")
     item = await _draft(db_session, token_a)
 
-    response = await client.post(
-        f"/content/{item.id}/approve", json={}, headers=_headers(token_b)
-    )
+    response = await client.post(f"/content/{item.id}/approve", json={}, headers=_headers(token_b))
     assert response.status_code == 404
 
 
@@ -300,9 +278,7 @@ async def test_duyet_het_bo_qua_id_khong_thuoc_workspace(
 # --- Calendar và reschedule -------------------------------------------------
 
 
-async def test_bai_da_duyet_hien_dung_ngay_tren_lich(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_bai_da_duyet_hien_dung_ngay_tren_lich(client: AsyncClient, db_session: AsyncSession):
     """Lịch gom theo ngày Việt Nam: 8h sáng VN = 1h sáng UTC cùng ngày."""
     token_pair = await _onboard(client, email="a15@havi.vn")
     item = await _draft(db_session, token_pair)
@@ -436,9 +412,7 @@ async def test_gio_dang_luu_dung_moc_utc_khong_bi_nuot_offset(
 # --- Audit ------------------------------------------------------------------
 
 
-async def test_duyet_va_doi_lich_deu_ghi_event_log(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_duyet_va_doi_lich_deu_ghi_event_log(client: AsyncClient, db_session: AsyncSession):
     """Definition of Done §7: hành động nhạy cảm phải có audit event."""
     token_pair = await _onboard(client, email="a23@havi.vn")
     workspace_id = UUID(token_pair["active_workspace_id"])
@@ -452,10 +426,10 @@ async def test_duyet_va_doi_lich_deu_ghi_event_log(
     )
 
     rows = (
-        await db_session.execute(
-            select(EventLog).where(EventLog.workspace_id == workspace_id)
-        )
-    ).scalars().all()
+        (await db_session.execute(select(EventLog).where(EventLog.workspace_id == workspace_id)))
+        .scalars()
+        .all()
+    )
     kinds = [r.job_kind for r in rows]
     assert "content.approve" in kinds
     assert "content.reschedule" in kinds
