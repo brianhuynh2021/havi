@@ -20,11 +20,19 @@ celery_app = Celery(
     include=["worker.tasks", "scheduler.tasks"],
 )
 
+from kombu import Queue
+
 celery_app.conf.update(
     task_acks_late=True,
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
     task_default_queue="havi.default",
+    task_queues=(
+        Queue("havi.default"),
+        Queue("havi.content"),
+        Queue("havi.publish"),
+        Queue("havi.video_render"),
+    ),
     task_routes={
         "havi.video.render": {"queue": "havi.video_render"},
         "havi.content.*": {"queue": "havi.content"},

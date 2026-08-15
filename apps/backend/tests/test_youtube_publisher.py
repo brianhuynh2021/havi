@@ -99,7 +99,12 @@ async def test_youtube_publisher_rate_limit():
 
 @pytest.mark.asyncio
 async def test_google_youtube_oauth_client_mock_mode():
-    settings = Settings(env="local", use_fake_publisher=True)
+    settings = Settings(
+        env="local",
+        use_fake_publisher=True,
+        google_client_id="",
+        google_client_secret="",
+    )
     oauth = GoogleYouTubeOAuthClient(settings)
     assert oauth.platform == Platform.YOUTUBE
     assert oauth.is_configured is True
