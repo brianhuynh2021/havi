@@ -227,3 +227,82 @@ export async function cancelRenderJob(
     return { ok: false, message: GENERIC_ERROR };
   }
 }
+
+export type TrendingTopic = {
+  id: string;
+  keyword: string;
+  category: string;
+  trend_score: number;
+  source: string;
+  hook_style: string;
+  sample_hook: string;
+  suggested_angle: string;
+  suggested_hashtags: string[];
+};
+
+export type SynthesizeTrendResult = {
+  trend_id: string;
+  keyword: string;
+  title: string;
+  hook_caption: string;
+  caption_style: VideoCaptionStyle;
+  script_outline: string[];
+  suggested_hashtags: string[];
+  edit_plan: EditPlan;
+};
+
+export async function getHotTrends(
+  workspaceId: string,
+): Promise<Result<TrendingTopic[]>> {
+  try {
+    const res = await fetch(`${baseUrl}/workspaces/${workspaceId}/trends/hot`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, message: detailToMessage(err.detail, GENERIC_ERROR) };
+    }
+
+    const data: TrendingTopic[] = await res.json();
+    return { ok: true, data };
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { ok: false, message: NETWORK_ERROR_MESSAGE };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+}
+
+export async function synthesizeTrend(
+  workspaceId: string,
+  trendId: string,
+  options?: { target_aspect_ratio?: "9:16" | "1:1" | "16:9"; duration_seconds?: number },
+): Promise<Result<SynthesizeTrendResult>> {
+  try {
+    const res = await fetch(`${baseUrl}/workspaces/${workspaceId}/trends/synthesize`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        trend_id: trendId,
+        target_aspect_ratio: options?.target_aspect_ratio || "9:16",
+        duration_seconds: options?.duration_seconds || 15,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, message: detailToMessage(err.detail, GENERIC_ERROR) };
+    }
+
+    const data: SynthesizeTrendResult = await res.json();
+    return { ok: true, data };
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { ok: false, message: NETWORK_ERROR_MESSAGE };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+}
+

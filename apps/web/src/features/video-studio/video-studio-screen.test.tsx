@@ -134,4 +134,42 @@ describe("VideoStudioScreen", () => {
       expect(createdPayload.target_aspect_ratio).toBe("9:16");
     });
   });
+
+  it("hiển thị danh sách AI Trend Scout và cho phép áp dụng 1-chạm", async () => {
+    const user = userEvent.setup();
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname.includes("/trends/hot")) {
+        return jsonResponse([
+          {
+            id: "trend-1",
+            keyword: "Học nghề 3 tháng vs Đại học 4 năm",
+            category: "career_guidance",
+            trend_score: 98,
+            source: "TikTok Trends",
+            hook_style: "real_comparison",
+            sample_hook: "ĐỪNG MẤT 4 NĂM NẾU CHƯA BIẾT ĐIỀU NÀY!",
+            suggested_angle: "So sánh thực tế",
+            suggested_hashtags: ["#hocnghe", "#shorts"],
+          },
+        ]);
+      }
+      return jsonResponse({ items: [], total: 0, limit: 20, offset: 0 });
+    });
+
+    renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText("Học nghề 3 tháng vs Đại học 4 năm")).toBeInTheDocument();
+      expect(screen.getByText(/Hot 98%/i)).toBeInTheDocument();
+    });
+
+    const applyBtn = screen.getByRole("button", { name: /Dựng Video Theo Trend Này/i });
+    await user.click(applyBtn);
+
+    const hookInput = screen.getByLabelText("3s Hook Subtitle (Chữ động giữ chân)") as HTMLInputElement;
+    expect(hookInput.value).toBe("ĐỪNG MẤT 4 NĂM NẾU CHƯA BIẾT ĐIỀU NÀY!");
+  });
 });
+

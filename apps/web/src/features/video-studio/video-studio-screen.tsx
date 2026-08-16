@@ -7,14 +7,19 @@ import {
   retryRenderJob,
   cancelRenderJob,
   getActiveWorkspaceId,
+  getHotTrends,
+  synthesizeTrend,
   type VideoRenderJob,
   type VideoCaptionStyle,
+  type TrendingTopic,
 } from "./video-studio.api";
 import styles from "./video-studio.module.css";
 
 export function VideoStudioScreen() {
   const [jobs, setJobs] = useState<VideoRenderJob[]>([]);
   const [selectedJob, setSelectedJob] = useState<VideoRenderJob | null>(null);
+  const [trends, setTrends] = useState<TrendingTopic[]>([]);
+  const [isLoadingTrends, setIsLoadingTrends] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +33,26 @@ export function VideoStudioScreen() {
   const [normalizeAudio, setNormalizeAudio] = useState(true);
 
   const workspaceId = getActiveWorkspaceId() || "default-ws";
+
+  const fetchTrends = async () => {
+    if (!workspaceId) return;
+    setIsLoadingTrends(true);
+    const res = await getHotTrends(workspaceId);
+    if (res.ok && Array.isArray(res.data)) {
+      setTrends(res.data);
+    } else {
+      setTrends([]);
+    }
+    setIsLoadingTrends(false);
+  };
+
+  const handleApplyTrend = async (trend: TrendingTopic) => {
+    setTitle(`${trend.keyword} - TikTok Shorts`);
+    setHookCaption(trend.sample_hook);
+    setAspectRatio("9:16");
+    setDuration(15);
+    setCaptionStyle("bold_yellow");
+  };
 
   // Fetch jobs
   const fetchJobs = async () => {
@@ -49,6 +74,7 @@ export function VideoStudioScreen() {
 
   useEffect(() => {
     fetchJobs();
+    fetchTrends();
     const interval = setInterval(fetchJobs, 4000);
     return () => clearInterval(interval);
   }, [workspaceId]);
@@ -135,7 +161,45 @@ export function VideoStudioScreen() {
         </div>
       </header>
 
-      {error && <div className={`${styles.card} ${styles.statusFailed}`}>{error}</div>}
+      {/* Mục Trinh Sát Trend Nóng Hổi Hôm Nay (AI Trend Scout - Milestone #8) */}
+      <div className={styles.trendScoutCard}>
+        <div className={styles.trendScoutHeader}>
+          <div className={styles.trendScoutTitle}>
+            <span>🔥 Xu Hướng Nóng Hổi Hôm Nay (AI Trend Scout)</span>
+          </div>
+          <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+            Tự động quét & tối ưu cho TikTok / YouTube Shorts
+          </span>
+        </div>
+
+        {isLoadingTrends ? (
+          <div style={{ padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.85rem" }}>
+            Đang trinh sát các chủ đề hot nhất trên mạng xã hội...
+          </div>
+        ) : (
+          <div className={styles.trendList}>
+            {(trends || []).map((t) => (
+              <div key={t.id} className={styles.trendItem}>
+                <div className={styles.trendTop}>
+                  <span className={styles.trendKeyword}>{t.keyword}</span>
+                  <span className={styles.trendScoreBadge}>⚡ Hot {t.trend_score}%</span>
+                </div>
+                <div className={styles.trendHook}>
+                  <strong>Hook 3s:</strong> "{t.sample_hook}"
+                </div>
+                <button
+                  type="button"
+                  className={styles.trendActionBtn}
+                  onClick={() => handleApplyTrend(t)}
+                  title="Dùng ý tưởng trend này để tạo video"
+                >
+                  ⚡ Dựng Video Theo Trend Này
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className={styles.grid}>
         {/* Cột 1: Cấu hình Render Job & Danh sách Hàng Đợi */}

@@ -40,6 +40,7 @@ from adapters.persistence.workspace_member_repository import WorkspaceMemberRepo
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
 from adapters.storage.object_storage import ObjectStorage
+from application.services.ai_lead_agent_service import AILeadAgentService
 from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
 from application.services.billing_service import BillingService
@@ -311,6 +312,16 @@ def get_video_render_service(session: DbSessionDep) -> VideoRenderService:
 
 
 VideoRenderServiceDep = Annotated[VideoRenderService, Depends(get_video_render_service)]
+
+
+def get_ai_lead_agent_service(session: DbSessionDep) -> AILeadAgentService:
+    return AILeadAgentService(
+        leads=LeadRepository(session),
+        inbox=InboxRepository(session),
+    )
+
+
+AILeadAgentServiceDep = Annotated[AILeadAgentService, Depends(get_ai_lead_agent_service)]
 
 
 class AuthContext:
