@@ -1,0 +1,119 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+export function PwaRegistrar() {
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    // 1. Đăng ký Service Worker
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          console.log("Havi PWA Service Worker registered with scope:", reg.scope);
+        })
+        .catch((err) => {
+          console.warn("Havi PWA Service Worker registration failed:", err);
+        });
+    }
+
+    // 2. Bắt sự kiện trước khi cài đặt App (Android / Chrome / Edge)
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+  };
+
+  if (!installPrompt || isDismissed) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: "16px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+        background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
+        color: "#ffffff",
+        padding: "12px 20px",
+        borderRadius: "16px",
+        boxShadow: "0 12px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3)",
+        display: "flex",
+        alignItems: "center",
+        gap: "14px",
+        maxWidth: "92vw",
+        width: "420px",
+        animation: "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+    >
+      <div
+        style={{
+          width: "40px",
+          height: "40px",
+          borderRadius: "10px",
+          background: "#00D2FF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "20px",
+          flexShrink: 0,
+        }}
+      >
+        📱
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cài đặt Havi lên điện thoại</div>
+        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Mở toàn màn hình, chạy nhanh mượt mà</div>
+      </div>
+      <button
+        type="button"
+        onClick={handleInstall}
+        style={{
+          background: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
+          color: "#ffffff",
+          border: "none",
+          padding: "8px 14px",
+          borderRadius: "8px",
+          fontWeight: 700,
+          fontSize: "0.8rem",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Cài đặt ngay
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsDismissed(true)}
+        style={{
+          background: "transparent",
+          color: "#64748b",
+          border: "none",
+          fontSize: "16px",
+          cursor: "pointer",
+          padding: "4px",
+        }}
+        aria-label="Đóng"
+      >
+        ×
+      </button>
+    </div>
+  );
+}

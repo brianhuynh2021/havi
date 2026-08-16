@@ -1,0 +1,60 @@
+{
+  "name": "Havi — Trợ Lý Marketing AI Đa Kênh",
+  "short_name": "Havi",
+  "description": "Hệ thống tự động hóa marketing, bắt trend video ngắn và chăm sóc khách hàng tự động",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#4F46E5",
+  "background_color": "#090D16",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tạo nội dung & Video",
+      "short_name": "Tạo bài",
+      "description": "Tạo bài viết và video đa kênh trong 1 giây",
+      "url": "/app/content",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Xưởng Video TikTok & Shorts",
+      "short_name": "Video Studio",
+      "description": "Bắt trend và render video ngắn 9:16",
+      "url": "/app/video-studio",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Hộp thư & Khách hỏi",
+      "short_name": "Hộp thư",
+      "description": "Xem tin nhắn và bình luận đa kênh",
+      "url": "/app/inbox",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Khách tiềm năng (CRM)",
+      "short_name": "Leads",
+      "description": "Quản lý học viên và khách hàng tiềm năng",
+      "url": "/app/leads",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

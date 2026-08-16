@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Merriweather } from "next/font/google";
 import { SessionProvider } from "@/lib/auth/session";
 import { LanguageProvider } from "@/lib/i18n/language-context";
+import { PwaRegistrar } from "@/components/pwa/pwa-registrar";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,13 +20,27 @@ const merriweather = Merriweather({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#4F46E5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
-  title: "Havi — Trợ lý Marketing AI",
-  description: "Hệ thống tự động hóa marketing dành cho chủ doanh nghiệp",
+  title: "Havi — Trợ lý Marketing AI Đa Kênh",
+  description: "Hệ thống tự động hóa marketing, bắt trend video ngắn và chăm sóc khách hàng tự động",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Havi",
+  },
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -39,10 +54,17 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} ${merriweather.variable}`}
     >
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body>
         <SessionProvider>
           <LanguageProvider>{children}</LanguageProvider>
         </SessionProvider>
+        <PwaRegistrar />
       </body>
     </html>
   );

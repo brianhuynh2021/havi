@@ -248,6 +248,9 @@ Active now — see §15 for full acceptance criteria:
    clients, so Google Business is no longer advertised as connectable.
 6. [x] P1 — measure cost per job and cost per approved draft rollups in `/analytics/operations` before pricing; then build the billing path.
 7. [x] P1 — `/app/inbox` screen with loading, empty, error, retry, and reply actions so ingested messages are visible to a shop owner.
+8. [ ] P0 — Live Outbound Meta Graph API reply dispatch for automated 24/7 inbox consultations (§19.2).
+9. [ ] P1 — Mobile-First UX optimization: touch targets >= 48px, single-thumb 30-second ingest & 1-tap approval, non-technical copy (§18, §19.2).
+10. [ ] P1 — Automated VietQR (PayOS / SePay) subscription webhook for instant 3-second plan activation and invoice generation (§20.2).
 
 ---
 
@@ -768,3 +771,72 @@ Order of operations when access does arrive:
    end to end against the real API before the next starts
 4. `/connections/capabilities` picks them up automatically, because it now
    derives from the registered OAuth clients
+
+---
+
+## 18. Niche Execution & Closed-Loop Ingest: Real Estate Brokers & Local Shops (2026-08-16)
+
+### 18.1 Target Personas & Core Behavioral Realities
+
+1. **Cò Bất Động Sản (Real Estate Brokers):**
+   - **Daily Reality:** On the road conducting site visits, legal notary paperwork, and taking 5–10 photos of land, houses, and red books (`sổ đỏ`) on mobile devices. Exhausted by evening, lacking copywriting skills and short-form video hooks, yet fearing algorithmic invisibility if they do not post daily.
+   - **Burning Pain:** Inability to consistently produce high-converting Facebook/Zalo posts and short video hooks (TikTok/YouTube Shorts) from raw property photos.
+   - **Willingness to Pay:** High. A single transaction yields tens of millions VND; paying 299k–599k/month for automated daily listing presence and 24/7 lead capture is an immediate positive ROI.
+
+2. **Chủ Tiệm (Spas, Salons, F&B, Auto/Motorbike Repair, Local Clinics):**
+   - **Daily Reality:** Hands literally occupied with chemical treatments, cutting hair, cooking, or servicing customers. 100% mobile device users.
+   - **Burning Pain:** Customer inquires at 11 PM or during rush hours; missing or delaying response by 15 minutes causes the lead to go to a neighboring competitor.
+   - **Willingness to Pay:** High. Replaces a 2.5M–3M/month part-time page moderator who frequently sleeps through late-night inquiries.
+
+### 18.2 Competitive Moat vs. DIY Tools (LovinBot, Unikon, ChatGPT Wrappers)
+
+- **The DIY Trap:** Competitors provide complex dashboards with dozens of templates, prompt inputs, and manual copy-pasting. Shop owners abandon DIY tools within 3–4 days due to cognitive overload.
+- **Havi's "Outcome over Tool" Moat:**
+  1. **30-Second Ingest:** Single mobile upload (photo + voice/text note) -> Havi generates channel-native drafts automatically.
+  2. **Zero-Effort Closed Loop:** Content Engine -> 1-Tap Approval -> Multi-channel publishing -> 24/7 Auto Lead Care.
+  3. **Brand Knowledge Base (Retention Lock-in):** Havi accumulates and remembers the shop's pricing table, service menu, property catalog, and FAQs. Switching costs increase over time.
+
+---
+
+## 19. The POS-Utility Paradigm & 24/7 Auto-Pilot Closing
+
+### 19.1 Utility Guarantee over Speculative Traffic Promises
+
+- Shifting the core value proposition from speculative "10x viral growth" to measurable operational utility (akin to KiotViet / Sapo POS systems):
+  - **Zero Missed Inquiries:** Instant 24/7 automated greeting, price quote delivery, and consultation via official Meta Graph API.
+  - **Single Pane of Glass (Unified Inbox):** Aggregated incoming inquiries across Facebook, Instagram, and connected channels.
+  - **Continuous Channel Liveness:** Scheduled content cadence ensures the page remains active, signaling trust to walk-ins and referrals.
+
+### 19.2 Required Engineering Enablers for Commercial Readiness
+
+1. **Outbound Meta Graph API Auto-Reply (Lead Care Station 4 Dispatch):**
+   - Wire `api/routers/inbox.py` and worker reply tasks to deliver real outbound messages through `FacebookPublisherAdapter` via official Meta Graph API endpoints.
+   - Maintain strict audit trail and tenant isolation.
+2. **Mobile-First UX Optimization:**
+   - Touch-optimized targets (>= 48px) for mobile Safari and Chrome.
+   - 1-tap fast media ingest and quick approval actions designed for single-thumb mobile usage.
+   - Eliminating technical jargon from UI (`Prompt`, `Temperature`, `LLM Provider` replaced with `Tạo bài đăng`, `Bảng giá dịch vụ`, `Khách cần tư vấn`).
+
+---
+
+## 20. Commercialization & 7-Day Dogfooding Go-To-Market Blueprint
+
+### 20.1 Pricing & Unit Economics (No-Brainer Tiering)
+
+| Tier | Target User | Price (VND/month) | Entitlements | Gross Margin Target |
+|---|---|---|---|---|
+| **Khởi Nghiệp (Starter)** | Chủ tiệm solo, Spa mini, Quán F&B | **199,000 – 299,000 đ** | 1 Fanpage/IG, 24/7 Auto Inbox & FAQ, 30 AI posts/month | >= 85% |
+| **Chuyên Nghiệp (Pro)** | Cò BĐS, Chuỗi 2-3 quán, Dịch vụ | **599,000 đ** | Multi-channel (FB + TikTok Hooks + Google Business), Phone/Appointment Lead extraction, CRM Nudge | >= 80% |
+
+### 20.2 Automated VietQR Subscription Activation
+
+- Integrate automated VietQR payment flows (PayOS / SePay / Casso webhook integration) for instant subscription upgrades within 3 seconds of scanning.
+- Auto-generate VAT invoices and update `Workspace.plan` seamlessly upon idempotent webhook receipt.
+
+### 20.3 7-Day Customer Zero Validation Protocol
+
+- **Day 1–2:** Dogfood internal operations at Trung Tâm Công Nghệ Nhật Minh (ingest daily workshop repair photos + auto-inbox reply).
+- **Day 3–4:** Deploy pilot with 1 Real Estate Broker (uploading land photos + generating listing posts and 3-second short-form scripts).
+- **Day 5–6:** Deploy pilot with 1 Local Spa/Salon (configuring service price list + 24/7 auto lead consultation).
+- **Day 7:** Review outcome metrics (`/analytics/summary`), verify zero dropped leads, and initiate first paid conversion via VietQR.
+
