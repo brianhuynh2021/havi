@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export function PwaRegistrar() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showIosPrompt, setShowIosPrompt] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
@@ -26,6 +27,19 @@ export function PwaRegistrar() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+
+    // 3. Kiểm tra thiết bị iOS Safari chưa cài Standalone
+    if (typeof window !== "undefined") {
+      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone;
+      if (isIos && !isStandalone) {
+        // Chỉ hiện sau 3 giây để không làm phiền người dùng
+        const timer = setTimeout(() => setShowIosPrompt(true), 3000);
+        return () => clearTimeout(timer);
+      }
+    }
+
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
   }, []);
 
@@ -38,7 +52,7 @@ export function PwaRegistrar() {
     }
   };
 
-  if (!installPrompt || isDismissed) {
+  if (isDismissed || (!installPrompt && !showIosPrompt)) {
     return null;
   }
 
@@ -80,25 +94,45 @@ export function PwaRegistrar() {
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cài đặt Havi lên điện thoại</div>
-        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Mở toàn màn hình, chạy nhanh mượt mà</div>
+        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+          {showIosPrompt && !installPrompt
+            ? "Bấm nút Chia sẻ 📤 rồi chọn 'Thêm vào MH chính'"
+            : "Mở toàn màn hình, chạy nhanh mượt mà"}
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={handleInstall}
-        style={{
-          background: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
-          color: "#ffffff",
-          border: "none",
-          padding: "8px 14px",
-          borderRadius: "8px",
-          fontWeight: 700,
-          fontSize: "0.8rem",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Cài đặt ngay
-      </button>
+      {installPrompt ? (
+        <button
+          type="button"
+          onClick={handleInstall}
+          style={{
+            background: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
+            color: "#ffffff",
+            border: "none",
+            padding: "8px 14px",
+            borderRadius: "8px",
+            fontWeight: 700,
+            fontSize: "0.8rem",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Cài đặt ngay
+        </button>
+      ) : (
+        <span
+          style={{
+            fontSize: "0.8rem",
+            color: "#00D2FF",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            background: "rgba(0, 210, 255, 0.1)",
+            padding: "6px 10px",
+            borderRadius: "8px",
+          }}
+        >
+          📤 Thêm MH chính
+        </span>
+      )}
       <button
         type="button"
         onClick={() => setIsDismissed(true)}
