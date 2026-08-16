@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Havi Master Brand Logomark (Print-Ready Infinite Resolution Vector SVG) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <!-- Master Electric Indigo to Cyan Gradient -->
+    <linearGradient id="havi-master-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="45%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+
+    <!-- Deep Space Navy Background Gradient -->
+    <linearGradient id="havi-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#090D16" />
+    </linearGradient>
+
+    <!-- Neon Glow Filter for Digital & Screen Display -->
+    <filter id="havi-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="36" flood-color="#00D2FF" flood-opacity="0.38" />
+    </filter>
+  </defs>
+
+  <!-- Premium Squircle Container (For Print & App Icon) -->
+  <rect
+    x="50"
+    y="50"
+    width="900"
+    height="900"
+    rx="240"
+    fill="url(#havi-bg-grad)"
+    stroke="rgba(255, 255, 255, 0.12)"
+    stroke-width="12"
+  />
+
+  <!-- Main Futuristic Ascending H with Velocity Arrow & AI Core -->
+  <g filter="url(#havi-glow)">
+    <!-- Left Vertical Pillar -->
+    <path
+      d="M270 310 C270 270, 310 250, 350 270 L390 290 C420 310, 430 340, 410 380 L300 690 C290 730, 240 750, 210 730 L190 710 C160 680, 170 640, 190 600 Z"
+      fill="url(#havi-master-grad)"
+    />
+
+    <!-- Soaring Diagonal Growth Arch & Velocity Arrow -->
+    <path
+      d="M290 510 C390 490, 550 450, 630 350 L630 270 C630 230, 680 210, 720 240 L860 340 C890 360, 890 410, 850 440 L710 550 C670 580, 610 560, 610 510 L610 450 C540 510, 430 570, 310 590 Z"
+      fill="url(#havi-master-grad)"
+    />
+
+    <!-- Right Lower Stem -->
+    <path
+      d="M590 590 C630 560, 670 580, 680 620 L710 710 C730 750, 700 790, 650 790 L590 790 C550 790, 520 760, 530 720 Z"
+      fill="#00D2FF"
+    />
+
+    <!-- Central AI Hex Core -->
+    <circle cx="570" cy="470" r="35" fill="#FFFFFF" />
+    <circle cx="570" cy="470" r="60" stroke="#00D2FF" stroke-width="15" fill="none" opacity="0.85" />
+  </g>
+</svg>

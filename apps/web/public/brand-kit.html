@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Havi — Bộ Nhận Diện Thương Hiệu & File In Ấn Chuẩn (Brand Kit)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090D16;
+      --card: #131A29;
+      --primary: #4F46E5;
+      --violet: #7C3AED;
+      --cyan: #00D2FF;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 40px 20px; line-height: 1.6; }
+    .container { max-width: 960px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 48px; }
+    h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #FFF 0%, var(--cyan) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
+    .subtitle { color: var(--muted); font-size: 1.1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 48px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .preview-box { width: 160px; height: 160px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; background: rgba(0,0,0,0.3); border: 1px dashed var(--border); }
+    .preview-box img { max-width: 120px; max-height: 120px; object-fit: contain; }
+    .preview-box.light { background: #FFFFFF; }
+    .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+    .card-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; flex: 1; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, var(--primary) 0%, var(--violet) 100%); color: #FFF; text-decoration: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; transition: transform 0.2s, box-shadow 0.2s; width: 100%; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4); }
+    .btn.secondary { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+    .btn.secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    
+    .color-section { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 48px; }
+    .color-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; }
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .color-pill { border-radius: 14px; padding: 16px; color: #FFF; font-weight: 700; font-size: 0.9rem; }
+    .color-name { font-size: 0.8rem; opacity: 0.8; font-weight: 400; margin-top: 4px; }
+    .cmyk-code { font-size: 0.75rem; opacity: 0.7; font-weight: 400; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Havi Master Brand Kit & Print Assets</h1>
+      <p class="subtitle">Bộ nhận diện thương hiệu & File Vector chuẩn in ấn (Không giới hạn độ phân giải)</p>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: Vector SVG Master -->
+      <div class="card">
+        <div class="preview-box">
+          <img src="/logo-print-ready.svg" alt="Havi Master Logo">
+        </div>
+        <h2 class="card-title">File Vector In Ấn (SVG)</h2>
+        <p class="card-desc">Định dạng Vector vô hạn điểm ảnh. Dùng in Bảng hiệu lớn, Standee 2m×1m, Backdrop sân khấu, Namecard.</p>
+        <a href="/logo-print-ready.svg" download="Havi-Logo-Print-Ready.svg" class="btn">⬇️ Tải Vector SVG (In Ấn)</a>
+      </div>
+
+      <!-- Card 2: Transparent SVG for Merch -->
+      <div class="card">
+        <div class="preview-box light">
+          <img src="/logo-transparent.svg" alt="Havi Transparent Logo">
+        </div>
+        <h2 class="card-title">File Nền Trong Suốt (Áo/Decal)</h2>
+        <p class="card-desc">Nền trong suốt tách nền. Chuyên dụng cho thợ in áo đồng phục, in chuyển nhiệt, dán decal xe, dán cửa kính.</p>
+        <a href="/logo-transparent.svg" download="Havi-Logo-Transparent.svg" class="btn">⬇️ Tải File In Áo / Decal</a>
+      </div>
+
+      <!-- Card 3: High-Res Master Image -->
+      <div class="card">
+        <div class="preview-box">
+          <img src="/logo.jpg" alt="Havi Master JPG">
+        </div>
+        <h2 class="card-title">Ảnh Master App Icon (4K)</h2>
+        <p class="card-desc">Dùng cho Avatar mạng xã hội (Facebook, TikTok, YouTube, Zalo), Slide thuyết trình, hồ sơ năng lực.</p>
+        <a href="/logo.jpg" download="Havi-Logo-Master-4K.jpg" class="btn secondary">⬇️ Tải Ảnh 4K JPG</a>
+      </div>
+    </div>
+
+    <!-- Color Codes for Printers -->
+    <div class="color-section">
+      <h2 class="color-title">🎨 Thông Số Màu Chuẩn Dành Cho Thợ In (Offset / Kỹ Thuật Số)</h2>
+      <div class="color-grid">
+        <div class="color-pill" style="background: #4F46E5;">
+          Electric Indigo
+          <div class="color-name">HEX: #4F46E5</div>
+          <div class="cmyk-code">CMYK: 75, 75, 0, 0</div>
+        </div>
+        <div class="color-pill" style="background: #7C3AED;">
+          Ultra Violet
+          <div class="color-name">HEX: #7C3AED</div>
+          <div class="cmyk-code">CMYK: 65, 80, 0, 0</div>
+        </div>
+        <div class="color-pill" style="background: #00D2FF; color: #090D16;">
+          Cyan Pulse
+          <div class="color-name">HEX: #00D2FF</div>
+          <div class="cmyk-code">CMYK: 60, 0, 0, 0</div>
+        </div>
+        <div class="color-pill" style="background: #090D16; border: 1px solid var(--border);">
+          Deep Space Navy
+          <div class="color-name">HEX: #090D16</div>
+          <div class="cmyk-code">CMYK: 85, 75, 55, 75</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
