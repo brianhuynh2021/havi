@@ -362,7 +362,7 @@ describe("ContentCreationScreen", () => {
     expect(screen.queryByText(/không đăng được/i)).not.toBeInTheDocument();
   });
 
-  it("clip không thành chip liệu thô vì chưa đăng được kênh video nào", async () => {
+  it("clip tạo chip liệu thô để đưa vào các kênh video", async () => {
     mockApi({ complete: () => jsonResponse(videoAsset()) });
     render(<ContentCreationScreen />);
     await screen.findByText(/chưa có bản nháp nào/i);
@@ -370,11 +370,10 @@ describe("ContentCreationScreen", () => {
     await chonClip();
     await screen.findByText("Xong");
 
-    // Ảnh tạo chip để đưa vào bài; clip thì chưa — `RawInputKind` không có
-    // `video` và Havi chưa publish kênh video nào (ROADMAP §17).
+    // Clip tạo chip để đưa vào bài đăng YouTube Shorts, TikTok, Reels
     expect(
-      screen.queryByRole("button", { name: /bỏ clip-doc.mp4/i }),
-    ).not.toBeInTheDocument();
+      await screen.findByRole("button", { name: /bỏ clip-doc.mp4/i }),
+    ).toBeInTheDocument();
   });
 
   it("tạo job có gửi Idempotency-Key để bấm hai lần không tốn hai lần tiền LLM", async () => {

@@ -140,6 +140,12 @@ class ConnectionRepository:
         """
         return decrypt_token(connection.access_token_encrypted)
 
+    def read_refresh_token(self, connection: PlatformConnection) -> str | None:
+        """Giải mã refresh token nếu có."""
+        if not connection.refresh_token_encrypted:
+            return None
+        return decrypt_token(connection.refresh_token_encrypted)
+
     async def mark_unusable(
         self,
         connection: PlatformConnection,

@@ -118,21 +118,26 @@ class YouTubePublisher(PublisherPort):
 
         # 2. Tải bytes từ media_url và đẩy lên YouTube
         try:
-            video_res = await client.get(video_url)
-            if video_res.status_code != 200:
-                raise ValidationPublishError(
-                    self.channel, f"Không thể tải video từ URL: {video_url}"
-                )
-            video_bytes = video_res.content
+            if video_url.startswith("file://") or video_url.startswith("/"):
+                file_path = video_url.replace("file://", "")
+                with open(file_path, "rb") as f:
+                    video_bytes = f.read()
+            else:
+                video_res = await client.get(video_url)
+                if video_res.status_code != 200:
+                    raise ValidationPublishError(
+                        self.channel, f"Không thể tải video từ URL: {video_url}"
+                    )
+                video_bytes = video_res.content
 
             upload_res = await client.put(
                 upload_location,
                 content=video_bytes,
                 headers={"Content-Type": "video/mp4"},
             )
-        except httpx.RequestError as exc:
+        except (httpx.RequestError, OSError) as exc:
             raise TemporaryPublishError(
-                self.channel, f"Lỗi mạng khi truyền video lên YouTube: {exc}"
+                self.channel, f"Lỗi khi nạp/truyền video lên YouTube: {exc}"
             ) from exc
 
         if upload_res.status_code in _TRANSIENT_STATUSES:

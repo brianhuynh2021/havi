@@ -374,11 +374,7 @@ export function ContentCreationScreen() {
               : upload,
           ),
         );
-        // Chỉ ảnh thành chip liệu thô: `RawInputKind` chưa có `video`, và Havi
-        // chưa đăng được kênh video nào (ROADMAP §17). Clip upload lên là để vào
-        // thư viện và để chủ tiệm biết nó có hợp khung/độ dài hay không — hứa nó
-        // sẽ được đưa vào bài viết ngay bây giờ là hứa thứ chưa có.
-        if (row.isVideo) return;
+        // Đưa media vừa upload vào chip liệu thô
         setChips((prev) => [
           ...prev,
           {

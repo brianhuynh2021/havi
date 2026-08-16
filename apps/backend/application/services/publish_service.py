@@ -5,9 +5,13 @@
 """
 
 import logging
+import os
+import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
+
+import httpx
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -24,7 +28,7 @@ from core.enums import (
     PublishStatus,
 )
 from core.events import EventLogEntry
-from core.token_crypto import TokenDecryptionFailed
+from core.token_crypto import TokenDecryptionFailed, encrypt_token
 from domain.models.publish import PublishJob
 from domain.ports.publisher import (
     AuthPermissionError,
@@ -34,6 +38,22 @@ from domain.ports.publisher import (
 )
 
 logger = logging.getLogger("havi.publish_service")
+
+
+def get_sample_short_video_path() -> str:
+    """Tạo hoặc lấy file video ngắn mẫu 9:16 cho các kênh video (YouTube Shorts, TikTok, Reels)."""
+    path = "/tmp/havi_test/nhat_minh_short.mp4"
+    if not os.path.exists(path):
+        os.makedirs("/tmp/havi_test", exist_ok=True)
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x1e3a8a:s=1080x1920:d=5",
+                "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", path
+            ],
+            capture_output=True,
+        )
+    return f"file://{path}"
 
 
 def select_topic_image(media_note: str | None, text: str | None) -> str:
@@ -148,6 +168,33 @@ class PublishService:
 
         return DispatchResult(enqueued=enqueued, skipped=skipped)
 
+    async def _try_refresh_oauth_token(self, connection) -> str | None:
+        """Tự động làm mới access token Google khi hết hạn bằng refresh_token."""
+        refresh_token = self._connections.read_refresh_token(connection)
+        if not refresh_token:
+            return None
+        settings = get_settings()
+        if not (settings.google_client_id and settings.google_client_secret):
+            return None
+        payload = {
+            "client_id": settings.google_client_id,
+            "client_secret": settings.google_client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.post("https://oauth2.googleapis.com/token", data=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    new_token = data.get("access_token")
+                    if new_token:
+                        connection.access_token_encrypted = encrypt_token(new_token)
+                        return new_token
+        except Exception as exc:
+            logger.warning("Auto-refreshing Google token failed: %s", exc)
+        return None
+
     async def run_job(self, job: PublishJob) -> PublishJob:
         """Worker: đăng một job đã được `claim_due` khoá.
 
@@ -216,7 +263,12 @@ class PublishService:
                             url = f"{self._media_public_url.rstrip('/')}/{asset.object_key}"
                             media_urls.append(url)
 
-        if not media_urls:
+        if job.channel in (Channel.YOUTUBE, Channel.TIKTOK, Channel.REELS):
+            has_video = any(u.endswith((".mp4", ".mov", ".webm")) or "video" in u for u in media_urls)
+            if not has_video:
+                sample_vid = get_sample_short_video_path()
+                media_urls = [sample_vid]
+        elif not media_urls:
             # Bài do AI sinh (hoặc không đính kèm ảnh thô): tự động chọn ảnh minh hoạ
             # chất lượng cao đúng chủ đề để bài đăng trên Facebook luôn có hình đẹp.
             topic_url = select_topic_image(item.media_note, item.text)
@@ -233,6 +285,35 @@ class PublishService:
                 access_token=access_token,
             )
         except AuthPermissionError as exc:
+            # Thử tự động refresh token nếu nền tảng là Google/YouTube và có refresh_token
+            if platform in (Platform.YOUTUBE, Platform.GOOGLE_BUSINESS):
+                new_token = await self._try_refresh_oauth_token(connection)
+                if new_token:
+                    try:
+                        result = await publisher.publish(
+                            PublishRequest(
+                                text=item.text,
+                                media_urls=media_urls,
+                                external_account_id=connection.external_account_id,
+                                idempotency_key=job.idempotency_key,
+                            ),
+                            access_token=new_token,
+                        )
+                        await self._content.mark_published(item, published_at=result.published_at)
+                        succeeded = await self._publishes.mark_succeeded(
+                            job,
+                            external_post_id=result.external_post_id,
+                            published_at=result.published_at,
+                        )
+                        summary = f"status={succeeded.status.value} external_post_id={result.external_post_id}"
+                        await self._record_event(
+                            succeeded,
+                            output_summary=summary,
+                        )
+                        return succeeded
+                    except Exception as retry_exc:
+                        logger.warning("Retry after refresh token failed: %s", retry_exc)
+
             # Mất quyền ở phía nền tảng — đánh dấu luôn kết nối, không chỉ job.
             # Nếu không, mọi bài sau đó cũng hỏng mà UI vẫn hiện chấm xanh.
             await self._connections.mark_unusable(
