@@ -5,6 +5,10 @@ echo "========================================================"
 echo "🚀 Starting Havi Platform Devbox (One-Click Environment)"
 echo "========================================================"
 
+# 0. Free busy ports if lingering from previous run
+echo "🧹 [0/4] Checking and freeing ports 3000 and 8000..."
+lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
+
 # 1. Start Docker Infrastructure (Postgres, Redis, MinIO)
 echo "📦 [1/4] Starting Docker infrastructure (Postgres, Redis, MinIO)..."
 docker compose up -d
@@ -18,6 +22,7 @@ cleanup() {
   echo ""
   echo "🛑 Stopping Havi services..."
   kill $(jobs -p) 2>/dev/null || true
+  lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
   echo "👋 Devbox stopped cleanly."
   exit 0
 }
