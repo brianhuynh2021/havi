@@ -47,11 +47,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 4. Guest Auth Routes (/login, /signup)
-  if ((pathname === "/login" || pathname === "/signup") && hasSession) {
-    return NextResponse.redirect(new URL("/app", request.url));
-  }
-
   return NextResponse.next();
 }
 

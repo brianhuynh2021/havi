@@ -36,10 +36,10 @@ let cachedTokens: StoredTokens | null = null;
 
 export function readTokens(): StoredTokens | null {
   const raw = storage()?.getItem(STORAGE_KEY) ?? null;
-  if (raw === cachedRaw) return cachedTokens;
-
-  cachedRaw = raw;
-  cachedTokens = raw ? parseTokens(raw) : null;
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    cachedTokens = raw ? parseTokens(raw) : null;
+  }
   syncCookie(Boolean(cachedTokens));
   return cachedTokens;
 }
