@@ -840,3 +840,16 @@ Order of operations when access does arrive:
 - **Day 5–6:** Deploy pilot with 1 Local Spa/Salon (configuring service price list + 24/7 auto lead consultation).
 - **Day 7:** Review outcome metrics (`/analytics/summary`), verify zero dropped leads, and initiate first paid conversion via VietQR.
 
+---
+
+## 21. Strategic 5-Phase Commercial Scale Master Plan
+
+The complete 5-phase product, engineering, and monetization roadmap from Local Dogfooding to Global Scale is formally recorded in [`docs/product/COMMERCIALIZATION_PHASES.md`](COMMERCIALIZATION_PHASES.md):
+
+* **Phase 1 (Month 1):** The Cash-Flow Core Engine (30s Mobile Ingest, Live Meta Reply, VietQR Activation, Dogfooding at Trung Tâm Công Nghệ Nhật Minh).
+* **Phase 2 (Months 2–3):** Local Dominance & AI Video Studio (Google Maps Local SEO Ranker, 3s TikTok Hooks, Smart Lead Triage).
+* **Phase 3 (Months 4–5):** Customer Retention & Smart CRM Nudge Loop (Automated re-activation of past leads, POS sales attribution, Brand Knowledge Base v2).
+* **Phase 4 (Months 6–8):** Autonomous Marketing Radar & Ads Copilot (AI Trend Scout, 1-tap Meta Ads Lite).
+* **Phase 5 (Months 9+):** Global Scale & Multi-Location Enterprise (Stripe multi-currency billing, global affiliate PLG, franchise mode).
+
+

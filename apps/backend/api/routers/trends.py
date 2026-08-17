@@ -1,7 +1,6 @@
 """REST API Router cho AI Trend Scout & Trendjacking (Milestone #8)."""
 
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field

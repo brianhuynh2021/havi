@@ -48,6 +48,32 @@ class BillingRepository:
         await self._session.flush()
         return invoice
 
+    async def get_invoice(self, invoice_id: UUID) -> Invoice | None:
+        result = await self._session.execute(
+            select(Invoice).where(Invoice.id == invoice_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_pending_invoice(
+        self, *, workspace_id: UUID, plan: Plan
+    ) -> Invoice | None:
+        result = await self._session.execute(
+            select(Invoice).where(
+                Invoice.workspace_id == workspace_id,
+                Invoice.plan == plan,
+                Invoice.status == InvoiceStatus.PENDING,
+            ).order_by(Invoice.issued_at.desc())
+        )
+        return result.scalars().first()
+
+    async def mark_invoice_paid(
+        self, invoice: Invoice, *, gateway_reference: str
+    ) -> Invoice:
+        invoice.status = InvoiceStatus.PAID
+        invoice.gateway_reference = gateway_reference
+        await self._session.flush()
+        return invoice
+
     async def list_invoices(
         self, *, workspace_id: UUID, limit: int = 50, offset: int = 0
     ) -> tuple[list[Invoice], int]:

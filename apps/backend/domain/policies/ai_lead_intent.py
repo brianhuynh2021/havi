@@ -2,10 +2,10 @@
 
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class LeadIntentKind(str, Enum):
+class LeadIntentKind(StrEnum):
     PRICE_INQUIRY = "price_inquiry"         # Hỏi học phí, giá dịch vụ
     CURRICULUM = "curriculum_inquiry"       # Hỏi chương trình học, thời gian, giáo trình
     LOCATION = "location_inquiry"           # Hỏi địa chỉ, cơ sở, bản đồ
@@ -81,7 +81,7 @@ def classify_lead_intent(text: str, author_name: str = "") -> LeadAnalysisResult
         intent = LeadIntentKind.LOCATION
         confidence = 0.90
         tags.append("#hoi_dia_chi")
-        reply = f"Dạ Trung Tâm Công Nghệ Nhật Minh tọa lạc tại vị trí thuận tiện để học viên các quận đến thực hành trực tiếp mỗi ngày. Anh/chị có thể ghé trực tiếp trung tâm để tham quan phòng thực hành và trải nghiệm thử 1 buổi trước khi đăng ký ạ!"
+        reply = "Dạ Trung Tâm Công Nghệ Nhật Minh tọa lạc tại vị trí thuận tiện để học viên các quận đến thực hành trực tiếp mỗi ngày. Anh/chị có thể ghé trực tiếp trung tâm để tham quan phòng thực hành và trải nghiệm thử 1 buổi trước khi đăng ký ạ!"
     else:
         intent = LeadIntentKind.GENERAL_SUPPORT
         confidence = 0.75

@@ -89,7 +89,7 @@ describe("VideoStudioScreen", () => {
 
   it("cho phép gửi form tạo job render video mới", async () => {
     const user = userEvent.setup();
-    let createdPayload: any = null;
+    let createdPayload: { title?: string } | null = null;
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
@@ -100,7 +100,7 @@ describe("VideoStudioScreen", () => {
         return jsonResponse({
           id: "job-2",
           workspace_id: "ws-123",
-          title: createdPayload.title,
+          title: createdPayload?.title || "Test Video",
           target_aspect_ratio: "9:16",
           status: "queued",
           progress_percent: 0,

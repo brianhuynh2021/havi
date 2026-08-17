@@ -15,9 +15,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -40,27 +39,34 @@ export type Session = {
 
 const SessionContext = createContext<Session | null>(null);
 
+// Client-only state must have the same snapshot during SSR and hydration. The
+// real client snapshot is picked up immediately after hydration, before the
+// route guard is allowed to redirect.
+const subscribeHydration = () => () => {};
+const getHydratedSnapshot = () => true;
+const getServerHydratedSnapshot = () => false;
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [tokens, setTokens] = useState<StoredTokens | null>(() => {
-    if (typeof window === "undefined") return null;
-    return readTokens();
-  });
+  const hydrated = useSyncExternalStore(
+    subscribeHydration,
+    getHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
+  const tokens = useSyncExternalStore(
+    subscribeTokens,
+    readTokens,
+    () => null,
+  );
 
-  useEffect(() => {
-    // Đảm bảo sync tokens khi hydration xong và lắng nghe thay đổi token
-    setTokens(readTokens());
-    const unsubscribe = subscribeTokens(() => {
-      setTokens(readTokens());
-    });
-    return unsubscribe;
-  }, []);
-
-  const status: SessionStatus = tokens ? "authenticated" : "guest";
+  const status: SessionStatus = !hydrated
+    ? "loading"
+    : tokens
+      ? "authenticated"
+      : "guest";
 
   const signIn = useCallback((next: StoredTokens) => {
     writeTokens(next);
-    setTokens(next);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -79,7 +85,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // Đăng xuất phía client vẫn phải hoàn tất nếu API/network đang lỗi.
     } finally {
       clearTokens();
-      setTokens(null);
       router.replace("/login");
     }
   }, [router]);

@@ -7,8 +7,11 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-view
 import { useLanguage } from "@/lib/i18n/language-context";
 import {
   changePlan,
+  checkInvoiceStatus,
+  createCheckout,
   fetchInvoices,
   fetchSubscription,
+  type CheckoutData,
   type Invoice,
   type Plan,
   type Subscription,
@@ -23,38 +26,38 @@ const PLAN_DETAILS: Record<
     title: "Gói Trải Nghiệm",
     price: "0 đ",
     period: "14 ngày",
-    desc: "Khám phá sức mạnh marketing AI cho người mới bắt đầu.",
+    desc: "Khám phá sức mạnh nhân viên AI marketing cho người mới bắt đầu.",
     features: [
-      "50.000 Token AI mỗi tháng",
+      "50 bài viết AI & kịch bản video mỗi tháng",
       "Kết nối 1 Fanpage Facebook",
       "Lịch đăng bài tự động giờ vàng",
-      "Hỗ trợ qua tài liệu & cộng đồng",
+      "Hỗ trợ kỹ thuật 24/7",
     ],
   },
   tiem_nho: {
     title: "Gói Tiệm Đơn",
     price: "299.000 đ",
     period: "/tháng",
-    desc: "Tối ưu nhất cho các tiệm Spa, Salon, F&B độc lập.",
+    desc: "Tối ưu nhất cho các tiệm Spa, Salon, F&B độc lập và môi giới BĐS.",
     features: [
-      "250.000 Token AI mỗi tháng",
+      "250 bài viết AI & kịch bản video mỗi tháng",
       "Kết nối Facebook Page, Reels, TikTok & YouTube Shorts",
-      "Sinh kịch bản video dọc với Hook 3s",
+      "Sinh kịch bản video dọc với Hook 3s giật tít",
       "Hộp thư hợp nhất & Trả lời FAQ tự động",
-      "Báo cáo khách tiềm năng & doanh thu",
+      "Báo cáo khách tiềm năng & doanh thu POS",
     ],
   },
   toan_dien: {
     title: "Gói Chuỗi Tiệm",
-    price: "799.000 đ",
+    price: "599.000 đ",
     period: "/tháng",
-    desc: "Dành cho chuỗi chi nhánh và cửa hàng nhiều cơ sở.",
+    desc: "Dành cho chuỗi chi nhánh, salon và cửa hàng nhiều cơ sở.",
     features: [
-      "1.000.000 Token AI tốc độ cao",
-      "Không giới hạn kết nối đa kênh",
-      "Ưu tiên tài nguyên AI & render video",
-      "Phân quyền nhân viên chi nhánh",
-      "Hỗ trợ kỹ thuật 1-1 chuyên biệt",
+      "1.000 bài viết AI & kịch bản video tốc độ cao",
+      "Không giới hạn kết nối đa kênh mạng xã hội",
+      "Ưu tiên tài nguyên AI & render video chất lượng cao",
+      "Phân quyền nhân viên từng chi nhánh",
+      "Chuyên viên hỗ trợ kỹ thuật 1-1 riêng biệt",
     ],
   },
 };
@@ -65,8 +68,19 @@ export function BillingScreen() {
   const [error, setError] = useState<string | null>(null);
   const [sub, setSub] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<Plan | null>(null);
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
+  const [isGeneratingCheckout, setIsGeneratingCheckout] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const reloadData = async () => {
+    const [subRes, invRes] = await Promise.all([
+      fetchSubscription(),
+      fetchInvoices(),
+    ]);
+    if (subRes.ok) setSub(subRes.data);
+    if (invRes.ok) setInvoices(invRes.data);
+  };
 
   useEffect(() => {
     let active = true;
@@ -94,16 +108,53 @@ export function BillingScreen() {
     };
   }, []);
 
-  async function handleConfirmUpgrade(plan: Plan) {
+  // Polling trạng thái hoá đơn khi mở modal VietQR
+  useEffect(() => {
+    if (!checkoutData?.invoice_id || paymentSuccess) return;
+
+    const interval = setInterval(async () => {
+      const res = await checkInvoiceStatus(checkoutData.invoice_id);
+      if (res.ok && res.data.status === "paid") {
+        setPaymentSuccess(true);
+        clearInterval(interval);
+        setTimeout(async () => {
+          await reloadData();
+          setCheckoutData(null);
+          setPaymentSuccess(false);
+        }, 2000);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [checkoutData, paymentSuccess]);
+
+  async function handleOpenCheckout(plan: Plan) {
+    setIsGeneratingCheckout(true);
+    const res = await createCheckout(plan);
+    setIsGeneratingCheckout(false);
+    if (res.ok) {
+      setCheckoutData(res.data);
+    } else {
+      // Fallback nếu API checkout local chưa cấu hình
+      setUpgrading(true);
+      const changeRes = await changePlan(plan);
+      setUpgrading(false);
+      if (changeRes.ok) {
+        await reloadData();
+      } else {
+        alert(changeRes.message);
+      }
+    }
+  }
+
+  async function handleManualConfirm() {
+    if (!checkoutData) return;
     setUpgrading(true);
-    const res = await changePlan(plan);
+    const res = await changePlan(checkoutData.plan);
     setUpgrading(false);
     if (res.ok) {
-      setSub(res.data);
-      setSelectedPlanForPayment(null);
-      // Reload invoices
-      const invRes = await fetchInvoices();
-      if (invRes.ok) setInvoices(invRes.data);
+      await reloadData();
+      setCheckoutData(null);
     } else {
       alert(res.message);
     }
@@ -143,7 +194,7 @@ export function BillingScreen() {
           </Badge>
         </div>
         <p className={styles.subtitle}>
-          Quản lý gói dịch vụ AI marketing, theo dõi hạn mức sử dụng và lịch sử thanh toán minh bạch.
+          Quản lý gói dịch vụ nhân viên AI marketing, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR minh bạch.
         </p>
       </header>
 
@@ -163,10 +214,10 @@ export function BillingScreen() {
 
         <div className={styles.quotaBarContainer}>
           <div className={styles.quotaLabels}>
-            <span>Hạn mức Token AI tháng này:</span>
+            <span>Hạn mức nội dung tháng này:</span>
             <span className={styles.quotaValue}>
               {sub.token_quota_used.toLocaleString("vi-VN")} /{" "}
-              {sub.token_quota_limit.toLocaleString("vi-VN")} Tokens ({quotaPercent}%)
+              {sub.token_quota_limit.toLocaleString("vi-VN")} Lượt ({quotaPercent}%)
             </span>
           </div>
           <div className={styles.progressBarBg}>
@@ -220,9 +271,10 @@ export function BillingScreen() {
                   <button
                     type="button"
                     className={`${styles.planButton} ${styles.upgradeBtn}`}
-                    onClick={() => setSelectedPlanForPayment(planKey)}
+                    disabled={isGeneratingCheckout}
+                    onClick={() => handleOpenCheckout(planKey)}
                   >
-                    Nâng cấp lên {plan.title}
+                    {isGeneratingCheckout ? "Đang tạo mã VietQR…" : `Nâng cấp lên ${plan.title}`}
                   </button>
                 )}
               </div>
@@ -233,11 +285,11 @@ export function BillingScreen() {
 
       {/* Invoices History */}
       <section className={styles.invoicesSection}>
-        <h2 className={styles.invoicesTitle}>📜 Lịch sử hóa đơn & Thanh toán</h2>
+        <h2 className={styles.invoicesTitle}>📜 Lịch sử hóa đơn & Thanh toán VietQR</h2>
         {invoices.length === 0 ? (
           <EmptyState
             title="Chưa có hóa đơn nào phát sinh"
-            body="Khi bạn đăng ký hoặc nâng cấp gói cước, hóa đơn điện tử sẽ hiển thị tại đây."
+            body="Khi bạn đăng ký hoặc nâng cấp gói cước, hóa đơn điện tử và mã giao dịch sẽ hiển thị tại đây."
           />
         ) : (
           <div className={styles.invoicesCard}>
@@ -260,7 +312,7 @@ export function BillingScreen() {
                     <td>{new Date(inv.issued_at).toLocaleDateString("vi-VN")}</td>
                     <td>
                       <Badge tone={inv.status === "paid" ? "success" : "info"}>
-                        {inv.status === "paid" ? "Đã thanh toán" : "Đã kích hoạt"}
+                        {inv.status === "paid" ? "✓ Đã thanh toán" : "Đang chờ thanh toán"}
                       </Badge>
                     </td>
                   </tr>
@@ -272,67 +324,79 @@ export function BillingScreen() {
       </section>
 
       {/* Modal VietQR Payment */}
-      {selectedPlanForPayment ? (
+      {checkoutData ? (
         <div
           className={styles.modalOverlay}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectedPlanForPayment(null);
+            if (e.target === e.currentTarget) setCheckoutData(null);
           }}
         >
           <div className={styles.modalCard} role="dialog" aria-modal="true">
-            <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
-              Quét mã VietQR để nâng cấp {PLAN_DETAILS[selectedPlanForPayment as keyof typeof PLAN_DETAILS]?.title}
-            </h3>
-            <p style={{ fontSize: 13.5, color: "#64748b" }}>
-              Chuyển khoản liên ngân hàng NAPAS 24/7 tự động kích hoạt gói cước ngay lập tức.
-            </p>
-
-            <div className={styles.qrBox}>
-              <img
-                src={`https://img.vietqr.io/image/970436-1025888888-compact2.png?amount=${
-                  selectedPlanForPayment === "tiem_nho" ? 299000 : 799000
-                }&addInfo=HAVI%20${sub.workspace_id.slice(0, 8)}&accountName=CONG%20TY%20HAVI%20VIETNAM`}
-                alt="VietQR Payment Code"
-                className={styles.qrImage}
-              />
-              <div className={styles.transferDetails}>
-                <div className={styles.transferRow}>
-                  <span>Ngân hàng:</span>
-                  <span>Vietcombank (VCB)</span>
-                </div>
-                <div className={styles.transferRow}>
-                  <span>Số tài khoản:</span>
-                  <strong>1025888888</strong>
-                </div>
-                <div className={styles.transferRow}>
-                  <span>Chủ tài khoản:</span>
-                  <span>CONG TY HAVI VIETNAM</span>
-                </div>
-                <div className={styles.transferRow}>
-                  <span>Số tiền:</span>
-                  <strong>
-                    {(selectedPlanForPayment === "tiem_nho" ? 299000 : 799000).toLocaleString("vi-VN")} đ
-                  </strong>
-                </div>
-                <div className={styles.transferRow}>
-                  <span>Nội dung CK:</span>
-                  <strong>HAVI {sub.workspace_id.slice(0, 8)}</strong>
-                </div>
+            {paymentSuccess ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ fontSize: 54 }}>🎉</div>
+                <h3 style={{ fontSize: 22, fontWeight: 800, color: "#10b981", marginTop: 12 }}>
+                  Thanh Toán Thành Công!
+                </h3>
+                <p style={{ color: "#64748b", marginTop: 8 }}>
+                  Tài khoản của bạn đã được tự động nâng cấp. Đang chuyển hướng…
+                </p>
               </div>
-            </div>
+            ) : (
+              <>
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
+                  Quét mã VietQR để nâng cấp {PLAN_DETAILS[checkoutData.plan]?.title}
+                </h3>
+                <p style={{ fontSize: 13.5, color: "#64748b" }}>
+                  Mở ứng dụng Ngân hàng (VCB, MB, Techcombank, VPBank…) quét mã QR 24/7 — Hệ thống tự động kích hoạt sau 3 giây.
+                </p>
 
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-              <Button variant="ghost" onClick={() => setSelectedPlanForPayment(null)}>
-                Đóng
-              </Button>
-              <Button
-                variant="primary"
-                disabled={upgrading}
-                onClick={() => handleConfirmUpgrade(selectedPlanForPayment)}
-              >
-                {upgrading ? "Đang xử lý…" : "Tôi đã chuyển khoản thành công"}
-              </Button>
-            </div>
+                <div className={styles.qrBox}>
+                  <img
+                    src={checkoutData.qr_code_url}
+                    alt="VietQR Payment Code"
+                    className={styles.qrImage}
+                  />
+                  <div className={styles.transferDetails}>
+                    <div className={styles.transferRow}>
+                      <span>Ngân hàng:</span>
+                      <strong>{checkoutData.bank_id}</strong>
+                    </div>
+                    <div className={styles.transferRow}>
+                      <span>Số tài khoản:</span>
+                      <strong>{checkoutData.account_no}</strong>
+                    </div>
+                    <div className={styles.transferRow}>
+                      <span>Chủ tài khoản:</span>
+                      <span>{checkoutData.account_name}</span>
+                    </div>
+                    <div className={styles.transferRow}>
+                      <span>Số tiền:</span>
+                      <strong style={{ color: "#0284c7" }}>
+                        {(checkoutData.amount_vnd ?? 0).toLocaleString("vi-VN")} đ
+                      </strong>
+                    </div>
+                    <div className={styles.transferRow}>
+                      <span>Nội dung CK:</span>
+                      <strong style={{ color: "#f59e0b" }}>{checkoutData.transfer_content}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
+                  <Button variant="ghost" onClick={() => setCheckoutData(null)}>
+                    Đóng
+                  </Button>
+                  <Button
+                    variant="primary"
+                    disabled={upgrading}
+                    onClick={handleManualConfirm}
+                  >
+                    {upgrading ? "Đang kích hoạt…" : "Xác nhận đã chuyển khoản"}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}

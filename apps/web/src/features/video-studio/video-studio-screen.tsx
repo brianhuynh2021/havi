@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   listRenderJobs,
   createRenderJob,
@@ -34,7 +34,7 @@ export function VideoStudioScreen() {
 
   const workspaceId = getActiveWorkspaceId() || "default-ws";
 
-  const fetchTrends = async () => {
+  const fetchTrends = useCallback(async () => {
     if (!workspaceId) return;
     setIsLoadingTrends(true);
     const res = await getHotTrends(workspaceId);
@@ -44,7 +44,7 @@ export function VideoStudioScreen() {
       setTrends([]);
     }
     setIsLoadingTrends(false);
-  };
+  }, [workspaceId]);
 
   const handleApplyTrend = async (trend: TrendingTopic) => {
     setTitle(`${trend.keyword} - TikTok Shorts`);
@@ -55,7 +55,7 @@ export function VideoStudioScreen() {
   };
 
   // Fetch jobs
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     if (!workspaceId) return;
     const res = await listRenderJobs(workspaceId);
     if (res.ok) {
@@ -70,14 +70,23 @@ export function VideoStudioScreen() {
       setError(res.message);
     }
     setIsLoading(false);
-  };
+  }, [workspaceId, selectedJob]);
 
   useEffect(() => {
-    fetchJobs();
-    fetchTrends();
-    const interval = setInterval(fetchJobs, 4000);
-    return () => clearInterval(interval);
-  }, [workspaceId]);
+    let isMounted = true;
+    const load = async () => {
+      if (!workspaceId) return;
+      await Promise.all([fetchJobs(), fetchTrends()]);
+    };
+    void load();
+    const interval = setInterval(() => {
+      if (isMounted) void fetchJobs();
+    }, 4000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [workspaceId, fetchJobs, fetchTrends]);
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,7 +194,7 @@ export function VideoStudioScreen() {
                   <span className={styles.trendScoreBadge}>⚡ Hot {t.trend_score}%</span>
                 </div>
                 <div className={styles.trendHook}>
-                  <strong>Hook 3s:</strong> "{t.sample_hook}"
+                  <strong>Hook 3s:</strong> &ldquo;{t.sample_hook}&rdquo;
                 </div>
                 <button
                   type="button"

@@ -26,6 +26,7 @@ import { useJobPolling } from "./use-job-polling";
 import { QuotaBanner } from "./quota-banner";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
+import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -201,12 +202,14 @@ export function ContentCreationScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [publishedModal, setPublishedModal] = useState<{
     title: string;
     body: string;
     isInstant: boolean;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef(new Set<string>());
 
   /** `keepError` cho lượt nạp lại *sau khi* một hành động thất bại: nạp lại
@@ -485,6 +488,54 @@ export function ContentCreationScreen() {
     });
   }
 
+  async function handleVoiceDirectGenerate(text: string) {
+    const newChip: RawChip = {
+      key: makeNoteChipKey(chips.length),
+      kind: "text",
+      label: text.length > 40 ? `${text.slice(0, 40)}…` : text,
+      input: { kind: "text", text },
+    };
+    const currentChips = [...chips, newChip];
+    setError(null);
+    setNotice(null);
+
+    const key = makeJobKey(currentChips);
+    const result = await createJob(
+      currentChips.map((c) => c.input),
+      key,
+    );
+    if (!result.ok) {
+      setError(result.message);
+      setQuotaKey((k) => k + 1);
+      return;
+    }
+    for (const chip of currentChips) forgetPreviewUrl(chip.previewUrl);
+    setChips([]);
+    setUploads([]);
+    setNote("");
+    setNoteOpen(true);
+
+    poll.addJobId(result.data.id);
+    setJobId(result.data.id);
+    setQuotaKey((k) => k + 1);
+
+    addToast({
+      type: "loading",
+      title: "⚡ Havi đang viết bài từ giọng nói...",
+      description: "Nhân viên AI đang sáng tạo bài viết đa kênh từ lời thu âm của chị!",
+    });
+  }
+
+  function handleVoiceInsertNote(text: string) {
+    setNote(text);
+    setNoteOpen(true);
+    addToast({
+      type: "success",
+      title: "🎙️ Đã chèn giọng nói vào ô ghi chú",
+      description: "Chị có thể sửa lại câu chữ hoặc bấm nút 'Để Havi viết cho chị' bên dưới.",
+    });
+  }
+
   async function onApprove(id: string, scheduledAt?: string) {
     setBusyIds((prev) => [...prev, id]);
     const result = await approveItem(id, scheduledAt);
@@ -561,7 +612,7 @@ export function ContentCreationScreen() {
       <QuotaBanner reloadKey={quotaKey} />
 
       <section className={styles.dropZone} aria-label="Nạp liệu mới">
-        <p className={styles.dropTitle}>Thả ảnh hoặc clip vào đây, hoặc</p>
+        <p className={styles.dropTitle}>Chụp ảnh, quay video hoặc gõ vài dòng — Nhân viên AI viết bài ngay</p>
         <div className={styles.dropActions}>
           <input
             ref={fileInputRef}
@@ -572,19 +623,39 @@ export function ContentCreationScreen() {
             data-testid="file-input"
             onChange={(e) => onPickFiles(e.target.files)}
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            hidden
+            data-testid="camera-input"
+            onChange={(e) => onPickFiles(e.target.files)}
+          />
           <Button
             variant="primary"
             disabled={uploading}
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            📸 Chụp ảnh / Video
+          </Button>
+          <Button
+            variant="outline"
+            disabled={uploading}
+            onClick={() => setVoiceModalOpen(true)}
+            data-testid="btn-voice-modal"
+          >
+            🎙️ Ghi âm giọng nói
+          </Button>
+          <Button
+            variant="outline"
+            disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? "Đang tải lên…" : "+ Tải ảnh / clip lên"}
-          </Button>
-          {/* Ghi âm là P1 (ROADMAP §4): ảnh/text ổn định trước đã. */}
-          <Button variant="outline" disabled title="Havi sẽ mở tính năng này sau">
-            Ghi âm nhanh
+            {uploading ? "Đang tải lên…" : "+ Thư viện ảnh / clip"}
           </Button>
           <Button variant="outline" onClick={() => setNoteOpen((v) => !v)}>
-            Gõ vài dòng
+            ✍️ Gõ ghi chú nhanh
           </Button>
         </div>
 
@@ -932,6 +1003,13 @@ export function ContentCreationScreen() {
           </div>
         </div>
       ) : null}
+
+      <VoiceRecorderModal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onInsertNote={handleVoiceInsertNote}
+        onDirectGenerate={handleVoiceDirectGenerate}
+      />
 
       {/* Floating Toast Notification ở góc phải màn hình theo chuẩn MIT */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />

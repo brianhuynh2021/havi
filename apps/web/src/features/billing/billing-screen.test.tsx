@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { writeTokens } from "@/lib/auth/token-store";
@@ -39,7 +39,7 @@ describe("BillingScreen", () => {
     vi.restoreAllMocks();
   });
 
-  it("tải gói cước hiện tại và hiển thị hạn mức Token", async () => {
+  it("tải gói cước hiện tại và hiển thị hạn mức", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
       if (url.pathname.includes("/billing/subscription")) {
@@ -71,7 +71,7 @@ describe("BillingScreen", () => {
 
     const planTitles = await screen.findAllByText(/Gói Tiệm Đơn/i);
     expect(planTitles.length).toBeGreaterThan(0);
-    expect(screen.getByText(/50.000 \/ 250.000 Tokens/i)).toBeInTheDocument();
+    expect(screen.getByText(/50.000 \/ 250.000/i)).toBeInTheDocument();
     const prices = screen.getAllByText(/299.000/i);
     expect(prices.length).toBeGreaterThan(0);
   });
@@ -89,6 +89,21 @@ describe("BillingScreen", () => {
           token_quota_limit: 50000,
         });
       }
+      if (url.pathname.includes("/billing/checkout")) {
+        return jsonResponse({
+          invoice_id: "inv-123",
+          plan: "tiem_nho",
+          amount_vnd: 299000,
+          transfer_content: "HAVI inv123",
+          bank_id: "MB",
+          account_no: "0987654321",
+          account_name: "TRUNG TAM CONG NGHE NHAT MINH",
+          qr_code_url: "https://img.vietqr.io/image/MB-0987654321-compact2.png",
+        });
+      }
+      if (url.pathname.includes("/billing/invoices/inv-123/status")) {
+        return jsonResponse({ status: "pending" });
+      }
       return jsonResponse([]);
     });
 
@@ -101,6 +116,6 @@ describe("BillingScreen", () => {
     await user.click(upgradeBtn);
 
     expect(await screen.findByText(/Quét mã VietQR để nâng cấp Gói Tiệm Đơn/i)).toBeInTheDocument();
-    expect(screen.getByText(/CONG TY HAVI VIETNAM/i)).toBeInTheDocument();
+    expect(screen.getByText(/TRUNG TAM CONG NGHE NHAT MINH/i)).toBeInTheDocument();
   });
 });

@@ -38,6 +38,8 @@ from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.video_render_repository import VideoRenderRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from adapters.publishers.facebook_reply import FacebookReplyAdapter
+from adapters.publishers.fake_reply import FakeReplyPublisher
 from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
 from adapters.storage.object_storage import ObjectStorage
 from application.services.ai_lead_agent_service import AILeadAgentService
@@ -55,6 +57,7 @@ from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.sales_service import SalesService
 from application.services.video_render_service import VideoRenderService
+from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
@@ -126,11 +129,22 @@ def get_billing_service(session: DbSessionDep) -> BillingService:
 BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
 
 
-def get_inbox_service(session: DbSessionDep) -> InboxService:
+def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxService:
+    connections = ConnectionRepository(session)
+    fb_publisher = (
+        FakeReplyPublisher(Platform.FACEBOOK)
+        if settings.use_fake_publisher
+        else FacebookReplyAdapter(connections)
+    )
+    reply_publishers = {
+        Platform.FACEBOOK: fb_publisher,
+        Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
+    }
     return InboxService(
         inbox=InboxRepository(session),
         profiles=BrandProfileRepository(session),
         events=EventLogRepository(session),
+        reply_publishers=reply_publishers,
     )
 
 
@@ -322,6 +336,25 @@ def get_ai_lead_agent_service(session: DbSessionDep) -> AILeadAgentService:
 
 
 AILeadAgentServiceDep = Annotated[AILeadAgentService, Depends(get_ai_lead_agent_service)]
+
+
+def get_voice_service(session: DbSessionDep, settings: SettingsDep) -> VoiceService:
+    from adapters.voice.gemini_transcriber import GeminiVoiceTranscriber
+    from adapters.voice.mock_transcriber import MockVoiceTranscriber
+    from application.services.voice_service import VoiceService
+
+    transcriber = (
+        MockVoiceTranscriber()
+        if settings.use_mock_llm
+        else GeminiVoiceTranscriber(settings)
+    )
+    return VoiceService(
+        transcriber=transcriber,
+        events=EventLogRepository(session),
+    )
+
+
+VoiceServiceDep = Annotated[VoiceService, Depends(get_voice_service)]
 
 
 class AuthContext:

@@ -3,11 +3,11 @@
 import logging
 from uuid import UUID
 
-from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.inbox_repository import InboxRepository
+from adapters.persistence.lead_repository import LeadRepository
 from core.enums import LeadReplyStatus, LeadSource, LeadStage
 from domain.models.lead import Lead
-from domain.policies.ai_lead_intent import classify_lead_intent, LeadAnalysisResult
+from domain.policies.ai_lead_intent import LeadAnalysisResult, classify_lead_intent
 
 logger = logging.getLogger("havi.ai_lead_agent_service")
 
@@ -49,6 +49,7 @@ class AILeadAgentService:
             reply_status=LeadReplyStatus.AWAITING_APPROVAL,
             message=message,
             suggested_reply=analysis.suggested_reply,
+            notes=notes,
         )
 
         logger.info(

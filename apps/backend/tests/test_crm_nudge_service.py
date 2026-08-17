@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.crm_nudge_repository import CrmNudgeRepository
 from adapters.persistence.event_log_repository import EventLogRepository
-from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.crm_nudge_service import CrmNudgeService
 from core.enums import CrmMessageStatus, Industry, LeadSource, LeadStage

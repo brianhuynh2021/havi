@@ -8,6 +8,7 @@ LLM chỉ chạy khi có job rõ ràng — không loop nền.
 """
 
 from celery import Celery
+from kombu import Queue
 
 from core.config import get_settings
 
@@ -19,8 +20,6 @@ celery_app = Celery(
     backend=settings.redis_url,
     include=["worker.tasks", "scheduler.tasks"],
 )
-
-from kombu import Queue
 
 celery_app.conf.update(
     task_acks_late=True,

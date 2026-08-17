@@ -73,13 +73,26 @@ export async function dismissInboxItem(id: string): Promise<Result<void>> {
   }
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+async function nudgeFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  const tokens = readTokens();
+  const headers = new Headers(options.headers || {});
+  if (tokens?.accessToken) {
+    headers.set("Authorization", `Bearer ${tokens.accessToken}`);
+  }
+  if (!headers.has("Content-Type") && options.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(`${baseUrl}${path}`, { ...options, headers });
+}
+
 export async function listNudges(workspaceId: string): Promise<Result<{ items: CrmNudge[]; total: number }>> {
   try {
-    const { data, error } = await apiClient.GET("/workspaces/{workspace_id}/crm/nudges" as any, {
-      params: { path: { workspace_id: workspaceId } },
-    } as any);
-    if (error || !data) return { ok: false, message: GENERIC_ERROR };
-    return { ok: true, data: data as any };
+    const res = await nudgeFetch(`/workspaces/${workspaceId}/crm/nudges`);
+    if (!res.ok) return { ok: false, message: GENERIC_ERROR };
+    const data = (await res.json()) as { items: CrmNudge[]; total: number };
+    return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -87,14 +100,13 @@ export async function listNudges(workspaceId: string): Promise<Result<{ items: C
 
 export async function triggerNudgeScan(workspaceId: string, inactiveDays: number = 30): Promise<Result<CrmNudge[]>> {
   try {
-    const { data, error } = await apiClient.POST("/workspaces/{workspace_id}/crm/nudges/scan" as any, {
-      params: {
-        path: { workspace_id: workspaceId },
-        query: { inactive_days: inactiveDays },
-      },
-    } as any);
-    if (error || !data) return { ok: false, message: GENERIC_ERROR };
-    return { ok: true, data: data as any };
+    const res = await nudgeFetch(
+      `/workspaces/${workspaceId}/crm/nudges/scan?inactive_days=${inactiveDays}`,
+      { method: "POST" }
+    );
+    if (!res.ok) return { ok: false, message: GENERIC_ERROR };
+    const data = (await res.json()) as CrmNudge[];
+    return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -102,11 +114,13 @@ export async function triggerNudgeScan(workspaceId: string, inactiveDays: number
 
 export async function approveNudge(workspaceId: string, nudgeId: string): Promise<Result<CrmNudge>> {
   try {
-    const { data, error } = await apiClient.POST("/workspaces/{workspace_id}/crm/nudges/{nudge_id}/approve" as any, {
-      params: { path: { workspace_id: workspaceId, nudge_id: nudgeId } },
-    } as any);
-    if (error || !data) return { ok: false, message: GENERIC_ERROR };
-    return { ok: true, data: data as any };
+    const res = await nudgeFetch(
+      `/workspaces/${workspaceId}/crm/nudges/${nudgeId}/approve`,
+      { method: "POST" }
+    );
+    if (!res.ok) return { ok: false, message: GENERIC_ERROR };
+    const data = (await res.json()) as CrmNudge;
+    return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -114,11 +128,13 @@ export async function approveNudge(workspaceId: string, nudgeId: string): Promis
 
 export async function dismissNudge(workspaceId: string, nudgeId: string): Promise<Result<CrmNudge>> {
   try {
-    const { data, error } = await apiClient.POST("/workspaces/{workspace_id}/crm/nudges/{nudge_id}/dismiss" as any, {
-      params: { path: { workspace_id: workspaceId, nudge_id: nudgeId } },
-    } as any);
-    if (error || !data) return { ok: false, message: GENERIC_ERROR };
-    return { ok: true, data: data as any };
+    const res = await nudgeFetch(
+      `/workspaces/${workspaceId}/crm/nudges/${nudgeId}/dismiss`,
+      { method: "POST" }
+    );
+    if (!res.ok) return { ok: false, message: GENERIC_ERROR };
+    const data = (await res.json()) as CrmNudge;
+    return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }

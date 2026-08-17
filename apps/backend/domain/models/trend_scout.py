@@ -1,12 +1,11 @@
 """Domain models for Trend Scout and Real-Time Trendjacking."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from enum import Enum
-from uuid import UUID, uuid4
+from datetime import UTC, datetime
+from enum import StrEnum
 
 
-class TrendCategory(str, Enum):
+class TrendCategory(StrEnum):
     TECH_EDUCATION = "tech_education"
     CAREER_GUIDANCE = "career_guidance"
     VOCATIONAL_SKILLS = "vocational_skills"
@@ -15,7 +14,7 @@ class TrendCategory(str, Enum):
     LIFESTYLE = "lifestyle"
 
 
-class HookStyle(str, Enum):
+class HookStyle(StrEnum):
     WARNING_MISTAKE = "warning_mistake"  # Cảnh báo sai lầm
     REAL_COMPARISON = "real_comparison"  # So sánh thực tế
     BEHIND_SCENES = "behind_scenes"     # Hậu trường 1 ngày

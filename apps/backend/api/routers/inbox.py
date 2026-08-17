@@ -11,7 +11,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from api.deps import AuthDep, InboxServiceDep, WorkspaceDep, get_ai_lead_agent_service
-from application.services.ai_lead_agent_service import AILeadAgentService
 from application.services.inbox_service import InboxItemNotFound
 from core.enums import InboxItemStatus, LeadSource, Platform
 from core.schemas import InboxItem, InboxReplyRequest, Page

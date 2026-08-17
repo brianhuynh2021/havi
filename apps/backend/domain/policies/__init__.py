@@ -24,7 +24,6 @@ from domain.policies.oauth_state import (
 )
 from domain.policies.phone import InvalidPhoneNumber, normalize_vietnamese_phone
 from domain.policies.provider_router import AllProvidersFailed, ProviderRouter
-from domain.policies.sales_attribution import PosOrder, format_pos_notes
 from domain.policies.quota import (
     MONTHLY_TOKEN_QUOTA,
     QuotaExceeded,
@@ -42,6 +41,7 @@ from domain.policies.rate_limits import (
     CONTENT_JOB,
     MEDIA_UPLOAD_TICKET,
 )
+from domain.policies.sales_attribution import PosOrder, format_pos_notes
 from domain.policies.scheduling import (
     GOLDEN_HOURS,
     VIETNAM_TZ,
@@ -89,6 +89,7 @@ __all__ = [
     "MONTHLY_TOKEN_QUOTA",
     "OAuthStatePayload",
     "PlanChangeNotAllowed",
+    "PosOrder",
     "ProviderRouter",
     "QuotaExceeded",
     "QuotaStatus",
@@ -114,7 +115,10 @@ __all__ = [
     "derive_status",
     "eligible_channels",
     "evaluate_quota",
+    "format_pos_notes",
+    "generate_nudge_message",
     "initial_status",
+    "is_eligible_for_nudge",
     "month_start_utc",
     "next_after_failure",
     "next_golden_hour",

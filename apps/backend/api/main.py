@@ -28,8 +28,10 @@ from api.routers import (
     inbox,
     leads,
     media,
+    payment_webhook,
     trends,
     video_render,
+    voice,
     webhooks,
     workspaces,
 )
@@ -61,6 +63,7 @@ ROUTERS = (
     media.router,
     trends.router,
     video_render.router,
+    voice.router,
     content.router,
     calendar.router,
     connections.router,
@@ -70,6 +73,7 @@ ROUTERS = (
     analytics.router,
     billing.router,
     webhooks.router,
+    payment_webhook.router,
 )
 
 

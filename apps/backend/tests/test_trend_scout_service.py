@@ -1,7 +1,8 @@
 """Unit tests for TrendScoutService (Milestone #8)."""
 
-import pytest
 from uuid import uuid4
+
+import pytest
 
 from application.services.trend_scout_service import TrendScoutService
 from domain.models.trend_scout import TrendCategory, TrendSynthesisRequest

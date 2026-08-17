@@ -48,8 +48,8 @@ export function QuotaBanner({ reloadKey = 0 }: { reloadKey?: number }) {
         </p>
         <p className={styles.body}>
           {t({
-            vi: `Quota sẽ mở lại ngày ${resets}. Bài đã duyệt vẫn đăng đúng lịch bình thường.`,
-            en: `Quota resets on ${resets}. Previously scheduled posts will publish normally.`,
+            vi: `Lượt tạo bài sẽ mở lại ngày ${resets}. Bài đã duyệt vẫn đăng đúng lịch bình thường.`,
+            en: `Creation limit resets on ${resets}. Previously scheduled posts will publish normally.`,
           })}
         </p>
       </div>

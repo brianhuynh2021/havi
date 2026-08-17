@@ -134,12 +134,15 @@ class Settings(BaseSettings):
     zalo_site_verification: str = ""
     # Phần đuôi của file xác minh Zalo yêu cầu đặt ở gốc domain, ví dụ
     # `zalo_verifierAbC123.html` thì đây là `AbC123.html`.
-    #
-    # So khớp tuyệt đối với giá trị này rồi trả nội dung dựng sẵn — không ghép
-    # input của request vào đường dẫn file. Bản trước đó dùng `{rest:path}` +
-    # `FileResponse`, tức là một request khéo léo đọc được `.env` (JWT secret,
-    # khoá mã hoá token, API key provider).
     zalo_verifier_suffix: str = ""
+    # Cổng thanh toán tự động VietQR & PayOS
+    payos_client_id: str = ""
+    payos_api_key: str = ""
+    payos_checksum_key: str = ""
+    vietqr_bank_id: str = "MB"
+    vietqr_account_no: str = "0987654321"
+    vietqr_account_name: str = "TRUNG TAM CONG NGHE NHAT MINH"
+    payment_webhook_secret: str = "havi_payment_secret_2026"
 
     @field_validator("cors_origins", mode="before")
     @classmethod

@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+};
+
 export function PwaRegistrar() {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosPrompt, setShowIosPrompt] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -26,16 +31,19 @@ export function PwaRegistrar() {
     // 2. Bắt sự kiện trước khi cài đặt App (Android / Chrome / Edge)
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setInstallPrompt(e);
+      setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
     // 3. Kiểm tra thiết bị iOS Safari chưa cài Standalone
     if (typeof window !== "undefined") {
-      const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      const isIos =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+        !("MSStream" in window);
       const isStandalone =
-        window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone;
+        window.matchMedia("(display-mode: standalone)").matches ||
+        Boolean((navigator as unknown as { standalone?: boolean }).standalone);
       if (isIos && !isStandalone) {
         // Chỉ hiện sau 3 giây để không làm phiền người dùng
         const timer = setTimeout(() => setShowIosPrompt(true), 3000);

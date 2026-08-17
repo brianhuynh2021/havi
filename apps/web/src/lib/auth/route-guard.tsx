@@ -41,6 +41,10 @@ export function RouteGuard({ require, children }: Props) {
     }
   }, [status, needsOnboarding, require, router]);
 
+  if (status === "loading") {
+    return null;
+  }
+
   const redirecting =
     require === "guest"
       ? status === "authenticated"

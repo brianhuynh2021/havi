@@ -7,6 +7,7 @@ Quy tắc kinh doanh:
 """
 
 from datetime import datetime, timedelta
+
 from core.enums import CrmNudgeType, Industry
 
 

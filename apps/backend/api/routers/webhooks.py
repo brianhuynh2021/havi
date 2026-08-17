@@ -265,7 +265,7 @@ async def ingest_pos_webhook(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="workspace_id không hợp lệ.",
-        )
+        ) from None
 
     order = PosOrder(
         order_id=payload.order_id,

@@ -1,9 +1,10 @@
 """Unit test suite cho GoogleBusinessOAuthClient."""
 
 import pytest
+
+from adapters.oauth.google_business import GoogleBusinessOAuthClient
 from core.config import Settings
 from core.enums import Platform
-from adapters.oauth.google_business import GoogleBusinessOAuthClient
 
 
 def test_google_business_oauth_client_properties():

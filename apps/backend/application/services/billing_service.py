@@ -16,9 +16,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from adapters.payment.payos_gateway import VietQRCheckout, generate_vietqr_checkout
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from core.config import Settings
 from core.enums import InvoiceStatus, Plan
 from core.events import EventLogEntry
 from domain.models.workspace import Invoice
@@ -26,13 +28,14 @@ from domain.policies import quota, subscription
 
 logger = logging.getLogger("havi.billing")
 
-#: Một kỳ trả tiền. 30 ngày chứ không "1 tháng dương lịch" để mọi kỳ dài bằng
-#: nhau — quota thì theo tháng dương lịch (`quota.month_start_utc`) vì chủ tiệm
-#: hiểu "mùng 1 có lại", còn kỳ thanh toán thì phải công bằng về số ngày.
 BILLING_PERIOD_DAYS = 30
 
 
 class WorkspaceNotFound(Exception):
+    pass
+
+
+class InvoiceNotFound(Exception):
     pass
 
 
@@ -118,6 +121,91 @@ class BillingService:
             now=now,
         )
         return state, invoice
+
+    async def get_invoice(self, *, invoice_id: UUID) -> Invoice | None:
+        return await self._billing.get_invoice(invoice_id)
+
+    async def create_checkout(
+        self,
+        *,
+        workspace_id: UUID,
+        target: Plan,
+        settings: Settings,
+        now: datetime | None = None,
+    ) -> tuple[Invoice, VietQRCheckout]:
+        """Tạo hoá đơn PENDING và mã VietQR thanh toán cho gói mong muốn."""
+        now = now or datetime.now(UTC)
+        workspace = await self._workspaces.get_by_id(workspace_id)
+        if workspace is None:
+            raise WorkspaceNotFound()
+
+        subscription.check_plan_change(current=workspace.plan, target=target)
+        amount = subscription.price_for(target)
+
+        # Kiểm tra xem đã có hoá đơn PENDING cho gói này chưa, nếu có thì dùng lại
+        pending = await self._billing.get_pending_invoice(
+            workspace_id=workspace_id, plan=target
+        )
+        if pending is None or pending.amount_vnd != amount:
+            pending = await self._billing.create_invoice(
+                workspace_id=workspace_id,
+                plan=target,
+                amount_vnd=amount,
+                issued_at=now,
+                status=InvoiceStatus.PENDING,
+            )
+
+        checkout = generate_vietqr_checkout(
+            settings=settings,
+            invoice_id=pending.id,
+            amount_vnd=amount,
+        )
+        return pending, checkout
+
+    async def process_payment_success(
+        self,
+        *,
+        invoice_id: UUID,
+        gateway_reference: str,
+        amount_paid_vnd: int,
+        now: datetime | None = None,
+    ) -> Invoice:
+        """Xử lý webhook thanh toán thành công: nâng gói, kích hoạt 30 ngày, đổi status sang PAID."""
+        now = now or datetime.now(UTC)
+        invoice = await self._billing.get_invoice(invoice_id)
+        if invoice is None:
+            raise InvoiceNotFound(f"Invoice {invoice_id} not found")
+
+        # Idempotency: nếu đã PAID từ trước thì không cộng dồn thêm lần nữa
+        if invoice.status == InvoiceStatus.PAID:
+            logger.info("Hoá đơn %s đã ở trạng thái PAID (idempotent)", invoice_id)
+            return invoice
+
+        workspace = await self._workspaces.get_by_id(invoice.workspace_id)
+        if workspace is None:
+            raise WorkspaceNotFound()
+
+        current_paid = _as_utc(workspace.paid_until)
+        base_time = current_paid if current_paid and current_paid > now else now
+        new_paid_until = base_time + timedelta(days=BILLING_PERIOD_DAYS)
+
+        await self._billing.set_plan(workspace, plan=invoice.plan, paid_until=new_paid_until)
+        updated_invoice = await self._billing.mark_invoice_paid(
+            invoice, gateway_reference=gateway_reference
+        )
+
+        await self._events.record(
+            EventLogEntry(
+                workspace_id=workspace.id,
+                job_kind="billing.payment_received",
+                input_summary=f"VietQR {gateway_reference}: nhận {amount_paid_vnd:,}đ",
+                output_summary=(
+                    f"invoice:{invoice.id} plan:{invoice.plan.value} "
+                    f"paid_until:{new_paid_until.isoformat()}"
+                ),
+            )
+        )
+        return updated_invoice
 
     async def list_invoices(
         self, *, workspace_id: UUID, limit: int, offset: int

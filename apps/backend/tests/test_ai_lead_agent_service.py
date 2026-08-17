@@ -1,15 +1,16 @@
 """Unit tests for AILeadAgentService and Intent Policies (Milestone #9)."""
 
-import pytest
 from uuid import uuid4
 
+import pytest
+
 from application.services.ai_lead_agent_service import AILeadAgentService
+from core.enums import LeadStage
 from domain.policies.ai_lead_intent import (
+    LeadIntentKind,
     classify_lead_intent,
     extract_vietnam_phone,
-    LeadIntentKind,
 )
-from core.enums import LeadStage
 
 
 def test_extract_vietnam_phone():

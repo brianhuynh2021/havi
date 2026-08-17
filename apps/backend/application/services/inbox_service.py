@@ -5,6 +5,7 @@ NGUYÊN TẮC #2 & #7:
 2. Ngoại lệ duy nhất là FAQ chủ đã duyệt sẵn từng câu trong Brand Profile.
 """
 
+import logging
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
@@ -14,7 +15,9 @@ from adapters.publishers.fake_reply import FakeReplyPublisher
 from core.enums import InboxItemStatus, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
-from domain.ports.reply_publisher import ReplyPublisherPort, ReplyRequest
+from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
+
+logger = logging.getLogger(__name__)
 
 
 class InboxItemNotFound(Exception):
@@ -114,14 +117,18 @@ class InboxService:
         if matched_answer:
             # FAQ khớp tuyệt đối -> gửi qua reply publisher port (Nguyên tắc #1)
             publisher = self._reply_publishers.get(platform) or FakeReplyPublisher(platform)
-            reply_res = await publisher.send_reply(
-                ReplyRequest(
-                    workspace_id=workspace_id,
-                    platform=platform,
-                    text=matched_answer,
-                    external_message_id=external_message_id,
+            reply_res = None
+            try:
+                reply_res = await publisher.send_reply(
+                    ReplyRequest(
+                        workspace_id=workspace_id,
+                        platform=platform,
+                        text=matched_answer,
+                        external_message_id=external_message_id,
+                    )
                 )
-            )
+            except ReplyError as exc:
+                logger.warning("Không thể tự động gửi trả lời: %s", exc)
 
             item = await self._inbox.create(
                 workspace_id=workspace_id,
@@ -141,7 +148,7 @@ class InboxService:
                     job_kind="inbox.faq_auto_reply",
                     input_summary=f"{platform.value}: tin nhắn khớp FAQ đã duyệt",
                     output_summary=(
-                        f"reply_id:{reply_res.external_reply_id} | {matched_answer[:200]}"
+                        f"reply_id:{reply_res.external_reply_id if reply_res else 'none'} | {matched_answer[:200]}"
                     ),
                 )
             )
@@ -173,14 +180,18 @@ class InboxService:
             raise InboxItemNotFound()
 
         publisher = self._reply_publishers.get(item.platform) or FakeReplyPublisher(item.platform)
-        reply_res = await publisher.send_reply(
-            ReplyRequest(
-                workspace_id=workspace_id,
-                platform=item.platform,
-                text=text,
-                external_message_id=item.external_message_id,
+        reply_res = None
+        try:
+            reply_res = await publisher.send_reply(
+                ReplyRequest(
+                    workspace_id=workspace_id,
+                    platform=item.platform,
+                    text=text,
+                    external_message_id=item.external_message_id,
+                )
             )
-        )
+        except ReplyError as exc:
+            logger.warning("Không thể gửi tin nhắn thật qua API nền tảng: %s", exc)
 
         updated = await self._inbox.update_status(
             item,
@@ -193,7 +204,7 @@ class InboxService:
                 workspace_id=workspace_id,
                 job_kind="inbox.reply_sent",
                 input_summary=f"{item.platform.value}: gửi phản hồi cho {item.author_name}",
-                output_summary=f"reply_id:{reply_res.external_reply_id} | {text[:200]}",
+                output_summary=f"reply_id:{reply_res.external_reply_id if reply_res else 'none'} | {text[:200]}",
             )
         )
         return updated
