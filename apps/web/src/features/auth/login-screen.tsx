@@ -48,33 +48,40 @@ export function LoginScreen() {
 
       <form
         className={styles.form}
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
       >
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="email">
           <span className={styles.label}>{t("auth.email", "Email")}</span>
           <Input
+            id="email"
+            name="email"
             scale="large"
             type="email"
             inputMode="email"
-            autoComplete="email"
+            autoComplete="username email"
             placeholder="tencuaban@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </label>
 
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="password">
           <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
           <Input
+            id="password"
+            name="password"
             scale="large"
             type="password"
             autoComplete="current-password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </label>
 
@@ -89,10 +96,9 @@ export function LoginScreen() {
         ) : null}
 
         <Button
-          type="button"
+          type="submit"
           variant="primary"
           scale="large"
-          onClick={submit}
           disabled={submitting}
         >
           {submitting

@@ -55,43 +55,54 @@ export function SignupScreen() {
 
       <form
         className={styles.form}
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
       >
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="signup-name">
           <span className={styles.label}>{t("auth.fullName", "Họ và tên")}</span>
           <Input
+            id="signup-name"
+            name="name"
             scale="large"
+            autoComplete="name"
             placeholder={t({ vi: "Ví dụ: Chị Hương", en: "e.g., Sarah Jenkins" })}
             value={name}
             onChange={(e) => setName(e.target.value)}
+            required
           />
         </label>
 
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="signup-email">
           <span className={styles.label}>{t("auth.email", "Email")}</span>
           <Input
+            id="signup-email"
+            name="email"
             scale="large"
             type="email"
             inputMode="email"
-            autoComplete="email"
+            autoComplete="username email"
             placeholder="tencuaban@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </label>
 
-        <label className={styles.field}>
+        <label className={styles.field} htmlFor="signup-password">
           <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
           <Input
+            id="signup-password"
+            name="password"
             scale="large"
             type="password"
             autoComplete="new-password"
             placeholder={t({ vi: `Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `At least ${MIN_PASSWORD_LENGTH} characters` })}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </label>
 
@@ -102,10 +113,9 @@ export function SignupScreen() {
         ) : null}
 
         <Button
-          type="button"
+          type="submit"
           variant="primary"
           scale="large"
-          onClick={submit}
           disabled={submitting}
         >
           {submitting
