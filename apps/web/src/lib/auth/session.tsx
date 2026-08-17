@@ -15,8 +15,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
   type ReactNode,
 } from "react";
 import {
@@ -41,20 +42,27 @@ const SessionContext = createContext<Session | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  const [tokens, setTokens] = useState<StoredTokens | null>(null);
 
-  // `getServerSnapshot` trả undefined để lần render đầu (SSR và hydrate) luôn là
-  // "loading" — localStorage chưa tồn tại lúc đó, đoán bừa sẽ lệch với client.
-  const tokens = useSyncExternalStore(
-    subscribeTokens,
-    readTokens,
-    () => undefined,
-  );
+  useEffect(() => {
+    setIsMounted(true);
+    setTokens(readTokens());
+    const unsubscribe = subscribeTokens(() => {
+      setTokens(readTokens());
+    });
+    return unsubscribe;
+  }, []);
 
-  const status: SessionStatus =
-    tokens === undefined ? "loading" : tokens ? "authenticated" : "guest";
+  const status: SessionStatus = !isMounted
+    ? "loading"
+    : tokens
+      ? "authenticated"
+      : "guest";
 
   const signIn = useCallback((next: StoredTokens) => {
     writeTokens(next);
+    setTokens(next);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -73,6 +81,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       // Đăng xuất phía client vẫn phải hoàn tất nếu API/network đang lỗi.
     } finally {
       clearTokens();
+      setTokens(null);
       router.replace("/login");
     }
   }, [router]);

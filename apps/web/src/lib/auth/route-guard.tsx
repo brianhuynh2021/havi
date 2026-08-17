@@ -37,6 +37,9 @@ export function RouteGuard({ require, children }: Props) {
 
     if (status === "guest") {
       router.replace("/login");
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/app")) {
+        window.location.replace("/login");
+      }
       return;
     }
 
