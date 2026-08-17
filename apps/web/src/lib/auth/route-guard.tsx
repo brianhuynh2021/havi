@@ -45,14 +45,27 @@ export function RouteGuard({ require, children }: Props) {
     }
   }, [status, needsOnboarding, require, router]);
 
-  if (status === "loading") return null;
+  if (status === "loading") {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "#64748b", fontSize: "0.9rem" }}>
+        <span>Đang kết nối Havi...</span>
+      </div>
+    );
+  }
 
-  // Đang trên đường redirect thì không render nội dung — tránh nháy một nhịp
-  // dashboard trước khi bị đá về /dang-nhap.
+  // Đang trên đường redirect thì hiển thị nhịp chuyển tiếp mượt mà
   const redirecting =
     require === "guest"
       ? status === "authenticated"
       : status === "guest" || (require === "app" && needsOnboarding);
 
-  return redirecting ? null : <>{children}</>;
+  if (redirecting) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "#64748b", fontSize: "0.9rem" }}>
+        <span>{status === "guest" ? "Đang chuyển hướng đến trang đăng nhập..." : "Đang tải dữ liệu..."}</span>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }
