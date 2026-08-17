@@ -24,10 +24,6 @@ export function RouteGuard({ require, children }: Props) {
   const { status, needsOnboarding } = useSession();
 
   useEffect(() => {
-    // Chưa đọc xong localStorage thì chưa biết gì — điều hướng lúc này sẽ đá
-    // nhầm người đang đăng nhập ra màn đăng nhập.
-    if (status === "loading") return;
-
     if (require === "guest") {
       if (status === "authenticated") {
         router.replace(needsOnboarding ? "/onboarding" : "/app");
@@ -47,14 +43,6 @@ export function RouteGuard({ require, children }: Props) {
       router.replace("/onboarding");
     }
   }, [status, needsOnboarding, require, router]);
-
-  if (status === "loading") {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "#64748b", fontSize: "0.9rem" }}>
-        <span>Đang kết nối Havi...</span>
-      </div>
-    );
-  }
 
   // Đang trên đường redirect thì hiển thị nhịp chuyển tiếp mượt mà
   const redirecting =

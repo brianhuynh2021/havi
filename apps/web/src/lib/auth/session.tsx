@@ -42,11 +42,13 @@ const SessionContext = createContext<Session | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  const [tokens, setTokens] = useState<StoredTokens | null>(null);
+  const [tokens, setTokens] = useState<StoredTokens | null>(() => {
+    if (typeof window === "undefined") return null;
+    return readTokens();
+  });
 
   useEffect(() => {
-    setIsMounted(true);
+    // Đảm bảo sync tokens khi hydration xong và lắng nghe thay đổi token
     setTokens(readTokens());
     const unsubscribe = subscribeTokens(() => {
       setTokens(readTokens());
@@ -54,11 +56,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const status: SessionStatus = !isMounted
-    ? "loading"
-    : tokens
-      ? "authenticated"
-      : "guest";
+  const status: SessionStatus = tokens ? "authenticated" : "guest";
 
   const signIn = useCallback((next: StoredTokens) => {
     writeTokens(next);
