@@ -8,16 +8,19 @@ export function PwaRegistrar() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Đăng ký Service Worker
+    // 1. Chỉ đăng ký Service Worker trong môi trường Production, ở Local dev tự động huỷ để tránh xung đột Turbopack
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((reg) => {
-          console.log("Havi PWA Service Worker registered with scope:", reg.scope);
-        })
-        .catch((err) => {
-          console.warn("Havi PWA Service Worker registration failed:", err);
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .catch((err) => {
+            console.warn("Havi PWA Service Worker registration failed:", err);
+          });
+      } else {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          for (const reg of regs) reg.unregister();
         });
+      }
     }
 
     // 2. Bắt sự kiện trước khi cài đặt App (Android / Chrome / Edge)

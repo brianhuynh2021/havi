@@ -26,8 +26,6 @@ const LEGACY_ALIASES: Record<string, string> = {
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get("havi_session")?.value;
-  const hasSession = Boolean(sessionCookie);
 
   // 1. Alias Rewrites for legacy Vietnamese URLs
   if (pathname in LEGACY_ALIASES) {
@@ -36,15 +34,7 @@ export function middleware(request: NextRequest) {
 
   // 2. Root route '/' Gateway Logic
   if (pathname === "/") {
-    if (hasSession) {
-      return NextResponse.redirect(new URL("/app", request.url));
-    }
     return NextResponse.rewrite(new URL("/about", request.url));
-  }
-
-  // 3. Protected App Realm (/app/*)
-  if (pathname.startsWith("/app") && !hasSession) {
-    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
