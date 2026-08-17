@@ -33,9 +33,6 @@ export function RouteGuard({ require, children }: Props) {
 
     if (status === "guest") {
       router.replace("/login");
-      if (typeof window !== "undefined" && window.location.pathname.startsWith("/app")) {
-        window.location.replace("/login");
-      }
       return;
     }
 
@@ -44,18 +41,13 @@ export function RouteGuard({ require, children }: Props) {
     }
   }, [status, needsOnboarding, require, router]);
 
-  // Đang trên đường redirect thì hiển thị nhịp chuyển tiếp mượt mà
   const redirecting =
     require === "guest"
       ? status === "authenticated"
       : status === "guest" || (require === "app" && needsOnboarding);
 
   if (redirecting) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "#64748b", fontSize: "0.9rem" }}>
-        <span>{status === "guest" ? "Đang chuyển hướng đến trang đăng nhập..." : "Đang tải dữ liệu..."}</span>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;
