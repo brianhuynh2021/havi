@@ -9,8 +9,20 @@ echo "========================================================"
 echo "🧹 [0/4] Checking and freeing ports 3000 and 8000..."
 lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
 
-# 1. Start Docker Infrastructure (Postgres, Redis, MinIO)
+# 1. Ensure Docker is running
 echo "📦 [1/4] Starting Docker infrastructure (Postgres, Redis, MinIO)..."
+if ! docker info >/dev/null 2>&1; then
+  echo "⚠️  Docker chưa chạy, đang tự động mở Docker Desktop trên Mac..."
+  open -a Docker 2>/dev/null || true
+  for i in {1..30}; do
+    if docker info >/dev/null 2>&1; then
+      echo "✅ Docker đã sẵn sàng!"
+      break
+    fi
+    echo "   Đang chờ Docker khởi động ($i/30)..."
+    sleep 2
+  done
+fi
 docker compose up -d
 
 # 2. Run Database Migrations
