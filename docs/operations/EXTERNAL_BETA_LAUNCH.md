@@ -1,53 +1,104 @@
-# Havi External Beta Pilot Launch Guide
+# Havi Commercial Launch & Go-To-Market Execution Guide
 
-## Overview
-This operational guide details the onboarding protocol, cohort selection criteria, onboarding script, feedback collection workflow, and SLA response targets for launching the Havi External Beta Cohort (10–20 Vietnamese business owners).
-
----
-
-## 1. Target Pilot Cohort Profile
-
-| Parameter | Criteria |
-|---|---|
-| **Target Size** | 10 to 20 active Vietnamese business owners |
-| **Industries** | Spa/Clinic (30%), F&B & Cafe (25%), Real Estate (25%), Online Shops & Services (20%) |
-| **Social Presence** | Must own an active Facebook Page or Zalo OA |
-| **Technical Ability** | Non-technical (requires simple smartphone-first UI, zero prompt engineering) |
+> **Target Audience:** Founders, Lead Engineers, Growth Marketers  
+> **Mission:** Bring Havi to market, onboard Cohort 1 (10–50 paying shops), and automate revenue collection via PayOS VietQR.
 
 ---
 
-## 2. 3-Step Shop Onboarding Protocol
+## 1. Executive Summary & GTM Strategy
 
-1. **Step 1: Account Activation & Industry Selection** (1 min)
-   - Owner signs up at `/dangkypilot` or `/onboarding`.
-   - Selects business industry (Spa, F&B, Real Estate, Online Shop, Other) and specifies banned claims or tone rules.
-2. **Step 2: Social Channel Connection** (1 min)
-   - Owner connects their Facebook Page via OAuth.
-   - Verified by backend platform token encryption (`ConnectionRepository`).
-3. **Step 3: First Content Job & 1-Click Approval** (1 min)
-   - Owner inputs a 15s voice recording or quick photo.
-   - Havi generates 3 multi-channel drafts (Facebook, Zalo, Google).
-   - Owner reviews, makes minor edits if desired, and clicks **"Duyệt & đăng"** (Approve & Publish).
+Havi is positioned as an **"AI Marketing Employee"** ($299k–$599k/month) that replaces a part-time marketer (3–5M/month) by running 3 autonomous loops:
+1. **Content & Video Publishing:** 30s mobile ingest $\rightarrow$ Multi-channel posts (Facebook, Google Maps, TikTok/Shorts hooks).
+2. **24/7 Lead Care (Inbox Speed-to-Lead):** Auto-responds with verified price lists and captures customer phone numbers within 5 seconds.
+3. **Automated CRM Nudge:** Re-engages past customers with 1-tap re-activation offers.
 
 ---
 
-## 3. Support & Bug Triage SLAs
+## 2. 4-Step Production Cloud Deployment (Hạ Tầng Sẵn Sàng)
 
-| Priority | Definition | Response Time Target | Resolution Target |
-|---|---|---|---|
-| **P0 (Blocker)** | Post failed to publish, credential leak, or app crash | < 30 minutes | < 2 hours |
-| **P1 (High)** | LLM draft quality issue or scheduling delay | < 2 hours | < 12 hours |
-| **P2 (Normal)** | Copy tweak or feature request | < 12 hours | < 48 hours |
-
----
-
-## 4. Telemetry & Health Monitoring
-Founders monitor pilot health daily using:
+### Step 2.1: Cloud VPS Provisioning
+* **Recommended Providers:** DigitalOcean Droplet, Hetzner Cloud, AWS EC2, or Vietnix VPS.
+* **Specs:** 2–4 vCPU, 4–8 GB RAM, Ubuntu 22.04 LTS (~$10–$20/month).
+* **Setup Docker:**
 ```bash
-# Automated 7-Day Dogfooding & Health Audit
-cd apps/backend && uv run python ../../scripts/dogfood_suite.py
+sudo apt update && sudo apt install -y docker.io docker-compose-v2
 ```
-Key Metrics to Track:
-- % of drafts approved without owner edits vs edited
-- Time from raw input to 1st approved post (< 90 seconds)
-- Zero duplicate post incidents (100% idempotency protection)
+
+### Step 2.2: Clone & Environment Configuration
+```bash
+git clone https://github.com/brianhuynh2021/havi.git /opt/havi
+cd /opt/havi
+cp .env.example .env
+# Chỉnh sửa biến môi trường Production:
+# - HAVI_ENV=production
+# - DATABASE_URL=postgresql+asyncpg://...
+# - REDIS_URL=redis://...
+# - PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY
+# - META_APP_ID, META_APP_SECRET
+```
+
+### Step 2.3: Launch Production Stack
+```bash
+# Khởi động cụm dịch vụ Production (FastAPI, Next.js, Celery, Postgres, Redis, Caddy SSL)
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Step 2.4: Permanent Webhook Registration
+* **PayOS Webhook URL:** `https://app.havi.vn/webhooks/payos`
+* **Meta Graph Webhook URL:** `https://app.havi.vn/webhooks/meta` (Verify Token: configured in `.env`)
+
+---
+
+## 3. Cohort 1 Target Profile (10–20 Pilot Shops)
+
+| Sector | Target % | Pain Point Solved by Havi |
+|---|---|---|
+| **Spa / Salon / Thẩm Mỹ** | 35% | Bận làm dịch vụ dính tay $\rightarrow$ Havi trực Inbox báo giá + chốt lịch 24/7. |
+| **Quán Ăn / Cafe / F&B** | 25% | Khách hỏi menu đêm $\rightarrow$ Havi gửi menu + địa chỉ Google Maps tức thì. |
+| **Cò / Môi Giới Bất Động Sản** | 25% | Đi đường xem đất $\rightarrow$ Chụp 1 ảnh sổ đỏ, Havi biến thành 3 bài đăng + kịch bản TikTok. |
+| **Dịch Vụ Kỹ Thuật / Đào Tạo** | 15% | Đăng bài dự án thực chiến hàng ngày lên Fanpage/Google Maps mà không tốn 1 giờ viết. |
+
+---
+
+## 4. 15-Second Sales Pitch & Onboarding Scripts
+
+### 4.1 15-Second Elevator Pitch (Nói trực tiếp hoặc nhắn Zalo)
+> *"Chào anh/chị, thay vì bỏ 4–5 triệu thuê người đăng bài mà nửa đêm vẫn bị sót tin nhắn của khách, Havi là nhân viên AI chỉ 10k/ngày: vừa tự làm bài đăng đa kênh chuẩn ngành, vừa trực page trả lời bảng giá và xin số điện thoại khách trong 5 giây. Em cài cho anh/chị dùng thử 7 ngày miễn phí nhé, chỉ mất 3 phút kết nối Fanpage thôi!"*
+
+### 4.2 3-Minute Onboarding Protocol
+1. **Phút 1:** Mở `app.havi.vn` $\rightarrow$ Đăng ký tài khoản $\rightarrow$ Chọn ngành (Spa, F&B, BĐS...).
+2. **Phút 2:** Bấm **"Kết nối Facebook"** $\rightarrow$ Chọn Fanpage của tiệm.
+3. **Phút 3:** Nhập 3–5 dịch vụ chính + bảng giá $\rightarrow$ Bấm chụp 1 ảnh để Havi tạo ngay bài đăng đầu tiên.
+
+---
+
+## 5. Automated 7-Day VietQR Conversion Protocol
+
+```
+[Day 1-6: Trải nghiệm 7 ngày Miễn Phí]
+  │
+  ├─► Havi tự đăng 1-2 bài/ngày + trực inbox trả lời khách
+  │
+[Day 7: Thông báo kích hoạt gói dịch vụ]
+  │
+  ├─► Popup hiển thị VietQR PayOS (299k Gói Tiệm Đơn / 599k Gói Chuỗi)
+  │
+[Khách hàng quét chuyển khoản]
+  │
+  └─► PayOS Webhook kích hoạt trong 1.0s ➔ Tự động gia hạn 30 ngày ➔ Xuất hóa đơn VAT
+```
+
+---
+
+## 6. Daily Founder Dogfooding & Quality Monitoring
+
+Chạy bộ kiểm tra sức khỏe hệ thống tự động:
+```bash
+# Kiểm thử toàn diện 608 bài test
+cd apps/backend && uv run pytest
+npm --prefix apps/web test
+
+# Chạy kịch bản giả lập Dogfooding 7 ngày
+cd apps/backend && python ../../scripts/dogfood_suite.py
+```
+
