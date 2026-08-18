@@ -130,3 +130,70 @@ Scale Havi internationally across English-speaking and Asian markets with global
 ## Core Value Proposition Summary
 
 $$\text{Customer Lifetime Value (LTV)} = \underbrace{\text{Time Savings (2 hrs/day)}}_{\text{Immediate Operational Relief}} + \underbrace{\text{Speed-to-Lead + Google Maps SEO}}_{\text{Direct Measurable Revenue}}$$
+
+---
+
+## 6. Competitive Positioning Landscape
+
+```
+                            [ TỰ ĐỘNG HÓA CAO (Autonomous Workflow) ]
+                                            ▲
+                                            │       ★ HAVI (AI Marketing Employee)
+                                            │       (Khép kín: Tạo bài ➔ Đăng đa kênh ➔
+                                            │        Chốt Inbox 24/7 ➔ Báo cáo doanh thu)
+                                            │
+           Pancake / Fchat / ManyChat       │
+           (Mạnh về Chatbot kịch bản cũ,    │
+            không tạo nội dung/video)       │
+    ────────────────────────────────────────┼───────────────────────────────────────►
+    [ PHỨC TẠP / CHUYÊN SÂU ]               │            [ ĐƠN GIẢN / DI ĐỘNG HÓA ]
+                                            │
+           KiotViet / Sapo                  │       ChatGPT / Canva / LovinBot
+           (Mạnh về POS / Kho hàng,         │       (Bẫy DIY: Bắt tự viết prompt,
+            Marketing & Lead Care yếu)      │        tự copy paste, rời rạc công đoạn)
+                                            │
+                                            ▼
+                            [ THỦ CÔNG / RỜI RẠC (Manual Tools) ]
+```
+
+---
+
+## 7. FAANG-Grade Brand Positioning & Slogan Matrix
+
+### 7.1 Core Brand Essence
+> **"Havi — Nhân viên AI nuôi dưỡng thương hiệu, chốt đơn ngày đêm cho tiệm của bạn."**  
+> *(English: "Havi — Your 24/7 Autonomous AI Marketing Employee.")*
+
+### 7.2 Vertical-Specific Value Hooks
+* **Spa / Salon / Thẩm Mỹ Viện:** *"Bạn chăm sóc sắc đẹp cho khách — Havi chăm sóc khách hàng và kéo khách đến tiệm cho bạn."*
+* **Môi Giới & Cò Bất Động Sản:** *"Chụp 1 tấm ảnh sổ đỏ, Havi biến thành 3 bài đăng Facebook và kịch bản video TikTok chốt khách."*
+* **Quán Ăn / Cafe / F&B:** *"Đừng để khách thèm ăn lúc nửa đêm nhắn tin mà tiệm ngủ quên. Havi trực inbox, gửi menu chốt bàn 24/7."*
+* **Đào Tạo & Kỹ Thuật (Nhật Minh Tech):** *"Biến mọi dự án thực chiến thành bài viết hút học viên. Hiện diện đa kênh không tốn 1 giờ mỗi ngày."*
+
+---
+
+## 8. 30-Day Go-To-Market Execution Blueprint (Đẩy Ra Ngoài Thực Chiến)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        HAVI 30-DAY GO-TO-MARKET BLUEPRINT                              │
+├───────────────────┬───────────────────┬───────────────────┬────────────────────────────┤
+│ TUẦN 1            │ TUẦN 2            │ TUẦN 3            │ TUẦN 4                     │
+│ Production Deploy │ Dogfooding Pilot  │ Onboard 5-10 Shops│ VietQR Conversion          │
+│ Cloud VPS & Domain│ Nhật Minh Tech    │ Free 7-Day Pilot  │ Thu tiền & Scale           │
+└───────────────────┴───────────────────┴───────────────────┴────────────────────────────┘
+```
+
+1. **Tuần 1: Triển khai Production Cloud & Tên miền chính thức**
+   - Chạy Docker Compose (`docker-compose.prod.yml`) trên Cloud VPS (DigitalOcean / AWS / Hetzner / Vietnix).
+   - Trỏ domain chính thức (ví dụ: `havi.vn` hoặc `app.havi.vn`) kèm SSL Let's Encrypt tự động.
+   - Cấu hình Webhook PayOS Live & Meta Graph API App Live.
+2. **Tuần 2: Dogfooding thực chiến tại "Trung Tâm Công Nghệ Nhật Minh"**
+   - Vận hành Havi đăng bài dự án, khóa học hàng ngày lên Facebook Page + Google Business.
+   - Bật bot trực inbox tư vấn khóa học và ghi nhận lead tự động.
+3. **Tuần 3: Onboard Cohort 1 (5–10 Chủ Tiệm Thân Quen)**
+   - Mời 5–10 chủ tiệm (1 Spa, 1 Quán ăn, 1 Môi giới BĐS, 1 Tiệm kỹ thuật) dùng thử 7 ngày miễn phí.
+   - Hỗ trợ kết nối Fanpage và cấu hình bảng giá/FAQ trong 5 phút.
+4. **Tuần 4: Chuyển đổi trả phí qua VietQR & Mở rộng cộng đồng**
+   - Sau 7 ngày, gửi thông báo gia hạn gói cước qua VietQR tự động (299k/tháng).
+   - Thu thập video testimonial và feedback thực tế để nhân rộng sang 50 khách hàng tiếp theo.
