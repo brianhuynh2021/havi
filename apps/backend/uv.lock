@@ -502,6 +502,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "payos" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
@@ -538,6 +539,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=44.0" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "payos", specifier = ">=1.1.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'db'", specifier = ">=3.2" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.9" },
     { name = "pydantic-settings", specifier = ">=2.6" },
@@ -744,6 +746,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/f1/e7a6dd94a8d4a5626c03e4e99c87f241ba9e350cd9e6d75123f992427270/packaging-26.2.tar.gz", hash = "sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661", size = 228134, upload-time = "2026-04-24T20:15:23.917Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/b2/87e62e8c3e2f4b32e5fe99e0b86d576da1312593b39f47d8ceef365e95ed/packaging-26.2-py3-none-any.whl", hash = "sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e", size = 100195, upload-time = "2026-04-24T20:15:22.081Z" },
+]
+
+[[package]]
+name = "payos"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/96/ec5ceb9caa41876066b072584be633b0145b5da3882e5176d886221c340f/payos-1.1.0.tar.gz", hash = "sha256:9f54332e86cc179bd41244cce4356d8fb503b4eb55caa365257338a8b7424d5f", size = 27917, upload-time = "2026-01-22T07:08:41.798Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/5a/917987d3b53b91a6bc20eb7a8830b4258507dcf9a39d4fe00ba5fb2fc90f/payos-1.1.0-py3-none-any.whl", hash = "sha256:6a85e9277bf739294dbeb7dba512adad3ff065e5fb77aae0d3d90b0a6f39b7b7", size = 50003, upload-time = "2026-01-22T07:08:40.716Z" },
 ]
 
 [[package]]
