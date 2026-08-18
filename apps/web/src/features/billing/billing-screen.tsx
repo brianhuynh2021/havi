@@ -36,7 +36,7 @@ const PLAN_DETAILS: Record<
   },
   tiem_nho: {
     title: "Gói Tiệm Đơn",
-    price: "299.000 đ",
+    price: "19.000 đ",
     period: "/tháng",
     desc: "Tối ưu nhất cho các tiệm Spa, Salon, F&B độc lập và môi giới BĐS.",
     features: [
@@ -49,7 +49,7 @@ const PLAN_DETAILS: Record<
   },
   toan_dien: {
     title: "Gói Chuỗi Tiệm",
-    price: "599.000 đ",
+    price: "29.000 đ",
     period: "/tháng",
     desc: "Dành cho chuỗi chi nhánh, salon và cửa hàng nhiều cơ sở.",
     features: [
