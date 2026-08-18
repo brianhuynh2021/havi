@@ -1,6 +1,8 @@
 """Test cho Cổng thanh toán VietQR & Webhook PayOS/SePay (chuẩn MIT/Stanford)."""
 
 from datetime import UTC, datetime
+import hashlib
+import hmac
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -101,20 +103,32 @@ async def test_payos_webhook_success(monkeypatch):
     mock_billing.process_payment_success = AsyncMock(return_value=mock_invoice)
 
     from api import deps
+    from core.config import get_settings
+    settings = get_settings()
     app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
+
+    data = {
+        "amount": 299000,
+        "description": f"HAVI {inv_id}",
+        "orderCode": 9999,
+        "reference": "FT260817001",
+    }
+    checksum_key = settings.payos_checksum_key or "test_checksum_key"
+    if not settings.payos_checksum_key:
+        app.dependency_overrides[deps.get_settings] = lambda: settings
+
+    # Compute valid PayOS HMAC signature
+    sorted_keys = sorted(k for k in data.keys() if k != "signature")
+    sign_data = "&".join(f"{k}={data[k]}" for k in sorted_keys if data[k] is not None)
+    signature = hmac.new(checksum_key.encode("utf-8"), sign_data.encode("utf-8"), hashlib.sha256).hexdigest()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         payload = {
             "code": "00",
             "desc": "Success",
-            "data": {
-                "orderCode": 9999,
-                "amount": 299000,
-                "description": f"HAVI {inv_id}",
-                "reference": "FT260817001",
-            },
-            "signature": "",
+            "data": data,
+            "signature": signature,
         }
         res = await client.post("/webhooks/payos", json=payload)
         assert res.status_code == 200
