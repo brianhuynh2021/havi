@@ -44,8 +44,8 @@ def generate_vietqr_checkout(
     transfer_content = custom_content or f"HAVI {invoice_id_str.replace('-', '')[:8]}"
 
     bank_id = settings.vietqr_bank_id or "MB"
-    account_no = settings.vietqr_account_no or "0987654321"
-    account_name = settings.vietqr_account_name or "TRUNG TAM CONG NGHE NHAT MINH"
+    account_no = settings.vietqr_account_no or "0984883750"
+    account_name = settings.vietqr_account_name or "NGUYEN THANH HUYNH"
 
     encoded_name = urllib.parse.quote(account_name)
     encoded_desc = urllib.parse.quote(transfer_content)
@@ -64,6 +64,86 @@ def generate_vietqr_checkout(
         account_no=account_no,
         account_name=account_name,
         qr_code_url=qr_url,
+    )
+
+
+async def create_payos_payment_link(
+    *,
+    settings: Settings,
+    invoice_id: UUID,
+    amount_vnd: int,
+    custom_content: str | None = None,
+) -> VietQRCheckout:
+    """Tạo link thanh toán chính thức qua PayOS API kèm Fallback VietQR chuẩn."""
+    import httpx
+    from datetime import UTC, datetime
+
+    invoice_id_str = str(invoice_id)
+    clean_id = invoice_id_str.replace("-", "")[:8]
+    description = custom_content or f"HAVI {clean_id}"
+
+    order_code = int(f"{int(datetime.now(UTC).timestamp()) % 1000000}{int(invoice_id.hex[:4], 16) % 10000:04d}")
+    ret_url = f"{settings.web_base_url}/billing"
+    can_url = f"{settings.web_base_url}/billing"
+
+    if settings.payos_client_id and settings.payos_api_key and settings.payos_checksum_key:
+        sign_string = f"amount={amount_vnd}&cancelUrl={can_url}&description={description}&orderCode={order_code}&returnUrl={ret_url}"
+        signature = hmac.new(
+            settings.payos_checksum_key.encode("utf-8"),
+            sign_string.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        headers = {
+            "x-client-id": settings.payos_client_id,
+            "x-api-key": settings.payos_api_key,
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "orderCode": order_code,
+            "amount": amount_vnd,
+            "description": description,
+            "returnUrl": ret_url,
+            "cancelUrl": can_url,
+            "signature": signature,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.post("https://api-merchant.payos.vn/v2/payment-requests", json=payload, headers=headers)
+                if res.status_code == 200:
+                    data = res.json()
+                    if data.get("code") == "00" and data.get("data"):
+                        p_data = data["data"]
+                        account_no = p_data.get("accountNumber") or settings.vietqr_account_no or "0984883750"
+                        account_name = p_data.get("accountName") or settings.vietqr_account_name or "NGUYEN THANH HUYNH"
+                        bin_code = p_data.get("bin") or "970422"
+                        qr_url = (
+                            f"https://img.vietqr.io/image/{bin_code}-{account_no}-compact2.png"
+                            f"?amount={amount_vnd}&addInfo={urllib.parse.quote(description)}&accountName={urllib.parse.quote(account_name)}"
+                        )
+                        logger.info("Đã tạo PayOS payment request thành công: orderCode=%s invoice=%s account=%s", order_code, invoice_id, account_no)
+                        return VietQRCheckout(
+                            invoice_id=invoice_id_str,
+                            amount_vnd=amount_vnd,
+                            transfer_content=description,
+                            bank_id=settings.vietqr_bank_id or "MB",
+                            account_no=account_no,
+                            account_name=account_name,
+                            qr_code_url=qr_url,
+                        )
+                    else:
+                        logger.warning("PayOS API error: %s", data)
+                else:
+                    logger.warning("PayOS HTTP error %s: %s", res.status_code, res.text)
+        except Exception as exc:
+            logger.error("Lỗi khi kết nối PayOS API: %s", exc)
+
+    return generate_vietqr_checkout(
+        settings=settings,
+        invoice_id=invoice_id,
+        amount_vnd=amount_vnd,
+        custom_content=description,
     )
 
 

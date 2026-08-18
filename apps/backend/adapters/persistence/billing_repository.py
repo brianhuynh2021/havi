@@ -54,6 +54,19 @@ class BillingRepository:
         )
         return result.scalar_one_or_none()
 
+    async def find_by_prefix(self, prefix: str) -> Invoice | None:
+        """Tìm hoá đơn có UUID bắt đầu bằng prefix (ví dụ 8 ký tự hex)."""
+        from sqlalchemy import cast, String
+        clean = prefix.replace("-", "").strip()
+        if not clean:
+            return None
+        result = await self._session.execute(
+            select(Invoice)
+            .where(cast(Invoice.id, String).ilike(f"{clean}%"))
+            .order_by(Invoice.issued_at.desc())
+        )
+        return result.scalars().first()
+
     async def get_pending_invoice(
         self, *, workspace_id: UUID, plan: Plan
     ) -> Invoice | None:

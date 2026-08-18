@@ -16,7 +16,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from adapters.payment.payos_gateway import VietQRCheckout, generate_vietqr_checkout
+from adapters.payment.payos_gateway import (
+    VietQRCheckout,
+    create_payos_payment_link,
+    generate_vietqr_checkout,
+)
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
@@ -125,6 +129,14 @@ class BillingService:
     async def get_invoice(self, *, invoice_id: UUID) -> Invoice | None:
         return await self._billing.get_invoice(invoice_id)
 
+    async def get_invoice_by_code(self, *, code: str) -> Invoice | None:
+        """Tìm hoá đơn qua mã UUID hoặc 8 ký tự hex rút gọn."""
+        try:
+            full_id = UUID(code)
+            return await self._billing.get_invoice(full_id)
+        except ValueError:
+            return await self._billing.find_by_prefix(code)
+
     async def create_checkout(
         self,
         *,
@@ -155,7 +167,7 @@ class BillingService:
                 status=InvoiceStatus.PENDING,
             )
 
-        checkout = generate_vietqr_checkout(
+        checkout = await create_payos_payment_link(
             settings=settings,
             invoice_id=pending.id,
             amount_vnd=amount,

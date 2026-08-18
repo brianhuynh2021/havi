@@ -69,17 +69,8 @@ async def payos_webhook(
 
     # 3. Kích hoạt hoá đơn và gia hạn gói
     try:
-        # Nếu code là full UUID hoặc 8 ký tự hex, xử lý tìm invoice
-        invoice = None
-        try:
-            full_id = UUID(code)
-            invoice = await billing_service.get_invoice(invoice_id=full_id)
-        except ValueError:
-            # Code là 8 ký tự hex -> quét tìm invoice có ID bắt đầu bằng chuỗi này
-            pass
-
+        invoice = await billing_service.get_invoice_by_code(code=code)
         if invoice is None:
-            # Fallback nếu invoice_id là UUID string
             logger.error("Không tìm thấy hoá đơn tương ứng với code=%s", code)
             return {"error": 0, "message": "Invoice not found", "data": None}
 

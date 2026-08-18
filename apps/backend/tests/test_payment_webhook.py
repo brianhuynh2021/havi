@@ -100,6 +100,7 @@ async def test_payos_webhook_success(monkeypatch):
 
     mock_billing = MagicMock()
     mock_billing.get_invoice = AsyncMock(return_value=mock_invoice)
+    mock_billing.get_invoice_by_code = AsyncMock(return_value=mock_invoice)
     mock_billing.process_payment_success = AsyncMock(return_value=mock_invoice)
 
     from api import deps
