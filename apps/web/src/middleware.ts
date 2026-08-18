@@ -8,11 +8,21 @@ const LEGACY_ALIASES: Record<string, string> = {
   "/dang-nhap": "/login",
   "/dang-ky": "/signup",
   "/quen-mat-khau": "/forgot-password",
+  "/connections": "/app/connections",
+  "/ket-noi": "/app/connections",
   "/noi-dung": "/app/content",
+  "/content": "/app/content",
   "/lich-dang": "/app/calendar",
+  "/calendar": "/app/calendar",
   "/khach-tiem-nang": "/app/leads",
+  "/leads": "/app/leads",
   "/bao-cao": "/app/reports",
+  "/reports": "/app/reports",
   "/cai-dat": "/app/settings",
+  "/settings": "/app/settings",
+  "/video-studio": "/app/video-studio",
+  "/billing": "/app/billing",
+  "/inbox": "/app/inbox",
 };
 
 /**

@@ -151,7 +151,10 @@ class ConnectionService:
                 "Tài khoản này không còn quyền trên workspace — đăng nhập lại rồi nối kênh"
             )
 
-        account = await client.exchange_code(code)
+        try:
+            account = await client.exchange_code(code, state=state)
+        except TypeError:
+            account = await client.exchange_code(code)
 
         connection = await self._connections.upsert(
             workspace_id=payload.workspace_id,

@@ -42,6 +42,9 @@ export const metadata: Metadata = {
     shortcut: "/icon-192.png",
     apple: "/apple-touch-icon.png",
   },
+  other: {
+    "tiktok-developers-site-verification": "wE8XEvdVAuCMy5jdJv5mfMYn8aPOidGP",
+  },
 };
 
 export default function RootLayout({

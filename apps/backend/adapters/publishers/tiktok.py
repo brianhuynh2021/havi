@@ -22,7 +22,11 @@ from domain.ports.publisher import (
 
 logger = logging.getLogger(__name__)
 
-TIKTOK_PUBLISH_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/video/init/"
+import os
+from pathlib import Path
+
+TIKTOK_INBOX_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/"
+TIKTOK_DIRECT_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/video/init/"
 _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 
@@ -31,7 +35,7 @@ class TikTokPublisher(PublisherPort):
         self,
         *,
         client: httpx.AsyncClient | None = None,
-        timeout_seconds: float = 30.0,
+        timeout_seconds: float = 60.0,
     ) -> None:
         self._client = client
         self._timeout = timeout_seconds
@@ -49,72 +53,111 @@ class TikTokPublisher(PublisherPort):
                 self.channel, "TikTok bắt buộc phải có ít nhất 1 video URL"
             )
 
-        video_url = request.media_urls[0]
-        payload = {
-            "post_info": {
-                "title": request.text[:150] if request.text else "Video từ Havi AI",
-                "privacy_level": "PUBLIC_TO_EVERYONE",
-                "disable_duet": False,
-                "disable_stitch": False,
-                "disable_comment": False,
-            },
-            "source_info": {
-                "source": "PULL_FROM_URL",
-                "video_url": video_url,
-            },
-        }
+        video_source = request.media_urls[0]
+
+        if self._client is not None:
+            return await self._do_publish(self._client, video_source, access_token, request.idempotency_key)
+
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            return await self._do_publish(client, video_source, access_token, request.idempotency_key)
+
+    async def _do_publish(
+        self,
+        client: httpx.AsyncClient,
+        video_source: str,
+        access_token: str,
+        idempotency_key: str | None,
+    ) -> PublishResult:
+        # 1. Lấy dữ liệu bytes của Video (từ file path hoặc URL)
+        local_path = video_source[7:] if video_source.startswith("file://") else video_source
+        video_bytes: bytes | None = None
+        if os.path.exists(local_path):
+            video_bytes = Path(local_path).read_bytes()
+        else:
+            try:
+                media_resp = await client.get(video_source)
+                if media_resp.status_code == 200:
+                    video_bytes = media_resp.content
+            except Exception as exc:
+                logger.warning("Không thể tải video từ URL %s: %s", video_source, exc)
 
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json; charset=UTF-8",
         }
-        if request.idempotency_key:
-            headers["X-Idempotency-Key"] = request.idempotency_key
+        if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
 
-        if self._client is not None:
-            return await self._do_publish(self._client, payload, headers)
+        # Nếu có bytes video, sử dụng FILE_UPLOAD (chuẩn truyền tải nhị phân an toàn nhất của TikTok)
+        if video_bytes:
+            video_size = len(video_bytes)
+            init_payload = {
+                "source_info": {
+                    "source": "FILE_UPLOAD",
+                    "video_size": video_size,
+                    "chunk_size": video_size,
+                    "total_chunk_count": 1,
+                },
+            }
+            try:
+                resp = await client.post(TIKTOK_INBOX_INIT_URL, json=init_payload, headers=headers)
+            except httpx.RequestError as exc:
+                raise TemporaryPublishError(self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}") from exc
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            return await self._do_publish(client, payload, headers)
+            if resp.status_code in _TRANSIENT_STATUSES:
+                raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {resp.status_code}")
+            if resp.status_code in (401, 403):
+                raise AuthPermissionError(self.channel, "Token TikTok hết hạn hoặc mất quyền đăng bài")
+            if resp.status_code >= 400:
+                raise ValidationPublishError(self.channel, f"TikTok từ chối video: {resp.text[:200]}")
 
-    async def _do_publish(
-        self,
-        client: httpx.AsyncClient,
-        payload: dict,
-        headers: dict,
-    ) -> PublishResult:
+            body = resp.json()
+            data = body.get("data") or {}
+            publish_id = data.get("publish_id")
+            upload_url = data.get("upload_url")
+
+            if not publish_id:
+                err_msg = body.get("error", {}).get("message") or "Không nhận được publish_id"
+                raise ValidationPublishError(self.channel, f"TikTok Publish lỗi: {err_msg}")
+
+            if upload_url:
+                upload_headers = {
+                    "Content-Range": f"bytes 0-{video_size - 1}/{video_size}",
+                    "Content-Type": "video/mp4",
+                }
+                up_resp = await client.put(upload_url, content=video_bytes, headers=upload_headers)
+                if up_resp.status_code not in (200, 201):
+                    raise TemporaryPublishError(self.channel, f"Lỗi tải binary video lên TikTok: HTTP {up_resp.status_code}")
+
+            return PublishResult(
+                external_post_id=publish_id,
+                published_at=datetime.now(UTC),
+            )
+
+        # Fallback: PULL_FROM_URL
+        payload = {
+            "source_info": {
+                "source": "PULL_FROM_URL",
+                "video_url": video_source,
+            },
+        }
         try:
-            response = await client.post(TIKTOK_PUBLISH_INIT_URL, json=payload, headers=headers)
+            resp = await client.post(TIKTOK_INBOX_INIT_URL, json=payload, headers=headers)
         except httpx.RequestError as exc:
-            raise TemporaryPublishError(
-                self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}"
-            ) from exc
+            raise TemporaryPublishError(self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}") from exc
 
-        if response.status_code in _TRANSIENT_STATUSES:
-            raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {response.status_code}")
-        if response.status_code in (401, 403):
+        if resp.status_code in _TRANSIENT_STATUSES:
+            raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {resp.status_code}")
+        if resp.status_code in (401, 403):
             raise AuthPermissionError(self.channel, "Token TikTok hết hạn hoặc mất quyền đăng bài")
-        if response.status_code >= 400:
-            err_detail = response.text[:200]
-            msg = f"TikTok từ chối video (HTTP {response.status_code}): {err_detail}"
-            raise ValidationPublishError(self.channel, msg)
+        if resp.status_code >= 400:
+            raise ValidationPublishError(self.channel, f"TikTok từ chối video: {resp.text[:200]}")
 
-        try:
-            body = response.json()
-        except ValueError as exc:
-            raise TemporaryPublishError(
-                self.channel, "TikTok trả về dữ liệu không phải JSON"
-            ) from exc
-
+        body = resp.json()
         data = body.get("data") or {}
         publish_id = data.get("publish_id")
         if not publish_id:
-            err = body.get("error", {})
-            err_code = err.get("code")
-            err_msg = err.get("message") or "Không nhận được publish_id"
-            if err_code in ("access_token_invalid", "scope_not_authorized"):
-                raise AuthPermissionError(self.channel, f"TikTok auth error: {err_msg}")
-            raise ValidationPublishError(self.channel, f"TikTok publish error: {err_msg}")
+            raise ValidationPublishError(self.channel, "Không nhận được publish_id từ TikTok")
 
         return PublishResult(
             external_post_id=publish_id,

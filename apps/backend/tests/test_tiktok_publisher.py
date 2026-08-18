@@ -103,7 +103,12 @@ async def test_tiktok_publisher_rate_limit():
 
 @pytest.mark.asyncio
 async def test_tiktok_oauth_client_mock_mode():
-    settings = Settings(env="local", use_fake_publisher=True)
+    settings = Settings(
+        env="local",
+        use_fake_publisher=True,
+        tiktok_client_key="",
+        tiktok_client_secret="",
+    )
     oauth = TikTokOAuthClient(settings)
     assert oauth.platform == Platform.TIKTOK
     assert oauth.is_configured is True
@@ -115,3 +120,22 @@ async def test_tiktok_oauth_client_mock_mode():
     account = await oauth.exchange_code("mock_tiktok_code")
     assert account.external_account_id == "tiktok_mock_user_123"
     assert account.access_token == "mock_tiktok_access_token"
+
+
+@pytest.mark.asyncio
+async def test_tiktok_oauth_client_real_url():
+    settings = Settings(
+        env="local",
+        tiktok_client_key="test_key_123",
+        tiktok_client_secret="test_secret_456",
+        tiktok_redirect_uri="http://localhost:8000/connections/tiktok/callback",
+    )
+    oauth = TikTokOAuthClient(settings)
+    auth_url = oauth.authorization_url(state="test_state_xyz")
+    assert "client_key=test_key_123" in auth_url
+    assert "scope=user.info.basic%2Cvideo.upload" in auth_url
+    assert "state=test_state_xyz" in auth_url
+    assert "code_challenge=" in auth_url
+    assert "code_challenge_method=S256" in auth_url
+
+
