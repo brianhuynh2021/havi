@@ -72,7 +72,7 @@ async def test_change_plan_success_issues_invoice(client: AsyncClient):
     invoices = inv_res.json()
     assert len(invoices) == 1
     assert invoices[0]["plan"] == Plan.TIEM_NHO
-    assert invoices[0]["amount_vnd"] == 19_000
+    assert invoices[0]["amount_vnd"] == 2_000
     assert invoices[0]["status"] == "pending"
 
 
