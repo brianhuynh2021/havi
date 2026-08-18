@@ -26,6 +26,8 @@ dependencies = [
     # phải nằm ngoài process: in-memory thì mỗi worker uvicorn đếm riêng và
     # restart là mất, tức không giới hạn được gì.
     "redis>=5.2",
+    # Official PayOS SDK cho xử lý thanh toán VietQR & Webhook chuẩn xác
+    "payos>=1.1.0",
 ]
 
 [project.optional-dependencies]

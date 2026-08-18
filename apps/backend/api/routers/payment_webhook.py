@@ -42,7 +42,12 @@ async def payos_webhook(
     data = payload.data or {}
     signature = payload.signature
 
-    # 1. Xác thực chữ ký số nếu đã cấu hình checksum key (bỏ qua ở local dev nếu chưa nhập key)
+    # 1. Nếu là ping kiểm tra webhook URL từ PayOS
+    if not data and not signature:
+        logger.info("Nhận ping xác nhận webhook URL từ PayOS")
+        return {"success": True, "message": "Webhook verified"}
+
+    # 2. Xác thực chữ ký số nếu đã cấu hình checksum key (bỏ qua ở local dev nếu chưa nhập key)
     if settings.payos_checksum_key:
         valid = verify_payos_signature(data, signature, settings.payos_checksum_key)
         if not valid:

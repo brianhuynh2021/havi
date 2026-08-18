@@ -74,9 +74,10 @@ async def create_payos_payment_link(
     amount_vnd: int,
     custom_content: str | None = None,
 ) -> VietQRCheckout:
-    """Tạo link thanh toán chính thức qua PayOS API kèm Fallback VietQR chuẩn."""
-    import httpx
+    """Tạo link thanh toán chính thức qua PayOS SDK kèm Fallback VietQR chuẩn."""
     from datetime import UTC, datetime
+    from payos import AsyncPayOS
+    from payos.types.v2.payment_requests.payment_requests import CreatePaymentLinkRequest
 
     invoice_id_str = str(invoice_id)
     clean_id = invoice_id_str.replace("-", "")[:8]
@@ -87,57 +88,39 @@ async def create_payos_payment_link(
     can_url = f"{settings.web_base_url}/billing"
 
     if settings.payos_client_id and settings.payos_api_key and settings.payos_checksum_key:
-        sign_string = f"amount={amount_vnd}&cancelUrl={can_url}&description={description}&orderCode={order_code}&returnUrl={ret_url}"
-        signature = hmac.new(
-            settings.payos_checksum_key.encode("utf-8"),
-            sign_string.encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-
-        headers = {
-            "x-client-id": settings.payos_client_id,
-            "x-api-key": settings.payos_api_key,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "orderCode": order_code,
-            "amount": amount_vnd,
-            "description": description,
-            "returnUrl": ret_url,
-            "cancelUrl": can_url,
-            "signature": signature,
-        }
-
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post("https://api-merchant.payos.vn/v2/payment-requests", json=payload, headers=headers)
-                if res.status_code == 200:
-                    data = res.json()
-                    if data.get("code") == "00" and data.get("data"):
-                        p_data = data["data"]
-                        account_no = p_data.get("accountNumber") or settings.vietqr_account_no or "0984883750"
-                        account_name = p_data.get("accountName") or settings.vietqr_account_name or "NGUYEN THANH HUYNH"
-                        bin_code = p_data.get("bin") or "970422"
-                        qr_url = (
-                            f"https://img.vietqr.io/image/{bin_code}-{account_no}-compact2.png"
-                            f"?amount={amount_vnd}&addInfo={urllib.parse.quote(description)}&accountName={urllib.parse.quote(account_name)}"
-                        )
-                        logger.info("Đã tạo PayOS payment request thành công: orderCode=%s invoice=%s account=%s", order_code, invoice_id, account_no)
-                        return VietQRCheckout(
-                            invoice_id=invoice_id_str,
-                            amount_vnd=amount_vnd,
-                            transfer_content=description,
-                            bank_id=settings.vietqr_bank_id or "MB",
-                            account_no=account_no,
-                            account_name=account_name,
-                            qr_code_url=qr_url,
-                        )
-                    else:
-                        logger.warning("PayOS API error: %s", data)
-                else:
-                    logger.warning("PayOS HTTP error %s: %s", res.status_code, res.text)
+            payos_client = AsyncPayOS(
+                client_id=settings.payos_client_id,
+                api_key=settings.payos_api_key,
+                checksum_key=settings.payos_checksum_key,
+            )
+            req = CreatePaymentLinkRequest(
+                order_code=order_code,
+                amount=amount_vnd,
+                description=description,
+                return_url=ret_url,
+                cancel_url=can_url,
+            )
+            res = await payos_client.payment_requests.create(req)
+            account_no = res.account_number or settings.vietqr_account_no or "0984883750"
+            account_name = res.account_name or settings.vietqr_account_name or "NGUYEN THANH HUYNH"
+            bin_code = res.bin or "970422"
+            qr_url = (
+                f"https://img.vietqr.io/image/{bin_code}-{account_no}-compact2.png"
+                f"?amount={amount_vnd}&addInfo={urllib.parse.quote(description)}&accountName={urllib.parse.quote(account_name)}"
+            )
+            logger.info("Đã tạo PayOS payment link thành công: orderCode=%s invoice=%s account=%s", order_code, invoice_id, account_no)
+            return VietQRCheckout(
+                invoice_id=invoice_id_str,
+                amount_vnd=amount_vnd,
+                transfer_content=description,
+                bank_id=settings.vietqr_bank_id or "MB",
+                account_no=account_no,
+                account_name=account_name,
+                qr_code_url=qr_url,
+            )
         except Exception as exc:
-            logger.error("Lỗi khi kết nối PayOS API: %s", exc)
+            logger.error("Lỗi khi kết nối PayOS SDK: %s", exc)
 
     return generate_vietqr_checkout(
         settings=settings,
@@ -152,25 +135,26 @@ def verify_payos_signature(
     signature: str,
     checksum_key: str,
 ) -> bool:
-    """Xác thực chữ ký HMAC-SHA256 theo chuẩn PayOS.
-
-    PayOS sắp xếp các key theo thứ tự a-z (trừ signature), nối thành chuỗi
-    `k1=v1&k2=v2` rồi tính HMAC-SHA256 với checksum_key.
-    """
+    """Xác thực chữ ký HMAC-SHA256 theo chuẩn PayOS SDK."""
     if not checksum_key or not signature:
         return False
 
-    # Loại bỏ signature ra khỏi dữ liệu cần hash nếu có
-    sorted_keys = sorted(k for k in data.keys() if k != "signature")
-    sign_data = "&".join(f"{k}={data[k]}" for k in sorted_keys if data[k] is not None)
-
-    computed = hmac.new(
-        checksum_key.encode("utf-8"),
-        sign_data.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-    return hmac.compare_digest(computed.lower(), signature.lower())
+    try:
+        from payos import PayOS
+        p = PayOS(client_id="dummy", api_key="dummy", checksum_key=checksum_key)
+        payload = {"data": data, "signature": signature}
+        p.webhooks.verify(payload)
+        return True
+    except Exception:
+        # Fallback manual calculation
+        sorted_keys = sorted(k for k in data.keys() if k != "signature")
+        sign_data = "&".join(f"{k}={data[k]}" for k in sorted_keys if data[k] is not None)
+        computed = hmac.new(
+            checksum_key.encode("utf-8"),
+            sign_data.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        return hmac.compare_digest(computed.lower(), signature.lower())
 
 
 def verify_webhook_hmac(
