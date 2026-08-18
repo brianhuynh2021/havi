@@ -108,7 +108,7 @@ export function BillingScreen() {
     };
   }, []);
 
-  // Polling trạng thái hoá đơn mượt mà khi mở modal VietQR (700ms - 0.7s)
+  // Polling trạng thái hoá đơn mượt mà khi mở modal VietQR (900ms - 0.9s)
   useEffect(() => {
     if (!checkoutData?.invoice_id || paymentSuccess) return;
 
@@ -121,9 +121,9 @@ export function BillingScreen() {
           await reloadData();
           setCheckoutData(null);
           setPaymentSuccess(false);
-        }, 700);
+        }, 1000);
       }
-    }, 700);
+    }, 900);
 
     return () => clearInterval(interval);
   }, [checkoutData, paymentSuccess]);
