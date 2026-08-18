@@ -66,13 +66,13 @@ export function LandingScreen() {
             bạn chỉ cần bấm <span className={styles.purpleGradient}>duyệt 1-chạm</span>
           </h1>
           <p className={styles.heroBody}>
-            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~10.000 đ/ngày</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s — Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
+            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~6.000 đ/ngày (189k/tháng)</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s — Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
             <strong style={{ color: "#f8fafc" }}>Bài không tự phát hành khi bạn chưa nhấn nút duyệt.</strong>
           </p>
 
           <div className={styles.heroActions}>
             <Link href="/signup" className={styles.ctaButton}>
-              Bắt đầu dùng thử 14 ngày miễn phí
+              Bắt đầu dùng thử 7 ngày miễn phí
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -318,15 +318,15 @@ export function LandingScreen() {
         </div>
       </section>
 
-      {/* Bảng Giá Thương Mại & So Sánh ROI */}
+      {/* Bảng Giá Thương Mại & So Sánh ROI (Chiến thuật FAANG) */}
       <section id="bang-gia" className={styles.hero} style={{ paddingTop: "40px" }}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag} style={{ color: "#34d399" }}>BẢNG GIÁ ĐẦU TƯ</div>
-          <h2 className={styles.sectionTitle}>Chi Phí 10k/Ngày — Hiệu Quả Gấp 10 Lần</h2>
+          <div className={styles.sectionTag} style={{ color: "#34d399" }}>BẢNG GIÁ ĐẦU TƯ TIẾT KIỆM</div>
+          <h2 className={styles.sectionTitle}>Chỉ Từ 6.000 đ/Ngày — Rẻ Hơn 1 Ly Trà Sữa</h2>
           <p className={styles.sectionSubtitle}>Không phụ phí ẩn · Tự động kích hoạt VietQR trong 1 giây · Hoàn tiền nếu không hài lòng sau 7 ngày.</p>
         </div>
 
-        <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "40px" }}>
+        <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "30px" }}>
           {/* Free Trial */}
           <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
@@ -335,16 +335,16 @@ export function LandingScreen() {
               </span>
               <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Dùng Thử</h3>
               <div style={{ fontSize: "32px", fontWeight: 900, color: "#fff", marginBottom: "14px" }}>
-                0 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ 14 ngày</span>
+                0 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ 7 ngày</span>
               </div>
               <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Trải nghiệm trọn vẹn sức mạnh nhân viên AI cho tiệm của bạn.
+                Trải nghiệm trọn vẹn sức mạnh nhân viên AI — Không cần thẻ tín dụng.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ 50 bài viết AI &amp; kịch bản video</li>
+                <li>✓ Dùng thử 7 ngày không rủi ro</li>
                 <li>✓ Kết nối 1 Fanpage Facebook</li>
+                <li>✓ Trực Inbox &amp; Trả lời Bảng giá/FAQ 24/7</li>
                 <li>✓ Lên lịch đăng giờ vàng tự động</li>
-                <li>✓ Không yêu cầu thẻ tín dụng</li>
               </ul>
             </div>
             <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
@@ -352,60 +352,81 @@ export function LandingScreen() {
             </Link>
           </div>
 
-          {/* Gói Tiệm Đơn (Best Value) */}
-          <div className={`${styles.glassCard} ${styles.glassCardGlow}`} style={{ padding: "32px", textAlign: "left", borderColor: "rgba(139,92,246,0.6)", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative" }}>
-            <div style={{ position: "absolute", top: "-12px", right: "20px", background: "linear-gradient(135deg, #8B5CF6, #00D2FF)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 12px", borderRadius: "99px" }}>
-              PHỔ BIẾN NHẤT
-            </div>
-            <div>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "99px" }}>
-                TIỆM ĐƠN / SOLO
-              </span>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Tiệm Đơn</h3>
-              <div style={{ fontSize: "32px", fontWeight: 900, color: "#c084fc", marginBottom: "14px" }}>
-                299.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~10k/ngày)</span>
-              </div>
-              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Tối ưu nhất cho Spa, Salon, Quán ăn độc lập và Môi giới Bất động sản.
-              </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ <strong>250 bài viết AI &amp; video</strong> mỗi tháng</li>
-                <li>✓ <strong>Đa kênh:</strong> Facebook, TikTok Shorts, Google Maps</li>
-                <li>✓ <strong>Video Studio 9:16</strong> có Hook 3s giật tít</li>
-                <li>✓ <strong>Trực Inbox 24/7</strong> &amp; Bắt SĐT khách tự động</li>
-                <li>✓ <strong>Báo cáo chốt đơn</strong> &amp; Doanh thu POS</li>
-              </ul>
-            </div>
-            <Link href="/signup" className={styles.ctaButton} style={{ width: "100%", justifyContent: "center" }}>
-              Nâng cấp Gói Tiệm Đơn
-            </Link>
-          </div>
-
-          {/* Gói Chuỗi Tiệm */}
+          {/* Gói Khởi Nghiệp (189.000 đ) */}
           <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div>
               <span style={{ fontSize: "12px", fontWeight: 800, color: "#38bdf8", background: "rgba(56,189,248,0.15)", padding: "4px 10px", borderRadius: "99px" }}>
-                CHUỖI CHI NHÁNH
+                GÓI PHỔ CẬP
               </span>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Chuỗi Tiệm</h3>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Khởi Nghiệp</h3>
               <div style={{ fontSize: "32px", fontWeight: 900, color: "#38bdf8", marginBottom: "14px" }}>
-                599.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng</span>
+                189.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~6.000 đ/ngày)</span>
               </div>
               <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Dành cho chuỗi cửa hàng, trung tâm đào tạo và doanh nghiệp nhiều cơ sở.
+                Rẻ hơn 1 ly trà sữa mỗi tuần — Khiến mọi chủ tiệm đều có thể bắt đầu ngay.
               </p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ <strong>1.000 bài viết AI &amp; kịch bản video</strong>/tháng</li>
-                <li>✓ Không giới hạn kết nối mạng xã hội</li>
-                <li>✓ Ưu tiên tài nguyên GPU &amp; AI tốc độ cao</li>
-                <li>✓ Phân quyền nhân viên từng chi nhánh</li>
-                <li>✓ Hỗ trợ kỹ thuật 1 kèm 1 chuyên biệt</li>
+                <li>✓ <strong>1 Fanpage Facebook</strong> kết nối</li>
+                <li>✓ <strong>30 bài viết AI/tháng</strong> (Ảnh tiệm ➔ Bài chuẩn ngành)</li>
+                <li>✓ <strong>Trực Inbox 24/7</strong> &amp; Bắt SĐT khách tự động</li>
+                <li>✓ Báo cáo tương tác cơ bản</li>
+                <li>✓ Hỗ trợ kỹ thuật 24/7</li>
               </ul>
             </div>
             <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
-              Nâng cấp Gói Chuỗi Tiệm
+              Nâng cấp Gói Khởi Nghiệp
             </Link>
           </div>
+
+          {/* Gói Chuyên Nghiệp (369.000 đ - Best Seller) */}
+          <div className={`${styles.glassCard} ${styles.glassCardGlow}`} style={{ padding: "32px", textAlign: "left", borderColor: "rgba(139,92,246,0.6)", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative" }}>
+            <div style={{ position: "absolute", top: "-12px", right: "20px", background: "linear-gradient(135deg, #8B5CF6, #00D2FF)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 12px", borderRadius: "99px" }}>
+              BÁN CHẠY NHẤT ★
+            </div>
+            <div>
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "99px" }}>
+                GÓI CHUYÊN NGHIỆP
+              </span>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Chuyên Nghiệp</h3>
+              <div style={{ fontSize: "32px", fontWeight: 900, color: "#c084fc", marginBottom: "14px" }}>
+                369.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~12.000 đ/ngày)</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
+                Đánh trúng đối tượng cần khách thật (Spa, Cò BĐS, F&B, Dạy nghề).
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
+                <li>✓ <strong>Đa kênh:</strong> Facebook + Google Maps + TikTok Video</li>
+                <li>✓ <strong>90 bài viết AI &amp; Video ngắn 9:16</strong> (Hook 3s giật tít)</li>
+                <li>✓ <strong>AI Lead Agent:</strong> Tự động trích xuất SĐT/Tên khách hàng</li>
+                <li>✓ <strong>Smart CRM Nudge:</strong> Gợi ý tin nhắn kéo khách cũ quay lại</li>
+                <li>✓ Báo cáo doanh thu &amp; Đối soát POS</li>
+              </ul>
+            </div>
+            <Link href="/signup" className={styles.ctaButton} style={{ width: "100%", justifyContent: "center" }}>
+              Nâng cấp Gói Chuyên Nghiệp
+            </Link>
+          </div>
+        </div>
+
+        {/* Cash Flow Accelerator Banner (Đòn Bẩy Gói Năm) */}
+        <div className={styles.glassCard} style={{ padding: "24px 36px", textAlign: "left", background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,210,255,0.12))", borderColor: "rgba(139,92,246,0.4)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", marginBottom: "60px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "20px" }}>🎁</span>
+              <span style={{ fontSize: "16px", fontWeight: 800, color: "#fff" }}>
+                Ưu Đãi Đòn Bẩy Gói Năm (Tiết Kiệm Tối Đa)
+              </span>
+              <span style={{ fontSize: "11px", fontWeight: 800, background: "#10b981", color: "#fff", padding: "2px 8px", borderRadius: "6px" }}>
+                TẶNG 3 THÁNG
+              </span>
+            </div>
+            <p style={{ fontSize: "14px", color: "#cbd5e1", margin: "6px 0 0 0" }}>
+              Thanh toán 1 năm: Tặng ngay 3 tháng sử dụng miễn phí + Tặng bộ 50 kịch bản Video TikTok chuyển đổi cao độc quyền từ Havi.
+            </p>
+          </div>
+          <Link href="/signup" className={styles.ctaButton} style={{ whiteSpace: "nowrap" }}>
+            Nhận Ưu Đãi Gói Năm
+          </Link>
         </div>
       </section>
 

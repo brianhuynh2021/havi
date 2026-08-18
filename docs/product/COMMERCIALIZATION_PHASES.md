@@ -195,5 +195,56 @@ $$\text{Customer Lifetime Value (LTV)} = \underbrace{\text{Time Savings (2 hrs/d
    - Mời 5–10 chủ tiệm (1 Spa, 1 Quán ăn, 1 Môi giới BĐS, 1 Tiệm kỹ thuật) dùng thử 7 ngày miễn phí.
    - Hỗ trợ kết nối Fanpage và cấu hình bảng giá/FAQ trong 5 phút.
 4. **Tuần 4: Chuyển đổi trả phí qua VietQR & Mở rộng cộng đồng**
-   - Sau 7 ngày, gửi thông báo gia hạn gói cước qua VietQR tự động (299k/tháng).
+   - Sau 7 ngày, gửi thông báo gia hạn gói cước qua VietQR tự động (189k hoặc 369k/tháng).
    - Thu thập video testimonial và feedback thực tế để nhân rộng sang 50 khách hàng tiếp theo.
+
+---
+
+## 9. Định Hướng Quyền Lợi Chi Tiết Từng Gói Thương Mại & Biên Lợi Nhuận
+
+### 9.1 Gói Khởi Nghiệp (189.000 đ/tháng — "Gói Phổ Cập / No-Brainer Offer")
+* **Mục tiêu:** Khiến khách hàng không thể từ chối. Rẻ hơn 1 ly trà sữa mỗi tuần.
+* **Quyền lợi:**
+  * 1 Fanpage Facebook kết nối.
+  * 30 bài viết AI/tháng (Ảnh tiệm $\rightarrow$ Bài đăng chuẩn ngành).
+  * Trực Inbox & Tự động trả lời Bảng giá/FAQ 24/7.
+  * Báo cáo tương tác cơ bản.
+* **Biên lợi nhuận gộp:** **92.1%** (Thu 189.000 đ, chi phí hạ tầng AI/Server chỉ tốn ~15.000 đ).
+
+### 9.2 Gói Chuyên Nghiệp (369.000 đ/tháng — "Gói Bán Chạy Nhất / Best Seller")
+* **Mục tiêu:** Tối đa hóa doanh thu trung bình trên mỗi khách hàng (ARPU). Đánh trúng đối tượng cần khách thật (Cò BĐS, Thẩm mỹ viện, Dạy nghề, Salon).
+* **Quyền lợi:**
+  * **Đa kênh:** Facebook Fanpage + Google Maps Local SEO + Kịch bản Video TikTok 3 giây.
+  * **90 bài viết AI/tháng** + Tạo video ngắn 9:16 từ ảnh tiệm.
+  * **AI Lead Agent:** Tự động nhận diện & trích xuất Số điện thoại / Tên khách hàng $\rightarrow$ Bắn thông báo ngay cho chủ tiệm.
+  * **Smart CRM Nudge:** Tự động gợi ý tin nhắn kéo khách cũ quay lại tiệm.
+* **Biên lợi nhuận gộp:** **93.2%** (Thu 369.000 đ, chi phí hạ tầng tốn ~25.000 đ).
+
+### 9.3 Gói Chuỗi Doanh Nghiệp (799.000 đ/tháng — "Gói Doanh Nghiệp / B2B Scale")
+* **Mục tiêu:** Bán cho các chuỗi 2–5 chi nhánh, các trung tâm đào tạo lớn hoặc các Agency nhận làm dịch vụ marketing cho nhiều quán.
+* **Quyền lợi:**
+  * Quản lý tối đa 5 cơ sở / Fanpage trong 1 tài khoản duy nhất.
+  * Không giới hạn bài viết AI & kịch bản video.
+  * Đối soát doanh thu bán lẻ qua Webhook POS (KiotViet/Sapo).
+  * Hỗ trợ kỹ thuật VIP 1-1 riêng biệt từ đội ngũ kỹ sư Havi.
+* **Biên lợi nhuận gộp:** **94.5%** (Thu 799.000 đ, chi phí tốn ~45.000 đ).
+
+---
+
+## 10. Chiến Thuật Bán Hàng Tăng Tốc Dòng Tiền (FAANG Growth Tactics)
+
+### 10.1 Neo Giá Theo Ngày (Reframing to Daily Cost)
+* Trên giao diện web, banner truyền thông và kịch bản tư vấn, **tuyệt đối không nhấn mạnh "189k/tháng"**, mà luôn neo:
+  > **"Chỉ 6.000 đ/ngày — Thuê trọn đời 1 nhân viên AI cần mẫn đăng bài và trực page 24/7 cho tiệm của bạn."**
+
+### 10.2 Đòn Bẩy Gói Năm (Cash Flow Accelerator)
+* Tiểu thương Việt Nam có tâm lý rất thích *"mua 1 lần dùng cả năm để khỏi phải nhớ đóng tiền lắt nhắt"*.
+* Đưa ra ưu đãi độc quyền: **"Thanh toán 1 năm: Tặng ngay 3 tháng sử dụng miễn phí + Tặng trọn bộ 50 kịch bản Video TikTok độc quyền."**
+* Khi 10 khách hàng đầu tiên quét VietQR gói 1 năm (~3.290.000 đ), Havi có ngay **hơn 30.000.000 đ tiền mặt tươi (Cash Flow)** trong tài khoản để tái đầu tư hạ tầng GPU và marketing.
+
+### 10.3 Phễu Dùng Thử 7 Ngày Không Rủi Ro (Zero-Risk Trial Funnel)
+* Đăng ký 30 giây không cần thẻ tín dụng $\rightarrow$ Dùng thử 7 ngày thật đầy đủ tính năng.
+* **Ngày thứ 6:** Havi tự động gửi thông báo SMS/Zalo/In-app:
+  > *"7 ngày qua Havi đã đăng 7 bài viết chuẩn ngành và trả lời 12 khách hàng cho tiệm. Quét mã VietQR 189k (chỉ 6k/ngày) để tiếp tục giữ chân nhân viên AI của bạn!"*
+* Con số **189.000 đ** và **369.000 đ** là những **"điểm ngọt" (Sweet Spots)** đã được chứng minh qua tâm lý học hành vi: vừa đủ rẻ để chủ tiệm quyết định ngay trong 30 giây, vừa mang lại biên lợi nhuận khổng lồ $\ge 92\%$ cho Havi.
+

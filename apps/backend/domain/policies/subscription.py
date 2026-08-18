@@ -16,8 +16,8 @@ from datetime import UTC, datetime, timedelta
 
 from core.enums import Plan, SubscriptionStatus
 
-#: Số ngày dùng thử, khớp bảng giá landing page ("0đ 14 ngày").
-TRIAL_DAYS = 14
+#: Số ngày dùng thử, khớp bảng giá landing page ("0đ 7 ngày").
+TRIAL_DAYS = 7
 
 #: Giá tháng theo gói, đơn vị VND. Trial 0đ.
 #:
@@ -25,8 +25,8 @@ TRIAL_DAYS = 14
 #: và cổng thanh toán chỉ là cách thu tiền. Đổi giá thì sửa đúng một chỗ này.
 MONTHLY_PRICE_VND: dict[Plan, int] = {
     Plan.TRIAL: 0,
-    Plan.TIEM_NHO: 299_000,
-    Plan.TOAN_DIEN: 599_000,
+    Plan.TIEM_NHO: 189_000,
+    Plan.TOAN_DIEN: 369_000,
 }
 
 

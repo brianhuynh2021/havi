@@ -58,7 +58,7 @@ describe("BillingScreen", () => {
             id: "inv-1",
             workspace_id: "w1",
             plan: "tiem_nho",
-            amount_vnd: 299000,
+            amount_vnd: 189000,
             status: "paid",
             issued_at: "2026-08-15T10:00:00Z",
           },
@@ -69,10 +69,10 @@ describe("BillingScreen", () => {
 
     renderBilling();
 
-    const planTitles = await screen.findAllByText(/Gói Tiệm Đơn/i);
+    const planTitles = await screen.findAllByText(/Gói Khởi Nghiệp/i);
     expect(planTitles.length).toBeGreaterThan(0);
     expect(screen.getByText(/50.000 \/ 250.000/i)).toBeInTheDocument();
-    const prices = screen.getAllByText(/299.000/i);
+    const prices = screen.getAllByText(/189.000/i);
     expect(prices.length).toBeGreaterThan(0);
   });
 
@@ -93,7 +93,7 @@ describe("BillingScreen", () => {
         return jsonResponse({
           invoice_id: "inv-123",
           plan: "tiem_nho",
-          amount_vnd: 299000,
+          amount_vnd: 189000,
           transfer_content: "HAVI inv123",
           bank_id: "MB",
           account_no: "0987654321",
@@ -111,11 +111,11 @@ describe("BillingScreen", () => {
     const user = userEvent.setup();
 
     const upgradeBtn = await screen.findByRole("button", {
-      name: /Nâng cấp lên Gói Tiệm Đơn/i,
+      name: /Nâng cấp lên Gói Khởi Nghiệp/i,
     });
     await user.click(upgradeBtn);
 
-    expect(await screen.findByText(/Quét mã VietQR để nâng cấp Gói Tiệm Đơn/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Quét mã VietQR để nâng cấp Gói Khởi Nghiệp/i)).toBeInTheDocument();
     expect(screen.getByText(/TRUNG TAM CONG NGHE NHAT MINH/i)).toBeInTheDocument();
   });
 });

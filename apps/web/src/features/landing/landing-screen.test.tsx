@@ -21,11 +21,11 @@ describe("LandingScreen", () => {
     expect(screen.getAllByText(/trực inbox/i).length).toBeGreaterThan(0);
   });
 
-  it("hiển thị bảng giá thương mại chính thức (Gói Tiệm Đơn 299k & Gói Chuỗi 599k)", () => {
+  it("hiển thị bảng giá thương mại chính thức (Gói Khởi Nghiệp 189k & Gói Chuyên Nghiệp 369k)", () => {
     renderLanding();
-    expect(screen.getAllByText(/299.000 đ/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/599.000 đ/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/14 ngày/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/189.000 đ/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/369.000 đ/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/7 ngày/i).length).toBeGreaterThan(0);
   });
 
   it("nói rõ nguyên tắc an toàn duyệt-trước là giá trị cốt lõi", () => {

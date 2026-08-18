@@ -12,7 +12,7 @@ export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
   { v: "4 Trụ Cột Đa Kênh", l: "Facebook · TikTok Video · Google Maps · 24/7 Lead Care", icon: "🌐" },
-  { v: "Chỉ ~10.000 đ/ngày", l: "Tiết kiệm 4 triệu/tháng thuê nhân sự marketing", icon: "💰" },
+  { v: "Chỉ từ 6.000 đ/ngày", l: "Rẻ hơn 1 ly trà sữa mỗi tuần (189.000 đ/tháng)", icon: "💰" },
   { v: "Phản hồi < 5 Giây", l: "Trực Inbox 24/7 không để rơi mất khách nửa đêm", icon: "⚡" },
 ];
 

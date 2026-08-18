@@ -81,7 +81,7 @@ docker compose -f docker-compose.prod.yml up -d
   │
 [Day 7: Thông báo kích hoạt gói dịch vụ]
   │
-  ├─► Popup hiển thị VietQR PayOS (299k Gói Tiệm Đơn / 599k Gói Chuỗi)
+  ├─► Popup hiển thị VietQR PayOS (189k Gói Khởi Nghiệp / 369k Gói Chuyên Nghiệp)
   │
 [Khách hàng quét chuyển khoản]
   │
