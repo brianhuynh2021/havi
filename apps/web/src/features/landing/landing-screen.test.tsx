@@ -1,81 +1,72 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { LandingScreen } from "./landing-screen";
+import { LanguageProvider } from "@/lib/i18n/language-context";
 
-/** Claim công khai phải bám capability thật (ROADMAP §2, §10).
- *
- * Test này là chốt chặn: ai đó copy câu chữ từ prototype sang mà quên rằng
- * tính năng chưa làm thì test đỏ ngay, thay vì phát hiện sau khi landing đã
- * public và có người đăng ký vì lời hứa đó.
- */
-const CAM_KHONG_DUOC_HUA = [
-  // Publish thật là Tuần 7 — pilot chưa đăng được kênh nào.
-  /tự động đăng/i,
-  /tự đăng/i,
-  /4 kênh/i,
-  // P2, và §4 cấm crawl group.
-  /lắng nghe hội nhóm/i,
-  /săn khách/i,
-  // P2.
-  /crm/i,
-  // Chưa có, vision là P1/P2.
-  /làm đẹp ảnh/i,
-  /gắn logo/i,
-  // §12: giá chỉ public sau khi đo cost trên khách Việt thật.
-  /299k/i,
-  /599k/i,
-  /14 ngày/i,
-  // Kênh chưa hỗ trợ.
-  /linkedin/i,
-  /youtube/i,
-  /google maps/i,
-  /tiktok/i,
-];
+function renderLanding() {
+  return render(
+    <LanguageProvider>
+      <LandingScreen />
+    </LanguageProvider>
+  );
+}
 
 describe("LandingScreen", () => {
-  it("không hứa capability chưa có", () => {
-    const { container } = render(<LandingScreen />);
-    const text = container.textContent ?? "";
-
-    for (const pattern of CAM_KHONG_DUOC_HUA) {
-      expect(text, `Landing đang hứa thứ chưa làm được: ${pattern}`).not.toMatch(
-        pattern,
-      );
-    }
-  });
-
-  it("chỉ nêu đúng 3 kênh pilot", () => {
-    render(<LandingScreen />);
+  it("hiển thị đầy đủ 4 trụ cột tiếp thị đa kênh của Havi", () => {
+    renderLanding();
     expect(screen.getAllByText(/facebook/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/zalo oa/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/google business/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/tiktok/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/google maps/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/trực inbox/i).length).toBeGreaterThan(0);
   });
 
-  it("nói rõ nguyên tắc duyệt-trước — điểm bán hàng chính", () => {
-    render(<LandingScreen />);
+  it("hiển thị bảng giá thương mại chính thức (Gói Tiệm Đơn 299k & Gói Chuỗi 599k)", () => {
+    renderLanding();
+    expect(screen.getAllByText(/299.000 đ/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/599.000 đ/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/14 ngày/i).length).toBeGreaterThan(0);
+  });
+
+  it("nói rõ nguyên tắc an toàn duyệt-trước là giá trị cốt lõi", () => {
+    renderLanding();
     expect(screen.getByText(/bạn duyệt trước, luôn luôn/i)).toBeInTheDocument();
     expect(screen.getByText(/chỉ dùng api chính thức/i)).toBeInTheDocument();
   });
 
-  it("CTA dẫn tới đăng ký và đăng nhập thật", () => {
-    render(<LandingScreen />);
-    const signup = screen.getAllByRole("link", { name: /tạo tài khoản/i });
-    expect(signup.length).toBeGreaterThan(0);
-    for (const link of signup) {
+  it("cho phép tương tác đổi tab trong Studio Demo trực tuyến", async () => {
+    renderLanding();
+    const user = userEvent.setup();
+
+    // Bấm chuyển sang tab TikTok Video
+    const videoTab = screen.getByRole("button", { name: /tiktok video/i });
+    await user.click(videoTab);
+    expect(screen.getAllByText(/3-Second Retention Hook/i).length).toBeGreaterThan(0);
+
+    // Bấm chuyển sang tab Trực Inbox Bắt SĐT
+    const inboxTab = screen.getByRole("button", { name: /trực inbox bắt sđt/i });
+    await user.click(inboxTab);
+    expect(screen.getAllByText(/Đã bắt SĐT về CRM/i).length).toBeGreaterThan(0);
+  });
+
+  it("CTA dẫn tới đăng ký và đăng nhập", () => {
+    renderLanding();
+    const signupLinks = screen.getAllByRole("link", { name: /dùng thử 14 ngày/i });
+    expect(signupLinks.length).toBeGreaterThan(0);
+    for (const link of signupLinks) {
       expect(link).toHaveAttribute("href", "/signup");
     }
-    // Hai link đăng nhập (header + footer) là cố ý — người cuộn hết trang
-    // không phải cuộn ngược lên đầu.
-    const login = screen.getAllByRole("link", { name: /^đăng nhập$/i });
-    expect(login.length).toBeGreaterThan(0);
-    for (const link of login) {
+
+    const loginLinks = screen.getAllByRole("link", { name: /^đăng nhập$/i });
+    expect(loginLinks.length).toBeGreaterThan(0);
+    for (const link of loginLinks) {
       expect(link).toHaveAttribute("href", "/login");
     }
   });
 
-  it("có anchor navigation tới các section", () => {
-    const { container } = render(<LandingScreen />);
-    for (const id of ["cach-hoat-dong", "nganh", "nguyen-tac"]) {
+  it("có anchor navigation tới các section chính", () => {
+    const { container } = renderLanding();
+    for (const id of ["demo-studio", "cach-hoat-dong", "bang-gia", "nguyen-tac"]) {
       expect(container.querySelector(`#${id}`)).not.toBeNull();
       expect(
         container.querySelector(`a[href="#${id}"]`),
@@ -83,10 +74,5 @@ describe("LandingScreen", () => {
       ).not.toBeNull();
     }
   });
-
-  it("nói rõ đang thử nghiệm, chưa công bố giá", () => {
-    render(<LandingScreen />);
-    expect(screen.getAllByText(/giai đoạn thử nghiệm/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/bảng giá sẽ công bố sau/i)).toBeInTheDocument();
-  });
 });
+

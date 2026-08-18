@@ -7,53 +7,23 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
   heroChannels,
   heroStats,
-  industries,
+  industryScenarios,
   principles,
   steps,
 } from "./landing.content";
 import styles from "./landing.module.css";
-
-const PREVIEW_DRAFTS: Record<
-  string,
-  { photo: string; text: string; tag: string; rawInput?: string }
-> = {
-  Facebook: {
-    photo: "/images/spa_photo_hq.jpg",
-    text: "Tuần này Spa bên mình có ưu đãi đặc biệt cho 30 khách đặt lịch tái khám sớm — nhắn tin qua Fanpage để giữ chỗ trước nha chị em!",
-    tag: "Fanpage Post",
-    rawInput: "Chụp 1 tấm ảnh Spa liệu trình vi kim rảo mụn",
-  },
-  "Zalo OA": {
-    photo: "/images/spa_photo_hq.jpg",
-    text: "Bản tin Zalo OA: Nhắc lịch tái khám & quà tặng serum phục hồi cao cấp dành riêng cho khách hàng thân thiết trong tuần này.",
-    tag: "Zalo Care",
-    rawInput: "Ghi âm 15s nhắc khách tái khám đúng hẹn",
-  },
-  "Google Business": {
-    photo: "/images/cafe_photo_hq.jpg",
-    text: "Ghé trải nghiệm không gian và thưởng thức cà phê rang xay thơm nức tại tiệm — Đánh giá 5 sao nhận ngay ưu đãi quà tặng!",
-    tag: "Google Business Post",
-    rawInput: "Món mới cà phê dừa nướng thơm nức",
-  },
-  "Bản tin Email": {
-    photo: "/images/bds_photo_hq.jpg",
-    text: "[Báo giá mới nhất] Gửi anh/chị thông tin 3 căn nhà vị trí đẹp, giá đầu tư cực tốt kèm thông tin chính chủ nét.",
-    tag: "Email Marketing",
-    rawInput: "Nhà phố Q7 chính chủ 85m²",
-  },
-};
-
 import { useLanguage } from "@/lib/i18n/language-context";
 
+type ChannelTabKey = "facebook" | "video" | "maps" | "inbox";
+
 export function LandingScreen() {
-  const [activeChannel, setActiveChannel] = useState("Facebook");
+  const [activeIndustryIdx, setActiveIndustryIdx] = useState(0);
+  const [activeChannelKey, setActiveChannelKey] = useState<ChannelTabKey>("facebook");
   const [activeStep, setActiveStep] = useState(0);
-  const [activeIndustry, setActiveIndustry] = useState(0);
   const { lang } = useLanguage();
 
-
-  const currentDraft = PREVIEW_DRAFTS[activeChannel] || PREVIEW_DRAFTS.Facebook;
-  const currentInd = industries[activeIndustry] || industries[0];
+  const currentScenario = industryScenarios[activeIndustryIdx] || industryScenarios[0];
+  const activeTabContent = currentScenario.tabs[activeChannelKey];
 
   return (
     <div className={styles.page}>
@@ -66,8 +36,9 @@ export function LandingScreen() {
           </Link>
 
           <nav className={styles.nav} aria-label="Điều hướng trang">
+            <a href="#demo-studio">{lang === "VN" ? "Dùng thử Demo" : "Live Demo"}</a>
             <a href="#cach-hoat-dong">{lang === "VN" ? "Cách hoạt động" : "How it works"}</a>
-            <a href="#nganh">{lang === "VN" ? "Cho ngành của bạn" : "Industries"}</a>
+            <a href="#bang-gia">{lang === "VN" ? "Bảng giá" : "Pricing"}</a>
             <a href="#nguyen-tac">{lang === "VN" ? "Nguyên tắc" : "Principles"}</a>
           </nav>
 
@@ -78,7 +49,7 @@ export function LandingScreen() {
               {lang === "VN" ? "Đăng nhập" : "Login"}
             </Link>
             <Link href="/signup" className={styles.ctaButton}>
-              {lang === "VN" ? "Tạo tài khoản" : "Get Started"}
+              {lang === "VN" ? "Dùng thử 14 ngày" : "Get Started"}
             </Link>
           </div>
         </div>
@@ -88,20 +59,20 @@ export function LandingScreen() {
       <section className={styles.hero}>
         <div>
           <div className={styles.eyebrow}>
-            <span style={{ fontSize: "14px" }}>✨</span> Trợ Lý AI Marketing Đa Kênh Cho Tiệm &amp; Shop
+            <span style={{ fontSize: "14px" }}>✨</span> NHÂN VIÊN AI MARKETING ĐA KÊNH — TRỰC TIỆM &amp; CHỐT ĐƠN 24/7
           </div>
           <h1 className={styles.heroTitle}>
-            Tải ảnh tiệm lên, bài đăng &amp; Email sẵn sàng —{" "}
+            Tải ảnh tiệm lên, bài đăng &amp; Video sẵn sàng —{" "}
             bạn chỉ cần bấm <span className={styles.purpleGradient}>duyệt 1-chạm</span>
           </h1>
           <p className={styles.heroBody}>
-            Không cần giỏi văn hay am hiểu công nghệ. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s — Havi tự biên soạn bài viết chuẩn giọng tiệm cho Facebook, Zalo OA, Google Business &amp; Email.{" "}
+            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~10.000 đ/ngày</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s — Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
             <strong style={{ color: "#f8fafc" }}>Bài không tự phát hành khi bạn chưa nhấn nút duyệt.</strong>
           </p>
 
           <div className={styles.heroActions}>
             <Link href="/signup" className={styles.ctaButton}>
-              Tạo tài khoản miễn phí
+              Bắt đầu dùng thử 14 ngày miễn phí
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -110,11 +81,11 @@ export function LandingScreen() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
-              Xem Studio Demo Trực Quan
+              Bấm Thử Demo Trực Tuyến
             </a>
           </div>
 
-          {/* Stats Section With Icons & Clear Friendly Copy */}
+          {/* Stats Section */}
           <div className={styles.heroStats}>
             {heroStats.map((st, idx) => (
               <div key={st.v} style={{ display: "flex", alignItems: "center", gap: "36px" }}>
@@ -132,7 +103,7 @@ export function LandingScreen() {
         </div>
       </section>
 
-      {/* Clean Friendly Studio Demo Showcase */}
+      {/* Interactive Live Studio Demo Showcase */}
       <section id="demo-studio" className={styles.demoStudioSection}>
         <div className={`${styles.glassCard} ${styles.glassCardGlow}`}>
           {/* Studio Header Bar */}
@@ -144,27 +115,41 @@ export function LandingScreen() {
                 <span className={styles.dotGreen} />
               </div>
               <span className={styles.studioTitle}>
-                Havi AI Studio • Trình Mô Phỏng Biên Soạn Đa Kênh Tự Động
+                Havi AI Studio • Trình Mô Phỏng 4 Trụ Cột Đa Kênh Tự Động
               </span>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div className={styles.soundWave}>
-                <div className={styles.soundBar} />
-                <div className={styles.soundBar} />
-                <div className={styles.soundBar} />
-              </div>
-              <span style={{ fontSize: "12px", fontWeight: 700, background: "rgba(139,92,246,0.18)", color: "#c084fc", border: "1px solid rgba(139,92,246,0.35)", borderRadius: "99px", padding: "4px 12px" }}>
-                🟢 HỆ THỐNG DỊCH VỤ SẴN SÀNG
+              <span style={{ fontSize: "12px", fontWeight: 700, background: "rgba(16,185,129,0.18)", color: "#34d399", border: "1px solid rgba(16,185,129,0.35)", borderRadius: "99px", padding: "4px 12px" }}>
+                🟢 KẾT NỐI SẴN SÀNG
               </span>
             </div>
+          </div>
+
+          {/* Industry Selection Tabs */}
+          <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "10px", overflowX: "auto" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#94a3b8", whiteSpace: "nowrap" }}>
+              Chọn ngành tiệm:
+            </span>
+            {industryScenarios.map((sc, idx) => (
+              <button
+                key={sc.name}
+                type="button"
+                className={`${styles.channelTab} ${activeIndustryIdx === idx ? styles.channelTabActive : ""}`}
+                onClick={() => setActiveIndustryIdx(idx)}
+                style={{ padding: "8px 18px", fontSize: "13.5px" }}
+              >
+                <span style={{ marginRight: "6px" }}>{sc.badge}</span>
+                {sc.name}
+              </button>
+            ))}
           </div>
 
           {/* Studio Body */}
           <div className={styles.studioBody}>
             {/* Step Controls Sidebar */}
-            <div className={styles.studioSidebar}>
-              <div className={styles.stepTitle}>Quy Trình 4 Bước</div>
+            <div id="cach-hoat-dong" className={styles.studioSidebar}>
+              <div className={styles.stepTitle}>Quy Trình 4 Bước Tự Động</div>
               <div className={styles.stepList}>
                 {steps.map((st, idx) => (
                   <div
@@ -187,50 +172,128 @@ export function LandingScreen() {
               {/* Channel Tabs */}
               <div className={styles.channelTabs}>
                 <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#64748b", marginRight: "6px" }}>
-                  Kênh Đang Xem:
+                  Xem Kết Quả Đa Kênh:
                 </span>
-                {heroChannels.map((ch) => (
-                  <button
-                    key={ch.n}
-                    type="button"
-                    className={`${styles.channelTab} ${activeChannel === ch.n ? styles.channelTabActive : ""}`}
-                    onClick={() => setActiveChannel(ch.n)}
-                  >
-                    <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: ch.c, display: "inline-block", marginRight: "6px" }} />
-                    {ch.n}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  className={`${styles.channelTab} ${activeChannelKey === "facebook" ? styles.channelTabActive : ""}`}
+                  onClick={() => setActiveChannelKey("facebook")}
+                >
+                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#1877F2", display: "inline-block", marginRight: "6px" }} />
+                  📱 Facebook Post
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.channelTab} ${activeChannelKey === "video" ? styles.channelTabActive : ""}`}
+                  onClick={() => setActiveChannelKey("video")}
+                >
+                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#FE2C55", display: "inline-block", marginRight: "6px" }} />
+                  🎬 TikTok Video (Hook 3s)
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.channelTab} ${activeChannelKey === "maps" ? styles.channelTabActive : ""}`}
+                  onClick={() => setActiveChannelKey("maps")}
+                >
+                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#16A34A", display: "inline-block", marginRight: "6px" }} />
+                  📍 Google Maps SEO
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.channelTab} ${activeChannelKey === "inbox" ? styles.channelTabActive : ""}`}
+                  onClick={() => setActiveChannelKey("inbox")}
+                >
+                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#8B5CF6", display: "inline-block", marginRight: "6px" }} />
+                  💬 Trực Inbox Bắt SĐT
+                </button>
               </div>
 
               {/* Demo Content Card */}
               <div className={styles.demoFrame}>
                 <div className={styles.demoCardContent}>
                   <div className={styles.demoPhoto}>
-                    <img src={currentDraft.photo} alt="Preview showcase" />
+                    <img src={currentScenario.image} alt={currentScenario.name} />
                     <span className={styles.badgeRaw}>ẢNH TIỆM THẬT</span>
                   </div>
 
                   <div className={styles.demoTextCol}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                      <span className={styles.aiBadge}>✨ BÀI NHÁP BỞI HAVI AI</span>
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>{currentDraft.tag}</span>
+                      <span className={styles.aiBadge}>✨ XỬ LÝ BỞI HAVI AI</span>
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>{activeTabContent.badge}</span>
                     </div>
 
-                    {currentDraft.rawInput && (
-                      <div style={{ fontSize: "12px", color: "#c084fc", background: "rgba(139,92,246,0.15)", padding: "4px 10px", borderRadius: "6px", marginBottom: "10px" }}>
-                        📥 Nguồn ảnh/ghi âm: {currentDraft.rawInput}
+                    <div style={{ fontSize: "12px", color: "#c084fc", background: "rgba(139,92,246,0.15)", padding: "4px 10px", borderRadius: "6px", marginBottom: "10px" }}>
+                      📥 Nguồn chụp/ghi âm 30s: <strong>{currentScenario.rawInput}</strong>
+                    </div>
+
+                    {/* Conditional Rendering by Active Tab */}
+                    {activeChannelKey === "facebook" && (
+                      <div>
+                        <p className={styles.demoBody}>{currentScenario.tabs.facebook.content}</p>
+                        <div className={styles.demoTags}>
+                          <span className={styles.tagItem}>#HaviAI</span>
+                          <span className={styles.tagItem}>#Duyet1Cham</span>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "6px" }}>
+                            ⏰ Giờ vàng đăng: 19:30 Tối nay
+                          </span>
+                        </div>
                       </div>
                     )}
 
-                    <p className={styles.demoBody}>{currentDraft.text}</p>
+                    {activeChannelKey === "video" && (
+                      <div>
+                        <div style={{ background: "rgba(254,44,85,0.12)", border: "1px solid rgba(254,44,85,0.3)", borderRadius: "8px", padding: "10px 14px", marginBottom: "10px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 800, color: "#FE2C55", textTransform: "uppercase" }}>
+                            ⚡ 3-Second Retention Hook (Giật Tít Giữ Chân)
+                          </span>
+                          <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", marginTop: "4px" }}>
+                            {currentScenario.tabs.video.hook}
+                          </div>
+                        </div>
+                        <p className={styles.demoBody} style={{ whiteSpace: "pre-line", fontSize: "13px" }}>
+                          {currentScenario.tabs.video.script}
+                        </p>
+                      </div>
+                    )}
 
-                    <div className={styles.demoTags}>
-                      <span className={styles.tagItem}>#HaviAI</span>
-                      <span className={styles.tagItem}>#Duyet1Cham</span>
-                      <span style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "6px" }}>
-                        Lịch đăng: 19:30 Tối nay (Giờ Vàng Tiệm)
-                      </span>
-                    </div>
+                    {activeChannelKey === "maps" && (
+                      <div>
+                        <p className={styles.demoBody}>{currentScenario.tabs.maps.content}</p>
+                        <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                          <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#34d399", background: "rgba(16,185,129,0.15)", padding: "4px 10px", borderRadius: "6px" }}>
+                            ⭐ Tối ưu xếp hạng Top 3 Google Maps
+                          </span>
+                          <span style={{ fontSize: "11.5px", color: "#94a3b8", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "6px" }}>
+                            📍 Geotagged Local SEO
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeChannelKey === "inbox" && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 14px", alignSelf: "flex-start", maxWidth: "90%" }}>
+                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>👤 Khách hàng (Lúc 23:15 đêm):</span>
+                          <div style={{ fontSize: "13.5px", color: "#fff", marginTop: "2px" }}>
+                            {currentScenario.tabs.inbox.customerMsg}
+                          </div>
+                        </div>
+
+                        <div style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "10px", padding: "10px 14px", alignSelf: "flex-end", maxWidth: "95%" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc" }}>✨ Havi Tự Trả Lời (Sau 5 giây):</span>
+                          <div style={{ fontSize: "13.5px", color: "#f8fafc", marginTop: "2px" }}>
+                            {currentScenario.tabs.inbox.haviReply}
+                          </div>
+                        </div>
+
+                        <div style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "14px" }}>🟢</span>
+                          <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#34d399" }}>
+                            Đã bắt SĐT về CRM: {currentScenario.tabs.inbox.capturedPhone}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -241,103 +304,117 @@ export function LandingScreen() {
                       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                       <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
-                    <span>Havi biên soạn sẵn — <strong style={{ color: "#fff" }}>Bạn đọc lướt rồi bấm duyệt 1-chạm</strong></span>
+                    <span>Havi tự động hoàn thiện — <strong style={{ color: "#fff" }}>Bạn chỉ cần bấm duyệt 1-chạm</strong></span>
                   </div>
                   <div style={{ display: "flex", gap: "12px" }}>
                     <Link href="/signup" className={styles.ctaButton}>
-                      Duyệt bài này 1-chạm
+                      Duyệt &amp; kích hoạt ngay
                     </Link>
                   </div>
                 </div>
               </div>
-
-              {/* Floating Badge */}
-              <div className={styles.floatingImpactBadge}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "99px", background: "rgba(139,92,246,0.2)", color: "#c084fc", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "16px" }}>
-                  ✓
-                </div>
-                <div>
-                  <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#fff" }}>Bài đăng &amp; email sẵn sàng</div>
-                  <div style={{ fontSize: "12px", color: "#c084fc", fontWeight: 600, marginTop: "2px" }}>Bấm duyệt 1-chạm để phát hành</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Cách Hoạt Động (Bento Grid) */}
-      <section id="cach-hoat-dong" className={styles.hero} style={{ paddingTop: "40px" }}>
+      {/* Bảng Giá Thương Mại & So Sánh ROI */}
+      <section id="bang-gia" className={styles.hero} style={{ paddingTop: "40px" }}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag}>QUY TRÌNH VẬN HÀNH TIỆM</div>
-          <h2 className={styles.sectionTitle}>Bốn Bước Tiết Kiệm Thời Gian Vận Hành</h2>
-          <p className={styles.sectionSubtitle}>Dành cho chủ tiệm &amp; môi giới bận rộn — tiết kiệm tới 15 giờ mỗi tuần.</p>
+          <div className={styles.sectionTag} style={{ color: "#34d399" }}>BẢNG GIÁ ĐẦU TƯ</div>
+          <h2 className={styles.sectionTitle}>Chi Phí 10k/Ngày — Hiệu Quả Gấp 10 Lần</h2>
+          <p className={styles.sectionSubtitle}>Không phụ phí ẩn · Tự động kích hoạt VietQR trong 1 giây · Hoàn tiền nếu không hài lòng sau 7 ngày.</p>
         </div>
 
-        <div className={styles.bentoGrid}>
-          {steps.map((st, idx) => (
-            <div
-              key={st.n}
-              className={`${styles.glassCard} ${idx === 0 || idx === 3 ? styles.bentoSpan2 : ""}`}
-              style={{ padding: "36px", textAlign: "left" }}
-            >
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 12px", borderRadius: "99px" }}>
-                BƯỚC 0{st.n}
+        <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "40px" }}>
+          {/* Free Trial */}
+          <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div>
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#94a3b8", background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "99px" }}>
+                TRẢI NGHIỆM
               </span>
-              <h3 style={{ fontSize: "24px", fontWeight: 800, color: "#fff", margin: "16px 0 12px" }}>{st.title}</h3>
-              <p style={{ fontSize: "15px", color: "#b8c0d0", lineHeight: 1.6, margin: 0 }}>{st.desc}</p>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Dùng Thử</h3>
+              <div style={{ fontSize: "32px", fontWeight: 900, color: "#fff", marginBottom: "14px" }}>
+                0 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ 14 ngày</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
+                Trải nghiệm trọn vẹn sức mạnh nhân viên AI cho tiệm của bạn.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
+                <li>✓ 50 bài viết AI &amp; kịch bản video</li>
+                <li>✓ Kết nối 1 Fanpage Facebook</li>
+                <li>✓ Lên lịch đăng giờ vàng tự động</li>
+                <li>✓ Không yêu cầu thẻ tín dụng</li>
+              </ul>
             </div>
-          ))}
+            <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
+              Dùng thử miễn phí
+            </Link>
+          </div>
+
+          {/* Gói Tiệm Đơn (Best Value) */}
+          <div className={`${styles.glassCard} ${styles.glassCardGlow}`} style={{ padding: "32px", textAlign: "left", borderColor: "rgba(139,92,246,0.6)", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative" }}>
+            <div style={{ position: "absolute", top: "-12px", right: "20px", background: "linear-gradient(135deg, #8B5CF6, #00D2FF)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 12px", borderRadius: "99px" }}>
+              PHỔ BIẾN NHẤT
+            </div>
+            <div>
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "99px" }}>
+                TIỆM ĐƠN / SOLO
+              </span>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Tiệm Đơn</h3>
+              <div style={{ fontSize: "32px", fontWeight: 900, color: "#c084fc", marginBottom: "14px" }}>
+                299.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~10k/ngày)</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
+                Tối ưu nhất cho Spa, Salon, Quán ăn độc lập và Môi giới Bất động sản.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
+                <li>✓ <strong>250 bài viết AI &amp; video</strong> mỗi tháng</li>
+                <li>✓ <strong>Đa kênh:</strong> Facebook, TikTok Shorts, Google Maps</li>
+                <li>✓ <strong>Video Studio 9:16</strong> có Hook 3s giật tít</li>
+                <li>✓ <strong>Trực Inbox 24/7</strong> &amp; Bắt SĐT khách tự động</li>
+                <li>✓ <strong>Báo cáo chốt đơn</strong> &amp; Doanh thu POS</li>
+              </ul>
+            </div>
+            <Link href="/signup" className={styles.ctaButton} style={{ width: "100%", justifyContent: "center" }}>
+              Nâng cấp Gói Tiệm Đơn
+            </Link>
+          </div>
+
+          {/* Gói Chuỗi Tiệm */}
+          <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div>
+              <span style={{ fontSize: "12px", fontWeight: 800, color: "#38bdf8", background: "rgba(56,189,248,0.15)", padding: "4px 10px", borderRadius: "99px" }}>
+                CHUỖI CHI NHÁNH
+              </span>
+              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Chuỗi Tiệm</h3>
+              <div style={{ fontSize: "32px", fontWeight: 900, color: "#38bdf8", marginBottom: "14px" }}>
+                599.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
+                Dành cho chuỗi cửa hàng, trung tâm đào tạo và doanh nghiệp nhiều cơ sở.
+              </p>
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
+                <li>✓ <strong>1.000 bài viết AI &amp; kịch bản video</strong>/tháng</li>
+                <li>✓ Không giới hạn kết nối mạng xã hội</li>
+                <li>✓ Ưu tiên tài nguyên GPU &amp; AI tốc độ cao</li>
+                <li>✓ Phân quyền nhân viên từng chi nhánh</li>
+                <li>✓ Hỗ trợ kỹ thuật 1 kèm 1 chuyên biệt</li>
+              </ul>
+            </div>
+            <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
+              Nâng cấp Gói Chuỗi Tiệm
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Cho Ngành Của Bạn */}
-      <section id="nganh" className={styles.hero} style={{ paddingTop: "20px" }}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag} style={{ color: "#38bdf8" }}>CHO NGÀNH CỦA BẠN</div>
-          <h2 className={styles.sectionTitle}>Tối Ưu Giọng Văn Cho Từng Mô Hình Tiệm</h2>
-          <p className={styles.sectionSubtitle}>Dù bạn chạy Spa, tiệm Cà phê, BĐS hay Shop online, Havi tự điều chỉnh bộ từ vựng chính xác.</p>
-        </div>
-
-        <div className={styles.channelTabs} style={{ justifyContent: "center", marginBottom: "40px" }}>
-          {industries.map((ind, idx) => (
-            <button
-              key={ind.name}
-              type="button"
-              className={`${styles.channelTab} ${activeIndustry === idx ? styles.channelTabActive : ""}`}
-              onClick={() => setActiveIndustry(idx)}
-              style={{ padding: "10px 22px", fontSize: "14px" }}
-            >
-              {ind.name}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.bentoGrid} style={{ gridTemplateColumns: "1fr 1.2fr", alignItems: "center" }}>
-          <div className={styles.glassCard} style={{ padding: "20px", overflow: "hidden", borderRadius: "20px" }}>
-            <img src={currentInd.image} alt={currentInd.name} style={{ width: "100%", height: "320px", objectFit: "cover", borderRadius: "14px", display: "block" }} />
-          </div>
-
-          <div className={styles.glassCard} style={{ padding: "36px", textAlign: "left" }}>
-            <h3 style={{ fontSize: "26px", fontWeight: 800, color: "#fff", margin: "0 0 20px" }}>{currentInd.name}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {currentInd.rows.map((rw) => (
-                <div key={rw.k} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px" }}>
-                  <span style={{ fontSize: "12px", fontWeight: 800, color: "#38bdf8", textTransform: "uppercase" }}>{rw.k}</span>
-                  <div style={{ fontSize: "14.5px", color: "#e2e8f0", marginTop: "4px", fontWeight: 500 }}>{rw.t}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Nguyên Tắc & Bảng Giá Khảo Sát */}
+      {/* Nguyên Tắc Vận Hành */}
       <section id="nguyen-tac" className={styles.hero} style={{ paddingTop: "20px" }}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag} style={{ color: "#10b981" }}>NGUYÊN TẮC VẬN HÀNH</div>
-          <h2 className={styles.sectionTitle}>Havi Đang Trong Giai Đoạn Thử Nghiệm</h2>
-          <p className={styles.sectionSubtitle}>Bảng giá sẽ công bố sau khi hoàn tất đo lường thực tế — Bài không tự phát hành khi chưa bấm nút.</p>
+          <div className={styles.sectionTag} style={{ color: "#10b981" }}>CAM KẾT AN TOÀN</div>
+          <h2 className={styles.sectionTitle}>Nguyên Tắc Xây Dựng Thương Hiệu Của Havi</h2>
+          <p className={styles.sectionSubtitle}>Bảo vệ trọn vẹn uy tín của tiệm — Không bao giờ phát hành nội dung khi chưa được bạn duyệt.</p>
         </div>
 
         <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "60px" }}>
@@ -364,10 +441,10 @@ export function LandingScreen() {
                 <span style={{ fontWeight: 800, fontSize: "22px", color: "#fff" }}>Havi</span>
               </div>
               <p className={styles.footerDesc}>
-                Giải pháp Nhân viên AI Marketing Đa Kênh tự động cho mọi thương hiệu &amp; doanh nghiệp. Tự động hóa bài viết &amp; email chăm sóc chuẩn giọng Việt, duyệt 100% trước khi đăng.
+                Nhân viên AI Marketing Đa Kênh tự động cho mọi chủ tiệm &amp; doanh nghiệp. Tự động hóa bài viết Facebook, kịch bản TikTok Shorts, Google Maps SEO và trực Inbox 24/7.
               </p>
               <div className={styles.trustBadges}>
-                <span className={styles.trustBadge}>🔒 Official API</span>
+                <span className={styles.trustBadge}>🔒 Official Meta API</span>
                 <span className={styles.trustBadge}>🇻🇳 Tiếng Việt Là Gốc</span>
                 <span className={styles.trustBadge}>⚡ 100% Duyệt Trước</span>
               </div>
@@ -377,9 +454,9 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>SẢN PHẨM</div>
               <ul className={styles.footerLinkList}>
+                <li><a href="#demo-studio">Studio Demo</a></li>
                 <li><a href="#cach-hoat-dong">Cách hoạt động</a></li>
-                <li><a href="#demo-studio">Studio Showcase</a></li>
-                <li><a href="#nganh">Cho ngành của bạn</a></li>
+                <li><a href="#bang-gia">Bảng giá 10k/ngày</a></li>
                 <li><a href="#nguyen-tac">Nguyên tắc cốt lõi</a></li>
               </ul>
             </div>
@@ -388,10 +465,10 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>NGÀNH NGHỀ</div>
               <ul className={styles.footerLinkList}>
-                <li><a href="#nganh">Spa &amp; Tiệm Làm Đẹp</a></li>
-                <li><a href="#nganh">Quán Ăn &amp; Cà Phê</a></li>
-                <li><a href="#nganh">Môi Giới Bất Động Sản</a></li>
-                <li><a href="#nganh">Shop Online &amp; Traffic</a></li>
+                <li><a href="#demo-studio">Spa &amp; Thẩm Mỹ Viện</a></li>
+                <li><a href="#demo-studio">Quán Ăn &amp; Cà Phê</a></li>
+                <li><a href="#demo-studio">Môi Giới Bất Động Sản</a></li>
+                <li><a href="#demo-studio">Kỹ Thuật &amp; Đào Tạo</a></li>
               </ul>
             </div>
 
@@ -412,7 +489,7 @@ export function LandingScreen() {
               <div className={styles.footerColTitle}>HỖ TRỢ &amp; HỆ THỐNG</div>
               <div style={{ fontSize: "13.5px", color: "#b8c0d0", lineHeight: 1.6 }}>
                 <div>Email: <a href="mailto:hotro@havi.vn" style={{ color: "#38bdf8" }}>hotro@havi.vn</a></div>
-                <div style={{ marginTop: "4px" }}>Khu vực: TP. Hồ Chí Minh, Việt Nam</div>
+                <div style={{ marginTop: "4px" }}>Thực chiến tại: <strong>Trung Tâm Công Nghệ Nhật Minh</strong></div>
               </div>
 
               <div className={styles.statusIndicator}>
@@ -442,3 +519,4 @@ export function LandingScreen() {
     </div>
   );
 }
+

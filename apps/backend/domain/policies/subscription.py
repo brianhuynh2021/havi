@@ -25,8 +25,8 @@ TRIAL_DAYS = 14
 #: và cổng thanh toán chỉ là cách thu tiền. Đổi giá thì sửa đúng một chỗ này.
 MONTHLY_PRICE_VND: dict[Plan, int] = {
     Plan.TRIAL: 0,
-    Plan.TIEM_NHO: 2_000,
-    Plan.TOAN_DIEN: 3_000,
+    Plan.TIEM_NHO: 299_000,
+    Plan.TOAN_DIEN: 599_000,
 }
 
 

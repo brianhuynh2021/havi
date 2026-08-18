@@ -36,20 +36,20 @@ const PLAN_DETAILS: Record<
   },
   tiem_nho: {
     title: "Gói Tiệm Đơn",
-    price: "2.000 đ",
+    price: "299.000 đ",
     period: "/tháng",
-    desc: "Tối ưu nhất cho các tiệm Spa, Salon, F&B độc lập và môi giới BĐS.",
+    desc: "Tối ưu nhất cho các tiệm Spa, Salon, F&B độc lập và môi giới BĐS (~10k/ngày).",
     features: [
       "250 bài viết AI & kịch bản video mỗi tháng",
       "Kết nối Facebook Page, Reels, TikTok & YouTube Shorts",
       "Sinh kịch bản video dọc với Hook 3s giật tít",
-      "Hộp thư hợp nhất & Trả lời FAQ tự động",
+      "Hộp thư hợp nhất & Trực Page bắt SĐT khách 24/7",
       "Báo cáo khách tiềm năng & doanh thu POS",
     ],
   },
   toan_dien: {
     title: "Gói Chuỗi Tiệm",
-    price: "3.000 đ",
+    price: "599.000 đ",
     period: "/tháng",
     desc: "Dành cho chuỗi chi nhánh, salon và cửa hàng nhiều cơ sở.",
     features: [
