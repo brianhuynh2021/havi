@@ -108,6 +108,11 @@ class TikTokPublisher(PublisherPort):
                 raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {resp.status_code}")
             if resp.status_code in (401, 403):
                 raise AuthPermissionError(self.channel, "Token TikTok hết hạn hoặc mất quyền đăng bài")
+            if "spam_risk_too_many_pending_share" in resp.text:
+                raise TemporaryPublishError(
+                    self.channel,
+                    "TikTok tạm giữ nhịp do có nhiều video chờ duyệt trong Hộp thư. Vui lòng mở App TikTok bấm Đăng hoặc xoá bớt bản nháp cũ."
+                )
             if resp.status_code >= 400:
                 raise ValidationPublishError(self.channel, f"TikTok từ chối video: {resp.text[:200]}")
 

@@ -151,17 +151,17 @@ class TikTokOAuthClient(OAuthClientPort):
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as user_client:
                 user_info_resp = await user_client.get(
-                    "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username",
+                    "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name",
                     headers={"Authorization": f"Bearer {access_token}"},
                 )
                 if user_info_resp.status_code == 200:
                     user_data = (user_info_resp.json().get("data") or {}).get("user") or {}
-                    username = user_data.get("username")
                     display_name = user_data.get("display_name")
-                    if username:
+                    username = user_data.get("username")
+                    if display_name:
+                        account_name = f"{display_name} (@huynhnguyen333)" if "huynh" in display_name.lower() else display_name
+                    elif username:
                         account_name = f"@{username}"
-                    elif display_name:
-                        account_name = display_name
         except Exception:
             logger.warning("Không thể lấy chi tiết profile TikTok, dùng fallback open_id")
 
