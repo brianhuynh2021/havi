@@ -144,7 +144,7 @@ export function HeroCinematicShowcase({
                 <div className={styles.scanAnalysisBox}>
                   <div className={styles.scanAnalysisHeader}>
                     <span className={styles.aiTagBadge}>✨ HAVI VISION AI 2.0</span>
-                    <span className={styles.scanSpeed}>0.34 giây</span>
+                    <span className={styles.scanSpeed}>0.34s</span>
                   </div>
                   <h4 className={styles.scanAnalysisTitle}>
                     Đã nhận diện bối cảnh &amp; dịch vụ tiệm
@@ -290,7 +290,7 @@ export function HeroCinematicShowcase({
                     <span className={styles.radarWave} />
                     <span className={styles.radarCenterIcon}>📡</span>
                   </div>
-                  <h4 className={styles.radarTitle}>Chuông Báo Rung <span className={styles.highlightText}>Dưới 3 Giây</span></h4>
+                  <h4 className={styles.radarTitle}>Chuông Báo Rung <span className={styles.highlightText}>Dưới 3s</span></h4>
                   <p className={styles.radarDesc}>
                     Khách nhắn tin ban đêm hay rạng sáng, AI tự động trực chat theo bảng giá tiệm, khéo léo lấy SĐT và bắn chuông ngay về máy chủ tiệm để không bao giờ bị rơi mất đơn.
                   </p>

@@ -269,46 +269,90 @@
 }
 
 .heroStats {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 48px;
-  padding: 24px 40px;
+  gap: 20px;
+  padding: 24px 32px;
   background: #131a29;
   backdrop-filter: blur(24px);
   border: 1px solid rgba(0, 210, 255, 0.2);
   border-radius: 20px;
-  max-width: 880px;
+  max-width: 980px;
+  width: 100%;
   margin: 0 auto;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 102, 255, 0.12);
+  box-sizing: border-box;
+}
+
+.statItemWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
 }
 
 .statItem {
   text-align: center;
+  width: 100%;
+  padding: 0 8px;
 }
 
 .statVal {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.statIcon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .statLbl {
   font-size: 13px;
-  color: #b8c0d0;
+  color: #94a3b8;
   margin-top: 6px;
   font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .statDivider {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 1px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.12);
 }
+
+@media (max-width: 768px) {
+  .heroStats {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+    max-width: 440px;
+  }
+
+  .statDivider {
+    display: none;
+  }
+
+  .statLbl {
+    white-space: normal;
+  }
+}
+
 
 /* --- Friendly AI Studio Showcase Demo ------------------------------------ */
 

@@ -887,9 +887,28 @@ The complete 5-phase product, engineering, and monetization roadmap from Local D
    - Closed-Loop POS Attribution directly tying social posts to cash register receipts.
    - Evolution from Co-pilot (1-tap approval) to Auto-pilot for trusted routine campaigns.
 3. **Years 5–10 (Global AI Autonomous Commerce & Local SLMs):**
-   - On-premise / Edge Small Language Models (SLMs) for zero-latency, private enterprise knowledge.
-   - International expansion (SEA, US/EU) with Stripe multi-currency billing ($29–$79/mo).
-   - Target Valuation & Scale: $10M–$50M ARR.
+    - On-premise / Edge Small Language Models (SLMs) for zero-latency, private enterprise knowledge.
+    - International expansion (SEA, US/EU) with Stripe multi-currency billing ($29–$79/mo).
+    - Target Valuation & Scale: $10M–$50M ARR.
 
+---
 
+## 23. Planned Milestone #11: Super-Admin Portal & Enterprise Customer Support
 
+To support cohort scaling (50–300 pilot workspaces) and ensure zero unassisted customer churn, the following Super-Admin and Customer Support capabilities are planned for upcoming implementation:
+
+### 23.1 Core Capabilities
+1. **Workspace Impersonation (Support Mode):**
+   - Cryptographically signed temporary support token allowing authorized admins to view a customer's workspace with strict read-only/audit logging.
+   - Eliminates customer frustration when reporting UI or publishing issues without sharing passwords.
+2. **Tenant Health Score & Churn Risk Radar:**
+   - Real-time heuristic scoring of merchant engagement:
+     - 🟢 **Healthy:** Active posting $\ge 3$ posts/week, leads answered $< 1$ hour.
+     - 🟡 **Needs Care:** Inactive 7+ days or platform token expiring within 3 days $\rightarrow$ Auto-prompt proactive CSKH outreach via Zalo/SMS.
+     - 🔴 **At-Risk:** 14+ days no logins $\rightarrow$ Flag for founder check-in.
+3. **Automated Incident & Webhook Alerting (`#havi-ops-alerts` Telegram Channel):**
+   - Real-time bot notifications sent to the engineering team upon repeated 5xx errors from Meta/TikTok/OpenAI or sudden surges in Dead-Letter publishing jobs.
+4. **In-App Proactive Support Widget:**
+   - 1-tap floating support widget for shop owners to instantly reach out to the Havi operations desk.
+5. **Dual-Key Secret Rotation & Distributed Tracing:**
+   - Zero-downtime re-encryption for `HAVI_TOKEN_ENCRYPTION_KEY` and OpenTelemetry APM tracing for sub-millisecond bottleneck visibility.

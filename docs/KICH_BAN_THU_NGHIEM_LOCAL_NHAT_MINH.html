@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Kịch Bản Thử Nghiệm Thực Chiến Local — Trung Tâm Công Nghệ Nhật Minh</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm 15mm 15mm;
+      @bottom-right {
+        content: counter(page) "/" counter(pages);
+      }
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans", sans-serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #1e293b;
+      background-color: #ffffff;
+    }
+    .header {
+      border-bottom: 2px solid #e11d48;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .brand-title {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .brand-title span {
+      color: #e11d48;
+    }
+    .brand-subtitle {
+      font-size: 10.5pt;
+      color: #475569;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .header-badge {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #64748b;
+    }
+    .badge-pill {
+      display: inline-block;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 3px;
+    }
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #3b82f6;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 9pt;
+    }
+    .meta-item strong {
+      color: #0f172a;
+    }
+    h2 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      break-after: avoid;
+    }
+    .section-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #ffffff;
+      break-inside: avoid;
+    }
+    .section-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .url-tag {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 8pt;
+      background: #eff6ff;
+      color: #1d4ed8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #bfdbfe;
+    }
+    .step-list {
+      margin-left: 16px;
+      margin-bottom: 8px;
+    }
+    .step-list li {
+      margin-bottom: 4px;
+    }
+    .code-box {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 8.5pt;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin: 6px 0;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .input-box {
+      background: #fdf2f8;
+      border: 1px dashed #f43f5e;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 8.5pt;
+      color: #881337;
+      margin: 6px 0;
+      font-family: inherit;
+    }
+    .expected-box {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 8.5pt;
+      color: #065f46;
+      margin: 6px 0;
+    }
+    .expected-box ul {
+      margin-left: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 8.5pt;
+      break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .checkbox-col {
+      width: 32px;
+      text-align: center;
+    }
+    .checkbox-box {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 1.5px solid #64748b;
+      border-radius: 2px;
+    }
+    .footer {
+      margin-top: 20px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 8px;
+      text-align: center;
+      font-size: 8pt;
+      color: #64748b;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .highlight-pill {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 8pt;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="brand-title">Havi <span>Platform</span></div>
+      <div class="brand-subtitle">KỊCH BẢN THỬ NGHIỆM THỰC CHIẾN (LOCAL DOGFOODING RUNBOOK)</div>
+    </div>
+    <div class="header-badge">
+      <div class="badge-pill">Customer Zero Edition</div><br>
+      <span>Mục tiêu: Trung Tâm Công Nghệ Nhật Minh</span>
+    </div>
+  </div>
+
+  <!-- META BOX -->
+  <div class="meta-box">
+    <div class="meta-item"><strong>Doanh nghiệp áp dụng:</strong> Trung Tâm Công Nghệ Nhật Minh</div>
+    <div class="meta-item"><strong>Môi trường thử nghiệm:</strong> Local Devbox (macOS / Docker)</div>
+    <div class="meta-item"><strong>Địa chỉ Web App:</strong> <code>http://localhost:3000</code></div>
+    <div class="meta-item"><strong>Địa chỉ API Docs:</strong> <code>http://localhost:8000/docs</code></div>
+    <div class="meta-item"><strong>Tiêu chuẩn kỹ thuật:</strong> MIT Clean Architecture & Stanford HCI</div>
+    <div class="meta-item"><strong>Nguyên tắc kiểm thử:</strong> 100% Deterministic & Closed-Loop</div>
+  </div>
+
+  <!-- STEP 0 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>🚀 Bước 0: Khởi Động Devbox Toàn Diện (1 Lệnh)</span>
+      <span class="url-tag">Terminal</span>
+    </div>
+    <p>Chạy một lệnh duy nhất tại thư mục gốc của dự án để khởi động Postgres, Redis, MinIO, Backend API, Celery Worker, Beat và Next.js Frontend:</p>
+    <div class="code-box">npm run dev</div>
+    <p><em>(Hoặc: <code>bash scripts/devbox.sh</code>). Đợi khoảng 5–10 giây khi thấy thông báo "✨ Havi Devbox is LIVE!".</em></p>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>🎯 Kịch Bản 1: Thiết Lập Nhận Diện & Brand Profile</span>
+      <span class="url-tag">http://localhost:3000/app/settings</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Cấu hình tiếng nói chuyên gia thực chiến cho AI và thiết lập bộ quy tắc cấm cam kết ảo.</p>
+    <div class="input-box">
+      <strong>Dữ liệu nhập mẫu:</strong><br>
+      • <strong>Tên Doanh Nghiệp:</strong> Trung Tâm Công Nghệ Nhật Minh<br>
+      • <strong>Ngành nghề:</strong> Đào tạo & Kỹ thuật (hoặc Khác)<br>
+      • <strong>Giọng điệu (Brand Tone):</strong> <em>Chuyên gia công nghệ thực chiến, tận tâm, hiện đại, ngôn từ gần gũi, hướng dẫn 1 kèm 1, cam kết chất lượng sản phẩm thực tế.</em><br>
+      • <strong>Cam kết bị cấm (Banned Claims):</strong> <em>Bao đỗ 100% không cần học, Lương 50 triệu ngay sau 1 tuần, Đảm bảo việc làm không cần thi</em><br>
+      • <strong>Hotline / Zalo:</strong> <em>0984.883.750</em>
+    </div>
+    <div class="expected-box">
+      <strong>Kỳ vọng:</strong> Lưu thành công. Mọi nội dung AI sinh sau này tự động tuân thủ tone giọng kỹ thuật và không bao giờ xuất hiện các cam kết bị cấm.
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>✍️ Kịch Bản 2: Sáng Tạo Nội Dung Đa Kênh & Video 3s Hook</span>
+      <span class="url-tag">http://localhost:3000/app/content/new</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Biến 1 ghi chú thô 20 giây thành bài Facebook, Google Maps SEO và Kịch bản Video TikTok 9:16 có hook 3 giây giữ chân người xem.</p>
+    
+    <div style="margin-top: 6px;"><strong>🧪 Test Case 2.1: Khai Giảng Khóa Học AI Agent</strong></div>
+    <div class="input-box">
+      <strong>Raw Input:</strong> Ghi âm 20s: Khai giảng lớp AI Agent tối T3-T5-T7. Học viên tự build bot trực inbox và tạo video tự động. Giảm 20% học phí cho 5 bạn đăng ký sớm. Hotline 0984883750.
+    </div>
+    <div class="expected-box">
+      <strong>Kỳ vọng kết quả AI sinh ra:</strong>
+      <ul>
+        <li><strong>Bài Facebook:</strong> Đánh trúng nỗi đau trực page đêm khuya, giới thiệu quyền lợi thực hành 1 kèm 1, CTA nhắn tin nhận lộ trình.</li>
+        <li><strong>3-Second Video Hook:</strong> <em>"Dừng ngay việc thức trắng đêm trả lời inbox khách hàng nếu bạn chưa biết bí mật AI Agent này!"</em></li>
+        <li><strong>Google Maps Local SEO:</strong> Tối ưu từ khóa đào tạo lập trình & AI thực chiến tại khu vực.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top: 8px;"><strong>🧪 Test Case 2.2: Nghiệm Thu Bàn Giao Phòng Lab Máy Trạm</strong></div>
+    <div class="input-box">
+      <strong>Raw Input:</strong> Ảnh chụp: Bàn giao phòng Lab 30 máy trạm đồ họa công nghệ cao cho đối tác doanh nghiệp. Khảo sát tận nơi trong 2 giờ.
+    </div>
+    <div class="expected-box">
+      <strong>Kỳ vọng kết quả AI sinh ra:</strong>
+      <ul>
+        <li><strong>Bài Facebook:</strong> Báo cáo nghiệm thu dự án thực tế, khẳng định uy tín năng lực hạ tầng kỹ thuật.</li>
+        <li><strong>3-Second Video Hook:</strong> <em>"Bên trong phòng Lab máy trạm AI tiền tỷ vừa được Nhật Minh Tech bàn giao có gì?"</em></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- STEP 3 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>📅 Kịch Bản 3: Duyệt Bài 1 Chạm & Lên Lịch Giờ Vàng</span>
+      <span class="url-tag">http://localhost:3000/app/calendar</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Duyệt nội dung nhanh trên di động và đặt lịch giờ vàng tương tác cao.</p>
+    <ul class="step-list">
+      <li>Nhấn nút <strong>"Duyệt & Đăng"</strong> cho các bài viết vừa sinh ở Kịch bản 2.</li>
+      <li>Chọn khung giờ vàng: <strong>11:30</strong> (buổi trưa) hoặc <strong>20:00</strong> (buổi tối).</li>
+      <li>Kiểm tra hiển thị trực quan trên lịch biểu theo múi giờ Việt Nam (<code>UTC+7</code>).</li>
+      <li>Hệ thống áp dụng cơ chế khóa phân tán (<code>SKIP LOCKED</code>) loại bỏ 100% rủi ro đăng trùng bài.</li>
+    </ul>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>💬 Kịch Bản 4: AI Lead Agent Trực Inbox 24/7 & Bắt Số Điện Thoại</span>
+      <span class="url-tag">http://localhost:3000/app/inbox | /app/leads</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Giả lập khách hỏi học phí lúc nửa đêm, AI phản hồi tức thì và trích xuất SĐT vào CRM.</p>
+    <div class="input-box">
+      <strong>Tin nhắn học viên gửi lúc 23:45:</strong><br>
+      <em>"Ad ơi cho mình hỏi khóa AI Agent tối T3-T5 học phí bao nhiêu? Tư vấn giúp mình qua số 0984883750 với!"</em>
+    </div>
+    <div class="expected-box">
+      <strong>Kỳ vọng kết quả:</strong>
+      <ul>
+        <li><strong>AI Phản Hồi Tức Thì (dưới 5s):</strong> Báo học phí 3.500.000 đ kèm ưu đãi 20% và xác nhận lưu số để giảng viên gọi sáng mai.</li>
+        <li><strong>Tự Động Bắt SĐT CRM:</strong> Vào <code>/app/leads</code> thấy ngay Lead mới với SĐT <strong>0984883750</strong>, nguồn <strong>Fanpage Inbox</strong>, trạng thái <strong>MỚI (NEW)</strong>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>🔄 Kịch Bản 5: Chăm Sóc & Kéo Học Viên Cũ (Smart CRM Nudge)</span>
+      <span class="url-tag">http://localhost:3000/app/leads</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Tự động re-engage học viên cũ sau 30 ngày để bán thêm khóa nâng cao.</p>
+    <ul class="step-list">
+      <li>Tìm danh sách học viên hoàn thành khóa cơ bản sau 30 ngày (Trạng thái <code>INACTIVE_30_DAYS</code>).</li>
+      <li>Hệ thống tự tạo tin nhắn chăm sóc: <em>"Nhật Minh Tech gửi tặng bạn mã giảm 15% nâng cấp lên khóa AI Agent Chuyên Sâu nhân dịp tròn 1 tháng hoàn thành khóa Cơ Bản!"</em></li>
+      <li>Chủ tiệm chỉ cần bấm <strong>"Gửi Ưu Đãi" (1-Tap Send)</strong>.</li>
+    </ul>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>💳 Kịch Bản 6: Gia Hạn Gói Cước & Thanh Toán VietQR PayOS</span>
+      <span class="url-tag">http://localhost:3000/app/billing</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Trải nghiệm nâng cấp gói trả phí tự động 100% qua mã QR ngân hàng.</p>
+    <ul class="step-list">
+      <li>Chọn <strong>Gói Toàn Diện</strong> (<code>369.000 đ / tháng</code>).</li>
+      <li>Kiểm tra hiển thị mã <strong>VietQR</strong> động có gắn kèm nội dung chuyển khoản <code>HAVI &lt;MÃ_HÓA_ĐƠN&gt;</code>.</li>
+      <li>Khi Webhook thanh toán xác nhận: Gói cước lập tức kích hoạt 30 ngày + hạn mức 2.000.000 AI tokens.</li>
+    </ul>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>📊 Kịch Bản 7: Báo Cáo Doanh Thu Khép Kín (Closed-Loop Attribution)</span>
+      <span class="url-tag">http://localhost:3000/app/reports</span>
+    </div>
+    <p><strong>Mục tiêu:</strong> Kiểm tra các chỉ số kinh doanh thực tế thay vì các con số ảo (view/like):</p>
+    <div class="expected-box">
+      • <strong>Số lượt hỏi giá / tư vấn:</strong> Đo lường từ tin nhắn inbox thực tế.<br>
+      • <strong>Số Lead có số điện thoại:</strong> Trích xuất tự động từ khách nhắn tin.<br>
+      • <strong>Tốc độ phản hồi trung bình:</strong> Dưới 5 giây.<br>
+      • <strong>Quy đổi doanh thu:</strong> Đối soát số tiền khóa học / dịch vụ thực thu.
+    </div>
+  </div>
+
+  <!-- STEP 8: AUTOMATED RUNNER -->
+  <div class="section-card">
+    <div class="section-title">
+      <span>⚡ Chạy Mô Phỏng Tự Động Toàn Bộ 10 Milestones (2 Giây)</span>
+      <span class="url-tag">Terminal</span>
+    </div>
+    <p>Chạy script dogfooding có sẵn để kiểm tra toàn diện 100% logic backend chỉ trong 2 giây:</p>
+    <div class="code-box">cd apps/backend && uv run python ../../scripts/dogfood_suite.py</div>
+  </div>
+
+  <!-- CHECKLIST TABLE -->
+  <h2>📋 Bảng Checklist Đánh Giá Thử Nghiệm Hôm Nay</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="checkbox-col">✓</th>
+        <th>Hạng mục thử nghiệm</th>
+        <th>Đường dẫn kiểm tra</th>
+        <th>Kết quả kỳ vọng</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Khởi động Devbox</strong></td>
+        <td><code>npm run dev</code></td>
+        <td>Web (3000) và API (8000) online bình thường</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Brand Profile Nhật Minh</strong></td>
+        <td><code>/app/settings</code></td>
+        <td>Lưu tone giọng kỹ thuật & cấm cam kết ảo</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Tạo bài & 3s Hook Video</strong></td>
+        <td><code>/app/content/new</code></td>
+        <td>Sinh bài Facebook + Google Maps + Hook 3s</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Lịch đăng giờ vàng</strong></td>
+        <td><code>/app/calendar</code></td>
+        <td>Duyệt 1 chạm, hẹn giờ 11:30 / 20:00</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>AI Lead Agent bắt SĐT</strong></td>
+        <td><code>/app/inbox</code>, <code>/app/leads</code></td>
+        <td>Bắt chính xác số <code>0984883750</code> vào CRM</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>CRM Nudge kéo khách cũ</strong></td>
+        <td><code>/app/leads</code></td>
+        <td>Sinh ưu đãi 15% nâng cấp khóa chuyên sâu</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>VietQR PayOS Billing</strong></td>
+        <td><code>/app/billing</code></td>
+        <td>Mã QR hiển thị đúng 369.000đ & cú pháp</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Báo cáo doanh thu thực</strong></td>
+        <td><code>/app/reports</code></td>
+        <td>Hiển thị số lead, khách hỏi giá thực tế</td>
+      </tr>
+      <tr>
+        <td class="checkbox-col"><div class="checkbox-box"></div></td>
+        <td><strong>Dogfood Suite Script</strong></td>
+        <td><code>scripts/dogfood_suite.py</code></td>
+        <td>10/10 Milestones Pass 100%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>Havi Platform</strong> — Phát triển với tình yêu thương và trí tuệ Việt Nam.<br>
+    Được biên soạn dành riêng cho Founder kiểm thử thực chiến tại <strong>Trung Tâm Công Nghệ Nhật Minh</strong>.
+  </div>
+
+</body>
+</html>

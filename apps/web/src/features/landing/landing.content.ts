@@ -11,10 +11,13 @@
 export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
-  { v: "4 Kênh Tăng Trưởng", l: "Facebook · Google Maps SEO · TikTok · YouTube Shorts", icon: "🌐" },
-  { v: "Chỉ từ 6.000 đ/ngày", l: "Rẻ hơn 1 ly trà sữa mỗi tuần (189.000 đ/tháng)", icon: "💰" },
-  { v: "Phản hồi < 5 Giây", l: "Trực Inbox 24/7 không để rơi mất khách nửa đêm", icon: "⚡" },
+  { v: "4 Kênh Tăng Trưởng", l: "Facebook · Maps SEO · TikTok · Shorts", icon: "🌐" },
+  { v: "Chỉ từ 6k/ngày", l: "Rẻ hơn 1 ly trà sữa mỗi tuần", icon: "💰" },
+  { v: "Phản hồi < 5s", l: "Trực Inbox 24/7 không bỏ sót khách", icon: "⚡" },
 ];
+
+
+
 
 /** Các kênh siêu năng lực hỗ trợ. */
 export const heroChannels = [

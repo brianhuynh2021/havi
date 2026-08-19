@@ -137,18 +137,19 @@ export function LandingScreen() {
           {/* Stats Section */}
           <div className={styles.heroStats}>
             {heroStats.map((st, idx) => (
-              <div key={st.v} style={{ display: "flex", alignItems: "center", gap: "36px" }}>
-                {idx > 0 && <div className={styles.statDivider} />}
+              <div key={st.v} className={styles.statItemWrapper}>
+                {idx > 0 && <div className={styles.statDivider} aria-hidden="true" />}
                 <div className={styles.statItem}>
                   <div className={styles.statVal}>
-                    <span style={{ fontSize: "20px" }}>{st.icon}</span>
-                    {st.v}
+                    <span className={styles.statIcon}>{st.icon}</span>
+                    <span>{st.v}</span>
                   </div>
                   <div className={styles.statLbl}>{st.l}</div>
                 </div>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
