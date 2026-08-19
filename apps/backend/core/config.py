@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     web_base_url: str = "http://localhost:3000"
     google_client_id: str = ""
     google_client_secret: str = ""
+    google_business_redirect_uri: str = "http://localhost:8000/connections/google_business/callback"
     youtube_redirect_uri: str = "http://localhost:8000/connections/youtube/callback"
     tiktok_client_key: str = ""
     tiktok_client_secret: str = ""

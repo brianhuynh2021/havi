@@ -151,11 +151,13 @@ export function ConnectionCard({
       const interval = setInterval(() => {
         attempts += 1;
         onChanged();
-        if (attempts >= 30) {
+        if (attempts >= 8) {
           clearInterval(interval);
           setBusy(false);
         }
-      }, 1500);
+      }, 2000);
+    } else {
+      setBusy(false);
     }
   }
 

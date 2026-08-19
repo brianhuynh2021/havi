@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionCard } from "./connection-card";
 import {
   isUsable,
@@ -31,6 +31,11 @@ type Props = {
 export function ConnectionList({ returnTo, onUsableChange }: Props) {
   const [connections, setConnections] = useState<PlatformConnection[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const onUsableChangeRef = useRef(onUsableChange);
+
+  useEffect(() => {
+    onUsableChangeRef.current = onUsableChange;
+  }, [onUsableChange]);
 
   // Kết quả OAuth đọc được ngay ở lần render đầu — nó nằm trong URL, không phải
   // thứ phải đi hỏi ai. Dùng initializer chứ không effect + setState: đọc trong
@@ -49,13 +54,11 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
     }
     setError(null);
     setConnections(result.data);
-    onUsableChange?.(result.data.some((c) => isUsable(c)));
-  }, [onUsableChange]);
+    onUsableChangeRef.current?.(result.data.some((c) => isUsable(c)));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    // Bọc trong hàm async để mọi setState nằm sau `await`, không chạy đồng bộ
-    // trong thân effect. `cancelled` chặn setState sau khi unmount.
     async function initial() {
       const result = await listConnections();
       if (cancelled) return;
@@ -64,13 +67,13 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
         return;
       }
       setConnections(result.data);
-      onUsableChange?.(result.data.some((c) => isUsable(c)));
+      onUsableChangeRef.current?.(result.data.some((c) => isUsable(c)));
     }
     initial();
     return () => {
       cancelled = true;
     };
-  }, [onUsableChange]);
+  }, []);
 
   // Tự động thông báo cho cửa sổ chính và đóng popup nếu đang trong cửa sổ popup OAuth
   useEffect(() => {
