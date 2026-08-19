@@ -50,6 +50,7 @@ export async function GET(
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
+    console.error("Lỗi khi GET proxy webhook tới backend:", error);
     return NextResponse.json(
       { error: 1, message: "Webhook proxy error" },
       { status: 500 }

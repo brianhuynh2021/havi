@@ -195,13 +195,36 @@ describe("OnboardingScreen", () => {
     expect(spaCard).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("hiển thị bản xem trước bài viết AI (Magic Onboarding Preview)", async () => {
+  it("hiển thị bản xem trước bài viết AI linh hoạt theo ngành và tên tiệm (Smart Dynamic Preview)", async () => {
     mockApi();
     renderOnboarding();
 
     expect(
-      screen.getByText(/Bản xem trước bài viết của tiệm bạn/i)
+      screen.getByText(/Bản xem trước bài viết/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/Tự động tạo mẫu/i)).toBeInTheDocument();
+
+    const user = userEvent.setup();
+
+    // Chọn ngành Giáo dục
+    const eduCard = screen.getByRole("button", { name: /giáo dục/i });
+    await user.click(eduCard);
+
+    // Xác nhận nội dung đã chuyển sang văn phong Giáo dục & Đào tạo nghề
+    expect(
+      screen.getByText(/Khai giảng khóa mới tuần này tại Spa An Nhiên/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("#TuyenSinhKhoaMoi")).toBeInTheDocument();
+    expect(screen.getByText("#DaoTaoNgheThucChien")).toBeInTheDocument();
+
+    // Đổi sang ngành Ăn uống & Cà phê
+    const fbCard = screen.getByRole("button", { name: /ăn uống/i });
+    await user.click(fbCard);
+
+    // Xác nhận nội dung tự động chuyển sang Ăn uống
+    expect(
+      screen.getByText(/Thưởng thức menu món mới đậm vị tuần này tại Spa An Nhiên/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("#MonNgonMoiNgay")).toBeInTheDocument();
   });
 });

@@ -4,12 +4,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Logo } from "@/components/ui/logo";
 import { ConnectionList } from "@/features/connections/connection-list";
 import { useSession } from "@/lib/auth/session";
 import { createWorkspace, fetchDefaultShopName } from "./onboarding.api";
-import { industryOptions, type IndustryOption } from "./onboarding.fixture";
+import {
+  industryOptions,
+  getIndustrySamplePreview,
+  type IndustryOption,
+} from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
-import { Logo } from "@/components/ui/logo";
 
 type Step = 1 | 2 | 3;
 
@@ -37,6 +41,8 @@ export function OnboardingScreen() {
   const [completedStages, setCompletedStages] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const previewSample = getIndustrySamplePreview(industry, shopName);
 
   useEffect(() => {
     if (!learning) return;
@@ -198,28 +204,27 @@ export function OnboardingScreen() {
             <div className={styles.magicPreviewCard} aria-label="Bản xem trước bài viết AI">
               <div className={styles.magicPreviewHeader}>
                 <h3 className={styles.magicPreviewTitle}>
-                  ✨ Bản xem trước bài viết của tiệm bạn
+                  ✨ Bản xem trước bài viết theo ngành
                 </h3>
                 <span className={styles.magicBadge}>⚡ Tự động tạo mẫu</span>
               </div>
               <div className={styles.magicPreviewContent}>
                 <div className={styles.mockupHeader}>
                   <div className={styles.mockupAvatar}>
-                    {(shopName || "H")[0].toUpperCase()}
+                    {(shopName.trim() || "H")[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className={styles.mockupName}>{shopName.trim() || "Tiệm của bạn"}</p>
+                    <p className={styles.mockupName}>{shopName.trim() || "Thương hiệu của bạn"}</p>
                     <p className={styles.mockupMeta}>Fanpage · Vừa xong · 🌐</p>
                   </div>
                 </div>
                 <p className={styles.mockupText}>
-                  ✨ &ldquo;Hân hoan chào đón quý khách ghé thăm{" "}
-                  <strong>{shopName.trim() || "tiệm"}</strong>! Tuần này tiệm ưu đãi tặng voucher 15% cho 5 khách hàng đầu tiên nhắn tin đặt lịch trước...&rdquo;
+                  ✨ &ldquo;{previewSample.text}&rdquo;
                 </p>
                 <div className={styles.mockupFooter}>
-                  <span>#{(shopName.trim() || "tiem").replace(/\s+/g, "")}</span>
-                  <span>#UuDaiTuanNay</span>
-                  <span>#ChamSocKhachHang</span>
+                  {previewSample.hashtags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
                 </div>
               </div>
             </div>
