@@ -911,4 +911,23 @@ To support cohort scaling (50–300 pilot workspaces) and ensure zero unassisted
 4. **In-App Proactive Support Widget:**
    - 1-tap floating support widget for shop owners to instantly reach out to the Havi operations desk.
 5. **Dual-Key Secret Rotation & Distributed Tracing:**
-   - Zero-downtime re-encryption for `HAVI_TOKEN_ENCRYPTION_KEY` and OpenTelemetry APM tracing for sub-millisecond bottleneck visibility.
+    - Zero-downtime re-encryption for `HAVI_TOKEN_ENCRYPTION_KEY` and OpenTelemetry APM tracing for sub-millisecond bottleneck visibility.
+
+---
+
+## 24. Planned Milestone #12: Multi-Page Picker & Dynamic Channel Switcher (Dropdown)
+
+Based on direct founder dogfooding feedback with multi-brand accounts (*Trung Tâm Công Nghệ Nhật Minh* & *Havi Sandbox*):
+
+### 24.1 User Need & Problem
+When a shop owner manages multiple Facebook Pages (e.g., separate brand pages, multiple regional branches, or test environments), OAuth returns all authorized pages. Currently, the system deterministically picks the highest-priority business page. Merchants need the flexibility to view all connected pages and switch their primary active publishing/inbox page with a single click.
+
+### 24.2 Architecture & Feature Specification
+1. **Multi-Page Token Vault:**
+   - Store all authorized page tokens in `platform_connections` or a linked `workspace_page_assets` table.
+2. **Dynamic UI Dropdown Selector:**
+   - On `/app/connections` and Onboarding Step 2, render a clean dropdown selector when $\ge 2$ Pages are available.
+   - Live preview of page avatar, page name, and follower count.
+3. **Instant Active Page Switcher:**
+   - 1-click active page switching without re-triggering the Facebook OAuth popup.
+   - Dynamic update to AI Lead Agent webhook listeners and scheduled calendar jobs for the active page.

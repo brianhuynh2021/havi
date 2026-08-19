@@ -9,5 +9,7 @@
 - **Platform Strategy & Channel Priority**: Ưu tiên tối đa các kênh mở, dễ kiểm thử và tạo chuyển đổi ngay (**Facebook Fanpage, Instagram, TikTok, YouTube Shorts, Google Business Profile**). Kênh **Zalo OA** tạm thời lùi lại phía sau vì rào cản xét duyệt giấy phép ĐKKD của VNG.
 - **Brand Origin & Founder's Soul (Linh Hồn Thương Hiệu)**: **Havi** = **Harry** (con trai yêu quý của Founder — đại diện cho tương lai, ngọn lửa gia đình và sự bảo bọc) + **Vietnam** (trí tuệ và khát vọng của người Việt Nam, nâng tầm hàng triệu chủ tiệm/doanh nghiệp vừa và nhỏ). Toàn bộ sản phẩm được xây dựng với tình yêu thương, sự tử tế và tinh thần phụng sự cao nhất.
 - **Roadmap Milestones Executed**: #1 (Unified Inbox & Lead Care), #2 (AI Video Scripting & Hook Generator), #3 (Billing & VietQR Subscription), #4 (Production Docker & Cloud Deploy), #5 (Google Business & CRM Nudge), #6 (POS Sales Webhook & Closed-Loop Attribution), #7 (Dogfooding FB & YouTube Shorts), #8 (AI Trend Scout & Video Studio), #9 (AI Lead Agent), #10 (Mobile PWA & Stanford Branding).
-- **Roadmap Milestones Planned**: #11 (Super-Admin Portal, Tenant Health Radar, Impersonation & Incident Ops Alerting).
+- **Roadmap Milestones Planned**:
+  - #11: **Multi-Page Picker & Channel Switcher (Dropdown)** — Cho phép chủ tiệm quản lý nhiều Fanpage / chi nhánh linh hoạt chọn và chuyển đổi Trang kết nối trực tiếp qua Dropdown mà không cần kết nối lại.
+  - #12: Super-Admin Portal, Tenant Health Radar, Impersonation & Incident Ops Alerting.
 
