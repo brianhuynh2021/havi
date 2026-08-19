@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { LandingScreen } from "./landing-screen";
@@ -34,19 +34,19 @@ describe("LandingScreen", () => {
     expect(screen.getByText(/tuyệt đối an toàn cho fanpage/i)).toBeInTheDocument();
   });
 
-  it("cho phép tương tác đổi tab trong Studio Demo trực tuyến", async () => {
+  it("cho phép tương tác đổi ngành trong Showcase 3D Demo trực tuyến", async () => {
     renderLanding();
     const user = userEvent.setup();
 
-    // Bấm chuyển sang tab TikTok Video
-    const videoTab = screen.getByRole("button", { name: /tiktok video/i });
-    await user.click(videoTab);
-    expect(screen.getAllByText(/3-Second Retention Hook/i).length).toBeGreaterThan(0);
+    // Bấm chọn ngành F&B Quán ăn & Cafe
+    const fbBtn = screen.getByRole("button", { name: /quán ăn & cafe/i });
+    await user.click(fbBtn);
+    expect(screen.getAllByText(/quán ăn & cafe/i).length).toBeGreaterThan(0);
 
-    // Bấm chuyển sang tab Trực Inbox Bắt SĐT
-    const inboxTab = screen.getByRole("button", { name: /trực inbox bắt sđt/i });
-    await user.click(inboxTab);
-    expect(screen.getAllByText(/Đã bắt SĐT về CRM/i).length).toBeGreaterThan(0);
+    // Bấm chọn ngành Dạy Nghề Thực Chiến
+    const eduBtn = screen.getByRole("button", { name: /đào tạo & dịch vụ nghề/i });
+    await user.click(eduBtn);
+    expect(screen.getAllByText(/đào tạo & dịch vụ nghề/i).length).toBeGreaterThan(0);
   });
 
   it("CTA dẫn tới đăng ký và đăng nhập", () => {
@@ -105,6 +105,46 @@ describe("LandingScreen", () => {
     const faqBtn = screen.getByRole("button", { name: /Havi có tự động đăng bài lên mạng xã hội/i });
     await user.click(faqBtn);
     expect(screen.getByText(/Tuyệt đối KHÔNG. Nguyên tắc cốt lõi số 1 của Havi/i)).toBeInTheDocument();
+  });
+
+  it("hiển thị Hero 3D Cinematic Showcase và cho phép chuyển đổi giữa các bước", async () => {
+    renderLanding();
+    const user = userEvent.setup();
+
+    expect(screen.getByTestId("hero-cinematic-showcase")).toBeInTheDocument();
+    expect(screen.getByTestId("step-content-0")).toBeInTheDocument();
+    expect(screen.getByText(/Đã nhận diện bối cảnh & dịch vụ tiệm/i)).toBeInTheDocument();
+
+    // Click step 2: AI Sinh Đa Kênh
+    const step2Btn = screen.getByRole("button", { name: /Bước 2: AI Sinh Đa Kênh/i });
+    await user.click(step2Btn);
+    const step1El = screen.getByTestId("step-content-1");
+    expect(step1El).toBeInTheDocument();
+    expect(within(step1El).getByText(/TikTok Video 9:16/i)).toBeInTheDocument();
+
+    // Click step 3: Bắn Lead Telegram
+    const step3Btn = screen.getByRole("button", { name: /Bước 3: Bắn Lead Telegram/i });
+    await user.click(step3Btn);
+    const step2El = screen.getByTestId("step-content-2");
+    expect(step2El).toBeInTheDocument();
+    expect(within(step2El).getByText(/Havi Hot Lead Radar Bot/i)).toBeInTheDocument();
+  });
+
+  it("bấm nút Xem Video Thực Chiến 60s thì mở video modal và có thể đóng lại", async () => {
+    renderLanding();
+    const user = userEvent.setup();
+
+    const watchBtn = screen.getByRole("button", { name: /Xem Video Thực Chiến 60s/i });
+    await user.click(watchBtn);
+
+    expect(screen.getByRole("dialog", { name: /Video trình diễn thực chiến Havi 60 giây/i })).toBeInTheDocument();
+    expect(screen.getByText(/DEMO THỰC CHIẾN 60S/i)).toBeInTheDocument();
+
+    // Click close button
+    const closeBtn = screen.getByRole("button", { name: /Đóng video/i });
+    await user.click(closeBtn);
+
+    expect(screen.queryByRole("dialog", { name: /Video trình diễn thực chiến Havi 60 giây/i })).not.toBeInTheDocument();
   });
 });
 

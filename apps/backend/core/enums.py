@@ -189,6 +189,9 @@ class InboxItemStatus(StrEnum):
 class LeadSource(StrEnum):
     FANPAGE = "fanpage"
     MAPS = "maps"
+    GOOGLE_BUSINESS = "google_business"
+    TIKTOK = "tiktok"
+    INBOX = "inbox"
     GROUP = "group"
     CRM = "crm"
     POS = "pos"

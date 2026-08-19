@@ -697,8 +697,8 @@ export function ContentCreationScreen() {
               },
               {
                 icon: "💻",
-                title: "Đào tạo Tech / Nhật Minh",
-                text: "Khai giảng khóa học Lập trình Web & AI thực chiến 1 kèm 1: Học trên dự án thật, cam kết hỗ trợ việc làm sau khóa học.",
+                title: "Đào tạo Tech / Kỹ năng số",
+                text: "Khai giảng khóa học Kỹ thuật số thực chiến 1 kèm 1: Học trên dự án thật, cam kết hỗ trợ việc làm sau khóa học.",
               },
               {
                 icon: "🛍️",

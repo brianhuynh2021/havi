@@ -32,23 +32,24 @@ export const termsSections: Section[] = [
   {
     heading: "1. Havi là gì",
     paragraphs: [
-      "Havi là công cụ giúp hộ kinh doanh và doanh nghiệp nhỏ tạo nội dung marketing bằng AI. Bạn nạp ảnh hoặc vài dòng mô tả, Havi viết bài cho từng kênh, và bạn duyệt trước khi bài được đăng.",
-      "Havi đang trong giai đoạn thử nghiệm. Dịch vụ có thể thay đổi, tạm ngưng hoặc lỗi trong giai đoạn này, và chúng tôi chưa thu phí.",
+      "Havi là nền tảng trợ lý AI Marketing đa kênh giúp hộ kinh doanh, chủ tiệm Spa, Salon, F&B, BĐS và doanh nghiệp vừa và nhỏ tự động hóa sáng tạo nội dung, kịch bản video ngắn và trực chat bắt lead 24/7.",
+      "Bạn chỉ cần nạp ảnh hoặc ghi âm giọng nói, Havi viết bài và kịch bản cho từng kênh (Facebook, TikTok 9:16, Google Maps, YouTube Shorts), và bạn luôn là người duyệt trước khi bài được xuất bản.",
     ],
   },
   {
-    heading: "2. Tài khoản của bạn",
+    heading: "2. Tài khoản và Gói dịch vụ",
     paragraphs: [
       "Bạn cần email và mật khẩu để tạo tài khoản. Bạn chịu trách nhiệm giữ bí mật mật khẩu và mọi hoạt động diễn ra dưới tài khoản của mình.",
       "Bạn phải đủ 18 tuổi và có quyền đại diện cho cơ sở kinh doanh mà bạn đăng ký.",
+      "Havi cung cấp 7 ngày dùng thử miễn phí đầy đủ tính năng. Sau thời gian dùng thử, bạn có thể chọn nâng cấp Gói Khởi Nghiệp (189.000 đ/tháng) hoặc Gói Chuyên Nghiệp (369.000 đ/tháng) thanh toán tự động qua mã VietQR chuyển khoản ngân hàng. Bạn có quyền hủy gia hạn bất kỳ lúc nào.",
     ],
   },
   {
-    heading: "3. Nội dung do AI tạo ra — bạn là người chịu trách nhiệm cuối cùng",
+    heading: "3. Nội dung do AI tạo ra: bạn là người chịu trách nhiệm cuối cùng",
     paragraphs: [
-      "Havi sinh bản nháp bằng mô hình ngôn ngữ. AI có thể viết sai thông tin, sai giá, hoặc đưa ra cam kết mà tiệm bạn không thực hiện được. Havi có bộ lọc chặn những câu cam kết quá mức, nhưng bộ lọc không thể bắt hết mọi trường hợp.",
-      "Vì vậy mọi bài đều dừng ở trạng thái chờ duyệt, và chỉ đăng khi bạn bấm duyệt. Khi bạn duyệt một bài, bạn xác nhận đã đọc và chịu trách nhiệm về nội dung đó — kể cả phần do AI viết.",
-      "Bạn giữ toàn bộ quyền đối với nội dung mình nạp vào và bài đã duyệt. Havi không đòi quyền sở hữu với chúng.",
+      "Havi sinh bản nháp bằng mô hình ngôn ngữ lớn. AI có thể viết sai thông tin, sai giá, hoặc đưa ra cam kết mà tiệm bạn không thực hiện được. Havi có bộ lọc an toàn, nhưng bộ lọc không thể bắt hết mọi trường hợp.",
+      "Vì vậy mọi bài đều dừng ở trạng thái chờ duyệt, và chỉ xuất bản khi bạn bấm duyệt. Khi bạn duyệt một bài, bạn xác nhận đã đọc và chịu trách nhiệm về nội dung đó, kể cả phần do AI viết.",
+      "Bạn giữ toàn bộ 100% quyền sở hữu đối với nội dung mình nạp vào và bài đã duyệt. Havi không đòi quyền sở hữu với chúng.",
     ],
   },
   {
@@ -63,27 +64,27 @@ export const termsSections: Section[] = [
     heading: "5. Kết nối với nền tảng khác",
     paragraphs: [
       "Havi chỉ kết nối với Facebook, Google Business, TikTok, YouTube qua API chính thức của họ. Chúng tôi không thu thập dữ liệu bằng cách crawl, và không dùng công cụ tự động vi phạm điều khoản của các nền tảng đó.",
-      "Khi bạn nối một kênh, bạn cũng chịu ràng buộc bởi điều khoản của nền tảng đó. Nếu nền tảng thay đổi chính sách hoặc khoá quyền truy cập, tính năng liên quan có thể ngưng hoạt động ngoài tầm kiểm soát của Havi.",
+      "Khi bạn nối một kênh, bạn cũng chịu ràng buộc bởi điều khoản của nền tảng đó. Nếu bên thứ ba thay đổi chính sách hoặc khoá quyền truy cập, tính năng liên quan có thể ngưng hoạt động ngoài tầm kiểm soát của Havi.",
     ],
   },
   {
-    heading: "6. Giới hạn trách nhiệm",
+    heading: "6. Giới hạn trách nhiệm và Hoàn tiền",
     paragraphs: [
-      "Trong giai đoạn thử nghiệm, Havi được cung cấp nguyên trạng, không kèm bảo đảm về tính sẵn sàng hay chính xác.",
+      "Chúng tôi cam kết hoàn tiền 100% nếu bạn không hài lòng về dịch vụ trong vòng 7 ngày đầu tiên sau khi nâng cấp gói trả phí.",
       "Havi không chịu trách nhiệm cho thiệt hại phát sinh từ nội dung bạn đã duyệt và đăng, từ việc nền tảng bên thứ ba ngưng dịch vụ, hoặc từ việc bạn mất quyền truy cập tài khoản do lộ mật khẩu.",
     ],
   },
   {
     heading: "7. Ngưng sử dụng",
     paragraphs: [
-      "Bạn có thể ngưng dùng Havi bất cứ lúc nào. Để xoá tài khoản và dữ liệu, gửi email tới địa chỉ ở cuối trang — chúng tôi xử lý trong vòng 30 ngày.",
-      "Chúng tôi có thể tạm ngưng tài khoản vi phạm điều khoản, và sẽ báo trước qua email trừ trường hợp cần xử lý ngay.",
+      "Bạn có thể ngưng dùng Havi bất cứ lúc nào. Để xoá tài khoản và dữ liệu, gửi email tới địa chỉ ở cuối trang: chúng tôi xử lý thủ công trong vòng 30 ngày.",
+      "Chúng tôi có thể tạm ngưng tài khoản vi phạm điều khoản, và sẽ báo trước qua email trừ trường hợp cần xử lý khẩn cấp.",
     ],
   },
   {
     heading: "8. Thay đổi điều khoản",
     paragraphs: [
-      "Khi sửa điều khoản, chúng tôi cập nhật ngày ở đầu trang và báo qua email nếu thay đổi ảnh hưởng đáng kể tới quyền của bạn.",
+      "Khi sửa điều khoản, chúng tôi cập nhật ngày ở đầu trang và thông báo qua email nếu thay đổi ảnh hưởng đáng kể tới quyền lợi của bạn.",
     ],
   },
 ];
@@ -92,11 +93,11 @@ export const privacySections: Section[] = [
   {
     heading: "1. Chúng tôi thu thập gì",
     paragraphs: [
-      "Thông tin tài khoản: email, tên bạn nhập khi đăng ký, và mật khẩu ở dạng đã băm — chúng tôi không lưu và không đọc được mật khẩu gốc của bạn.",
+      "Thông tin tài khoản: email, tên bạn nhập khi đăng ký, và mật khẩu ở dạng đã băm bằng thuật toán Argon2id (chúng tôi không lưu và không đọc được mật khẩu gốc của bạn).",
       "Số điện thoại: chỉ khi bạn tự thêm trong phần Cài đặt, và chỉ dùng để gửi thông báo hoặc xác thực. Không bắt buộc, không dùng để đăng nhập.",
       "Thông tin tiệm: tên tiệm, ngành nghề, giọng văn và những câu bạn không muốn dùng trong bài.",
       "Nội dung bạn nạp: ảnh bạn tải lên và ghi chú bạn gõ, cùng các bản nháp Havi sinh ra và lịch sử mọi lần sửa.",
-      "Nhật ký kỹ thuật: thời điểm chạy, thời gian xử lý và lượng token mỗi lần gọi AI. Nhật ký này dùng để đo chi phí và tìm lỗi — nó không chứa nội dung bài viết của bạn.",
+      "Nhật ký kỹ thuật: thời điểm chạy, thời gian xử lý và lượng token mỗi lần gọi AI. Nhật ký này dùng để đo chi phí và tìm lỗi: nó không chứa nội dung bài viết cá nhân của bạn.",
     ],
   },
   {
@@ -104,14 +105,14 @@ export const privacySections: Section[] = [
     paragraphs: [
       "Để vận hành dịch vụ: sinh bản nháp theo đúng giọng tiệm bạn, xếp bài lên lịch, và hiển thị lịch sử sửa.",
       "Để giữ tài khoản an toàn: phát hiện đăng nhập bất thường và chặn lạm dụng.",
-      "Để cải thiện Havi: xem nhật ký kỹ thuật và số liệu tổng hợp. Chúng tôi không đọc nội dung bài của bạn để phục vụ mục đích này.",
-      "Chúng tôi không bán dữ liệu của bạn, và không dùng nội dung của bạn để quảng cáo cho bên thứ ba.",
+      "Để cải thiện Havi: xem nhật ký kỹ thuật và số liệu tổng hợp. Chúng tôi không đọc nội dung bài của bạn để phục vụ mục đích thương mại ngoài luồng.",
+      "Chúng tôi cam kết 100% không bán dữ liệu của bạn, và không dùng nội dung của bạn để quảng cáo cho bên thứ ba.",
     ],
   },
   {
     heading: "3. Dữ liệu đi tới đâu",
     paragraphs: [
-      "Để sinh bản nháp, Havi gửi thông tin tiệm và liệu thô bạn nạp tới nhà cung cấp mô hình AI — hiện là Google (Gemini), và Anthropic hoặc OpenAI khi Gemini gặp lỗi. Các nhà cung cấp này xử lý dữ liệu theo điều khoản dành cho khách hàng doanh nghiệp của họ.",
+      "Để sinh bản nháp, Havi gửi thông tin tiệm và dữ liệu thô bạn nạp tới nhà cung cấp mô hình AI: ưu tiên Google Gemini, và Anthropic hoặc OpenAI khi Gemini gặp sự cố. Các nhà cung cấp này xử lý dữ liệu theo điều khoản bảo mật dành cho khách hàng doanh nghiệp của họ.",
       "Khi bạn duyệt một bài, nội dung đó được gửi tới nền tảng bạn đã nối (Facebook, Google Maps, TikTok, YouTube) qua API chính thức.",
       "Ngoài hai trường hợp trên, chúng tôi chỉ chia sẻ dữ liệu khi có yêu cầu hợp pháp từ cơ quan nhà nước có thẩm quyền.",
     ],
@@ -119,34 +120,35 @@ export const privacySections: Section[] = [
   {
     heading: "4. Dữ liệu được giữ bao lâu",
     paragraphs: [
-      "Dữ liệu tài khoản và nội dung được giữ trong suốt thời gian bạn còn dùng Havi.",
-      "Khi bạn yêu cầu xoá tài khoản, chúng tôi xoá dữ liệu cá nhân và nội dung trong vòng 30 ngày. Nhật ký kỹ thuật ẩn danh — không gắn với danh tính bạn — có thể được giữ lại để phân tích chi phí.",
+      "Dữ liệu tài khoản và nội dung được giữ trong suốt thời gian bạn còn sử dụng Havi.",
+      "Khi bạn gửi yêu cầu qua email để xoá tài khoản, chúng tôi xử lý thủ công trong vòng 30 ngày để xóa toàn bộ dữ liệu cá nhân và nội dung liên kết. Nhật ký kỹ thuật ẩn danh không gắn với danh tính bạn có thể được giữ lại để phân tích chi phí.",
       "Bản sao lưu được xoay vòng và sẽ hết hạn theo chu kỳ sao lưu sau khi dữ liệu chính đã bị xoá.",
     ],
   },
   {
     heading: "5. Chúng tôi bảo vệ dữ liệu thế nào",
     paragraphs: [
-      "Mật khẩu được băm bằng Argon2id — kể cả chúng tôi cũng không đọc được mật khẩu gốc.",
-      "Dữ liệu mỗi tiệm được tách riêng: hệ thống chặn ở tầng truy vấn để tiệm này không đọc được dữ liệu của tiệm khác.",
-      "Ảnh bạn tải lên đi thẳng lên kho lưu trữ qua đường truyền có mã hoá; hệ thống kiểm tra định dạng thật của file trước khi nhận.",
+      "Mật khẩu được băm bằng thuật toán Argon2id: kể cả quản trị viên cũng không đọc được mật khẩu gốc.",
+      "Toàn bộ OAuth Access Token của các kênh mạng xã hội được mã hóa bằng khóa AES-128 Fernet.",
+      "Dữ liệu mỗi tiệm được tách riêng độc lập ở tầng truy vấn cơ sở dữ liệu (Multi-tenant data isolation) để tiệm này không bao giờ đọc được dữ liệu của tiệm khác.",
+      "Ảnh bạn tải lên đi thẳng lên kho lưu trữ qua đường truyền HTTPS mã hoá; hệ thống kiểm tra định dạng thật của file trước khi nhận.",
       "Nhật ký hệ thống không ghi mật khẩu, mã xác thực hay token đăng nhập.",
-      "Không hệ thống nào an toàn tuyệt đối. Nếu xảy ra sự cố ảnh hưởng tới dữ liệu của bạn, chúng tôi sẽ thông báo qua email.",
+      "Mặc dù áp dụng các tiêu chuẩn bảo mật khắt khe, trên thực tế không hệ thống nào an toàn tuyệt đối. Nếu xảy ra sự cố ảnh hưởng tới dữ liệu của bạn, chúng tôi sẽ thông báo ngay qua email.",
     ],
   },
   {
     heading: "6. Quyền của bạn",
     paragraphs: [
-      "Theo pháp luật Việt Nam về bảo vệ dữ liệu cá nhân, bạn có quyền biết dữ liệu nào của mình đang được xử lý, yêu cầu sửa dữ liệu sai, yêu cầu xoá dữ liệu, và rút lại sự đồng ý.",
-      "Bạn sửa được thông tin tiệm và giọng văn ngay trong ứng dụng. Với các yêu cầu còn lại — xem toàn bộ dữ liệu, xuất dữ liệu, hoặc xoá tài khoản — hiện bạn gửi email cho chúng tôi và chúng tôi xử lý thủ công trong vòng 30 ngày. Chúng tôi đang xây tính năng tự phục vụ cho những việc này.",
-      "Bạn cũng có quyền khiếu nại lên cơ quan nhà nước có thẩm quyền nếu cho rằng dữ liệu của mình bị xử lý sai.",
+      "Theo pháp luật Việt Nam về bảo vệ dữ liệu cá nhân (Nghị định 13/2023/NĐ-CP), bạn có đầy đủ các quyền: quyền biết dữ liệu nào của mình đang được xử lý, yêu cầu sửa dữ liệu sai, yêu cầu xoá dữ liệu, và rút lại sự đồng ý.",
+      "Bạn sửa được thông tin tiệm và giọng văn ngay trong ứng dụng. Với các yêu cầu còn lại: xem toàn bộ dữ liệu, xuất dữ liệu, hoặc xoá tài khoản: hiện bạn gửi email cho chúng tôi và chúng tôi xử lý thủ công trong vòng 30 ngày.",
+      "Bạn cũng có quyền khiếu nại lên cơ quan nhà nước có thẩm quyền nếu cho rằng dữ liệu của mình bị xử lý sai quy định.",
     ],
   },
   {
     heading: "7. Ảnh có mặt khách hàng",
     paragraphs: [
       "Nếu bạn nạp ảnh có hình khách hàng, bạn phải được họ đồng ý trước. Havi không thay bạn xin phép, và không kiểm tra được điều này.",
-      "Khách hàng trong ảnh có quyền yêu cầu gỡ hình của họ. Khi nhận yêu cầu như vậy, chúng tôi sẽ liên hệ với bạn để xử lý.",
+      "Khách hàng trong ảnh có quyền yêu cầu gỡ hình của họ. Khi nhận yêu cầu như vậy, chúng tôi sẽ liên hệ với bạn để xử lý kịp thời.",
     ],
   },
   {

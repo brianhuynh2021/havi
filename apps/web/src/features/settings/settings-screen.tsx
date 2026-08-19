@@ -17,6 +17,7 @@ import {
   type SettingsData,
 } from "./settings.api";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { DangerConfirmModal, type DangerActionType } from "./danger-confirm-modal";
 import styles from "./settings-screen.module.css";
 
 type FormState = {
@@ -55,6 +56,7 @@ export function SettingsScreen() {
 
   const [deletingWorkspace, setDeletingWorkspace] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [dangerModal, setDangerModal] = useState<DangerActionType | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,16 +114,8 @@ export function SettingsScreen() {
     }
   }
 
-  async function handleDeleteWorkspace() {
+  async function handleConfirmDeleteWorkspace() {
     if (!form.workspaceId) return;
-    const confirmed = window.confirm(
-      t({
-        vi: "Bạn có chắc chắn muốn xoá workspace này? Tất cả kênh đã kết nối và dữ liệu bài đăng sẽ bị xoá.",
-        en: "Are you sure you want to delete this workspace? Connected channels and post history will be deleted.",
-      }),
-    );
-    if (!confirmed) return;
-
     setDeletingWorkspace(true);
     setError("");
     const result = await deleteWorkspace(form.workspaceId);
@@ -131,18 +125,11 @@ export function SettingsScreen() {
     } else {
       setError(result.message);
       setDeletingWorkspace(false);
+      setDangerModal(null);
     }
   }
 
-  async function handleDeleteAccount() {
-    const confirmed = window.confirm(
-      t({
-        vi: "Bạn có chắc chắn muốn xoá tài khoản Havi? Hành động này không thể hoàn tác.",
-        en: "Are you sure you want to delete your Havi account? This action cannot be undone.",
-      }),
-    );
-    if (!confirmed) return;
-
+  async function handleConfirmDeleteAccount() {
     setDeletingAccount(true);
     setError("");
     const result = await deleteAccount();
@@ -152,6 +139,7 @@ export function SettingsScreen() {
     } else {
       setError(result.message);
       setDeletingAccount(false);
+      setDangerModal(null);
     }
   }
 
@@ -323,7 +311,7 @@ export function SettingsScreen() {
               type="button"
               className={styles.dangerButtonOutline}
               disabled={loading || deletingWorkspace || deletingAccount}
-              onClick={handleDeleteWorkspace}
+              onClick={() => setDangerModal("workspace")}
             >
               {deletingWorkspace ? "Đang xoá tiệm..." : "Xoá tiệm này"}
             </button>
@@ -340,13 +328,26 @@ export function SettingsScreen() {
               type="button"
               className={styles.dangerButton}
               disabled={loading || deletingWorkspace || deletingAccount}
-              onClick={handleDeleteAccount}
+              onClick={() => setDangerModal("account")}
             >
               {deletingAccount ? "Đang xoá tài khoản..." : "Xoá tài khoản"}
             </button>
           </div>
         </div>
       </section>
+
+      {/* Stanford / MIT Danger Confirm Modal */}
+      {dangerModal && (
+        <DangerConfirmModal
+          key={dangerModal}
+          isOpen={Boolean(dangerModal)}
+          type={dangerModal}
+          targetName={form.name || "tiệm này"}
+          isDeleting={dangerModal === "workspace" ? deletingWorkspace : deletingAccount}
+          onClose={() => setDangerModal(null)}
+          onConfirm={dangerModal === "workspace" ? handleConfirmDeleteWorkspace : handleConfirmDeleteAccount}
+        />
+      )}
     </div>
   );
 }

@@ -7,22 +7,18 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
   faqs,
   heroStats,
-  industryScenarios,
   principles,
-  steps,
   testimonials,
 } from "./landing.content";
+import { HeroCinematicShowcase } from "./hero-cinematic-showcase";
+import { VideoDemoModal } from "./video-demo-modal";
 import styles from "./landing.module.css";
 import { useLanguage } from "@/lib/i18n/language-context";
 
-type ChannelTabKey = "facebook" | "video" | "maps" | "inbox";
-
 export function LandingScreen() {
-  const [activeIndustryIdx, setActiveIndustryIdx] = useState(0);
-  const [activeChannelKey, setActiveChannelKey] = useState<ChannelTabKey>("facebook");
-  const [activeStep, setActiveStep] = useState(0);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [b2bSubmitted, setB2bSubmitted] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
   const [b2bForm, setB2bForm] = useState({
@@ -39,23 +35,19 @@ export function LandingScreen() {
     setB2bSubmitted(true);
   };
 
-  const currentScenario = industryScenarios[activeIndustryIdx] || industryScenarios[0];
-  const activeTabContent = currentScenario.tabs[activeChannelKey];
-
   return (
     <div className={styles.page}>
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link href="/about" className={styles.brand}>
+          <Link href="/" className={styles.brand}>
             <Logo size={36} />
             <span className={styles.brandText}>Havi</span>
-            <span className={styles.logoBadge}>AI 2.0</span>
           </Link>
 
-          <nav className={styles.nav} aria-label="Điều hướng trang">
+          <nav className={styles.nav}>
             <a href="#demo-studio" className={styles.navLink}>
-              {lang === "VN" ? "Dùng thử Demo" : "Live Demo"}
+              {lang === "VN" ? "Dùng thử Demo" : "Interactive Demo"}
             </a>
             <a href="#bang-gia" className={styles.navLink}>
               {lang === "VN" ? "Bảng giá" : "Pricing"}
@@ -69,9 +61,8 @@ export function LandingScreen() {
           </nav>
 
           <div className={styles.headerActions}>
-            <LanguageSwitcher variant="pill" />
-
-            <Link href="/login" className={styles.loginLink}>
+            <LanguageSwitcher />
+            <Link href="/login" className={styles.loginBtn}>
               {lang === "VN" ? "Đăng nhập" : "Login"}
             </Link>
             <Link href="/signup" className={styles.ctaButton}>
@@ -85,14 +76,14 @@ export function LandingScreen() {
       <section className={styles.hero}>
         <div>
           <div className={styles.eyebrow}>
-            <span style={{ fontSize: "14px" }}>✨</span> NHÂN VIÊN AI MARKETING ĐA KÊNH — TRỰC TIỆM &amp; CHỐT ĐƠN 24/7
+            <span style={{ fontSize: "14px" }}>✨</span> NHÂN VIÊN AI MARKETING ĐA KÊNH • TRỰC TIỆM &amp; CHỐT ĐƠN 24/7
           </div>
           <h1 className={styles.heroTitle}>
-            Tải ảnh tiệm lên, bài đăng &amp; Video sẵn sàng —{" "}
+            Tải ảnh tiệm lên, bài đăng &amp; Video sẵn sàng:{" "}
             bạn chỉ cần bấm <span className={styles.purpleGradient}>duyệt 1-chạm</span>
           </h1>
           <p className={styles.heroBody}>
-            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~6.000 đ/ngày (189k/tháng)</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s — Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
+            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~6.000 đ/ngày (189k/tháng)</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s, Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
             <strong style={{ color: "#f8fafc" }}>Bài không tự phát hành khi bạn chưa nhấn nút duyệt.</strong>
           </p>
 
@@ -103,18 +94,30 @@ export function LandingScreen() {
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
-            <a href="#demo-studio" className={styles.heroSecondaryBtn}>
+            <button
+              type="button"
+              className={styles.heroSecondaryBtn}
+              onClick={() => setIsVideoModalOpen(true)}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" strokeWidth="2.5">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
-              Bấm Thử Demo Trực Tuyến
-            </a>
+              {lang === "VN" ? "Xem Video Thực Chiến 60s" : "Watch 60s Demo"}
+            </button>
           </div>
 
           <div className={styles.heroTrustLine}>
             <span>⭐️ Được tin dùng bởi các chủ tiệm Spa, Salon, F&amp;B, BĐS &amp; Dạy Nghề</span>
             <span>•</span>
             <span style={{ color: "#34d399", fontWeight: 700 }}>✓ Kích hoạt 7 ngày không cần thẻ tín dụng</span>
+          </div>
+
+          {/* Hero 3D Cinematic Showcase (Unified Demo Hub) */}
+          <div id="demo-studio" style={{ scrollMarginTop: "100px" }}>
+            <HeroCinematicShowcase
+              onOpenVideoModal={() => setIsVideoModalOpen(true)}
+              lang={lang}
+            />
           </div>
 
           {/* Stats Section */}
@@ -135,226 +138,11 @@ export function LandingScreen() {
         </div>
       </section>
 
-      {/* Interactive Live Studio Demo Showcase */}
-      <section id="demo-studio" className={styles.demoStudioSection}>
-        <div className={`${styles.glassCard} ${styles.glassCardGlow}`}>
-          {/* Studio Header Bar */}
-          <div className={styles.studioHeader}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div className={styles.macDots}>
-                <span className={styles.dotRed} />
-                <span className={styles.dotYellow} />
-                <span className={styles.dotGreen} />
-              </div>
-              <span className={styles.studioTitle}>
-                Havi AI Studio • Trình Mô Phỏng 4 Trụ Cột Đa Kênh Tự Động
-              </span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ fontSize: "12px", fontWeight: 700, background: "rgba(16,185,129,0.18)", color: "#34d399", border: "1px solid rgba(16,185,129,0.35)", borderRadius: "99px", padding: "4px 12px" }}>
-                🟢 KẾT NỐI SẴN SÀNG
-              </span>
-            </div>
-          </div>
-
-          {/* Industry Selection Tabs */}
-          <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "10px", overflowX: "auto" }}>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#94a3b8", whiteSpace: "nowrap" }}>
-              Chọn ngành tiệm:
-            </span>
-            {industryScenarios.map((sc, idx) => (
-              <button
-                key={sc.name}
-                type="button"
-                className={`${styles.channelTab} ${activeIndustryIdx === idx ? styles.channelTabActive : ""}`}
-                onClick={() => setActiveIndustryIdx(idx)}
-                style={{ padding: "8px 18px", fontSize: "13.5px" }}
-              >
-                <span style={{ marginRight: "6px" }}>{sc.badge}</span>
-                {sc.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Studio Body */}
-          <div className={styles.studioBody}>
-            {/* Step Controls Sidebar */}
-            <div id="cach-hoat-dong" className={styles.studioSidebar}>
-              <div className={styles.stepTitle}>Quy Trình 4 Bước Tự Động</div>
-              <div className={styles.stepList}>
-                {steps.map((st, idx) => (
-                  <div
-                    key={st.n}
-                    className={`${styles.stepItem} ${activeStep === idx ? styles.stepItemActive : ""}`}
-                    onClick={() => setActiveStep(idx)}
-                  >
-                    <div className={styles.stepNum}>{st.n}</div>
-                    <div>
-                      <div className={styles.stepName}>{st.title}</div>
-                      <div className={styles.stepDesc}>{st.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Main Interactive Canvas */}
-            <div className={styles.studioCanvas}>
-              {/* Channel Tabs */}
-              <div className={styles.channelTabs}>
-                <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#64748b", marginRight: "6px" }}>
-                  Xem Kết Quả Đa Kênh:
-                </span>
-                <button
-                  type="button"
-                  className={`${styles.channelTab} ${activeChannelKey === "facebook" ? styles.channelTabActive : ""}`}
-                  onClick={() => setActiveChannelKey("facebook")}
-                >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#1877F2", display: "inline-block", marginRight: "6px" }} />
-                  📱 Facebook Post
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.channelTab} ${activeChannelKey === "video" ? styles.channelTabActive : ""}`}
-                  onClick={() => setActiveChannelKey("video")}
-                >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#FE2C55", display: "inline-block", marginRight: "6px" }} />
-                  🎬 TikTok Video (Hook 3s)
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.channelTab} ${activeChannelKey === "maps" ? styles.channelTabActive : ""}`}
-                  onClick={() => setActiveChannelKey("maps")}
-                >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#16A34A", display: "inline-block", marginRight: "6px" }} />
-                  📍 Google Maps SEO
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.channelTab} ${activeChannelKey === "inbox" ? styles.channelTabActive : ""}`}
-                  onClick={() => setActiveChannelKey("inbox")}
-                >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "99px", background: "#8B5CF6", display: "inline-block", marginRight: "6px" }} />
-                  💬 Trực Inbox Bắt SĐT
-                </button>
-              </div>
-
-              {/* Demo Content Card */}
-              <div className={styles.demoFrame}>
-                <div className={styles.demoCardContent}>
-                  <div className={styles.demoPhoto}>
-                    <img src={currentScenario.image} alt={currentScenario.name} />
-                    <span className={styles.badgeRaw}>ẢNH TIỆM THẬT</span>
-                  </div>
-
-                  <div className={styles.demoTextCol}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                      <span className={styles.aiBadge}>✨ XỬ LÝ BỞI HAVI AI</span>
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>{activeTabContent.badge}</span>
-                    </div>
-
-                    <div style={{ fontSize: "12px", color: "#c084fc", background: "rgba(139,92,246,0.15)", padding: "4px 10px", borderRadius: "6px", marginBottom: "10px" }}>
-                      📥 Nguồn chụp/ghi âm 30s: <strong>{currentScenario.rawInput}</strong>
-                    </div>
-
-                    {/* Conditional Rendering by Active Tab */}
-                    {activeChannelKey === "facebook" && (
-                      <div>
-                        <p className={styles.demoBody}>{currentScenario.tabs.facebook.content}</p>
-                        <div className={styles.demoTags}>
-                          <span className={styles.tagItem}>#HaviAI</span>
-                          <span className={styles.tagItem}>#Duyet1Cham</span>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "6px" }}>
-                            ⏰ Giờ vàng đăng: 19:30 Tối nay
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeChannelKey === "video" && (
-                      <div>
-                        <div style={{ background: "rgba(254,44,85,0.12)", border: "1px solid rgba(254,44,85,0.3)", borderRadius: "8px", padding: "10px 14px", marginBottom: "10px" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 800, color: "#FE2C55", textTransform: "uppercase" }}>
-                            ⚡ 3-Second Retention Hook (Giật Tít Giữ Chân)
-                          </span>
-                          <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", marginTop: "4px" }}>
-                            {currentScenario.tabs.video.hook}
-                          </div>
-                        </div>
-                        <p className={styles.demoBody} style={{ whiteSpace: "pre-line", fontSize: "13px" }}>
-                          {currentScenario.tabs.video.script}
-                        </p>
-                      </div>
-                    )}
-
-                    {activeChannelKey === "maps" && (
-                      <div>
-                        <p className={styles.demoBody}>{currentScenario.tabs.maps.content}</p>
-                        <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                          <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#34d399", background: "rgba(16,185,129,0.15)", padding: "4px 10px", borderRadius: "6px" }}>
-                            ⭐ Tối ưu xếp hạng Top 3 Google Maps
-                          </span>
-                          <span style={{ fontSize: "11.5px", color: "#94a3b8", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: "6px" }}>
-                            📍 Geotagged Local SEO
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeChannelKey === "inbox" && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 14px", alignSelf: "flex-start", maxWidth: "90%" }}>
-                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>👤 Khách hàng (Lúc 23:15 đêm):</span>
-                          <div style={{ fontSize: "13.5px", color: "#fff", marginTop: "2px" }}>
-                            {currentScenario.tabs.inbox.customerMsg}
-                          </div>
-                        </div>
-
-                        <div style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "10px", padding: "10px 14px", alignSelf: "flex-end", maxWidth: "95%" }}>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc" }}>✨ Havi Tự Trả Lời (Sau 5 giây):</span>
-                          <div style={{ fontSize: "13.5px", color: "#f8fafc", marginTop: "2px" }}>
-                            {currentScenario.tabs.inbox.haviReply}
-                          </div>
-                        </div>
-
-                        <div style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontSize: "14px" }}>🟢</span>
-                          <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#34d399" }}>
-                            Đã bắt SĐT về CRM: {currentScenario.tabs.inbox.capturedPhone}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Bar */}
-                <div className={styles.actionBar}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#b8c0d0" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <span>Havi tự động hoàn thiện — <strong style={{ color: "#fff" }}>Bạn chỉ cần bấm duyệt 1-chạm</strong></span>
-                  </div>
-                  <div style={{ display: "flex", gap: "12px" }}>
-                    <Link href="/signup" className={styles.ctaButton}>
-                      Duyệt &amp; kích hoạt ngay
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Bảng Giá Thương Mại & So Sánh ROI (Chiến thuật FAANG) */}
       <section id="bang-gia" className={styles.hero} style={{ paddingTop: "40px" }}>
         <div className={styles.sectionHeader}>
           <div className={styles.sectionTag} style={{ color: "#34d399" }}>BẢNG GIÁ ĐẦU TƯ TIẾT KIỆM</div>
-          <h2 className={styles.sectionTitle}>Chỉ Từ 6.000 đ/Ngày — Rẻ Hơn 1 Ly Trà Sữa</h2>
+          <h2 className={styles.sectionTitle}>Chỉ Từ 6.000 đ/Ngày (Rẻ Hơn 1 Ly Trà Sữa)</h2>
           <p className={styles.sectionSubtitle}>Không phụ phí ẩn · Tự động kích hoạt VietQR trong 1 giây · Hoàn tiền nếu không hài lòng sau 7 ngày.</p>
         </div>
 
@@ -672,7 +460,7 @@ export function LandingScreen() {
         <div className={styles.sectionHeader}>
           <div className={styles.sectionTag} style={{ color: "#10b981" }}>CAM KẾT AN TOÀN</div>
           <h2 className={styles.sectionTitle}>Nguyên Tắc Xây Dựng Thương Hiệu Của Havi</h2>
-          <p className={styles.sectionSubtitle}>Bảo vệ trọn vẹn uy tín của tiệm — Không bao giờ phát hành nội dung khi chưa được bạn duyệt.</p>
+          <p className={styles.sectionSubtitle}>Bảo vệ trọn vẹn uy tín của tiệm: Không bao giờ phát hành nội dung khi chưa được bạn duyệt.</p>
         </div>
 
         <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "60px" }}>
@@ -821,7 +609,7 @@ export function LandingScreen() {
               <div style={{ fontSize: "13.5px", color: "#b8c0d0", lineHeight: 1.6 }}>
                 <div>Hotline / Zalo: <a href="tel:0984883750" style={{ color: "#38bdf8", fontWeight: 700 }}>0984 883 750</a></div>
                 <div style={{ marginTop: "4px" }}>Email: <a href="mailto:hotro@havi.vn" style={{ color: "#38bdf8" }}>hotro@havi.vn</a></div>
-                <div style={{ marginTop: "4px" }}>Thực chiến tại: <strong>Trung Tâm Công Nghệ Nhật Minh</strong></div>
+                <div style={{ marginTop: "4px" }}>Hạ tầng: <strong>Havi Cloud Vietnam &amp; AI Nodes</strong></div>
               </div>
 
               <div className={styles.statusIndicator}>
@@ -982,6 +770,13 @@ export function LandingScreen() {
           </div>
         </div>
       )}
+
+      {/* Video Demo Modal (60s Tour) */}
+      <VideoDemoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        lang={lang}
+      />
     </div>
   );
 }

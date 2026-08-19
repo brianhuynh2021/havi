@@ -117,4 +117,24 @@ describe("SettingsScreen", () => {
 
     expect(await screen.findByText(/thành công/i)).toBeInTheDocument();
   });
+
+  it("mở DangerConfirmModal khi bấm Xoá tiệm này", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const request = input instanceof Request ? input : new Request(input);
+      if (request.url.includes("/workspaces/w1")) return jsonResponse(workspace());
+      if (request.url.includes("/brand-profile")) return jsonResponse(profile());
+      if (request.url.includes("/connections")) return jsonResponse([]);
+      return jsonResponse({ detail: "not found" }, 404);
+    });
+
+    renderSettings();
+    const user = userEvent.setup();
+    await screen.findByDisplayValue("Spa An Nhiên");
+
+    const deleteWorkspaceBtn = screen.getByRole("button", { name: /Xoá tiệm này/i });
+    await user.click(deleteWorkspaceBtn);
+
+    expect(await screen.findByText(/Xác nhận xoá tiệm/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Giữ Lại Tiệm/i })).toBeInTheDocument();
+  });
 });

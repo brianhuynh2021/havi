@@ -42,11 +42,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(new URL(LEGACY_ALIASES[pathname], request.url));
   }
 
-  // 2. Root route '/' Gateway Logic
-  if (pathname === "/") {
-    return NextResponse.rewrite(new URL("/about", request.url));
-  }
-
   return NextResponse.next();
 }
 

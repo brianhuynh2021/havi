@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { LandingScreen } from "@/features/landing/landing-screen";
+import { AboutScreen } from "@/features/about/about-screen";
 
 export const metadata: Metadata = {
-  title: "Havi — Trợ lý marketing AI cho tiệm nhỏ",
+  title: "Về Havi — Câu chuyện thương hiệu & Sứ mệnh",
   description:
-    "Nạp vài tấm ảnh hoặc ba gạch đầu dòng, Havi làm bài & video riêng cho Facebook, Google Maps SEO, TikTok và YouTube Shorts. Bạn duyệt rồi mới đăng.",
+    "Havi (Harry + Vietnam) ra đời với sứ mệnh bình dân hoá AI marketing đa kênh cho hàng triệu chủ tiệm và hộ kinh doanh Việt Nam.",
 };
 
 export default function Page() {
-  return <LandingScreen />;
+  return <AboutScreen />;
 }

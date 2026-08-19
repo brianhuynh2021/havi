@@ -164,29 +164,29 @@ export const industryScenarios: IndustryScenario[] = [
     badge: "DẠY NGHỀ",
     color: "linear-gradient(135deg,#7C3AED,#5B21B6)",
     image: "/images/hero_ai_studio_hq.jpg",
-    rawInput: "Ảnh học viên thực hành lập trình Web và ráp mạch thực chiến",
+    rawInput: "Ảnh học viên thực hành kỹ thuật số và tay nghề thực chiến",
     tabs: {
       facebook: {
         title: "Bài đăng Tuyển sinh & Khóa học",
         badge: "Facebook Feed",
-        content: "💡 Học nghề không lý thuyết suông — 100% học viên tại Trung Tâm Công Nghệ Nhật Minh được tự tay thực hành trên dự án thực tế ngay trong khóa học. Đăng ký nhận lộ trình học 1 kèm 1 và ưu đãi học phí tháng này nhé!",
+        content: "💡 Học nghề không lý thuyết suông: 100% học viên được tự tay thực hành trên dự án thực tế ngay trong khóa học. Đăng ký nhận lộ trình học 1 kèm 1 và ưu đãi học phí tháng này nhé!",
       },
       video: {
         title: "Kịch bản Video Review TikTok (Hook 3s)",
         badge: "Short-form Video 9:16",
         hook: "💻 Đừng học lý thuyết suông nữa! Đây là cách học viên tự tay làm ra website bán hàng chỉ sau 2 tuần...",
-        script: "1. Học thực hành 1 kèm 1 trên dự án thật.\n2. Tự tay làm web, gắn tính năng thanh toán online.\n3. Hỗ trợ việc làm ngay sau khi hoàn thành khóa học.\n👉 Đăng ký học thử 1 buổi miễn phí tại Nhật Minh Tech ngay hôm nay!",
+        script: "1. Học thực hành 1 kèm 1 trên dự án thật.\n2. Tự tay làm web, gắn tính năng thanh toán online.\n3. Hỗ trợ việc làm ngay sau khi hoàn thành khóa học.\n👉 Đăng ký học thử 1 buổi miễn phí tại Học Viện ngay hôm nay!",
       },
       maps: {
         title: "Google Business & Đào tạo Nghề",
         badge: "Google Business Top 3",
-        content: "📍 Trung Tâm Đào Tạo Công Nghệ Nhật Minh — Cơ sở đào tạo Lập trình & Kỹ thuật số thực chiến hàng đầu. Giảng viên tận tâm, cam kết đầu ra có sản phẩm chạy thật.",
+        content: "📍 Học Viện Đào Tạo Nghề & Kỹ Năng Thực Chiến: Cơ sở đào tạo kỹ thuật số hàng đầu. Giảng viên tận tâm, cam kết đầu ra có sản phẩm chạy thật.",
       },
       inbox: {
         title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
         badge: "Auto Lead Care",
         customerMsg: "Khóa Lập trình Web cho người mới bắt đầu học phí thế nào và học mấy tháng ạ?",
-        haviReply: "Dạ chào bạn! Khóa Lập trình Web Khởi động tại Nhật Minh Tech kéo dài 3 tháng, đào tạo 1 kèm 1 trên dự án thật. Bạn cho mình xin SĐT hoặc Zalo để thầy giáo tư vấn chi tiết lộ trình và ưu đãi học phí tháng này nhé!",
+        haviReply: "Dạ chào bạn! Khóa Lập trình Web Khởi động kéo dài 3 tháng, đào tạo 1 kèm 1 trên dự án thật. Bạn cho mình xin SĐT hoặc Zalo để thầy giáo tư vấn chi tiết lộ trình và ưu đãi học phí tháng này nhé!",
         capturedPhone: "0971.888.999 (Học viên tìm hiểu khóa Web)",
       },
     },
@@ -205,7 +205,7 @@ export const principles = [
   },
   {
     title: "Văn phong thuần Việt, chốt đơn khéo",
-    desc: "Hiểu đúng cách xưng hô anh/chị gần gũi, giọng điệu tự nhiên như người thật — tư vấn duyên dáng và khéo léo xin số điện thoại khách hàng.",
+    desc: "Hiểu đúng cách xưng hô anh/chị gần gũi, giọng điệu tự nhiên như người thật, tư vấn duyên dáng và khéo léo xin số điện thoại khách hàng.",
   },
 ];
 
@@ -242,7 +242,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     name: "Anh Tuấn Anh",
-    role: "Giám Đốc Đào Tạo — Nhật Minh Tech (Đà Nẵng)",
+    role: "Giám Đốc Học Viện Đào Tạo Nghề & Kỹ Năng (Đà Nẵng)",
     avatar: "🏠",
     rating: 5,
     quote:

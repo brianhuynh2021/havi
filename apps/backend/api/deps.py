@@ -134,7 +134,7 @@ def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxServ
     fb_publisher: ReplyPublisherPort = (
         FakeReplyPublisher(Platform.FACEBOOK)
         if settings.env == "local"
-        else FacebookReplyAdapter(ConnectionRepository(session), alerts=_alert_sink())
+        else FacebookReplyAdapter(ConnectionRepository(session))
     )
     reply_publishers = {
         Platform.FACEBOOK: fb_publisher,
