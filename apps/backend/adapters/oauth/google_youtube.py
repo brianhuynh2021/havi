@@ -65,7 +65,7 @@ class GoogleYouTubeOAuthClient(OAuthClientPort):
         }
         return f"{GOOGLE_AUTH_URL}?" + urlencode(params)
 
-    async def exchange_code(self, code: str) -> OAuthAccount:
+    async def exchange_code(self, code: str, **kwargs) -> OAuthAccount:
         if not self.is_configured:
             raise OAuthPermanentError(
                 self.platform, "Google/YouTube OAuth chưa được cấu hình client_id / secret"
