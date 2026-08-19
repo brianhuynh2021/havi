@@ -43,17 +43,10 @@
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Hộp thư & Khách hỏi",
-      "short_name": "Hộp thư",
-      "description": "Xem tin nhắn và bình luận đa kênh",
+      "name": "Hộp thư & Khách hàng",
+      "short_name": "Hộp thư & CRM",
+      "description": "Xem tin nhắn, bình luận đa kênh và danh sách khách hàng",
       "url": "/app/inbox",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Khách tiềm năng (CRM)",
-      "short_name": "Leads",
-      "description": "Quản lý học viên và khách hàng tiềm năng",
-      "url": "/app/leads",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]

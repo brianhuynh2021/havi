@@ -79,12 +79,26 @@ export function LandingScreen() {
             <span style={{ fontSize: "14px" }}>✨</span> NHÂN VIÊN AI MARKETING ĐA KÊNH • TRỰC TIỆM &amp; CHỐT ĐƠN 24/7
           </div>
           <h1 className={styles.heroTitle}>
-            Tải ảnh tiệm lên, bài đăng &amp; Video sẵn sàng:{" "}
-            bạn chỉ cần bấm <span className={styles.purpleGradient}>duyệt 1-chạm</span>
+            {lang === "VN" ? (
+              <>
+                <span style={{ display: "block" }}>Chỉ 1 chạm</span>
+                <span className={styles.purpleGradient} style={{ display: "inline-block" }}>
+                  tiếp cận khách hàng đa nền tảng
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ display: "block" }}>With 1 Touch</span>
+                <span className={styles.purpleGradient} style={{ display: "inline-block" }}>
+                  Reach Customers Across Platforms
+                </span>
+              </>
+            )}
           </h1>
           <p className={styles.heroBody}>
-            Thay thế 1 nhân viên marketing part-time 4 triệu/tháng chỉ với <strong style={{ color: "#38bdf8" }}>~6.000 đ/ngày (189k/tháng)</strong>. Chỉ cần chụp ảnh tiệm hoặc ghi âm 15s, Havi tự động sáng tạo bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và trực Inbox trả lời bảng giá bắt số điện thoại khách trong 5 giây.{" "}
-            <strong style={{ color: "#f8fafc" }}>Bài không tự phát hành khi bạn chưa nhấn nút duyệt.</strong>
+            {lang === "VN"
+              ? "Không còn mất hàng giờ nghĩ ý tưởng. Chỉ cần gửi ảnh, Havi tự động sinh bài, dựng video bắt trend và trực inbox kéo khách."
+              : "No more spending hours brainstorming. Just send a photo, Havi automatically generates posts, creates trending videos, and engages inbox leads 24/7."}
           </p>
 
           <div className={styles.heroActions}>
@@ -141,9 +155,17 @@ export function LandingScreen() {
       {/* Bảng Giá Thương Mại & So Sánh ROI (Chiến thuật FAANG) */}
       <section id="bang-gia" className={styles.hero} style={{ paddingTop: "40px" }}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag} style={{ color: "#34d399" }}>BẢNG GIÁ ĐẦU TƯ TIẾT KIỆM</div>
-          <h2 className={styles.sectionTitle}>Chỉ Từ 6.000 đ/Ngày (Rẻ Hơn 1 Ly Trà Sữa)</h2>
-          <p className={styles.sectionSubtitle}>Không phụ phí ẩn · Tự động kích hoạt VietQR trong 1 giây · Hoàn tiền nếu không hài lòng sau 7 ngày.</p>
+          <div className={styles.sectionTag} style={{ color: "#34d399" }}>
+            {lang === "VN" ? "BẢNG GIÁ DỊCH VỤ" : "TRANSPARENT PRICING"}
+          </div>
+          <h2 className={styles.sectionTitle}>
+            {lang === "VN" ? "Bảng Giá Minh Bạch & Tiết Kiệm" : "Flexible & Transparent Pricing"}
+          </h2>
+          <p className={styles.sectionSubtitle}>
+            {lang === "VN"
+              ? "Dùng thử 7 ngày không cần thẻ · Kích hoạt VietQR trong 3 giây · Hủy hoặc đổi gói bất kỳ lúc nào."
+              : "7-day free trial without credit card · Instant 3-second VietQR activation · Cancel or switch plans anytime."}
+          </p>
         </div>
 
         {/* Annual Discount Toggle */}

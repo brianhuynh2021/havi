@@ -68,9 +68,11 @@ export const termsSections: Section[] = [
     ],
   },
   {
-    heading: "6. Giới hạn trách nhiệm và Hoàn tiền",
+    heading: "6. Giới hạn trách nhiệm và Chính sách thanh toán",
     paragraphs: [
-      "Chúng tôi cam kết hoàn tiền 100% nếu bạn không hài lòng về dịch vụ trong vòng 7 ngày đầu tiên sau khi nâng cấp gói trả phí.",
+      "Havi cung cấp 7 ngày dùng thử miễn phí đầy đủ tính năng để bạn trải nghiệm thực tế trước khi quyết định nâng cấp. Do chi phí hạ tầng điện toán và mô hình AI phát sinh ngay khi xử lý, mọi gói dịch vụ (gói theo tháng hoặc gói theo năm) sau khi kích hoạt thành công sẽ không áp dụng hoàn tiền hoặc hoàn tiền theo tỷ lệ thời gian chưa sử dụng.",
+      "Đối với gói năm, bạn được hưởng mức giá chiết khấu ưu đãi thanh toán một lần và có quyền sử dụng trọn vẹn trong suốt 365 ngày kể từ ngày kích hoạt.",
+      "Bạn có toàn quyền không gia hạn tiếp hoặc chuyển đổi gói cho các chu kỳ tiếp theo mà không bị ràng buộc hay bị trừ tiền tự động.",
       "Havi không chịu trách nhiệm cho thiệt hại phát sinh từ nội dung bạn đã duyệt và đăng, từ việc nền tảng bên thứ ba ngưng dịch vụ, hoặc từ việc bạn mất quyền truy cập tài khoản do lộ mật khẩu.",
     ],
   },

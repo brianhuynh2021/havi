@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LandingScreen } from "@/features/landing/landing-screen";
 
 export const metadata: Metadata = {
-  title: "Havi — Nhân viên AI Marketing & Trực tiệm đa kênh cho chủ tiệm nhỏ",
+  title: "Havi — Chỉ 1 chạm tiếp cận khách hàng đa nền tảng",
   description:
-    "Tải ảnh tiệm lên, bài đăng & video TikTok 9:16 có Hook 3s sẵn sàng. Duyệt 1-chạm trước khi đăng, trực Inbox bắt số điện thoại 24/7 chỉ từ 6.000 đ/ngày.",
+    "Không còn mất hàng giờ nghĩ ý tưởng. Chỉ cần gửi ảnh, Havi tự động sinh bài, dựng video bắt trend và trực inbox kéo khách.",
 };
 
 export default function Page() {

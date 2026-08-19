@@ -241,6 +241,7 @@
   color: #f8fafc;
   max-width: 980px;
   margin: 0 auto 24px;
+  text-wrap: balance;
 }
 
 .purpleGradient {

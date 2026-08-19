@@ -115,15 +115,15 @@ describe("LandingScreen", () => {
     expect(screen.getByTestId("step-content-0")).toBeInTheDocument();
     expect(screen.getByText(/Đã nhận diện bối cảnh & dịch vụ tiệm/i)).toBeInTheDocument();
 
-    // Click step 2: AI Sinh Đa Kênh
-    const step2Btn = screen.getByRole("button", { name: /Bước 2: AI Sinh Đa Kênh/i });
+    // Click step 2: Tự tạo bài & Video
+    const step2Btn = screen.getByRole("button", { name: /Bước 2: Tự tạo bài & Video/i });
     await user.click(step2Btn);
     const step1El = screen.getByTestId("step-content-1");
     expect(step1El).toBeInTheDocument();
     expect(within(step1El).getByText(/TikTok Video 9:16/i)).toBeInTheDocument();
 
-    // Click step 3: Bắn Lead Telegram
-    const step3Btn = screen.getByRole("button", { name: /Bước 3: Bắn Lead Telegram/i });
+    // Click step 3: Theo dõi 24/7
+    const step3Btn = screen.getByRole("button", { name: /Bước 3: Theo dõi 24\/7/i });
     await user.click(step3Btn);
     const step2El = screen.getByTestId("step-content-2");
     expect(step2El).toBeInTheDocument();

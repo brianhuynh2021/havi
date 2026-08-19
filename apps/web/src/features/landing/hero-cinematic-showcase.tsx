@@ -69,19 +69,19 @@ export function HeroCinematicShowcase({
               type="button"
               className={`${styles.stepPill} ${activeStep === 1 ? styles.stepPillActive : ""}`}
               onClick={() => setActiveStep(1)}
-              aria-label="Bước 2: AI Sinh Đa Kênh"
+              aria-label="Bước 2: Tự tạo bài & Video"
             >
               <span className={styles.stepNum}>2</span>
-              <span>{lang === "VN" ? "AI Sinh Đa Kênh" : "Multi-channel AI"}</span>
+              <span>{lang === "VN" ? "Tự tạo bài & Video" : "Auto Create Posts & Video"}</span>
             </button>
             <button
               type="button"
               className={`${styles.stepPill} ${activeStep === 2 ? styles.stepPillActive : ""}`}
               onClick={() => setActiveStep(2)}
-              aria-label="Bước 3: Bắn Lead Telegram"
+              aria-label="Bước 3: Theo dõi 24/7"
             >
               <span className={styles.stepNum}>3</span>
-              <span>{lang === "VN" ? "Bắn Lead Telegram" : "Instant Telegram Lead"}</span>
+              <span>{lang === "VN" ? "Theo dõi 24/7" : "24/7 Lead Care"}</span>
             </button>
           </div>
 
