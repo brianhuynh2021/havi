@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { writeTokens } from "@/lib/auth/token-store";
@@ -80,9 +80,7 @@ describe("SettingsScreen", () => {
   });
 
   it("save workspace và brand voice", async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
         const request = input instanceof Request ? input : new Request(input);
         if (request.method === "GET" && request.url.includes("/workspaces/w1")) {
           return jsonResponse(workspace());

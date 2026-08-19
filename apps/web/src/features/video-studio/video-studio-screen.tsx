@@ -8,7 +8,6 @@ import {
   cancelRenderJob,
   getActiveWorkspaceId,
   getHotTrends,
-  synthesizeTrend,
   type VideoRenderJob,
   type VideoCaptionStyle,
   type TrendingTopic,
@@ -169,6 +168,12 @@ export function VideoStudioScreen() {
           </p>
         </div>
       </header>
+
+      {error ? (
+        <div style={{ padding: "12px 16px", borderRadius: "12px", background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", fontSize: "14px" }}>
+          ⚠️ {error}
+        </div>
+      ) : null}
 
       {/* Mục Trinh Sát Trend Nóng Hổi Hôm Nay (AI Trend Scout - Milestone #8) */}
       <div className={styles.trendScoutCard}>

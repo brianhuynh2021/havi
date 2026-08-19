@@ -24,8 +24,9 @@ const PLAN_DETAILS: Record<
     title: string;
     price: string;
     period: string;
+    dailyNote?: string;
     badge?: string | null;
-    badgeTone?: "popular" | "featured" | null;
+    badgeTone?: "popular" | "featured" | "enterprise" | null;
     desc: string;
     features: string[];
   }
@@ -33,13 +34,14 @@ const PLAN_DETAILS: Record<
   trial: {
     title: "Gói Trải Nghiệm",
     price: "0 đ",
-    period: "7 ngày",
+    period: "/ 7 ngày",
+    dailyNote: "Miễn phí 100% · Không cần thẻ",
     badge: null,
     badgeTone: null,
-    desc: "Dùng thử trọn vẹn sức mạnh nhân viên AI — Không cần thẻ tín dụng.",
+    desc: "Dùng thử trọn vẹn sức mạnh nhân viên AI — Trải nghiệm trước an tâm tuyệt đối.",
     features: [
       "Trải nghiệm 7 ngày không giới hạn tính năng",
-      "Kết nối 1 Fanpage Facebook chính thức",
+      "Kết nối 1 Fanpage Facebook an toàn",
       "Tự động tạo bài viết & Lên lịch đăng giờ vàng",
       "Hỗ trợ kỹ thuật & Hướng dẫn sử dụng 24/7",
     ],
@@ -47,13 +49,14 @@ const PLAN_DETAILS: Record<
   tiem_nho: {
     title: "Gói Khởi Nghiệp",
     price: "189.000 đ",
-    period: "/tháng (~6.000 đ/ngày)",
+    period: "/ tháng",
+    dailyNote: "Chỉ ~6.000 đ/ngày",
     badge: "TIẾT KIỆM NHẤT",
     badgeTone: "popular",
     desc: "Tối ưu tự động hóa nội dung & trực fanpage 24/7 cho cửa hàng đơn lẻ.",
     features: [
       "1 Fanpage Facebook kết nối chính thức",
-      "30 bài viết AI/tháng (Ảnh tiệm ➔ Bài chuẩn ngành)",
+      "30 bài viết chuẩn ngành/tháng từ ảnh tiệm",
       "AI Trực Inbox & Trả lời Bảng giá/FAQ 24/7",
       "Tự động trích xuất SĐT khách về CRM",
       "Báo cáo tương tác & Lịch sử đăng bài",
@@ -62,16 +65,33 @@ const PLAN_DETAILS: Record<
   toan_dien: {
     title: "Gói Chuyên Nghiệp",
     price: "369.000 đ",
-    period: "/tháng (~12.000 đ/ngày)",
+    period: "/ tháng",
+    dailyNote: "Chỉ ~12.000 đ/ngày",
     badge: "BÁN CHẠY NHẤT ★",
     badgeTone: "featured",
     desc: "Giải pháp đa kênh tăng trưởng toàn diện cho chủ tiệm & chuyên viên (Spa, Môi giới BĐS, F&B, Đào tạo nghề).",
     features: [
-      "Đa kênh: Facebook + Google Maps SEO + TikTok Shorts",
-      "90 bài viết AI/tháng + Video Studio (Hook giữ chân 3s)",
+      "Đa kênh: Facebook + Google Maps + TikTok Shorts",
+      "90 bài viết/tháng + Video Studio (Hook giữ chân 3s)",
       "AI Lead Agent: Tự động trích xuất SĐT/Tên khách hàng",
       "Smart CRM Nudge: Tự động kéo khách cũ quay lại tiệm",
       "Báo cáo doanh thu & Đối soát chuyển đổi POS",
+    ],
+  },
+  doanh_nghiep: {
+    title: "Chuỗi Doanh Nghiệp",
+    price: "799.000 đ",
+    period: "/ tháng",
+    dailyNote: "Chỉ ~26.000 đ/ngày",
+    badge: "QUY MÔ CHUỖI 👑",
+    badgeTone: "enterprise",
+    desc: "Quản lý tập trung 2–5 chi nhánh / Fanpage cho hệ thống chuỗi và Agency truyền thông.",
+    features: [
+      "Quản lý tối đa 5 Chi nhánh / Fanpage",
+      "Không giới hạn bài viết AI & kịch bản Video",
+      "Phân quyền nhân viên (RBAC): Chủ, Quản lý, Sale",
+      "Đối soát POS KiotViet / Sapo tự động",
+      "Kỹ sư Havi hỗ trợ VIP 1-1 riêng biệt",
     ],
   },
 };
@@ -264,16 +284,21 @@ export function BillingScreen() {
           const isCurrent = sub.plan === planKey;
           const isFeatured = plan.badgeTone === "featured";
           const isPopular = plan.badgeTone === "popular";
+          const isEnterprise = plan.badgeTone === "enterprise";
 
           return (
             <article
               key={planKey}
-              className={`${styles.planCard} ${isFeatured ? styles.planCardFeatured : isPopular ? styles.planCardPopular : ""}`}
+              className={`${styles.planCard} ${isEnterprise ? styles.planCardEnterprise : isFeatured ? styles.planCardFeatured : isPopular ? styles.planCardPopular : ""}`}
             >
               {plan.badge ? (
                 <span
                   className={
-                    isFeatured ? styles.featuredBadge : styles.popularBadge
+                    isEnterprise
+                      ? styles.enterpriseBadge
+                      : isFeatured
+                      ? styles.featuredBadge
+                      : styles.popularBadge
                   }
                 >
                   {plan.badge}
@@ -287,6 +312,9 @@ export function BillingScreen() {
                   <span className={styles.priceAmount}>{plan.price}</span>
                   <span className={styles.pricePeriod}>{plan.period}</span>
                 </div>
+                {plan.dailyNote ? (
+                  <div className={styles.priceDailyTag}>⚡ {plan.dailyNote}</div>
+                ) : null}
               </div>
 
               <ul className={styles.featuresList}>

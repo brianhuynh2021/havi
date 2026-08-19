@@ -120,7 +120,7 @@ describe("CalendarScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Zalo OA")).toBeInTheDocument();
     expect(screen.getByText("Đã lên lịch")).toBeInTheDocument();
-    expect(screen.getByText("Đã đăng")).toBeInTheDocument();
+    expect(screen.getAllByText("Đã đăng").length).toBeGreaterThanOrEqual(1);
   });
 
   it("giờ hiện theo múi giờ VN, không theo UTC", async () => {

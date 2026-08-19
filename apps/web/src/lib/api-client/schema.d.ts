@@ -1906,7 +1906,7 @@ export interface components {
          * @description Bảng giá landing page: 0đ 14 ngày / Tiệm Nhỏ 299K / Toàn Diện 599K.
          * @enum {string}
          */
-        Plan: "trial" | "tiem_nho" | "toan_dien";
+        Plan: "trial" | "tiem_nho" | "toan_dien" | "doanh_nghiep";
         /**
          * Platform
          * @description Nền tảng có OAuth connection (tập con của Channel).

@@ -27,6 +27,7 @@ MONTHLY_PRICE_VND: dict[Plan, int] = {
     Plan.TRIAL: 0,
     Plan.TIEM_NHO: 189_000,
     Plan.TOAN_DIEN: 369_000,
+    Plan.DOANH_NGHIEP: 799_000,
 }
 
 

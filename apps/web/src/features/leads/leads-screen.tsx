@@ -38,7 +38,15 @@ type Props = {
 export function LeadsScreen({ defaultTab = "inbox" }: Props) {
   const { t } = useLanguage();
   const workspaceId = getActiveWorkspaceId();
-  const [activeTab, setActiveTab] = useState<"inbox" | "leads">(defaultTab);
+  const [activeTabOverride, setActiveTabOverride] = useState<"inbox" | "leads" | null>(null);
+  const [prevDefaultTab, setPrevDefaultTab] = useState(defaultTab);
+  if (defaultTab !== prevDefaultTab) {
+    setPrevDefaultTab(defaultTab);
+    setActiveTabOverride(null);
+  }
+  const activeTab = activeTabOverride ?? defaultTab;
+  const setActiveTab = (tab: "inbox" | "leads") => setActiveTabOverride(tab);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -49,10 +57,6 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [scanningNudges, setScanningNudges] = useState(false);
   const [processingNudgeId, setProcessingNudgeId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
 
   const loadData = async () => {
     setLoading(true);

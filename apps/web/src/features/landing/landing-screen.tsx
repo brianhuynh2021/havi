@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
-  heroChannels,
   heroStats,
   industryScenarios,
   principles,
@@ -20,6 +19,7 @@ export function LandingScreen() {
   const [activeIndustryIdx, setActiveIndustryIdx] = useState(0);
   const [activeChannelKey, setActiveChannelKey] = useState<ChannelTabKey>("facebook");
   const [activeStep, setActiveStep] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const { lang } = useLanguage();
 
   const currentScenario = industryScenarios[activeIndustryIdx] || industryScenarios[0];
@@ -49,7 +49,7 @@ export function LandingScreen() {
               {lang === "VN" ? "Đăng nhập" : "Login"}
             </Link>
             <Link href="/signup" className={styles.ctaButton}>
-              {lang === "VN" ? "Dùng thử 14 ngày" : "Get Started"}
+              {lang === "VN" ? "Dùng thử 7 ngày" : "Get Started"}
             </Link>
           </div>
         </div>
@@ -326,25 +326,68 @@ export function LandingScreen() {
           <p className={styles.sectionSubtitle}>Không phụ phí ẩn · Tự động kích hoạt VietQR trong 1 giây · Hoàn tiền nếu không hài lòng sau 7 ngày.</p>
         </div>
 
-        <div className={styles.bentoGrid} style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: "30px" }}>
-          {/* Free Trial */}
-          <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-            <div>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#94a3b8", background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "99px" }}>
-                TRẢI NGHIỆM
+        {/* Annual Discount Toggle */}
+        <div style={{ textAlign: "center" }}>
+          <div className={styles.pricingToggleWrapper}>
+            <button
+              type="button"
+              className={`${styles.pricingToggleBtn} ${billingCycle === "monthly" ? styles.pricingToggleBtnActive : ""}`}
+              onClick={() => setBillingCycle("monthly")}
+            >
+              Thanh toán theo Tháng
+            </button>
+            <button
+              type="button"
+              className={`${styles.pricingToggleBtn} ${billingCycle === "yearly" ? styles.pricingToggleBtnActive : ""}`}
+              onClick={() => setBillingCycle("yearly")}
+            >
+              Thanh toán theo Năm
+              <span style={{ fontSize: "11px", fontWeight: 800, background: "#10b981", color: "#fff", padding: "2px 7px", borderRadius: "99px" }}>
+                🎁 TẶNG 3 THÁNG
               </span>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Dùng Thử</h3>
-              <div style={{ fontSize: "32px", fontWeight: 900, color: "#fff", marginBottom: "14px" }}>
-                0 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ 7 ngày</span>
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.pricingGrid}>
+          {/* Free Trial */}
+          <div className={styles.pricingCard}>
+            <div>
+              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#94a3b8", background: "rgba(255,255,255,0.06)", padding: "3px 9px", borderRadius: "99px" }}>
+                TRẢI NGHIỆM MIỄN PHÍ
+              </span>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "12px 0 4px" }}>Gói Dùng Thử</h3>
+              
+              <div className={styles.pricingPriceBox}>
+                <div className={styles.pricingPriceRow}>
+                  <span className={styles.pricingAmount} style={{ color: "#fff" }}>0 đ</span>
+                  <span className={styles.pricingPeriod}>/ 7 ngày</span>
+                </div>
+                <div className={`${styles.pricingDailyBadge} ${styles.pricingDailyBadgeGreen}`}>
+                  ✨ Trải nghiệm trọn vẹn · Không cần thẻ
+                </div>
               </div>
-              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Trải nghiệm trọn vẹn sức mạnh nhân viên AI — Không cần thẻ tín dụng.
+
+              <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.45, marginBottom: "16px" }}>
+                Dùng thử đầy đủ tính năng tạo bài &amp; trực inbox 24/7 để thấy rõ hiệu quả trước khi trả phí.
               </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ Dùng thử 7 ngày không rủi ro</li>
-                <li>✓ Kết nối 1 Fanpage Facebook</li>
-                <li>✓ Trực Inbox &amp; Trả lời Bảng giá/FAQ 24/7</li>
-                <li>✓ Lên lịch đăng giờ vàng tự động</li>
+              <ul className={styles.pricingFeaturesList}>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Dùng thử 7 ngày không rủi ro</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Kết nối 1 Fanpage Facebook an toàn</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Trực Inbox &amp; Trả lời Bảng giá 24/7</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Lên lịch đăng bài tự động giờ vàng</span>
+                </li>
               </ul>
             </div>
             <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
@@ -352,80 +395,190 @@ export function LandingScreen() {
             </Link>
           </div>
 
-          {/* Gói Khởi Nghiệp (189.000 đ) */}
-          <div className={styles.glassCard} style={{ padding: "32px", textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          {/* Gói Khởi Nghiệp (189.000 đ/tháng hoặc 1.890.000 đ/năm) */}
+          <div className={styles.pricingCard}>
             <div>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#38bdf8", background: "rgba(56,189,248,0.15)", padding: "4px 10px", borderRadius: "99px" }}>
-                GÓI PHỔ CẬP
+              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#38bdf8", background: "rgba(56,189,248,0.15)", padding: "3px 9px", borderRadius: "99px" }}>
+                TIẾT KIỆM NHẤT
               </span>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Khởi Nghiệp</h3>
-              <div style={{ fontSize: "32px", fontWeight: 900, color: "#38bdf8", marginBottom: "14px" }}>
-                189.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~6.000 đ/ngày)</span>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "12px 0 4px" }}>Gói Khởi Nghiệp</h3>
+              
+              <div className={styles.pricingPriceBox}>
+                <div className={styles.pricingPriceRow}>
+                  <span className={styles.pricingAmount} style={{ color: "#38bdf8" }}>
+                    {billingCycle === "yearly" ? "1.890.000 đ" : "189.000 đ"}
+                  </span>
+                  <span className={styles.pricingPeriod}>
+                    {billingCycle === "yearly" ? "/ năm" : "/ tháng"}
+                  </span>
+                </div>
+                <div className={styles.pricingDailyBadge}>
+                  {billingCycle === "yearly" ? "⚡ Tiết kiệm: ~157k/tháng · Tặng 3 tháng" : "⚡ Chỉ ~6.000 đ/ngày"}
+                </div>
               </div>
-              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Rẻ hơn 1 ly trà sữa mỗi tuần — Khiến mọi chủ tiệm đều có thể bắt đầu ngay.
+
+              <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.45, marginBottom: "16px" }}>
+                Giải pháp tối ưu chi phí cho chủ tiệm đơn lẻ duy trì tương tác và bắt lead tự động.
               </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ <strong>1 Fanpage Facebook</strong> kết nối</li>
-                <li>✓ <strong>30 bài viết AI/tháng</strong> (Ảnh tiệm ➔ Bài chuẩn ngành)</li>
-                <li>✓ <strong>Trực Inbox 24/7</strong> &amp; Bắt SĐT khách tự động</li>
-                <li>✓ Báo cáo tương tác cơ bản</li>
-                <li>✓ Hỗ trợ kỹ thuật 24/7</li>
+              <ul className={styles.pricingFeaturesList}>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>1 Fanpage Facebook</strong> chính thức</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>30 bài viết chuẩn ngành/tháng</strong> từ ảnh tiệm</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Trực Inbox 24/7</strong> &amp; Bắt SĐT khách tự động</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Báo cáo tương tác &amp; Hiệu quả bài viết</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Hỗ trợ kỹ thuật chu đáo 24/7</span>
+                </li>
               </ul>
             </div>
             <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
-              Nâng cấp Gói Khởi Nghiệp
+              Nâng cấp Khởi Nghiệp
             </Link>
           </div>
 
-          {/* Gói Chuyên Nghiệp (369.000 đ - Best Seller) */}
-          <div className={`${styles.glassCard} ${styles.glassCardGlow}`} style={{ padding: "32px", textAlign: "left", borderColor: "rgba(139,92,246,0.6)", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative" }}>
-            <div style={{ position: "absolute", top: "-12px", right: "20px", background: "linear-gradient(135deg, #8B5CF6, #00D2FF)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 12px", borderRadius: "99px" }}>
+          {/* Gói Chuyên Nghiệp (369.000 đ/tháng hoặc 3.690.000 đ/năm - Best Seller) */}
+          <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
+            <div className={styles.pricingBadgeTop}>
               BÁN CHẠY NHẤT ★
             </div>
             <div>
-              <span style={{ fontSize: "12px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "4px 10px", borderRadius: "99px" }}>
-                GÓI CHUYÊN NGHIỆP
+              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#c084fc", background: "rgba(139,92,246,0.18)", padding: "3px 9px", borderRadius: "99px" }}>
+                TĂNG TRƯỞNG ĐA KÊNH
               </span>
-              <h3 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "14px 0 6px" }}>Gói Chuyên Nghiệp</h3>
-              <div style={{ fontSize: "32px", fontWeight: 900, color: "#c084fc", marginBottom: "14px" }}>
-                369.000 đ <span style={{ fontSize: "14px", fontWeight: 500, color: "#94a3b8" }}>/ tháng (~12.000 đ/ngày)</span>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "12px 0 4px" }}>Gói Chuyên Nghiệp</h3>
+              
+              <div className={styles.pricingPriceBox}>
+                <div className={styles.pricingPriceRow}>
+                  <span className={styles.pricingAmount} style={{ color: "#c084fc" }}>
+                    {billingCycle === "yearly" ? "3.690.000 đ" : "369.000 đ"}
+                  </span>
+                  <span className={styles.pricingPeriod}>
+                    {billingCycle === "yearly" ? "/ năm" : "/ tháng"}
+                  </span>
+                </div>
+                <div className={`${styles.pricingDailyBadge} ${styles.pricingDailyBadgePurple}`}>
+                  {billingCycle === "yearly" ? "🔥 Tiết kiệm: ~307k/tháng · Tặng 3 tháng" : "🔥 Chỉ ~12.000 đ/ngày"}
+                </div>
               </div>
-              <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: 1.5, marginBottom: "20px" }}>
-                Giải pháp đa kênh tăng trưởng toàn diện (Spa, Môi giới BĐS, F&B, Đào tạo nghề).
+
+              <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.45, marginBottom: "16px" }}>
+                Bộ công cụ toàn diện tăng trưởng doanh thu cho Spa, Môi giới BĐS, F&amp;B, Salon và Dạy nghề.
               </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px", fontSize: "13.5px", color: "#cbd5e1" }}>
-                <li>✓ <strong>Đa kênh:</strong> Facebook + Google Maps + TikTok Video</li>
-                <li>✓ <strong>90 bài viết AI &amp; Video ngắn 9:16</strong> (Hook 3s giật tít)</li>
-                <li>✓ <strong>AI Lead Agent:</strong> Tự động trích xuất SĐT/Tên khách hàng</li>
-                <li>✓ <strong>Smart CRM Nudge:</strong> Gợi ý tin nhắn kéo khách cũ quay lại</li>
-                <li>✓ Báo cáo doanh thu &amp; Đối soát POS</li>
+              <ul className={styles.pricingFeaturesList}>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Đa kênh:</strong> Facebook + Google Maps + TikTok Video</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>90 bài viết &amp; Kịch bản Video 9:16</strong> (Hook 3s)</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Tự động bắt SĐT &amp; Tên khách hàng</strong> về app</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Chăm sóc khách cũ (CRM Nudge):</strong> Kéo khách quay lại</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}>Báo cáo doanh thu &amp; Đối soát đơn hàng</span>
+                </li>
               </ul>
             </div>
             <Link href="/signup" className={styles.ctaButton} style={{ width: "100%", justifyContent: "center" }}>
-              Nâng cấp Gói Chuyên Nghiệp
+              Nâng cấp Chuyên Nghiệp
+            </Link>
+          </div>
+
+          {/* Gói Chuỗi Doanh Nghiệp (799.000 đ/tháng hoặc 7.990.000 đ/năm - Multi-Store VIP) */}
+          <div className={`${styles.pricingCard} ${styles.pricingCardEnterprise}`}>
+            <div className={`${styles.pricingBadgeTop} ${styles.pricingBadgeGold}`}>
+              QUY MÔ CHUỖI 👑
+            </div>
+            <div>
+              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#fbbf24", background: "rgba(245,158,11,0.18)", padding: "3px 9px", borderRadius: "99px" }}>
+                DOANH NGHIỆP &amp; CHUỖI
+              </span>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "12px 0 4px" }}>Chuỗi Doanh Nghiệp</h3>
+              
+              <div className={styles.pricingPriceBox}>
+                <div className={styles.pricingPriceRow}>
+                  <span className={styles.pricingAmount} style={{ color: "#fbbf24" }}>
+                    {billingCycle === "yearly" ? "7.990.000 đ" : "799.000 đ"}
+                  </span>
+                  <span className={styles.pricingPeriod}>
+                    {billingCycle === "yearly" ? "/ năm" : "/ tháng"}
+                  </span>
+                </div>
+                <div className={`${styles.pricingDailyBadge} ${styles.pricingDailyBadgeAmber}`}>
+                  {billingCycle === "yearly" ? "💎 Tiết kiệm: ~665k/tháng · Tặng 3 tháng" : "💎 Chỉ ~26.000 đ/ngày"}
+                </div>
+              </div>
+
+              <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: 1.45, marginBottom: "16px" }}>
+                Quản lý tập trung 2–5 chi nhánh / Fanpage cho hệ thống chuỗi và Agency truyền thông.
+              </p>
+              <ul className={styles.pricingFeaturesList}>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Quản lý tối đa 5 Chi nhánh / Fanpage</strong></span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Không giới hạn</strong> bài viết AI &amp; kịch bản Video</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Phân quyền nhân viên (RBAC):</strong> Chủ, Quản lý, Sale</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Đối soát POS KiotViet / Sapo</strong> tự động</span>
+                </li>
+                <li>
+                  <span className={styles.pricingCheck}>✓</span>
+                  <span className={styles.pricingFeatureText}><strong>Kỹ sư Havi hỗ trợ VIP 1-1</strong> riêng biệt</span>
+                </li>
+              </ul>
+            </div>
+            <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center", borderColor: "rgba(245,158,11,0.4)" }}>
+              Nâng cấp Gói Chuỗi
             </Link>
           </div>
         </div>
 
-        {/* Cash Flow Accelerator Banner (Đòn Bẩy Gói Năm) */}
+        {/* Cash Flow Accelerator Banner / Custom B2B Box */}
         <div className={styles.glassCard} style={{ padding: "24px 36px", textAlign: "left", background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,210,255,0.12))", borderColor: "rgba(139,92,246,0.4)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", marginBottom: "60px" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "20px" }}>🎁</span>
+              <span style={{ fontSize: "20px" }}>🏢</span>
               <span style={{ fontSize: "16px", fontWeight: 800, color: "#fff" }}>
-                Ưu Đãi Đòn Bẩy Gói Năm (Tiết Kiệm Tối Đa)
+                Cần Quản Lý &gt; 5 Cơ Sở Hoặc Hợp Đồng &amp; Xuất Hóa Đơn VAT Doanh Nghiệp?
               </span>
-              <span style={{ fontSize: "11px", fontWeight: 800, background: "#10b981", color: "#fff", padding: "2px 8px", borderRadius: "6px" }}>
-                TẶNG 3 THÁNG
+              <span style={{ fontSize: "11px", fontWeight: 800, background: "#3b82f6", color: "#fff", padding: "2px 8px", borderRadius: "6px" }}>
+                B2B CUSTOM
               </span>
             </div>
             <p style={{ fontSize: "14px", color: "#cbd5e1", margin: "6px 0 0 0" }}>
-              Thanh toán 1 năm: Tặng ngay 3 tháng sử dụng miễn phí + Tặng bộ 50 kịch bản Video TikTok chuyển đổi cao độc quyền từ Havi.
+              Havi cung cấp giải pháp Private Setup, đào tạo AI chuyên sâu và tích hợp API riêng cho các chuỗi lớn và Agency.
             </p>
           </div>
-          <Link href="/signup" className={styles.ctaButton} style={{ whiteSpace: "nowrap" }}>
-            Nhận Ưu Đãi Gói Năm
+          <Link href="/about" className={styles.ctaButton} style={{ whiteSpace: "nowrap" }}>
+            Liên hệ Chuyên viên B2B
           </Link>
         </div>
       </section>
@@ -465,8 +618,8 @@ export function LandingScreen() {
                 Nhân viên AI Marketing Đa Kênh tự động cho mọi chủ tiệm &amp; doanh nghiệp. Tự động hóa bài viết Facebook, kịch bản TikTok Shorts, Google Maps SEO và trực Inbox 24/7.
               </p>
               <div className={styles.trustBadges}>
-                <span className={styles.trustBadge}>🔒 Official Meta API</span>
-                <span className={styles.trustBadge}>🇻🇳 Tiếng Việt Là Gốc</span>
+                <span className={styles.trustBadge}>🛡️ Bảo Vệ Kênh 100%</span>
+                <span className={styles.trustBadge}>🇻🇳 Giọng Văn Thuần Việt</span>
                 <span className={styles.trustBadge}>⚡ 100% Duyệt Trước</span>
               </div>
             </div>
@@ -477,8 +630,8 @@ export function LandingScreen() {
               <ul className={styles.footerLinkList}>
                 <li><a href="#demo-studio">Studio Demo</a></li>
                 <li><a href="#cach-hoat-dong">Cách hoạt động</a></li>
-                <li><a href="#bang-gia">Bảng giá 10k/ngày</a></li>
-                <li><a href="#nguyen-tac">Nguyên tắc cốt lõi</a></li>
+                <li><a href="#bang-gia">Bảng giá 6k/ngày</a></li>
+                <li><a href="#nguyen-tac">Nguyên tắc an toàn</a></li>
               </ul>
             </div>
 
@@ -486,10 +639,54 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>NGÀNH NGHỀ</div>
               <ul className={styles.footerLinkList}>
-                <li><a href="#demo-studio">Spa &amp; Thẩm Mỹ Viện</a></li>
-                <li><a href="#demo-studio">Quán Ăn &amp; Cà Phê</a></li>
-                <li><a href="#demo-studio">Môi Giới Bất Động Sản</a></li>
-                <li><a href="#demo-studio">Kỹ Thuật &amp; Đào Tạo</a></li>
+                <li>
+                  <a
+                    href="#demo-studio"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveIndustryIdx(0);
+                      document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Spa &amp; Làm Đẹp
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#demo-studio"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveIndustryIdx(1);
+                      document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Bất Động Sản
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#demo-studio"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveIndustryIdx(2);
+                      document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Quán Ăn &amp; Cafe
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#demo-studio"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActiveIndustryIdx(3);
+                      document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Đào Tạo &amp; Dạy Nghề
+                  </a>
+                </li>
               </ul>
             </div>
 

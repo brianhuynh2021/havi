@@ -307,6 +307,31 @@ export function CalendarScreen() {
             </button>
           </div>
 
+          <div className={styles.filterGroup}>
+            <span className={styles.filterLabel}>Trạng thái:</span>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${statusFilter === "all" ? styles.filterChipActive : ""}`}
+              onClick={() => setStatusFilter("all")}
+            >
+              Tất cả
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${statusFilter === "scheduled" ? styles.filterChipActive : ""}`}
+              onClick={() => setStatusFilter("scheduled")}
+            >
+              Chờ đăng
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterChip} ${statusFilter === "published" ? styles.filterChipActive : ""}`}
+              onClick={() => setStatusFilter("published")}
+            >
+              Đã đăng
+            </button>
+          </div>
+
           {/* View Mode Switcher */}
           <div className={styles.viewSwitcher}>
             <button

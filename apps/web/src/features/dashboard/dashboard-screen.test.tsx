@@ -60,6 +60,14 @@ function mockDashboard({
           eventsStatus,
         );
       }
+      if (url.pathname.includes("/billing/subscription")) {
+        return jsonResponse({
+          plan: "trial",
+          status: "trialing",
+          trial_ends_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+          paid_until: null,
+        });
+      }
       return jsonResponse(summary, summaryStatus);
     });
 }

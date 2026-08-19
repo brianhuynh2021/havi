@@ -406,8 +406,7 @@ describe("ContentCreationScreen", () => {
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
-
-    expect(await screen.findByText(/havi đang viết bài/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/havi đang viết bài/i)).length).toBeGreaterThanOrEqual(1);
   });
 
   it("job failed thì báo lỗi và cho thử lại, không quay vô tận", async () => {

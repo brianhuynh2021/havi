@@ -31,7 +31,7 @@ describe("LandingScreen", () => {
   it("nói rõ nguyên tắc an toàn duyệt-trước là giá trị cốt lõi", () => {
     renderLanding();
     expect(screen.getByText(/bạn duyệt trước, luôn luôn/i)).toBeInTheDocument();
-    expect(screen.getByText(/chỉ dùng api chính thức/i)).toBeInTheDocument();
+    expect(screen.getByText(/tuyệt đối an toàn cho fanpage/i)).toBeInTheDocument();
   });
 
   it("cho phép tương tác đổi tab trong Studio Demo trực tuyến", async () => {
@@ -51,7 +51,7 @@ describe("LandingScreen", () => {
 
   it("CTA dẫn tới đăng ký và đăng nhập", () => {
     renderLanding();
-    const signupLinks = screen.getAllByRole("link", { name: /dùng thử 14 ngày/i });
+    const signupLinks = screen.getAllByRole("link", { name: /dùng thử 7 ngày/i });
     expect(signupLinks.length).toBeGreaterThan(0);
     for (const link of signupLinks) {
       expect(link).toHaveAttribute("href", "/signup");

@@ -32,6 +32,7 @@ MONTHLY_TOKEN_QUOTA: dict[Plan, int] = {
     Plan.TRIAL: 100_000,
     Plan.TIEM_NHO: 500_000,
     Plan.TOAN_DIEN: 2_000_000,
+    Plan.DOANH_NGHIEP: 5_000_000,
 }
 
 #: Ngưỡng cảnh báo — vượt mức này thì UI nên nói trước, đừng để chủ tiệm chỉ

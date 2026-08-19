@@ -11,6 +11,7 @@ import {
   type DashboardActivityEvent,
   type DashboardContentSummary,
 } from "./dashboard.api";
+import { fetchSubscription, type Subscription } from "@/features/billing/billing.api";
 import styles from "./dashboard.module.css";
 
 function activityCopy(event: DashboardActivityEvent, t: (obj: { vi: string; en: string }) => string) {
@@ -45,6 +46,8 @@ export function DashboardScreen() {
   const { lang, t } = useLanguage();
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
   const [activity, setActivity] = useState<DashboardActivityEvent[]>([]);
+  const [sub, setSub] = useState<Subscription | null>(null);
+  const [daysLeft, setDaysLeft] = useState(7);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -70,9 +73,10 @@ export function DashboardScreen() {
   useEffect(() => {
     let cancelled = false;
     async function run() {
-      const [summaryResult, activityResult] = await Promise.all([
+      const [summaryResult, activityResult, subResult] = await Promise.all([
         fetchDashboardSummary(),
         fetchDashboardActivity(),
+        fetchSubscription(),
       ]);
       if (cancelled) return;
       if (summaryResult.ok) {
@@ -87,6 +91,19 @@ export function DashboardScreen() {
       } else {
         setActivity([]);
         setActivityError(activityResult.message);
+      }
+      if (subResult.ok) {
+        setSub(subResult.data);
+        if (subResult.data.current_period_end) {
+          const left = Math.max(
+            0,
+            Math.ceil(
+              (new Date(subResult.data.current_period_end).getTime() - Date.now()) /
+                (1000 * 60 * 60 * 24),
+            ),
+          );
+          setDaysLeft(left);
+        }
       }
       setLoading(false);
     }
@@ -104,6 +121,8 @@ export function DashboardScreen() {
     ];
   }
 
+  const isTrial = !sub || sub.plan === "trial";
+
   return (
     <>
       <header className={styles.header}>
@@ -112,6 +131,34 @@ export function DashboardScreen() {
           {dateLine} — {t({ vi: "số liệu từ workspace này", en: "metrics from this workspace" })}
         </p>
       </header>
+
+      {/* Trial Countdown & VietQR Upgrade Banner */}
+      {isTrial ? (
+        <section className={styles.trialBanner} aria-label="Thời hạn dùng thử">
+          <div className={styles.trialContent}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <span className={styles.trialBadge}>
+                ✨ {lang === "VN" ? `DÙNG THỬ CÒN ${daysLeft} NGÀY` : `${daysLeft} DAYS TRIAL LEFT`}
+              </span>
+              <span className={styles.trialTitle}>
+                {t({
+                  vi: "Trải nghiệm trọn vẹn nhân viên AI đa kênh của Havi",
+                  en: "Experience full multi-channel AI marketing employee",
+                })}
+              </span>
+            </div>
+            <p className={styles.trialDesc}>
+              {t({
+                vi: "Tiết kiệm 4 triệu/tháng chi phí marketing, tự động lên bài Facebook/TikTok và trực inbox bắt số điện thoại 24/7.",
+                en: "Save 4M VND/month on marketing costs, auto-publish Facebook/TikTok, and 24/7 inbox lead capture.",
+              })}
+            </p>
+          </div>
+          <Link href="/app/billing" className={styles.trialUpgradeBtn}>
+            {lang === "VN" ? "Nâng cấp chỉ 6k/ngày ➔" : "Upgrade from 6k/day ➔"}
+          </Link>
+        </section>
+      ) : null}
 
       {error ? (
         <ErrorState

@@ -40,8 +40,11 @@ export function OnboardingScreen() {
 
   useEffect(() => {
     if (!learning) return;
-    setProgressPercent(25);
-    setCompletedStages([0]);
+
+    const timer0 = setTimeout(() => {
+      setProgressPercent(25);
+      setCompletedStages([0]);
+    }, 0);
 
     const timer1 = setTimeout(() => {
       setProgressPercent(70);
@@ -54,6 +57,7 @@ export function OnboardingScreen() {
     }, 900);
 
     return () => {
+      clearTimeout(timer0);
       clearTimeout(timer1);
       clearTimeout(timer2);
     };

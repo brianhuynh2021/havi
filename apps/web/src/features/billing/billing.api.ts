@@ -5,7 +5,7 @@ import type { components } from "@/lib/api-client/schema";
 
 export type Subscription = components["schemas"]["Subscription"];
 export type Invoice = components["schemas"]["Invoice"];
-export type Plan = components["schemas"]["Plan"];
+export type Plan = components["schemas"]["Plan"] | "doanh_nghiep";
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 

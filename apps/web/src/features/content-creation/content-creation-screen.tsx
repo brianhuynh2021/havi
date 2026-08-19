@@ -174,11 +174,6 @@ function getTopicImage(mediaNote?: string | null, text?: string | null): string 
   return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80";
 }
 
-const jobProgressLabel: Record<string, string> = {
-  queued: "Havi đã nhận, đang xếp hàng…",
-  processing: "Havi đang viết bài từ liệu chị vừa nạp…",
-};
-
 function makeNoteChipKey(chipCount: number): string {
   return `note-${chipCount}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -676,6 +671,61 @@ export function ContentCreationScreen() {
             </Button>
           </div>
         ) : null}
+
+        {/* 1-Tap Fast Template Presets */}
+        <div className={styles.presetSection}>
+          <div className={styles.presetHeader}>
+            <span>⚡</span>
+            <span>Ý tưởng bài viết 1-chạm (Bấm để điền nhanh):</span>
+          </div>
+          <div className={styles.presetGrid}>
+            {[
+              {
+                icon: "💆",
+                title: "Spa / Chăm sóc da",
+                text: "Ưu đãi chăm sóc da chuyên sâu cuối tuần: Giảm 20% + Tặng gói massage cổ vai gáy 15 phút cho khách đặt lịch trước.",
+              },
+              {
+                icon: "☕",
+                title: "F&B / Quán ăn & Cafe",
+                text: "Giới thiệu món đặc biệt mới tuần này: Tặng kèm 1 đồ uống mát lạnh cho bàn từ 2 người, áp dụng từ nay đến Chủ Nhật.",
+              },
+              {
+                icon: "🏢",
+                title: "Bất động sản vị trí đẹp",
+                text: "Căn hộ 2 phòng ngủ view hồ thoáng mát, đầy đủ nội thất cao cấp xách vali vào ở ngay, sổ hồng sẵn công chứng trong ngày.",
+              },
+              {
+                icon: "💻",
+                title: "Đào tạo Tech / Nhật Minh",
+                text: "Khai giảng khóa học Lập trình Web & AI thực chiến 1 kèm 1: Học trên dự án thật, cam kết hỗ trợ việc làm sau khóa học.",
+              },
+              {
+                icon: "🛍️",
+                title: "Shop / Flash Sale",
+                text: "Bộ sưu tập mới về ngập kệ: Flash sale tri ân khách quen giảm 10% toàn bộ sản phẩm trong 48 giờ tới.",
+              },
+              {
+                icon: "🔧",
+                title: "Dịch vụ & Bảo dưỡng",
+                text: "Dịch vụ bảo dưỡng sửa chữa tận nơi nhanh chóng, bảo hành 6 tháng uy tín, gọi là có mặt sau 15 phút.",
+              },
+            ].map((preset) => (
+              <button
+                key={preset.title}
+                type="button"
+                className={styles.presetChip}
+                onClick={() => {
+                  setNote(preset.text);
+                  setNoteOpen(true);
+                }}
+              >
+                <span>{preset.icon}</span>
+                <span>{preset.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {uploads.length ? (
@@ -831,9 +881,9 @@ export function ContentCreationScreen() {
         <Button
           variant="primary"
           onClick={generate}
-          disabled={(!chips.length && !note.trim()) || uploading}
+          disabled={(!chips.length && !note.trim()) || uploading || generating}
         >
-          Để Havi viết cho chị
+          {generating ? "Havi đang viết bài…" : "Để Havi viết cho chị"}
         </Button>
       </div>
 

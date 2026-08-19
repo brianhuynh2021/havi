@@ -128,7 +128,7 @@ export const industryScenarios: IndustryScenario[] = [
     },
   },
   {
-    name: "Quán ăn / Cafe / F&B",
+    name: "Quán ăn & Cafe",
     badge: "F&B",
     color: "linear-gradient(135deg,#E65100,#EF6C00)",
     image: "/images/cafe_photo_hq.jpg",
@@ -160,27 +160,27 @@ export const industryScenarios: IndustryScenario[] = [
     },
   },
   {
-    name: "Đào tạo & Kỹ thuật (Nhật Minh Tech)",
-    badge: "TECH",
+    name: "Đào tạo & Dịch vụ nghề",
+    badge: "DẠY NGHỀ",
     color: "linear-gradient(135deg,#7C3AED,#5B21B6)",
     image: "/images/hero_ai_studio_hq.jpg",
     rawInput: "Ảnh học viên thực hành lập trình Web và ráp mạch thực chiến",
     tabs: {
       facebook: {
-        title: "Bài đăng Tuyển sinh & Dự án",
+        title: "Bài đăng Tuyển sinh & Khóa học",
         badge: "Facebook Feed",
-        content: "💡 Học lập trình không lý thuyết suông — 100% học viên tại Trung Tâm Công Nghệ Nhật Minh được tự tay code sản phẩm thật và triển khai lên Cloud ngay trong khóa học. Đăng ký nhận lộ trình học 1 kèm 1 và bộ quà tặng đồ án mẫu hôm nay!",
+        content: "💡 Học nghề không lý thuyết suông — 100% học viên tại Trung Tâm Công Nghệ Nhật Minh được tự tay thực hành trên dự án thực tế ngay trong khóa học. Đăng ký nhận lộ trình học 1 kèm 1 và ưu đãi học phí tháng này nhé!",
       },
       video: {
-        title: "Kịch bản Video TikTok Tech (Hook 3s)",
+        title: "Kịch bản Video Review TikTok (Hook 3s)",
         badge: "Short-form Video 9:16",
-        hook: "💻 Đừng học code theo sách giáo khoa nữa! Đây là cách tự tay build 1 con AI Agent trong 15 phút...",
-        script: "B1: Tạo backend FastAPI kết nối LLM.\nB2: Gắn Webhook thanh toán VietQR tự động.\nB3: Đóng gói Docker deploy lên Cloud.\n👉 Tham gia khóa học Lập trình Web Fullstack thực chiến tại Nhật Minh Tech ngay hôm nay!",
+        hook: "💻 Đừng học lý thuyết suông nữa! Đây là cách học viên tự tay làm ra website bán hàng chỉ sau 2 tuần...",
+        script: "1. Học thực hành 1 kèm 1 trên dự án thật.\n2. Tự tay làm web, gắn tính năng thanh toán online.\n3. Hỗ trợ việc làm ngay sau khi hoàn thành khóa học.\n👉 Đăng ký học thử 1 buổi miễn phí tại Nhật Minh Tech ngay hôm nay!",
       },
       maps: {
-        title: "Google Business & Đào tạo Kỹ thuật",
+        title: "Google Business & Đào tạo Nghề",
         badge: "Google Business Top 3",
-        content: "📍 Trung Tâm Đào Tạo Công Nghệ Nhật Minh — Cơ sở đào tạo Lập trình & Kỹ thuật số hàng đầu. Giảng viên chuyên gia, cam kết hỗ trợ việc làm.",
+        content: "📍 Trung Tâm Đào Tạo Công Nghệ Nhật Minh — Cơ sở đào tạo Lập trình & Kỹ thuật số thực chiến hàng đầu. Giảng viên tận tâm, cam kết đầu ra có sản phẩm chạy thật.",
       },
       inbox: {
         title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
@@ -197,15 +197,15 @@ export const industryScenarios: IndustryScenario[] = [
 export const principles = [
   {
     title: "Bạn duyệt trước, luôn luôn",
-    desc: "Mặc định không có bài đăng nào lên mạng khi bạn chưa duyệt. Bạn nắm trọn 100% uy tín thương hiệu tiệm.",
+    desc: "Không bao giờ tự ý đăng bài khi bạn chưa xem qua. Bạn nắm trọn 100% quyền kiểm soát nội dung và hình ảnh của tiệm.",
   },
   {
-    title: "Chỉ dùng API chính thức",
-    desc: "Havi tích hợp qua Meta Graph API, Google Business API chính hãng, an toàn tuyệt đối, không sợ bị khoá Fanpage.",
+    title: "Tuyệt đối an toàn cho Fanpage",
+    desc: "Nói không với tool lậu hay spam vi phạm chính sách. Giữ Fanpage và các kênh mạng xã hội của tiệm luôn an toàn, uy tín và bền vững.",
   },
   {
-    title: "Trợ lý hiểu sâu tiếng Việt bản địa",
-    desc: "Văn phong chuẩn xác theo từng vùng miền và ngành nghề — xưng hô chị/anh gần gũi, khéo léo chốt đơn.",
+    title: "Văn phong thuần Việt, chốt đơn khéo",
+    desc: "Hiểu đúng cách xưng hô anh/chị gần gũi, giọng điệu tự nhiên như người thật — tư vấn duyên dáng và khéo léo xin số điện thoại khách hàng.",
   },
 ];
 

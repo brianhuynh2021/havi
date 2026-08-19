@@ -17,6 +17,82 @@
   font-size: 14.5px;
 }
 
+/* Trial Countdown & VietQR Upgrade Banner */
+.trialBanner {
+  margin-top: 20px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(139, 92, 246, 0.12) 100%), var(--color-surface);
+  border: 1.5px solid rgba(139, 92, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  box-shadow: 0 8px 24px -4px rgba(139, 92, 246, 0.12);
+  transition: all 0.25s ease;
+}
+
+.trialBanner:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 12px 32px -4px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.trialBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8b5cf6, #00d2ff);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.trialContent {
+  flex: 1;
+}
+
+.trialTitle {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.trialDesc {
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--color-body);
+  line-height: 1.5;
+}
+
+.trialUpgradeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: none;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.trialUpgradeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.4);
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -378,6 +454,16 @@
 }
 
 @media (max-width: 720px) {
+  .trialBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 16px;
+  }
+  .trialUpgradeBtn {
+    width: 100%;
+    justify-content: center;
+  }
   .statsGrid {
     grid-template-columns: 1fr;
   }

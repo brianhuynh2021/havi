@@ -29,11 +29,12 @@ class WorkspaceRole(StrEnum):
 
 
 class Plan(StrEnum):
-    """Bảng giá landing page: 0đ 14 ngày / Tiệm Nhỏ 299K / Toàn Diện 599K."""
+    """Bảng giá: 0đ 7 ngày / Khởi Nghiệp 189K / Chuyên Nghiệp 369K / Chuỗi Doanh Nghiệp 799K."""
 
     TRIAL = "trial"
     TIEM_NHO = "tiem_nho"
     TOAN_DIEN = "toan_dien"
+    DOANH_NGHIEP = "doanh_nghiep"
 
 
 class Channel(StrEnum):

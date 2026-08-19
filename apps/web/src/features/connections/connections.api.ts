@@ -141,7 +141,7 @@ export const PILOT_PLATFORMS: { platform: Platform; label: string }[] = [
   { platform: "facebook", label: "Facebook Fanpage & Reels" },
   { platform: "google_business", label: "Google Maps SEO & Tìm kiếm" },
   { platform: "tiktok", label: "TikTok Channel (Video ngắn)" },
-  { platform: "youtube", label: "YouTube Shorts" },
+  { platform: "youtube", label: "YouTube & Shorts" },
 ];
 
 export function isUsable(connection: PlatformConnection | undefined): boolean {

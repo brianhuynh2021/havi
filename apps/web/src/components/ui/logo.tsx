@@ -17,12 +17,10 @@
 type LogoProps = {
   /** Cạnh của logomark tính bằng px. */
   size?: number;
-  /** `brand`, `dark`, hoặc `light` */
-  tone?: "brand" | "dark" | "light";
   className?: string;
 };
 
-export function Logo({ size = 40, tone = "brand", className }: LogoProps) {
+export function Logo({ size = 40, className }: LogoProps) {
   const gradientId = `havi-grad-${size}`;
   const glowId = `havi-glow-${size}`;
 

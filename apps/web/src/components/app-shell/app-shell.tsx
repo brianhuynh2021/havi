@@ -9,6 +9,7 @@ import { WorkspaceName } from "./workspace-name";
 import { Logo } from "@/components/ui/logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { PwaInstallModal } from "@/components/pwa/pwa-install-modal";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 type AppShellProps = {
@@ -39,7 +40,8 @@ export function AppShell({ children }: AppShellProps) {
       <main className={styles.content}>
         <header className={styles.topHeader}>
           <div className={styles.topHeaderTitle}>{t("shell.assistant", "Trợ lý Havi")}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <PwaInstallModal />
             <LanguageSwitcher variant="pill" />
             <NotificationBell />
           </div>
