@@ -85,7 +85,7 @@ export const translations = {
 
     // Leads & Care Loop
     "leads.title": "Khách Tiềm Năng & Hộp Thư",
-    "leads.subtitle": "Tự động phản hồi FAQ và quản lý khách hàng từ Zalo, Facebook, Google",
+    "leads.subtitle": "Tự động phản hồi FAQ và quản lý khách hàng từ Facebook, Google Maps SEO, TikTok, YouTube Shorts",
     "leads.faqTab": "Tự động trả lời (FAQ Loop)",
     "leads.crmTab": "Danh sách khách hàng (CRM)",
     "leads.autoReplyEnabled": "Bật tự động phản hồi AI",
@@ -101,9 +101,10 @@ export const translations = {
     "settings.workspaceTab": "Thông tin doanh nghiệp",
     "settings.channelsTab": "Kết nối kênh truyền thông",
     "settings.brandKitTab": "Bộ nhận diện thương hiệu",
-    "settings.connectFacebook": "Kết nối Facebook Page",
-    "settings.connectZalo": "Kết nối Zalo Official Account",
-    "settings.connectGoogle": "Kết nối Google Business Profile",
+    "settings.connectFacebook": "Kết nối Facebook Fanpage",
+    "settings.connectGoogle": "Kết nối Google Business Profile (Google Maps SEO)",
+    "settings.connectTikTok": "Kết nối TikTok Account",
+    "settings.connectYouTube": "Kết nối YouTube Shorts",
     "settings.connected": "Đã kết nối",
     "settings.notConnected": "Chưa kết nối",
 
@@ -214,7 +215,7 @@ export const translations = {
 
     // Leads & Care Loop
     "leads.title": "Leads & Customer Care",
-    "leads.subtitle": "Auto-reply FAQ & manage leads from Zalo, Facebook, Google",
+    "leads.subtitle": "Auto-reply FAQ & manage leads from Facebook, Google Maps SEO, TikTok, YouTube Shorts",
     "leads.faqTab": "FAQ Auto-reply Loop",
     "leads.crmTab": "Lead Contacts (CRM)",
     "leads.autoReplyEnabled": "Enable AI Auto-reply",
@@ -231,8 +232,9 @@ export const translations = {
     "settings.channelsTab": "Channel Connections",
     "settings.brandKitTab": "Brand Kit",
     "settings.connectFacebook": "Connect Facebook Page",
-    "settings.connectZalo": "Connect Zalo Official Account",
-    "settings.connectGoogle": "Connect Google Business Profile",
+    "settings.connectGoogle": "Connect Google Business Profile (Google Maps SEO)",
+    "settings.connectTikTok": "Connect TikTok Account",
+    "settings.connectYouTube": "Connect YouTube Shorts",
     "settings.connected": "Connected",
     "settings.notConnected": "Not Connected",
 

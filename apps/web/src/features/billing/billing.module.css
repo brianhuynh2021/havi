@@ -137,6 +137,18 @@
   box-shadow: 0 8px 30px -4px rgba(0, 102, 255, 0.15);
 }
 
+.planCardFeatured {
+  border-color: #8b5cf6;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, rgba(255, 255, 255, 1) 100%), #ffffff;
+  box-shadow: 0 8px 30px -4px rgba(139, 92, 246, 0.2), 0 0 20px rgba(0, 210, 255, 0.12);
+}
+
+.planCardFeatured:hover {
+  transform: translateY(-4px);
+  border-color: #a855f7;
+  box-shadow: 0 16px 40px -4px rgba(139, 92, 246, 0.28), 0 0 30px rgba(0, 210, 255, 0.2);
+}
+
 .popularBadge {
   position: absolute;
   top: -12px;
@@ -148,9 +160,27 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 4px 12px;
+  padding: 4px 14px;
   border-radius: 999px;
   box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+  white-space: nowrap;
+}
+
+.featuredBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #8b5cf6, #00d2ff);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  white-space: nowrap;
 }
 
 .planHeader {
@@ -374,12 +404,44 @@
 .transferRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   color: #1e3a8a;
 }
 
 .transferRow strong {
   color: #0066ff;
   font-family: monospace;
+}
+
+.valueWithCopy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copyBtn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #bfdbfe;
+  background: #ffffff;
+  color: #0066ff;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.copyBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.copyBtnSuccess {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
 }
 
 @media (max-width: 1024px) {

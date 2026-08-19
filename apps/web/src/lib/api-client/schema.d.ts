@@ -1465,10 +1465,10 @@ export interface components {
         };
         /**
          * Industry
-         * @description 6 ô trong bước 1 của Onboarding.
+         * @description 8 nhóm ngành kinh doanh trong bước 1 của Onboarding.
          * @enum {string}
          */
-        Industry: "spa" | "food_beverage" | "real_estate" | "professional" | "online_shop" | "other";
+        Industry: "spa" | "food_beverage" | "retail_shop" | "online_shop" | "education" | "local_service" | "real_estate" | "professional" | "other";
         /** Invoice */
         Invoice: {
             /**

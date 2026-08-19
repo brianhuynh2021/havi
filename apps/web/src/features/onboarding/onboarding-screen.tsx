@@ -33,8 +33,31 @@ export function OnboardingScreen() {
   const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
   const [learning, setLearning] = useState(false);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [completedStages, setCompletedStages] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!learning) return;
+    setProgressPercent(25);
+    setCompletedStages([0]);
+
+    const timer1 = setTimeout(() => {
+      setProgressPercent(70);
+      setCompletedStages([0, 1]);
+    }, 400);
+
+    const timer2 = setTimeout(() => {
+      setProgressPercent(100);
+      setCompletedStages([0, 1, 2]);
+    }, 900);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [learning]);
 
   // Tên đã nhập lúc đăng ký thường chính là tên tiệm — điền sẵn để chủ tiệm
   // không phải gõ lại. Vẫn sửa được: nhiều người đăng ký bằng tên riêng.
@@ -105,39 +128,66 @@ export function OnboardingScreen() {
               Havi sẽ dùng thông tin này để viết bài đúng giọng, đúng ngành.
             </p>
 
-            <label className={styles.label} htmlFor="shop-name">
-              Tên tiệm
-            </label>
-            <Input
-              id="shop-name"
-              placeholder="Spa An Nhiên"
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-            />
+            <div className={styles.inputSection}>
+              <label className={styles.label} htmlFor="shop-name">
+                Tên tiệm
+              </label>
+              <Input
+                id="shop-name"
+                scale="large"
+                placeholder="Ví dụ: Spa An Nhiên, Tiệm Cà Phê 1985..."
+                value={shopName}
+                onChange={(e) => setShopName(e.target.value)}
+              />
+            </div>
 
-            <div className={styles.industryGrid}>
-              {industryOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  aria-pressed={industry === option.value}
-                  className={`${styles.industryCard} ${
-                    industry === option.value ? styles.industryCardActive : ""
-                  }`}
-                  onClick={() => setIndustry(option.value)}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700 }}>
-                    <span style={{ fontSize: "18px" }}>{option.icon}</span>
-                    <span>{option.label}</span>
-                  </div>
-                  <div style={{ fontSize: "11.5px", fontWeight: 400, color: "#6b625b", marginTop: "4px", lineHeight: "1.3" }}>
-                    {option.desc}
-                  </div>
-                  {option.recommended ? (
-                    <span className={styles.recommendedTag}>★ Đề xuất pilot</span>
-                  ) : null}
-                </button>
-              ))}
+            <div className={styles.industrySection}>
+              <label className={styles.label}>Ngành kinh doanh của tiệm</label>
+              <div className={styles.industryGrid}>
+                {industryOptions.map((option) => {
+                  const isSelected = industry === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      className={`${styles.industryCard} ${
+                        isSelected ? styles.industryCardActive : ""
+                      }`}
+                      onClick={() => setIndustry(option.value)}
+                    >
+                      <div className={styles.cardHeader}>
+                        <div className={styles.cardTitleWrapper}>
+                          <span className={styles.cardIcon}>{option.icon}</span>
+                          <span className={styles.cardTitle}>{option.label}</span>
+                        </div>
+                        {option.recommended ? (
+                          <span className={styles.recommendedTag}>★ Đề xuất pilot</span>
+                        ) : null}
+                      </div>
+                      <div className={styles.cardDesc}>
+                        {option.desc}
+                      </div>
+                      {isSelected ? (
+                        <div className={styles.checkBadge}>
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {error ? (
@@ -146,56 +196,99 @@ export function OnboardingScreen() {
               </p>
             ) : null}
 
-            <Button
-              variant="primary"
-              disabled={!industry || submitting}
-              onClick={submitIndustry}
-            >
-              {submitting ? "Đang tạo tiệm…" : "Tiếp tục"}
-            </Button>
+            <div className={styles.actions}>
+              <Button
+                variant="primary"
+                scale="large"
+                disabled={!industry || submitting}
+                onClick={submitIndustry}
+              >
+                {submitting ? "Đang tạo tiệm…" : "Tiếp tục"}
+              </Button>
+            </div>
           </>
         ) : step === 2 ? (
           <>
-            <h1 className={styles.title}>Nối kênh Facebook Page</h1>
+            <h1 className={styles.title}>Kết nối kênh của bạn</h1>
             <p className={styles.subtitle}>
-              Havi cần quyền đăng bài trên Page để giúp chị/anh đăng đúng lịch.
+              Kết nối Facebook, Google Maps SEO, TikTok, YouTube Shorts để Havi tự động đăng bài, tạo video ngắn và chăm sóc khách 24/7.
             </p>
-            <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
+            <div className={styles.connectionListWrapper}>
+              <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
+            </div>
             <div className={styles.stepActions}>
               {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
                   tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}
-              <Button variant="outline" onClick={() => setStep(3)}>
+              <Button variant="outline" scale="large" onClick={() => setStep(3)}>
                 Bỏ qua
               </Button>
               <Button
                 variant="primary"
+                scale="large"
                 disabled={!connected}
                 onClick={() => setStep(3)}
               >
-                Tiếp tục
+                {connected ? "Tiếp tục →" : "Tiếp tục"}
               </Button>
             </div>
           </>
         ) : (
           <>
-            <h1 className={styles.title}>Havi đang học về tiệm của chị/anh</h1>
+            <h1 className={styles.title}>Havi đang học về tiệm của bạn</h1>
             <p className={styles.subtitle}>
-              Chỉ mất chưa đầy một phút — Havi đọc brand voice và chuẩn bị bản
+              Chỉ mất chưa đầy một phút — Havi đọc Brand Voice và chuẩn bị kịch bản, bản
               nháp đầu tiên.
             </p>
             {!learning ? (
-              <Button variant="primary" onClick={() => setLearning(true)}>
-                Bắt đầu
-              </Button>
+              <div className={styles.actions}>
+                <Button variant="primary" scale="large" onClick={() => setLearning(true)}>
+                  Bắt đầu ngay 🚀
+                </Button>
+              </div>
             ) : (
               <div className={styles.learningCard}>
-                <span className={styles.spinner} aria-hidden="true" />
-                <p className={styles.learningText}>
-                  Havi đã sẵn sàng — tạo bản nháp đầu tiên ở tab Tạo nội dung.
-                </p>
-                <Button variant="primary" onClick={goToApp}>
-                  Vào app
-                </Button>
+                {progressPercent < 100 ? (
+                  <span className={styles.spinner} aria-hidden="true" />
+                ) : (
+                  <div className={styles.successIconBadge}>✨</div>
+                )}
+
+                <div className={styles.progressContainer}>
+                  <div className={styles.progressBarWrapper}>
+                    <div
+                      className={styles.progressBarFill}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <span className={styles.progressPercentText}>{progressPercent}%</span>
+                </div>
+
+                <div className={styles.stageList}>
+                  {[
+                    { id: 0, text: "⚡ Đang phân tích ngành nghề & dịch vụ tiệm" },
+                    { id: 1, text: "🎨 Đang hiệu chỉnh Brand Voice & văn phong thu hút" },
+                    { id: 2, text: "✨ Đã sẵn sàng kịch bản & 3 bản nháp đầu tiên!" },
+                  ].map((stg) => {
+                    const isDone = completedStages.includes(stg.id);
+                    return (
+                      <div
+                        key={stg.id}
+                        className={`${styles.stageItem} ${isDone ? styles.stageItemDone : ""}`}
+                      >
+                        <span className={styles.stageIcon}>{isDone ? "✓" : "○"}</span>
+                        <span>{stg.text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {progressPercent === 100 ? (
+                  <div style={{ width: "100%", maxWidth: "280px", marginTop: "12px" }}>
+                    <Button variant="primary" scale="large" onClick={goToApp}>
+                      Vào app trải nghiệm 🚀
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             )}
           </>

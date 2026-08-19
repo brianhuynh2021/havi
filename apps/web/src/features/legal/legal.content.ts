@@ -62,7 +62,7 @@ export const termsSections: Section[] = [
   {
     heading: "5. Kết nối với nền tảng khác",
     paragraphs: [
-      "Havi chỉ kết nối với Facebook, Zalo và Google qua API chính thức của họ. Chúng tôi không thu thập dữ liệu bằng cách crawl, và không dùng công cụ tự động vi phạm điều khoản của các nền tảng đó.",
+      "Havi chỉ kết nối với Facebook, Google Business, TikTok, YouTube qua API chính thức của họ. Chúng tôi không thu thập dữ liệu bằng cách crawl, và không dùng công cụ tự động vi phạm điều khoản của các nền tảng đó.",
       "Khi bạn nối một kênh, bạn cũng chịu ràng buộc bởi điều khoản của nền tảng đó. Nếu nền tảng thay đổi chính sách hoặc khoá quyền truy cập, tính năng liên quan có thể ngưng hoạt động ngoài tầm kiểm soát của Havi.",
     ],
   },
@@ -93,7 +93,7 @@ export const privacySections: Section[] = [
     heading: "1. Chúng tôi thu thập gì",
     paragraphs: [
       "Thông tin tài khoản: email, tên bạn nhập khi đăng ký, và mật khẩu ở dạng đã băm — chúng tôi không lưu và không đọc được mật khẩu gốc của bạn.",
-      "Số điện thoại: chỉ khi bạn tự thêm trong phần Cài đặt, và chỉ dùng để gửi bản nháp hoặc nhắc duyệt qua Zalo. Không bắt buộc, không dùng để đăng nhập.",
+      "Số điện thoại: chỉ khi bạn tự thêm trong phần Cài đặt, và chỉ dùng để gửi thông báo hoặc xác thực. Không bắt buộc, không dùng để đăng nhập.",
       "Thông tin tiệm: tên tiệm, ngành nghề, giọng văn và những câu bạn không muốn dùng trong bài.",
       "Nội dung bạn nạp: ảnh bạn tải lên và ghi chú bạn gõ, cùng các bản nháp Havi sinh ra và lịch sử mọi lần sửa.",
       "Nhật ký kỹ thuật: thời điểm chạy, thời gian xử lý và lượng token mỗi lần gọi AI. Nhật ký này dùng để đo chi phí và tìm lỗi — nó không chứa nội dung bài viết của bạn.",
@@ -112,7 +112,7 @@ export const privacySections: Section[] = [
     heading: "3. Dữ liệu đi tới đâu",
     paragraphs: [
       "Để sinh bản nháp, Havi gửi thông tin tiệm và liệu thô bạn nạp tới nhà cung cấp mô hình AI — hiện là Google (Gemini), và Anthropic hoặc OpenAI khi Gemini gặp lỗi. Các nhà cung cấp này xử lý dữ liệu theo điều khoản dành cho khách hàng doanh nghiệp của họ.",
-      "Khi bạn duyệt một bài, nội dung đó được gửi tới nền tảng bạn đã nối (Facebook, Zalo, Google) qua API chính thức.",
+      "Khi bạn duyệt một bài, nội dung đó được gửi tới nền tảng bạn đã nối (Facebook, Google Maps, TikTok, YouTube) qua API chính thức.",
       "Ngoài hai trường hợp trên, chúng tôi chỉ chia sẻ dữ liệu khi có yêu cầu hợp pháp từ cơ quan nhà nước có thẩm quyền.",
     ],
   },

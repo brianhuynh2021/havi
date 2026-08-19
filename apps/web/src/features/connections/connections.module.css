@@ -66,14 +66,15 @@
 .rowHeader {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .rowLabel {
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
+  white-space: nowrap;
 }
 
 .accountName {
@@ -96,6 +97,10 @@
   align-items: center;
   flex-shrink: 0;
   gap: 12px;
+}
+
+.rowRight button {
+  min-width: 100px;
 }
 
 .error {

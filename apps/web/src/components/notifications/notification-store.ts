@@ -16,7 +16,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     id: "notif-1",
     type: "draft_ready",
     title: "⚡ Havi vừa tạo 3 bản nháp mới",
-    description: "Các bản nháp bài đăng Facebook, Zalo, Google Business đã sẵn sàng cho chị duyệt.",
+    description: "Các bản nháp bài đăng Facebook, Google Maps SEO, TikTok, YouTube Shorts đã sẵn sàng cho bạn duyệt.",
     timestamp: "Vừa xong",
     read: false,
   },

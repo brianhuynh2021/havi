@@ -230,33 +230,45 @@ export function VideoStudioScreen() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="aspect-ratio">Tỉ lệ khung hình</label>
-                  <select
-                    id="aspect-ratio"
-                    className={styles.select}
-                    value={aspectRatio}
-                    onChange={(e) => setAspectRatio(e.target.value as "9:16" | "1:1" | "16:9")}
-                  >
-                    <option value="9:16">9:16 (Dọc - Reels / TikTok / Shorts)</option>
-                    <option value="1:1">1:1 (Vuông - Instagram Feed)</option>
-                    <option value="16:9">16:9 (Ngang - YouTube Standard)</option>
-                  </select>
+              <div className={styles.formGroup}>
+                <label>Tỉ lệ khung hình</label>
+                <div className={styles.ratioGrid}>
+                  {[
+                    { value: "9:16", icon: "📱", label: "9:16 Dọc", sub: "Reels / TikTok / Shorts" },
+                    { value: "1:1", icon: "⏹️", label: "1:1 Vuông", sub: "Instagram & FB Feed" },
+                    { value: "16:9", icon: "🖥️", label: "16:9 Ngang", sub: "YouTube Chuẩn" },
+                  ].map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      className={`${styles.ratioCard} ${aspectRatio === r.value ? styles.ratioCardActive : ""}`}
+                      onClick={() => setAspectRatio(r.value as "9:16" | "1:1" | "16:9")}
+                    >
+                      <span className={styles.ratioIcon}>{r.icon}</span>
+                      <span className={styles.ratioLabel}>{r.label}</span>
+                      <span className={styles.ratioSub}>{r.sub}</span>
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="duration-sec">Thời lượng mong muốn (giây)</label>
-                  <select
-                    id="duration-sec"
-                    className={styles.select}
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
-                  >
-                    <option value={15}>15 giây (Story / Hook ngắn)</option>
-                    <option value={30}>30 giây (TikTok Tiêu chuẩn)</option>
-                    <option value={60}>60 giây (Reels Chuyên sâu)</option>
-                  </select>
+              <div className={styles.formGroup}>
+                <label>Thời lượng mong muốn</label>
+                <div className={styles.pillGroup}>
+                  {[
+                    { val: 15, label: "15s (Story / Hook)" },
+                    { val: 30, label: "30s (TikTok Chuẩn)" },
+                    { val: 60, label: "60s (Chuyên Sâu)" },
+                  ].map((d) => (
+                    <button
+                      key={d.val}
+                      type="button"
+                      className={`${styles.pillBtn} ${duration === d.val ? styles.pillBtnActive : ""}`}
+                      onClick={() => setDuration(d.val)}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -272,36 +284,39 @@ export function VideoStudioScreen() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="caption-style">Phong cách Chữ</label>
-                  <select
-                    id="caption-style"
-                    className={styles.select}
-                    value={captionStyle}
-                    onChange={(e) => setCaptionStyle(e.target.value as VideoCaptionStyle)}
-                  >
-                    <option value="bold_yellow">🟡 Vàng Đậm Nổi Bật (Bold Yellow)</option>
-                    <option value="clean_white">⚪ Trắng Tinh Tế (Clean White)</option>
-                    <option value="neon_cyan">🔵 Neon Cyan Sôi Động</option>
-                    <option value="boxed_black">⬛ Hộp Đen Sang Trọng (Boxed Black)</option>
-                  </select>
+              <div className={styles.formGroup}>
+                <label>Phong cách Chữ Subtitle</label>
+                <div className={styles.captionStyleGrid}>
+                  {[
+                    { val: "bold_yellow", label: "🟡 Vàng Nổi Bật" },
+                    { val: "clean_white", label: "⚪ Trắng Tinh Tế" },
+                    { val: "neon_cyan", label: "🔵 Neon Cyan" },
+                    { val: "boxed_black", label: "⬛ Hộp Đen" },
+                  ].map((c) => (
+                    <button
+                      key={c.val}
+                      type="button"
+                      className={`${styles.captionStyleBtn} ${captionStyle === c.val ? styles.captionStyleBtnActive : ""}`}
+                      onClick={() => setCaptionStyle(c.val as VideoCaptionStyle)}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div className={styles.formGroup}>
-                  <label htmlFor="audio-norm">Chuẩn hoá Âm thanh</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", height: "100%" }}>
-                    <input
-                      id="audio-norm"
-                      type="checkbox"
-                      checked={normalizeAudio}
-                      onChange={(e) => setNormalizeAudio(e.target.checked)}
-                      style={{ width: "18px", height: "18px", accentColor: "#6366f1" }}
-                    />
-                    <span style={{ fontSize: "0.875rem", color: "#475569" }}>
-                      Chuẩn hoá -14 LUFS (EBU R128)
-                    </span>
-                  </div>
+              <div className={styles.formGroup}>
+                <div className={styles.audioNormBox}>
+                  <input
+                    id="audio-norm"
+                    type="checkbox"
+                    checked={normalizeAudio}
+                    onChange={(e) => setNormalizeAudio(e.target.checked)}
+                    className={styles.checkbox}
+                  />
+                  <label htmlFor="audio-norm" style={{ margin: 0, cursor: "pointer" }}>
+                    <strong>Chuẩn hoá Âm thanh:</strong> Tự động cân bằng âm lượng chuẩn -14 LUFS (EBU R128) để video không bị nhỏ tiếng trên TikTok/Reels.
+                  </label>
                 </div>
               </div>
 

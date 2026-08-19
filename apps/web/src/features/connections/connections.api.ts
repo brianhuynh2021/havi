@@ -138,11 +138,10 @@ export function readCallbackOutcome(search: string): CallbackOutcome {
 }
 
 export const PILOT_PLATFORMS: { platform: Platform; label: string }[] = [
-  { platform: "facebook", label: "Facebook Page & Reels" },
-  { platform: "tiktok", label: "TikTok Account" },
-  { platform: "youtube", label: "YouTube Channel (Shorts)" },
-  { platform: "zalo_oa", label: "Zalo Official Account" },
-  { platform: "google_business", label: "Google Business Profile" },
+  { platform: "facebook", label: "Facebook Fanpage & Reels" },
+  { platform: "google_business", label: "Google Maps SEO & Tìm kiếm" },
+  { platform: "tiktok", label: "TikTok Channel (Video ngắn)" },
+  { platform: "youtube", label: "YouTube Shorts" },
 ];
 
 export function isUsable(connection: PlatformConnection | undefined): boolean {

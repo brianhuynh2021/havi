@@ -20,10 +20,10 @@ function signedIn() {
   });
 }
 
-function renderLeads() {
+function renderLeads(defaultTab: "inbox" | "leads" = "inbox") {
   return render(
     <LanguageProvider>
-      <LeadsScreen />
+      <LeadsScreen defaultTab={defaultTab} />
     </LanguageProvider>
   );
 }
@@ -136,7 +136,7 @@ describe("LeadsScreen", () => {
       }
     );
 
-    renderLeads();
+    renderLeads("leads");
 
     expect(
       await screen.findByText(/Chào chị Lan, tiệm tặng chị voucher/i)

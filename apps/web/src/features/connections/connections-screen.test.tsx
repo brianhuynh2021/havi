@@ -101,7 +101,7 @@ describe("ConnectionsScreen", () => {
     renderConnections();
 
     expect(
-      await screen.findByRole("button", { name: /kết nối facebook page/i }),
+      (await screen.findAllByRole("button", { name: /^kết nối$/i }))[0],
     ).toBeInTheDocument();
     expect(screen.getAllByText("Chưa kết nối")[0]).toBeInTheDocument();
     expect(screen.queryByText("Đã nối")).not.toBeInTheDocument();
@@ -158,9 +158,9 @@ describe("ConnectionsScreen", () => {
     renderConnections();
     const user = userEvent.setup();
 
-    const connectButton = await screen.findByRole("button", {
-      name: /kết nối facebook page/i,
-    });
+    const connectButton = (await screen.findAllByRole("button", {
+      name: /^kết nối$/i,
+    }))[0];
     await user.click(connectButton);
 
     await waitFor(() =>

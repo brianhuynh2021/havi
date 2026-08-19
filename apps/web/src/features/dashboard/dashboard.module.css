@@ -228,47 +228,70 @@
   color: #6ee7b7;
 }
 
-/* Zalo Banner */
-.zaloBanner {
+/* AI Growth Tip Banner */
+.aiTipBanner {
   margin-top: 28px;
   padding: 22px 28px;
   border-radius: 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(0, 210, 255, 0.04) 100%), var(--color-surface);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 20px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-.zaloBanner:hover {
-  border-color: rgba(0, 104, 255, 0.3);
-  box-shadow: var(--shadow-card-hover);
+.aiTipBanner:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08);
+  transform: translateY(-1px);
 }
 
-.zaloBadge {
+.aiTipBadge {
   padding: 8px 16px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0068ff 0%, #0045ab 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: #ffffff;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   flex: none;
-  box-shadow: 0 4px 14px rgba(0, 104, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+  white-space: nowrap;
 }
 
-.zaloTitle {
+.aiTipTitle {
   font-size: 15.5px;
   font-weight: 700;
   color: var(--color-ink);
 }
 
-.zaloBody {
-  font-size: 13.5px;
-  color: var(--color-muted);
+.aiTipBody {
   margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 13.5px;
   line-height: 1.5;
+}
+
+.aiTipLink {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #cbd5e1);
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: none;
+  transition: all 0.2s ease;
+}
+
+.aiTipLink:hover {
+  background: #eef2ff;
+  border-color: #818cf8;
+  transform: translateX(2px);
 }
 
 .statusPill {
@@ -358,9 +381,10 @@
   .statsGrid {
     grid-template-columns: 1fr;
   }
-  .zaloBanner {
+  .aiTipBanner {
     flex-direction: column;
     align-items: flex-start;
+    gap: 14px;
   }
   .statusPill {
     margin-left: 0;

@@ -13,12 +13,12 @@ import styles from "./reports.module.css";
 
 const channelLabels: Record<string, string> = {
   facebook_page: "Facebook Page",
-  zalo_oa: "Zalo OA",
-  google_business: "Google Business",
-  reels: "Reels",
+  google_business: "Google Maps SEO",
+  reels: "Facebook Reels",
   tiktok: "TikTok",
-  youtube: "YouTube",
+  youtube: "YouTube Shorts",
   email: "Email",
+  zalo_oa: "Zalo OA (Lưu trữ)",
 };
 
 function percent(value: number): string {

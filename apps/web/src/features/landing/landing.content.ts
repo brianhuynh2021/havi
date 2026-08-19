@@ -11,17 +11,17 @@
 export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
-  { v: "4 Trụ Cột Đa Kênh", l: "Facebook · TikTok Video · Google Maps · 24/7 Lead Care", icon: "🌐" },
+  { v: "4 Kênh Tăng Trưởng", l: "Facebook · Google Maps SEO · TikTok · YouTube Shorts", icon: "🌐" },
   { v: "Chỉ từ 6.000 đ/ngày", l: "Rẻ hơn 1 ly trà sữa mỗi tuần (189.000 đ/tháng)", icon: "💰" },
   { v: "Phản hồi < 5 Giây", l: "Trực Inbox 24/7 không để rơi mất khách nửa đêm", icon: "⚡" },
 ];
 
 /** Các kênh siêu năng lực hỗ trợ. */
 export const heroChannels = [
-  { n: "Facebook & IG", b: "f", c: "#1877F2" },
-  { n: "TikTok & Shorts", b: "▶", c: "#FE2C55" },
-  { n: "Google Maps", b: "G", c: "#16A34A" },
-  { n: "Trực Inbox 24/7", b: "💬", c: "#8B5CF6" },
+  { n: "Facebook Fanpage", b: "f", c: "#1877F2" },
+  { n: "Google Maps SEO", b: "📍", c: "#16A34A" },
+  { n: "TikTok Video", b: "🎵", c: "#FE2C55" },
+  { n: "YouTube Shorts", b: "▶", c: "#FF0000" },
 ];
 
 export const steps: Step[] = [
@@ -33,7 +33,7 @@ export const steps: Step[] = [
   {
     n: "2",
     title: "Havi tự làm bài & Video đa kênh",
-    desc: "Tự sinh bài viết Facebook, kịch bản Video TikTok 9:16 có Hook 3s giật tít, bài Google Maps và câu trả lời Inbox.",
+    desc: "Tự sinh bài viết Facebook, tối ưu Google Maps SEO, kịch bản Video TikTok & YouTube Shorts 9:16 có Hook 3s và câu trả lời Inbox.",
   },
   {
     n: "3",
@@ -57,7 +57,7 @@ export interface IndustryScenario {
     facebook: { title: string; content: string; badge: string };
     video: { title: string; hook: string; script: string; badge: string };
     maps: { title: string; content: string; badge: string };
-    inbox: { customerMsg: string; haviReply: string; capturedPhone: string; badge: string };
+    inbox: { title?: string; customerMsg: string; haviReply: string; capturedPhone: string; badge: string };
   };
 }
 

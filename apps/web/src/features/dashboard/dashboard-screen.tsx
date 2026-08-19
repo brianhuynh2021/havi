@@ -196,18 +196,25 @@ export function DashboardScreen() {
             </div>
           </section>
 
-          <section className={styles.zaloBanner}>
-            <div className={styles.zaloBadge}>Zalo</div>
+          <section className={styles.aiTipBanner}>
+            <div className={styles.aiTipBadge}>💡 Mẹo AI Marketing</div>
             <div>
-              <p className={styles.zaloTitle}>{t({ vi: "Duyệt qua Zalo OA", en: "Review via Zalo OA" })}</p>
-              <p className={styles.zaloBody}>
+              <p className={styles.aiTipTitle}>
                 {t({
-                  vi: "Thông báo qua Zalo OA sắp ra mắt. Hiện duyệt trực tiếp trên web.",
-                  en: "Zalo OA notifications coming soon. Review directly on web.",
+                  vi: "Tăng tương tác mạnh mẽ với Video Ngắn & Google Maps",
+                  en: "Boost reach with Short-form Video & Google Maps",
+                })}
+              </p>
+              <p className={styles.aiTipBody}>
+                {t({
+                  vi: "Tạo kịch bản Video ngắn 9:16 có Hook 3 giây giữ chân để tăng gấp 3 lần lượng khách tìm đến tiệm.",
+                  en: "Generate 9:16 short-form videos with 3s hooks to 3x your local customer acquisition.",
                 })}
               </p>
             </div>
-            <span className={styles.statusPill}>{t({ vi: "Sắp có", en: "Coming soon" })}</span>
+            <Link href="/app/video-studio" className={styles.aiTipLink}>
+              {t({ vi: "Mở Studio Video →", en: "Open Video Studio →" })}
+            </Link>
           </section>
 
           <section className={styles.activityCard}>

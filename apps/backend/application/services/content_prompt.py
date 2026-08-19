@@ -20,12 +20,15 @@ PILOT_CHANNELS: tuple[Channel, ...] = (
 )
 
 _INDUSTRY_LABELS: dict[Industry, str] = {
-    Industry.SPA: "spa / tiệm làm đẹp",
-    Industry.FOOD_BEVERAGE: "quán ăn / cà phê",
-    Industry.REAL_ESTATE: "môi giới bất động sản",
-    Industry.PROFESSIONAL: "dịch vụ chuyên môn",
-    Industry.ONLINE_SHOP: "bán hàng online",
-    Industry.OTHER: "kinh doanh nhỏ",
+    Industry.SPA: "spa / thẩm mỹ viện / tiệm chăm sóc sắc đẹp",
+    Industry.FOOD_BEVERAGE: "quán ăn / tiệm cà phê / tiệm bánh",
+    Industry.RETAIL_SHOP: "cửa hàng bán lẻ / shop thời trang / tạp hóa",
+    Industry.ONLINE_SHOP: "cửa hàng bán lẻ / shop bán hàng online",
+    Industry.EDUCATION: "trung tâm giáo dục / ngoại ngữ / đào tạo nghề & công nghệ",
+    Industry.LOCAL_SERVICE: "chi nhánh dịch vụ / phòng khám y tế / điểm giao dịch",
+    Industry.REAL_ESTATE: "môi giới bất động sản / văn phòng nhà đất",
+    Industry.PROFESSIONAL: "dịch vụ chuyên môn / văn phòng tư vấn",
+    Industry.OTHER: "cơ sở kinh doanh & dịch vụ",
 }
 
 _SYSTEM_PROMPT = """\

@@ -111,15 +111,15 @@ function PlatformIcon({ platform }: { platform: Platform }) {
 function getPlatformDescription(platform: Platform): string {
   switch (platform) {
     case "facebook":
-      return "Tự động đăng bài viết và Reels lên Fanpage chính thức.";
+      return "Tự động đăng bài viết, hình ảnh và Reels lên Fanpage chính thức.";
+    case "google_business":
+      return "Cập nhật bài viết, ưu đãi lên Google Maps SEO & Tìm kiếm địa phương để kéo khách.";
+    case "tiktok":
+      return "Đăng video ngắn viral 9:16 có Hook 3s lên kênh TikTok của tiệm.";
+    case "youtube":
+      return "Tự động xuất bản video ngắn lên YouTube Shorts để phủ sóng tìm kiếm.";
     case "zalo_oa":
       return "Gửi bài viết và tin nhắn chăm sóc qua Zalo Official Account.";
-    case "google_business":
-      return "Cập nhật bài viết, ưu đãi lên Google Maps & Tìm kiếm.";
-    case "youtube":
-      return "Tự động xuất bản video ngắn lên YouTube Shorts.";
-    case "tiktok":
-      return "Đăng video ngắn lên kênh TikTok của quán.";
   }
 }
 
@@ -214,7 +214,7 @@ export function ConnectionCard({
               {copy?.needsReconnect ? (
                 <Button variant="primary" onClick={connect} disabled={busy}>
                   {busy
-                    ? t({ vi: `Đang mở ${label}…`, en: `Connecting ${label}…` })
+                    ? t({ vi: "Đang mở…", en: "Connecting…" })
                     : t({ vi: "Nối lại", en: "Reconnect" })}
                 </Button>
               ) : null}
@@ -225,8 +225,8 @@ export function ConnectionCard({
           ) : (
             <Button variant="primary" onClick={connect} disabled={busy}>
               {busy
-                ? t({ vi: `Đang mở ${label}…`, en: `Connecting ${label}…` })
-                : t({ vi: `Kết nối ${label}`, en: `Connect ${label}` })}
+                ? t({ vi: "Đang mở…", en: "Opening…" })
+                : t({ vi: "Kết nối", en: "Connect" })}
             </Button>
           )}
         </div>

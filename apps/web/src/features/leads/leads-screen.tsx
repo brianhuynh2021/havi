@@ -31,9 +31,14 @@ const statusTone: Record<string, BadgeTone> = {
   dismissed: "neutral",
 };
 
-export function LeadsScreen() {
+type Props = {
+  defaultTab?: "inbox" | "leads";
+};
+
+export function LeadsScreen({ defaultTab = "inbox" }: Props) {
   const { t } = useLanguage();
   const workspaceId = getActiveWorkspaceId();
+  const [activeTab, setActiveTab] = useState<"inbox" | "leads">(defaultTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -44,6 +49,10 @@ export function LeadsScreen() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [scanningNudges, setScanningNudges] = useState(false);
   const [processingNudgeId, setProcessingNudgeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
 
   const loadData = async () => {
     setLoading(true);
@@ -188,14 +197,60 @@ export function LeadsScreen() {
     }
   };
 
+  const pendingDraftsCount = items.filter((i) => i.status === "drafted").length;
+  const pendingNudgesCount = nudges.filter((n) => n.status === "pending_approval").length;
+
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("leads.title", "Hộp Thư & Khách Tiềm Năng")}</h1>
+        <h1 className={styles.title}>
+          {activeTab === "inbox"
+            ? t("leads.inboxTitle", "Hộp Thư & AI Trực Tin Nhắn")
+            : t("leads.title", "Khách Tiềm Năng & CRM Nudge")}
+        </h1>
         <p className={styles.subtitle}>
-          {t("leads.subtitle", "Tự động phản hồi FAQ và quản lý khách hàng từ Zalo, Facebook, Google")}
+          {activeTab === "inbox"
+            ? t({
+                vi: "Tự động phản hồi FAQ và trực tin nhắn 24/7 từ Facebook, Google Maps SEO, TikTok, YouTube",
+                en: "Auto-reply FAQ and 24/7 inbox care across Facebook, Google Maps SEO, TikTok, YouTube",
+              })
+            : t({
+                vi: "Quản lý danh sách khách hàng tự động trích xuất và gửi ưu đãi kích hoạt khách cũ",
+                en: "Manage captured leads and re-engage inactive customers with personalized offers",
+              })}
         </p>
       </header>
+
+      {/* Segmented Tab Navigation Bar */}
+      <div className={styles.tabBar} role="tablist" aria-label="Inbox and Leads Tabs">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "inbox"}
+          className={`${styles.tabBtn} ${activeTab === "inbox" ? styles.tabBtnActive : ""}`}
+          onClick={() => setActiveTab("inbox")}
+        >
+          <span>💬 {t({ vi: "Hộp thư & AI Trả lời", en: "Inbox & AI Reply" })}</span>
+          {pendingDraftsCount > 0 ? (
+            <span className={styles.tabBadge}>{pendingDraftsCount}</span>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "leads"}
+          className={`${styles.tabBtn} ${activeTab === "leads" ? styles.tabBtnActive : ""}`}
+          onClick={() => setActiveTab("leads")}
+        >
+          <span>👥 {t({ vi: "Khách hàng & CRM Nudge", en: "Leads & CRM Nudge" })}</span>
+          {leads.length > 0 ? (
+            <span className={styles.tabBadgeMuted}>{leads.length}</span>
+          ) : null}
+          {pendingNudgesCount > 0 ? (
+            <span className={styles.tabBadgeAlert}>⚡ {pendingNudgesCount}</span>
+          ) : null}
+        </button>
+      </div>
 
       {error ? (
         <div className={styles.errorBox} role="alert">
@@ -206,94 +261,154 @@ export function LeadsScreen() {
         </div>
       ) : loading ? (
         <div className={styles.loadingState}>
-          <p>{t({ vi: "Đang tải hộp thư...", en: "Loading inbox..." })}</p>
+          <p>{t({ vi: "Đang tải dữ liệu...", en: "Loading data..." })}</p>
         </div>
+      ) : activeTab === "inbox" ? (
+        <section className={styles.leadsList} aria-label="Inbox list">
+          {items.length === 0 ? (
+            <div className={styles.emptyState}>
+              <p>{t({ vi: "Chưa có tin nhắn hoặc bình luận nào cần xử lý.", en: "No messages or comments yet." })}</p>
+            </div>
+          ) : (
+            items.map((item) => {
+              const currentReply = replyTextMap[item.id] ?? item.ai_suggested_reply ?? "";
+              const isEditing = editingId === item.id;
+              const isPending = item.status === "drafted";
+
+              return (
+                <article key={item.id} className={styles.leadCard}>
+                  <div className={styles.leadHeader}>
+                    <div>
+                      <p className={styles.leadName}>{item.author_name}</p>
+                      <p className={styles.leadMeta}>
+                        {item.platform} · {new Date(item.created_at).toLocaleString("vi-VN")}
+                      </p>
+                    </div>
+                    <Badge tone={statusTone[item.status] || "neutral"}>
+                      {getStatusLabel(item.status)}
+                    </Badge>
+                  </div>
+
+                  <p className={styles.leadMessage}>&ldquo;{item.content}&rdquo;</p>
+
+                  {item.ai_suggested_reply ? (
+                    <div className={styles.replyBox}>
+                      <p className={styles.replyLabel}>
+                        {t({ vi: "Havi gợi ý trả lời", en: "Havi Suggested Reply" })}
+                      </p>
+                      {isEditing ? (
+                        <textarea
+                          className={styles.replyInput}
+                          value={currentReply}
+                          onChange={(e) =>
+                            setReplyTextMap((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                          rows={3}
+                        />
+                      ) : (
+                        <p className={styles.replyText}>{currentReply}</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {isPending ? (
+                    <div className={styles.leadActions}>
+                      <Button
+                        variant="primary"
+                        disabled={sendingId === item.id}
+                        onClick={() => handleSend(item.id, currentReply)}
+                      >
+                        {sendingId === item.id
+                          ? t({ vi: "Đang gửi...", en: "Sending..." })
+                          : t({ vi: "Duyệt & gửi", en: "Approve & Send" })}
+                      </Button>
+
+                      {isEditing ? (
+                        <Button variant="outline" onClick={() => setEditingId(null)}>
+                          {t({ vi: "Huỷ", en: "Cancel" })}
+                        </Button>
+                      ) : (
+                        <Button variant="outline" onClick={() => setEditingId(item.id)}>
+                          {t({ vi: "Sửa câu trả lời", en: "Edit reply" })}
+                        </Button>
+                      )}
+
+                      <Button variant="ghost" onClick={() => handleDismiss(item.id)}>
+                        {t({ vi: "Bỏ qua", en: "Dismiss" })}
+                      </Button>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })
+          )}
+        </section>
       ) : (
         <>
-          <section className={styles.leadsList} aria-label="Inbox list">
-            {items.length === 0 ? (
+          {/* CRM Leads List */}
+          <section className={styles.leadsSection} aria-label="Captured Leads List">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>{t({ vi: "📋 Danh sách khách hàng đã bắt số", en: "📋 Captured Leads" })} ({leads.length})</h2>
+                <p className={styles.subtitle}>
+                  {t({
+                    vi: "Khách hàng để lại số điện thoại qua tin nhắn, bình luận hoặc khảo sát.",
+                    en: "Leads with captured phone numbers from inbox, comments, or forms.",
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {leads.length === 0 ? (
               <div className={styles.emptyState}>
-                <p>{t({ vi: "Chưa có tin nhắn hoặc bình luận nào.", en: "No messages or comments yet." })}</p>
+                <p>
+                  {t({
+                    vi: "Chưa có khách hàng nào để lại số điện thoại. Havi sẽ tự động bắt số khi khách inbox hỏi giá hoặc tư vấn.",
+                    en: "No captured leads yet. Havi will automatically extract phone numbers from inbox conversations.",
+                  })}
+                </p>
               </div>
             ) : (
-              items.map((item) => {
-                const currentReply = replyTextMap[item.id] ?? item.ai_suggested_reply ?? "";
-                const isEditing = editingId === item.id;
-                const isPending = item.status === "drafted";
-
-                return (
-                  <article key={item.id} className={styles.leadCard}>
+              <div className={styles.leadsGrid}>
+                {leads.map((lead) => (
+                  <article key={lead.id} className={styles.customerCard}>
                     <div className={styles.leadHeader}>
-                      <div>
-                        <p className={styles.leadName}>{item.author_name}</p>
-                        <p className={styles.leadMeta}>
-                          {item.platform} · {new Date(item.created_at).toLocaleString("vi-VN")}
-                        </p>
+                      <div className={styles.customerInfo}>
+                        <div className={styles.avatarCircle}>
+                          {(lead.name || "K")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className={styles.leadName}>{lead.name || t({ vi: "Khách hàng", en: "Customer" })}</p>
+                          <p className={styles.leadMeta}>
+                            {lead.source} · {new Date(lead.created_at).toLocaleDateString("vi-VN")}
+                          </p>
+                        </div>
                       </div>
-                      <Badge tone={statusTone[item.status] || "neutral"}>
-                        {getStatusLabel(item.status)}
+                      <Badge tone={lead.stage === "won" ? "success" : "info"}>
+                        {lead.stage === "won"
+                          ? t({ vi: "Đã chốt đơn", en: "Won" })
+                          : t({ vi: "Tiềm năng", en: "Qualified" })}
                       </Badge>
                     </div>
 
-                    <p className={styles.leadMessage}>&ldquo;{item.content}&rdquo;</p>
-
-                    {item.ai_suggested_reply ? (
-                      <div className={styles.replyBox}>
-                        <p className={styles.replyLabel}>
-                          {t({ vi: "Havi gợi ý trả lời", en: "Havi Suggested Reply" })}
-                        </p>
-                        {isEditing ? (
-                          <textarea
-                            className={styles.replyInput}
-                            value={currentReply}
-                            onChange={(e) =>
-                              setReplyTextMap((prev) => ({ ...prev, [item.id]: e.target.value }))
-                            }
-                            rows={3}
-                          />
-                        ) : (
-                          <p className={styles.replyText}>{currentReply}</p>
-                        )}
+                    {lead.phone ? (
+                      <div className={styles.phoneRow}>
+                        <span className={styles.phoneLabel}>📞 SĐT:</span>
+                        <a href={`tel:${lead.phone}`} className={styles.phoneLink}>
+                          {lead.phone}
+                        </a>
                       </div>
                     ) : null}
 
-                    {isPending ? (
-                      <div className={styles.leadActions}>
-                        <Button
-                          variant="primary"
-                          disabled={sendingId === item.id}
-                          onClick={() => handleSend(item.id, currentReply)}
-                        >
-                          {sendingId === item.id
-                            ? t({ vi: "Đang gửi...", en: "Sending..." })
-                            : t({ vi: "Duyệt & gửi", en: "Approve & Send" })}
-                        </Button>
-
-                        {isEditing ? (
-                          <Button variant="outline" onClick={() => setEditingId(null)}>
-                            {t({ vi: "Huỷ", en: "Cancel" })}
-                          </Button>
-                        ) : (
-                          <Button variant="outline" onClick={() => setEditingId(item.id)}>
-                            {t({ vi: "Sửa câu trả lời", en: "Edit reply" })}
-                          </Button>
-                        )}
-
-                        <Button variant="ghost" onClick={() => handleDismiss(item.id)}>
-                          {t({ vi: "Bỏ qua", en: "Dismiss" })}
-                        </Button>
-                      </div>
+                    {lead.message ? (
+                      <p className={styles.leadNote}>
+                        &ldquo;{lead.message}&rdquo;
+                      </p>
                     ) : null}
                   </article>
-                );
-              })
-            )}
-
-            {leads.length > 0 ? (
-              <div className={styles.leadSectionHeader}>
-                <h2>{t({ vi: "Khách hàng ghi nhận", en: "Captured Leads" })} ({leads.length})</h2>
+                ))}
               </div>
-            ) : null}
+            )}
           </section>
 
           {/* CRM Re-engagement Nudge Section */}

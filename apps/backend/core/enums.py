@@ -8,13 +8,16 @@ from enum import StrEnum
 
 
 class Industry(StrEnum):
-    """6 ô trong bước 1 của Onboarding."""
+    """8 nhóm ngành kinh doanh toàn diện trong bước 1 của Onboarding."""
 
     SPA = "spa"
     FOOD_BEVERAGE = "food_beverage"
+    RETAIL_SHOP = "retail_shop"
+    ONLINE_SHOP = "online_shop"  # backward compatibility alias
+    EDUCATION = "education"
+    LOCAL_SERVICE = "local_service"
     REAL_ESTATE = "real_estate"
     PROFESSIONAL = "professional"
-    ONLINE_SHOP = "online_shop"
     OTHER = "other"
 
 

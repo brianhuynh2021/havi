@@ -121,7 +121,7 @@ describe("OnboardingScreen", () => {
     expect(calledUrls.some((u) => u.includes("/activate"))).toBe(true);
 
     expect(
-      screen.getByRole("heading", { name: /nối kênh facebook/i }),
+      screen.getByRole("heading", { name: /kết nối kênh của bạn/i }),
     ).toBeInTheDocument();
   });
 
@@ -175,8 +175,23 @@ describe("OnboardingScreen", () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: /bỏ qua/i }));
     await user.click(screen.getByRole("button", { name: /bắt đầu/i }));
-    await user.click(screen.getByRole("button", { name: /vào app/i }));
+    await user.click(await screen.findByRole("button", { name: /vào app/i }));
 
     expect(replace).toHaveBeenCalledWith("/");
+  });
+
+  it("hiển thị badge đề xuất pilot và cập nhật trạng thái chọn aria-pressed", async () => {
+    mockApi();
+    renderOnboarding();
+
+    expect(screen.getByText("★ Đề xuất pilot")).toBeInTheDocument();
+
+    const spaCard = screen.getByRole("button", { name: /spa/i });
+    expect(spaCard).toHaveAttribute("aria-pressed", "false");
+
+    const user = userEvent.setup();
+    await user.click(spaCard);
+
+    expect(spaCard).toHaveAttribute("aria-pressed", "true");
   });
 });

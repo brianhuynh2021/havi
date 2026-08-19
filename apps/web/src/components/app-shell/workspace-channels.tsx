@@ -10,8 +10,10 @@ import styles from "./app-shell.module.css";
 
 const PLATFORM_LABELS: Record<string, string> = {
   facebook: "Facebook",
+  google_business: "Google Maps SEO",
+  tiktok: "TikTok",
+  youtube: "YouTube Shorts",
   zalo_oa: "Zalo OA",
-  google_business: "Google Business",
 };
 
 /**

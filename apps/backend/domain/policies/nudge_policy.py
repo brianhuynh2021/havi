@@ -33,6 +33,21 @@ def generate_nudge_message(
                 f"Chào {name} ơi! {brand_name} vừa ra mắt món mới trong tuần này. "
                 f"Mời {name} ghé dùng thử nhận ngay ưu đãi giảm {discount_percent}% nhé!"
             )
+        elif ind_str == "education":
+            return (
+                f"Chào {name} ạ! {brand_name} gửi lời hỏi thăm tình hình học tập và thực hành của mình. "
+                f"Nếu cần thầy cô hỗ trợ thêm kiến thức gì, {name} cứ nhắn trung tâm nhé!"
+            )
+        elif ind_str == "local_service":
+            return (
+                f"Dạ {brand_name} chào {name} ạ! Sau 2 tuần trải nghiệm dịch vụ, "
+                f"mình có cần hỗ trợ thêm thông tin hoặc hướng dẫn nào không ạ?"
+            )
+        elif ind_str in ("retail_shop", "online_shop"):
+            return (
+                f"Chào {name} ơi! Sản phẩm mình mua đợt trước dùng ưng ý không ạ? "
+                f"Shop vừa về thêm bộ sưu tập mới, {name} ghé xem nhé!"
+            )
         else:
             return (
                 f"Chào {name} ạ! {brand_name} gửi lời hỏi thăm đến mình. "
@@ -51,6 +66,21 @@ def generate_nudge_message(
             f"Chào {name} thân thương! Lâu rồi chưa thấy {name} ghé {brand_name}. "
             f"Tiệm gửi tặng {name} mã voucher giảm {discount_percent}% cho lần ghé kế tiếp. "
             f"Hẹn sớm gặp lại {name} ạ!"
+        )
+    elif ind_str == "education":
+        return (
+            f"Chào {name} ạ! {brand_name} chuẩn bị khai giảng khóa chuyên sâu & cập nhật mới trong tháng này. "
+            f"Trung tâm gửi tặng riêng {name} học bổng ưu đãi {discount_percent}% khi đăng ký sớm nha!"
+        )
+    elif ind_str == "local_service":
+        return (
+            f"Dạ {brand_name} chào {name} ạ! Đã 1 tháng từ lần giao dịch/thăm khám gần nhất. "
+            f"Chi nhánh gửi tặng {name} mã ưu đãi đặc quyền giảm {discount_percent}% cho lần ghé tiếp theo ạ!"
+        )
+    elif ind_str in ("retail_shop", "online_shop"):
+        return (
+            f"Chào {name} thân thương! Shop vừa tung voucher tri ân giảm {discount_percent}% "
+            f"dành riêng cho khách hàng thân thiết. Nhắn shop để nhận mã sắm đồ mới nha!"
         )
     else:
         return (

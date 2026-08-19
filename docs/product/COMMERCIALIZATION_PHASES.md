@@ -166,7 +166,7 @@ $$\text{Customer Lifetime Value (LTV)} = \underbrace{\text{Time Savings (2 hrs/d
 
 ### 7.2 Vertical-Specific Value Hooks
 * **Spa / Salon / Thẩm Mỹ Viện:** *"Bạn chăm sóc sắc đẹp cho khách — Havi chăm sóc khách hàng và kéo khách đến tiệm cho bạn."*
-* **Môi Giới & Cò Bất Động Sản:** *"Chụp 1 tấm ảnh sổ đỏ, Havi biến thành 3 bài đăng Facebook và kịch bản video TikTok chốt khách."*
+* **Môi Giới Bất Động Sản:** *"Chụp 1 tấm ảnh sổ đỏ, Havi biến thành 3 bài đăng Facebook và kịch bản video TikTok chốt khách."*
 * **Quán Ăn / Cafe / F&B:** *"Đừng để khách thèm ăn lúc nửa đêm nhắn tin mà tiệm ngủ quên. Havi trực inbox, gửi menu chốt bàn 24/7."*
 * **Đào Tạo & Kỹ Thuật (Nhật Minh Tech):** *"Biến mọi dự án thực chiến thành bài viết hút học viên. Hiện diện đa kênh không tốn 1 giờ mỗi ngày."*
 
@@ -212,7 +212,7 @@ $$\text{Customer Lifetime Value (LTV)} = \underbrace{\text{Time Savings (2 hrs/d
 * **Biên lợi nhuận gộp:** **92.1%** (Thu 189.000 đ, chi phí hạ tầng AI/Server chỉ tốn ~15.000 đ).
 
 ### 9.2 Gói Chuyên Nghiệp (369.000 đ/tháng — "Gói Bán Chạy Nhất / Best Seller")
-* **Mục tiêu:** Tối đa hóa doanh thu trung bình trên mỗi khách hàng (ARPU). Đánh trúng đối tượng cần khách thật (Cò BĐS, Thẩm mỹ viện, Dạy nghề, Salon).
+* **Mục tiêu:** Tối đa hóa doanh thu trung bình trên mỗi khách hàng (ARPU). Đánh trúng đối tượng cần khách thật (Môi giới BĐS, Thẩm mỹ viện, Dạy nghề, Salon).
 * **Quyền lợi:**
   * **Đa kênh:** Facebook Fanpage + Google Maps Local SEO + Kịch bản Video TikTok 3 giây.
   * **90 bài viết AI/tháng** + Tạo video ngắn 9:16 từ ảnh tiệm.

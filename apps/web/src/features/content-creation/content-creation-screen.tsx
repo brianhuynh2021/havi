@@ -285,7 +285,7 @@ export function ContentCreationScreen() {
     pushNotification({
       type: "draft_ready",
       title: "⚡ Havi vừa tạo xong các bản nháp mới",
-      description: "Bài viết mới cho Facebook, Zalo, Google Business đã sẵn sàng cho chị duyệt.",
+      description: "Bài viết mới cho Facebook, Google Maps SEO, TikTok, YouTube Shorts đã sẵn sàng cho bạn duyệt.",
     });
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({

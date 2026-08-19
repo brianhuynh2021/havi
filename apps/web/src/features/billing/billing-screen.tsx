@@ -20,44 +20,58 @@ import styles from "./billing.module.css";
 
 const PLAN_DETAILS: Record<
   Plan,
-  { title: string; price: string; period: string; desc: string; features: string[] }
+  {
+    title: string;
+    price: string;
+    period: string;
+    badge?: string | null;
+    badgeTone?: "popular" | "featured" | null;
+    desc: string;
+    features: string[];
+  }
 > = {
   trial: {
     title: "Gói Trải Nghiệm",
     price: "0 đ",
     period: "7 ngày",
+    badge: null,
+    badgeTone: null,
     desc: "Dùng thử trọn vẹn sức mạnh nhân viên AI — Không cần thẻ tín dụng.",
     features: [
       "Trải nghiệm 7 ngày không giới hạn tính năng",
-      "Kết nối 1 Fanpage Facebook",
-      "Lên lịch đăng bài tự động giờ vàng",
-      "Hỗ trợ kỹ thuật 24/7",
+      "Kết nối 1 Fanpage Facebook chính thức",
+      "Tự động tạo bài viết & Lên lịch đăng giờ vàng",
+      "Hỗ trợ kỹ thuật & Hướng dẫn sử dụng 24/7",
     ],
   },
   tiem_nho: {
     title: "Gói Khởi Nghiệp",
     price: "189.000 đ",
     period: "/tháng (~6.000 đ/ngày)",
-    desc: "Rẻ hơn 1 ly trà sữa mỗi tuần — Tối ưu nhất cho tiệm đơn & shop solo.",
+    badge: "TIẾT KIỆM NHẤT",
+    badgeTone: "popular",
+    desc: "Tối ưu tự động hóa nội dung & trực fanpage 24/7 cho cửa hàng đơn lẻ.",
     features: [
-      "1 Fanpage Facebook kết nối",
+      "1 Fanpage Facebook kết nối chính thức",
       "30 bài viết AI/tháng (Ảnh tiệm ➔ Bài chuẩn ngành)",
-      "Trực Inbox & Trả lời Bảng giá/FAQ 24/7",
-      "Bắt số điện thoại khách về CRM tự động",
-      "Báo cáo tương tác cơ bản",
+      "AI Trực Inbox & Trả lời Bảng giá/FAQ 24/7",
+      "Tự động trích xuất SĐT khách về CRM",
+      "Báo cáo tương tác & Lịch sử đăng bài",
     ],
   },
   toan_dien: {
-    title: "Gói Chuyên Nghiệp (Bán Chạy Nhất)",
+    title: "Gói Chuyên Nghiệp",
     price: "369.000 đ",
     period: "/tháng (~12.000 đ/ngày)",
-    desc: "Đánh trúng đối tượng cần khách thật (Spa, Cò BĐS, F&B, Dạy nghề).",
+    badge: "BÁN CHẠY NHẤT ★",
+    badgeTone: "featured",
+    desc: "Giải pháp đa kênh tăng trưởng toàn diện cho chủ tiệm & chuyên viên (Spa, Môi giới BĐS, F&B, Đào tạo nghề).",
     features: [
       "Đa kênh: Facebook + Google Maps SEO + TikTok Shorts",
-      "90 bài viết AI/tháng + Tạo video ngắn từ ảnh tiệm (Hook 3s)",
+      "90 bài viết AI/tháng + Video Studio (Hook giữ chân 3s)",
       "AI Lead Agent: Tự động trích xuất SĐT/Tên khách hàng",
       "Smart CRM Nudge: Tự động kéo khách cũ quay lại tiệm",
-      "Báo cáo doanh thu & Đối soát POS",
+      "Báo cáo doanh thu & Đối soát chuyển đổi POS",
     ],
   },
 };
@@ -72,6 +86,19 @@ export function BillingScreen() {
   const [isGeneratingCheckout, setIsGeneratingCheckout] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (key: string, value: string) => {
+    try {
+      void navigator.clipboard.writeText(value);
+      setCopiedKey(key);
+      setTimeout(() => {
+        setCopiedKey((curr) => (curr === key ? null : curr));
+      }, 2000);
+    } catch {
+      // ignore
+    }
+  };
 
   const reloadData = async () => {
     const [subRes, invRes] = await Promise.all([
@@ -235,14 +262,23 @@ export function BillingScreen() {
           const plan = PLAN_DETAILS[planKey as keyof typeof PLAN_DETAILS];
           if (!plan) return null;
           const isCurrent = sub.plan === planKey;
-          const isPopular = planKey === "tiem_nho";
+          const isFeatured = plan.badgeTone === "featured";
+          const isPopular = plan.badgeTone === "popular";
 
           return (
             <article
               key={planKey}
-              className={`${styles.planCard} ${isPopular ? styles.planCardPopular : ""}`}
+              className={`${styles.planCard} ${isFeatured ? styles.planCardFeatured : isPopular ? styles.planCardPopular : ""}`}
             >
-              {isPopular ? <span className={styles.popularBadge}>Phổ biến nhất</span> : null}
+              {plan.badge ? (
+                <span
+                  className={
+                    isFeatured ? styles.featuredBadge : styles.popularBadge
+                  }
+                >
+                  {plan.badge}
+                </span>
+              ) : null}
 
               <div className={styles.planHeader}>
                 <h3 className={styles.planTitle}>{plan.title}</h3>
@@ -364,7 +400,16 @@ export function BillingScreen() {
                     </div>
                     <div className={styles.transferRow}>
                       <span>Số tài khoản:</span>
-                      <strong>{checkoutData.account_no}</strong>
+                      <div className={styles.valueWithCopy}>
+                        <strong>{checkoutData.account_no}</strong>
+                        <button
+                          type="button"
+                          className={`${styles.copyBtn} ${copiedKey === "account_no" ? styles.copyBtnSuccess : ""}`}
+                          onClick={() => handleCopy("account_no", checkoutData.account_no)}
+                        >
+                          {copiedKey === "account_no" ? "✓ Đã chép" : "Sao chép"}
+                        </button>
+                      </div>
                     </div>
                     <div className={styles.transferRow}>
                       <span>Chủ tài khoản:</span>
@@ -372,13 +417,31 @@ export function BillingScreen() {
                     </div>
                     <div className={styles.transferRow}>
                       <span>Số tiền:</span>
-                      <strong style={{ color: "#0284c7" }}>
-                        {(checkoutData.amount_vnd ?? 0).toLocaleString("vi-VN")} đ
-                      </strong>
+                      <div className={styles.valueWithCopy}>
+                        <strong style={{ color: "#0284c7" }}>
+                          {(checkoutData.amount_vnd ?? 0).toLocaleString("vi-VN")} đ
+                        </strong>
+                        <button
+                          type="button"
+                          className={`${styles.copyBtn} ${copiedKey === "amount" ? styles.copyBtnSuccess : ""}`}
+                          onClick={() => handleCopy("amount", String(checkoutData.amount_vnd ?? 0))}
+                        >
+                          {copiedKey === "amount" ? "✓ Đã chép" : "Sao chép"}
+                        </button>
+                      </div>
                     </div>
                     <div className={styles.transferRow}>
                       <span>Nội dung CK:</span>
-                      <strong style={{ color: "#f59e0b" }}>{checkoutData.transfer_content}</strong>
+                      <div className={styles.valueWithCopy}>
+                        <strong style={{ color: "#d97706" }}>{checkoutData.transfer_content}</strong>
+                        <button
+                          type="button"
+                          className={`${styles.copyBtn} ${copiedKey === "content" ? styles.copyBtnSuccess : ""}`}
+                          onClick={() => handleCopy("content", checkoutData.transfer_content)}
+                        >
+                          {copiedKey === "content" ? "✓ Đã chép" : "Sao chép"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
