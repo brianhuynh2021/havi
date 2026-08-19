@@ -14,8 +14,9 @@ Kịch bản:
 """
 
 import asyncio
-from datetime import UTC, datetime
 from uuid import uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
@@ -27,7 +28,6 @@ from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.publishers.fake import FakePublisher
-from adapters.publishers.tiktok import TikTokPublisher
 from application.services.approval_service import ApprovalService
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
@@ -37,10 +37,8 @@ from core.enums import (
     ContentStatus,
     Industry,
     Platform,
-    PublishStatus,
     WorkspaceRole,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def run_tiktok_demo():

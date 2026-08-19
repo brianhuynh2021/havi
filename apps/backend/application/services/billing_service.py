@@ -19,7 +19,6 @@ from uuid import UUID
 from adapters.payment.payos_gateway import (
     VietQRCheckout,
     create_payos_payment_link,
-    generate_vietqr_checkout,
 )
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.event_log_repository import EventLogRepository

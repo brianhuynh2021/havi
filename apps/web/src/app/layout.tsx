@@ -24,9 +24,8 @@ export const viewport: Viewport = {
   themeColor: "#4F46E5",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
+
 
 export const metadata: Metadata = {
   title: "Havi — Trợ lý Marketing AI Đa Kênh",

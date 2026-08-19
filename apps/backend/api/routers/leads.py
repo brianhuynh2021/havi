@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from api.deps import AuthDep, LeadServiceDep, WorkspaceDep
 from application.services.lead_service import LeadNotFound
-from core.enums import LeadReplyStatus, LeadStage
+from core.enums import LeadReplyStatus, LeadSource, LeadStage
 from core.schemas import Lead, LeadCreate, LeadUpdate, Page
 
 router = APIRouter(prefix="/leads", tags=["leads"])

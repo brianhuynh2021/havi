@@ -1,6 +1,7 @@
 """Adapter gửi tin nhắn cảnh báo Hot Lead qua Telegram Bot API."""
 
 import logging
+
 import httpx
 
 from core.config import Settings

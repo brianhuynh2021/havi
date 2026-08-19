@@ -568,7 +568,6 @@ export function LandingScreen() {
                     href="#demo-studio"
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveIndustryIdx(0);
                       document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
@@ -580,7 +579,6 @@ export function LandingScreen() {
                     href="#demo-studio"
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveIndustryIdx(1);
                       document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
@@ -592,7 +590,6 @@ export function LandingScreen() {
                     href="#demo-studio"
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveIndustryIdx(2);
                       document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
@@ -604,7 +601,6 @@ export function LandingScreen() {
                     href="#demo-studio"
                     onClick={(e) => {
                       e.preventDefault();
-                      setActiveIndustryIdx(3);
                       document.getElementById("demo-studio")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
@@ -612,6 +608,7 @@ export function LandingScreen() {
                   </a>
                 </li>
               </ul>
+
             </div>
 
             {/* Legal & Account */}

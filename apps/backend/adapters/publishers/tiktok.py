@@ -6,7 +6,9 @@ Triển khai `PublisherPort` theo chuẩn TikTok Content Posting API v2:
 """
 
 import logging
+import os
 from datetime import UTC, datetime
+from pathlib import Path
 
 import httpx
 
@@ -22,8 +24,6 @@ from domain.ports.publisher import (
 
 logger = logging.getLogger(__name__)
 
-import os
-from pathlib import Path
 
 TIKTOK_INBOX_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/"
 TIKTOK_DIRECT_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/video/init/"

@@ -5,6 +5,8 @@ import asyncio
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import _engine
@@ -15,9 +17,7 @@ from adapters.publishers.tiktok import TikTokPublisher
 from application.services.approval_service import ApprovalService
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
-from core.config import get_settings
 from core.enums import Channel, ContentStatus, Platform
-from sqlalchemy.ext.asyncio import AsyncSession
 
 WORKSPACE_ID = UUID("0c36abba-e1b1-44c0-96e2-661d1e97f6ab")
 USER_ID = UUID("ae9e07a9-cc00-4260-bd8f-443751640bef")
@@ -29,9 +29,8 @@ async def publish_live_tiktok():
     print("🎬 TIẾN HÀNH XUẤT BẢN VIDEO THẬT LÊN TIKTOK TÀI KHOẢN KẾT NỐI")
     print("=" * 60)
 
-    settings = get_settings()
-
     async with AsyncSession(_engine) as session:
+
         conn_repo = ConnectionRepository(session)
         content_repo = ContentRepository(session)
         publish_repo = PublishRepository(session)

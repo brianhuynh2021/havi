@@ -65,6 +65,7 @@ from core.config import Settings, get_settings
 from core.enums import Platform
 from core.security import decode_access_token
 from domain.ports.email import EmailSender
+from domain.ports.reply_publisher import ReplyPublisherPort
 
 bearer_scheme = HTTPBearer(auto_error=True)
 

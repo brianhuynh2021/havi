@@ -56,7 +56,7 @@ class BillingRepository:
 
     async def find_by_prefix(self, prefix: str) -> Invoice | None:
         """Tìm hoá đơn có UUID bắt đầu bằng prefix (ví dụ 8 ký tự hex)."""
-        from sqlalchemy import cast, String
+        from sqlalchemy import String, cast
         clean = prefix.replace("-", "").strip()
         if not clean:
             return None

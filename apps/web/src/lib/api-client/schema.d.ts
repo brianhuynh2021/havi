@@ -58,6 +58,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/social-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Social Login
+         * @description Đăng nhập 1-chạm qua Google hoặc Facebook.
+         */
+        post: operations["social_login_auth_social_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/password-reset/request": {
         parameters: {
             query?: never;
@@ -385,6 +405,164 @@ export interface paths {
         head?: never;
         /** Update Media */
         patch: operations["update_media_media__asset_id__patch"];
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/trends/hot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lấy danh sách các Hot Trends thời gian thực được AI đề xuất cho tiệm */
+        get: operations["get_hot_trends_workspaces__workspace_id__trends_hot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/trends/synthesize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Biến một trend thành kịch bản video ngắn và edit plan 9:16 hoàn chỉnh */
+        post: operations["synthesize_trend_workspaces__workspace_id__trends_synthesize_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/video/render-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Render Jobs
+         * @description Lấy danh sách các render jobs của workspace với phân trang.
+         */
+        get: operations["list_render_jobs_workspaces__workspace_id__video_render_jobs_get"];
+        put?: never;
+        /**
+         * Create Render Job
+         * @description Tạo một job render video mới và xếp vào hàng đợi `havi.video_render`.
+         */
+        post: operations["create_render_job_workspaces__workspace_id__video_render_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/video/render-jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Render Job
+         * @description Kiểm tra tiến độ render (0-100%) và kết quả video đầu ra.
+         */
+        get: operations["get_render_job_workspaces__workspace_id__video_render_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/video/render-jobs/{job_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Render Job
+         * @description Thử lại một video render job đã bị thất bại.
+         */
+        post: operations["retry_render_job_workspaces__workspace_id__video_render_jobs__job_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/video/render-jobs/{job_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Render Job
+         * @description Huỷ một video render job đang trong hàng đợi.
+         */
+        post: operations["cancel_render_job_workspaces__workspace_id__video_render_jobs__job_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voice/transcribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transcribe Voice
+         * @description Chuyển đổi file ghi âm giọng nói thành văn bản tiếng Việt chuẩn xác.
+         */
+        post: operations["transcribe_voice_voice_transcribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voice/voice-to-content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice To Content
+         * @description 1-Chạm: Ghi âm giọng nói -> Chuyển thành văn bản -> Tự động tạo Job sinh bài đa kênh.
+         */
+        post: operations["voice_to_content_voice_voice_to_content_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/content/jobs": {
@@ -822,6 +1000,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/inbox/ai-care": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze And Care Lead
+         * @description AI Lead Care: Phân loại ý định, trích xuất SĐT và tự động đồng bộ Lead vào CRM.
+         */
+        post: operations["analyze_and_care_lead_inbox_ai_care_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/leads": {
         parameters: {
             query?: never;
@@ -855,6 +1053,106 @@ export interface paths {
         head?: never;
         /** Update Lead */
         patch: operations["update_lead_leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/leads/test-telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Telegram Alert
+         * @description Bắn thử 1 thông báo chuông reo Hot Lead qua Telegram để kiểm tra kết nối.
+         */
+        post: operations["test_telegram_alert_leads_test_telegram_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/crm/nudges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Nudges
+         * @description Lấy danh sách tin nhắn chăm sóc khách hàng định kỳ.
+         */
+        get: operations["list_nudges_workspaces__workspace_id__crm_nudges_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/crm/nudges/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger Nudge Scan
+         * @description Chủ động kích hoạt quét khách hàng cũ để tạo tin nhắn chăm sóc.
+         */
+        post: operations["trigger_nudge_scan_workspaces__workspace_id__crm_nudges_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/crm/nudges/{nudge_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Nudge
+         * @description Duyệt và gửi tin nhắn chăm sóc tới khách hàng.
+         */
+        post: operations["approve_nudge_workspaces__workspace_id__crm_nudges__nudge_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/crm/nudges/{nudge_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss Nudge
+         * @description Bỏ qua tin nhắn chăm sóc khách hàng.
+         */
+        post: operations["dismiss_nudge_workspaces__workspace_id__crm_nudges__nudge_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/analytics/dashboard": {
@@ -1035,10 +1333,139 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/billing/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Checkout
+         * @description Tạo mã thanh toán VietQR động để nâng cấp gói cước.
+         */
+        post: operations["create_checkout_billing_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/billing/invoices/{invoice_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Invoice Status
+         * @description Kiểm tra trạng thái hoá đơn để Frontend tự động refresh sau khi quét QR.
+         */
+        get: operations["get_invoice_status_billing_invoices__invoice_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/pos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tiếp nhận đơn hàng POS bán hàng tại quầy (Station 5)
+         * @description Tiếp nhận đơn hàng từ máy POS, gắn doanh thu vào Lead và chuyển sang stage WON.
+         */
+        post: operations["ingest_pos_webhook_webhooks_pos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/payos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Payos Webhook
+         * @description Nhận webhook từ PayOS khi khách quét VietQR thanh toán thành công.
+         */
+        post: operations["payos_webhook_webhooks_payos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/vietqr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vietqr Generic Webhook
+         * @description Webhook nhận biến động số dư VietQR / SePay từ tài khoản ngân hàng.
+         */
+        post: operations["vietqr_generic_webhook_webhooks_vietqr_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AICareInquiryRequest */
+        AICareInquiryRequest: {
+            /**
+             * Author Name
+             * @default Khách hàng
+             */
+            author_name: string;
+            /** Content */
+            content: string;
+            /** @default facebook */
+            platform: components["schemas"]["Platform"];
+        };
+        /** AICareInquiryResponse */
+        AICareInquiryResponse: {
+            /** Intent */
+            intent: string;
+            /** Confidence */
+            confidence: number;
+            /** Extracted Phone */
+            extracted_phone?: string | null;
+            /** Extracted Name */
+            extracted_name?: string | null;
+            /** Suggested Tags */
+            suggested_tags: string[];
+            /** Suggested Reply */
+            suggested_reply: string;
+            /** Lead Id */
+            lead_id?: string | null;
+        };
         /**
          * AnalyticsSummary
          * @description Đo bằng khách hỏi giá / lead đã chốt / khách quay lại — không phải like/reach.
@@ -1056,6 +1483,11 @@ export interface components {
             new_leads: number;
             /** Lead Won Rate */
             lead_won_rate: number;
+            /**
+             * Total Revenue Vnd
+             * @default 0
+             */
+            total_revenue_vnd: number;
             /** Change Vs Previous Period */
             change_vs_previous_period?: {
                 [key: string]: number;
@@ -1075,6 +1507,23 @@ export interface components {
              * @description Bỏ trống để Havi chọn khung giờ vàng.
              */
             scheduled_at?: string | null;
+        };
+        /**
+         * Base64VoiceRequest
+         * @description Payload nhận diện âm thanh dạng base64 từ trình duyệt / mobile app.
+         */
+        Base64VoiceRequest: {
+            /**
+             * Audio Base64
+             * @description Chuỗi base64 của file âm thanh
+             */
+            audio_base64: string;
+            /**
+             * Mime Type
+             * @description MIME type của âm thanh (audio/webm, audio/mp4...)
+             * @default audio/webm
+             */
+            mime_type: string;
         };
         /**
          * BrandProfile
@@ -1183,6 +1632,24 @@ export interface components {
             share: number;
             /** Note */
             note?: string | null;
+        };
+        /** CheckoutResponse */
+        CheckoutResponse: {
+            /** Invoice Id */
+            invoice_id: string;
+            plan: components["schemas"]["Plan"];
+            /** Amount Vnd */
+            amount_vnd: number;
+            /** Transfer Content */
+            transfer_content: string;
+            /** Bank Id */
+            bank_id: string;
+            /** Account No */
+            account_no: string;
+            /** Account Name */
+            account_name: string;
+            /** Qr Code Url */
+            qr_code_url: string;
         };
         /**
          * ConnectionStatus
@@ -1307,6 +1774,73 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending_approval" | "approved" | "scheduled" | "publishing" | "published" | "failed" | "dead_letter";
+        /** CreateVideoRenderJobRequest */
+        CreateVideoRenderJobRequest: {
+            /**
+             * Title
+             * @default Video ngắn tự động
+             */
+            title: string;
+            /**
+             * Target Aspect Ratio
+             * @default 9:16
+             */
+            target_aspect_ratio: string;
+            /** Edit Plan */
+            edit_plan?: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Media Id */
+            source_media_id?: string | null;
+            /** @default ffmpeg */
+            renderer_engine: components["schemas"]["VideoRenderEngine"];
+        };
+        /**
+         * CrmMessageStatus
+         * @enum {string}
+         */
+        CrmMessageStatus: "pending_approval" | "sent" | "dismissed";
+        /** CrmNudgeListResponse */
+        CrmNudgeListResponse: {
+            /** Items */
+            items: components["schemas"]["CrmNudgeResponse"][];
+            /** Total */
+            total: number;
+        };
+        /** CrmNudgeResponse */
+        CrmNudgeResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Lead Id
+             * Format: uuid
+             */
+            lead_id: string;
+            nudge_type: components["schemas"]["CrmNudgeType"];
+            status: components["schemas"]["CrmMessageStatus"];
+            /** Message */
+            message: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Sent At */
+            sent_at: string | null;
+        };
+        /**
+         * CrmNudgeType
+         * @enum {string}
+         */
+        CrmNudgeType: "inactive_30_days" | "followup_14_days" | "birthday_special";
         /** CurrentUser */
         CurrentUser: {
             /**
@@ -1416,6 +1950,11 @@ export interface components {
             /** Version */
             version: string;
         };
+        /**
+         * HookStyle
+         * @enum {string}
+         */
+        HookStyle: "warning_mistake" | "real_comparison" | "behind_scenes" | "hero_rescue" | "career_income";
         /** InboxItem */
         InboxItem: {
             /**
@@ -1465,7 +2004,7 @@ export interface components {
         };
         /**
          * Industry
-         * @description 8 nhóm ngành kinh doanh trong bước 1 của Onboarding.
+         * @description 8 nhóm ngành kinh doanh toàn diện trong bước 1 của Onboarding.
          * @enum {string}
          */
         Industry: "spa" | "food_beverage" | "retail_shop" | "online_shop" | "education" | "local_service" | "real_estate" | "professional" | "other";
@@ -1549,7 +2088,7 @@ export interface components {
          * LeadSource
          * @enum {string}
          */
-        LeadSource: "fanpage" | "maps" | "group" | "crm";
+        LeadSource: "fanpage" | "maps" | "google_business" | "tiktok" | "inbox" | "group" | "crm" | "pos";
         /**
          * LeadStage
          * @description Pipeline kanban trong Settings/CRM (TECHNICAL_SPEC §8).
@@ -1567,6 +2106,17 @@ export interface components {
             notes?: string | null;
             /** Content Item Id */
             content_item_id?: string | null;
+        };
+        /** ListVideoRenderJobsResponse */
+        ListVideoRenderJobsResponse: {
+            /** Items */
+            items: components["schemas"]["VideoRenderJobResponse"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** MediaAsset */
         MediaAsset: {
@@ -1890,6 +2440,25 @@ export interface components {
              */
             email: string;
         };
+        /** PayOSWebhookRequest */
+        PayOSWebhookRequest: {
+            /** Code */
+            code?: string | null;
+            /** Desc */
+            desc?: string | null;
+            /**
+             * Data
+             * @default {}
+             */
+            data: {
+                [key: string]: unknown;
+            };
+            /**
+             * Signature
+             * @default
+             */
+            signature: string;
+        };
         /**
          * PhoneUpdateRequest
          * @description SĐT tuỳ chọn — chỉ để nhận bản nháp/nhắc duyệt qua Zalo OA, không để đăng nhập.
@@ -1903,7 +2472,7 @@ export interface components {
         };
         /**
          * Plan
-         * @description Bảng giá landing page: 0đ 14 ngày / Tiệm Nhỏ 299K / Toàn Diện 599K.
+         * @description Bảng giá: 0đ 7 ngày / Khởi Nghiệp 189K / Chuyên Nghiệp 369K / Chuỗi Doanh Nghiệp 799K.
          * @enum {string}
          */
         Plan: "trial" | "tiem_nho" | "toan_dien" | "doanh_nghiep";
@@ -1931,6 +2500,46 @@ export interface components {
             expires_at?: string | null;
             /** Connected By */
             connected_by?: string | null;
+        };
+        /** PosIngestResponse */
+        PosIngestResponse: {
+            /** Success */
+            success: boolean;
+            /** Lead Id */
+            lead_id: string;
+            /** Customer Name */
+            customer_name: string;
+            /** Amount Vnd */
+            amount_vnd: number;
+            /** Stage */
+            stage: string;
+        };
+        /**
+         * PosOrderPayload
+         * @description Payload nhận đơn hàng / hóa đơn từ máy POS hoặc phần mềm bán hàng.
+         */
+        PosOrderPayload: {
+            /** Order Id */
+            order_id: string;
+            /**
+             * Customer Name
+             * @default Khách tại quầy
+             */
+            customer_name: string;
+            /** Customer Phone */
+            customer_phone?: string | null;
+            /** Amount Vnd */
+            amount_vnd: number;
+            /**
+             * Source
+             * @default pos
+             */
+            source: string;
+            /**
+             * Items
+             * @default []
+             */
+            items: string[];
         };
         /**
          * PublishFailureKind
@@ -2045,6 +2654,22 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** SocialLoginRequest */
+        SocialLoginRequest: {
+            /**
+             * Provider
+             * @example google
+             * @example facebook
+             */
+            provider: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Name */
+            name?: string | null;
+        };
         /** Subscription */
         Subscription: {
             /**
@@ -2072,6 +2697,44 @@ export interface components {
          * @enum {string}
          */
         SubscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
+        /** SynthesizeTrendRequest */
+        SynthesizeTrendRequest: {
+            /** Trend Id */
+            trend_id: string;
+            /**
+             * Target Aspect Ratio
+             * @default 9:16
+             */
+            target_aspect_ratio: string;
+            /**
+             * Duration Seconds
+             * @default 15
+             */
+            duration_seconds: number;
+            /** Custom Notes */
+            custom_notes?: string | null;
+        };
+        /** SynthesizeTrendResponse */
+        SynthesizeTrendResponse: {
+            /** Trend Id */
+            trend_id: string;
+            /** Keyword */
+            keyword: string;
+            /** Title */
+            title: string;
+            /** Hook Caption */
+            hook_caption: string;
+            /** Caption Style */
+            caption_style: string;
+            /** Script Outline */
+            script_outline: string[];
+            /** Suggested Hashtags */
+            suggested_hashtags: string[];
+            /** Edit Plan */
+            edit_plan: {
+                [key: string]: unknown;
+            };
+        };
         /** TimeseriesPoint */
         TimeseriesPoint: {
             /**
@@ -2126,6 +2789,30 @@ export interface components {
              */
             resets_at: string;
         };
+        /**
+         * TrendCategory
+         * @enum {string}
+         */
+        TrendCategory: "tech_education" | "career_guidance" | "vocational_skills" | "viral_meme" | "tech_news" | "lifestyle";
+        /** TrendingTopicResponse */
+        TrendingTopicResponse: {
+            /** Id */
+            id: string;
+            /** Keyword */
+            keyword: string;
+            category: components["schemas"]["TrendCategory"];
+            /** Trend Score */
+            trend_score: number;
+            /** Source */
+            source: string;
+            hook_style: components["schemas"]["HookStyle"];
+            /** Sample Hook */
+            sample_hook: string;
+            /** Suggested Angle */
+            suggested_angle: string;
+            /** Suggested Hashtags */
+            suggested_hashtags: string[];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -2138,6 +2825,91 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * VideoRenderEngine
+         * @description Engine được dùng để render video.
+         * @enum {string}
+         */
+        VideoRenderEngine: "ffmpeg" | "remotion";
+        /** VideoRenderJobResponse */
+        VideoRenderJobResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /** Title */
+            title: string;
+            /** Target Aspect Ratio */
+            target_aspect_ratio: string;
+            status: components["schemas"]["VideoRenderStatus"];
+            /** Progress Percent */
+            progress_percent: number;
+            renderer_engine: components["schemas"]["VideoRenderEngine"];
+            /** Source Media Id */
+            source_media_id?: string | null;
+            /** Edit Plan */
+            edit_plan?: {
+                [key: string]: unknown;
+            };
+            /** Output Media Id */
+            output_media_id?: string | null;
+            /** Output Url */
+            output_url?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * VideoRenderStatus
+         * @description Trạng thái của tác vụ render video (Phase 3 Video Pipeline).
+         * @enum {string}
+         */
+        VideoRenderStatus: "queued" | "rendering" | "completed" | "failed" | "cancelled";
+        /**
+         * VoiceToContentResponse
+         * @description Kết quả quy trình 1-chạm tạo bài từ giọng nói.
+         */
+        VoiceToContentResponse: {
+            /** Text */
+            text: string;
+            /** Summary */
+            summary: string;
+            /** Detected Intent */
+            detected_intent: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Status */
+            job_status: string;
+        };
+        /**
+         * VoiceTranscribeResponse
+         * @description Kết quả nhận diện giọng nói.
+         */
+        VoiceTranscribeResponse: {
+            /** Text */
+            text: string;
+            /** Summary */
+            summary: string;
+            /** Detected Intent */
+            detected_intent: string;
         };
         /** Workspace */
         Workspace: {
@@ -2272,6 +3044,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EmailLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenPair"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    social_login_auth_social_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialLoginRequest"];
             };
         };
         responses: {
@@ -2958,6 +3763,290 @@ export interface operations {
             };
         };
     };
+    get_hot_trends_workspaces__workspace_id__trends_hot_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendingTopicResponse"][];
+                };
+            };
+        };
+    };
+    synthesize_trend_workspaces__workspace_id__trends_synthesize_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynthesizeTrendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SynthesizeTrendResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_render_jobs_workspaces__workspace_id__video_render_jobs_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["VideoRenderStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListVideoRenderJobsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_render_job_workspaces__workspace_id__video_render_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Request-ID"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVideoRenderJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_render_job_workspaces__workspace_id__video_render_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_render_job_workspaces__workspace_id__video_render_jobs__job_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Request-ID"?: string | null;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_render_job_workspaces__workspace_id__video_render_jobs__job_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transcribe_voice_voice_transcribe_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Base64VoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceTranscribeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_to_content_voice_voice_to_content_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Base64VoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceToContentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_content_job_content_jobs_post: {
         parameters: {
             query?: never;
@@ -3605,6 +4694,39 @@ export interface operations {
             };
         };
     };
+    analyze_and_care_lead_inbox_ai_care_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AICareInquiryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AICareInquiryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_leads_leads_get: {
         parameters: {
             query?: {
@@ -3694,6 +4816,154 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Lead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_telegram_alert_leads_test_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    list_nudges_workspaces__workspace_id__crm_nudges_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["CrmMessageStatus"] | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmNudgeListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_nudge_scan_workspaces__workspace_id__crm_nudges_scan_post: {
+        parameters: {
+            query?: {
+                inactive_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmNudgeResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_nudge_workspaces__workspace_id__crm_nudges__nudge_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nudge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmNudgeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_nudge_workspaces__workspace_id__crm_nudges__nudge_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nudge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmNudgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3964,6 +5234,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_checkout_billing_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_invoice_status_billing_invoices__invoice_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_pos_webhook_webhooks_pos_post: {
+        parameters: {
+            query: {
+                workspace_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PosOrderPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosIngestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    payos_webhook_webhooks_payos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayOSWebhookRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vietqr_generic_webhook_webhooks_vietqr_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Signature"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
