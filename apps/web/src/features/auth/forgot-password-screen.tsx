@@ -83,7 +83,7 @@ export function ForgotPasswordScreen() {
           </Button>
 
           <p className={styles.footerText}>
-            <Link href="/dang-nhap">← {t("auth.backToLogin", "Quay lại đăng nhập")}</Link>
+            <Link href="/login">← {t("auth.backToLogin", "Quay lại đăng nhập")}</Link>
           </p>
         </div>
       ) : step === "otp" ? (

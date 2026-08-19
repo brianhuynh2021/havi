@@ -133,6 +133,19 @@ class AuthService:
             raise InvalidCredentials()
         return await self._issue_token_pair(user)
 
+    async def social_sign_in(
+        self, *, provider: str, email: str, name: str
+    ) -> TokenPairResult:
+        normalized_email = self._normalize_email(email)
+        user = await self._users.get_by_email(normalized_email)
+        if user is None:
+            user = await self._users.create(
+                email=normalized_email,
+                name=name or normalized_email.split("@")[0],
+                password_hash=hash_password(f"social_{provider}_{normalized_email}_{self._settings.secret_key}"),
+            )
+        return await self._issue_token_pair(user)
+
     async def request_password_reset(self, *, email: str) -> OtpChallengeResult:
         """Không tiết lộ email có tồn tại hay không — luôn trả về challenge giống nhau.
 

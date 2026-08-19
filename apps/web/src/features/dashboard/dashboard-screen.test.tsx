@@ -161,6 +161,24 @@ describe("DashboardScreen", () => {
     expect(screen.queryByText(/auth_permission/i)).not.toBeInTheDocument();
   });
 
+  it("hiển thị thẻ đối soát ROI và tiết kiệm chi phí marketing cho tiệm", async () => {
+    mockDashboard({
+      summary: {
+        drafts: 0,
+        pending_approval: 0,
+        scheduled: 0,
+        published: 1,
+        failed: 0,
+      },
+    });
+
+    render(<DashboardScreen />);
+
+    expect(await screen.findByText(/Hiệu Quả Đầu Tư Của Tiệm/i)).toBeInTheDocument();
+    expect(screen.getByText(/TIẾT KIỆM GẤP 14 LẦN/i)).toBeInTheDocument();
+    expect(screen.getByText("+4.201.000 đ")).toBeInTheDocument();
+  });
+
   it("activity feed lỗi riêng thì tổng quan vẫn hiển thị", async () => {
     mockDashboard({
       summary: {
@@ -185,8 +203,26 @@ describe("DashboardScreen", () => {
     render(<DashboardScreen />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /không kết nối được/i,
+      /không kết nối được với havi/i,
     );
     expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
+  });
+
+  it("hiển thị nút mic ghi âm nói để tạo bài và thẻ nhiệm vụ nhận thêm ngày dùng thử", async () => {
+    mockDashboard({
+      summary: {
+        drafts: 0,
+        pending_approval: 0,
+        scheduled: 0,
+        published: 0,
+        failed: 0,
+      },
+    });
+
+    render(<DashboardScreen />);
+
+    expect(await screen.findByRole("link", { name: /nói để tạo bài/i })).toBeInTheDocument();
+    expect(screen.getByText(/Nhiệm Vụ Kích Hoạt Tiệm/i)).toBeInTheDocument();
+    expect(screen.getByText("+2 Ngày")).toBeInTheDocument();
   });
 });

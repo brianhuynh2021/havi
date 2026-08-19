@@ -66,13 +66,45 @@ describe("LandingScreen", () => {
 
   it("có anchor navigation tới các section chính", () => {
     const { container } = renderLanding();
-    for (const id of ["demo-studio", "cach-hoat-dong", "bang-gia", "nguyen-tac"]) {
+    for (const id of ["demo-studio", "bang-gia", "khach-hang", "faq"]) {
       expect(container.querySelector(`#${id}`)).not.toBeNull();
       expect(
         container.querySelector(`a[href="#${id}"]`),
         `thiếu link tới #${id}`,
       ).not.toBeNull();
     }
+  });
+
+  it("bấm nút Liên hệ Chuyên viên B2B thì mở popup tư vấn doanh nghiệp", async () => {
+    renderLanding();
+    const user = userEvent.setup();
+
+    const b2bButton = screen.getByRole("button", { name: /liên hệ chuyên viên b2b/i });
+    await user.click(b2bButton);
+
+    expect(screen.getByText(/Tư Vấn Giải Pháp Havi Enterprise/i)).toBeInTheDocument();
+    expect(screen.getByText(/Gửi Yêu Cầu Tư Vấn Ngay/i)).toBeInTheDocument();
+  });
+
+  it("hiển thị các đánh giá thực chiến từ chủ tiệm (Testimonials)", () => {
+    renderLanding();
+    expect(screen.getByText(/Chủ Tiệm Nói Gì Về Havi/i)).toBeInTheDocument();
+    expect(screen.getByText(/Chị Mai Lan/i)).toBeInTheDocument();
+    expect(screen.getByText(/Anh Quốc Hoàng/i)).toBeInTheDocument();
+  });
+
+  it("cho phép tương tác đóng mở Accordion FAQ", async () => {
+    renderLanding();
+    const user = userEvent.setup();
+
+    expect(screen.getByText(/Câu Hỏi Thường Gặp/i)).toBeInTheDocument();
+    // Default open FAQ 0
+    expect(screen.getByText(/Hoàn toàn dễ dàng! Havi được thiết kế trực quan/i)).toBeInTheDocument();
+
+    // Click FAQ 1: Havi có tự động đăng bài...
+    const faqBtn = screen.getByRole("button", { name: /Havi có tự động đăng bài lên mạng xã hội/i });
+    await user.click(faqBtn);
+    expect(screen.getByText(/Tuyệt đối KHÔNG. Nguyên tắc cốt lõi số 1 của Havi/i)).toBeInTheDocument();
   });
 });
 

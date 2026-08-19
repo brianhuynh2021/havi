@@ -65,6 +65,12 @@ class EmailLoginRequest(HaviModel):
     password: str
 
 
+class SocialLoginRequest(HaviModel):
+    provider: str = Field(examples=["google", "facebook"])
+    email: EmailStr
+    name: str | None = None
+
+
 class PasswordResetRequest(HaviModel):
     """Bước 1 màn "Quên mật khẩu" — gửi mã 6 số qua email."""
 

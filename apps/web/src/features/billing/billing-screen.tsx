@@ -89,7 +89,7 @@ const PLAN_DETAILS: Record<
     features: [
       "Quản lý tối đa 5 Chi nhánh / Fanpage",
       "Không giới hạn bài viết AI & kịch bản Video",
-      "Phân quyền nhân viên (RBAC): Chủ, Quản lý, Sale",
+      "Phân quyền tài khoản: Chủ tiệm, Quản lý, Nhân viên tư vấn",
       "Đối soát POS KiotViet / Sapo tự động",
       "Kỹ sư Havi hỗ trợ VIP 1-1 riêng biệt",
     ],
@@ -472,6 +472,10 @@ export function BillingScreen() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div style={{ marginTop: 12, fontSize: "12.5px", color: "var(--color-muted)", textAlign: "center" }}>
+                  Cần hỗ trợ thanh toán hoặc kích hoạt gấp? Hotline / Zalo Founder: <a href="tel:0984883750" style={{ color: "#0066ff", fontWeight: 700 }}>0984 883 750</a>
                 </div>
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>

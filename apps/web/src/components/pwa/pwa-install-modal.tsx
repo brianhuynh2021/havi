@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { Logo } from "@/components/ui/logo";
 import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./pwa-install-modal.module.css";
 
@@ -28,10 +30,57 @@ function getServerSnapshot() {
   return false;
 }
 
+function subscribeMount() {
+  return () => {};
+}
+function getMountSnapshot() {
+  return true;
+}
+function getServerMountSnapshot() {
+  return false;
+}
+
+function subscribePlatform() {
+  return () => {};
+}
+function getPlatformSnapshot(): "ios" | "android" | "desktop" {
+  if (typeof window === "undefined") return "desktop";
+  const ua = window.navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return "ios";
+  if (/android/.test(ua)) return "android";
+  return "desktop";
+}
+function getServerPlatformSnapshot(): "ios" | "android" | "desktop" {
+  return "desktop";
+}
+
+function subscribeBanner(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+function getBannerSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem("havi_pwa_banner_dismissed") === "true";
+}
+function getServerBannerSnapshot() {
+  return false;
+}
+
 export function PwaInstallModal() {
   const { lang, t } = useLanguage();
+  const mounted = useSyncExternalStore(subscribeMount, getMountSnapshot, getServerMountSnapshot);
+  const detectedPlatform = useSyncExternalStore(subscribePlatform, getPlatformSnapshot, getServerPlatformSnapshot);
+  const bannerStored = useSyncExternalStore(subscribeBanner, getBannerSnapshot, getServerBannerSnapshot);
+
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<"ios" | "android" | "desktop" | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [userDismissed, setUserDismissed] = useState(false);
+
+  const activeTab = selectedTab ?? detectedPlatform;
+  const isBannerDismissed = userDismissed || bannerStored;
+
   const isStandalone = useSyncExternalStore(
     subscribeStandalone,
     getStandaloneSnapshot,
@@ -48,123 +97,346 @@ export function PwaInstallModal() {
     return () => window.removeEventListener("beforeinstallprompt", handlePrompt);
   }, []);
 
-  // Nếu đã chạy trong app PWA standalone thì không hiện nút nữa
+  // Nếu đã mở trong chế độ PWA Standalone thì không hiện bất kỳ lời nhắc nào nữa
   if (isStandalone) return null;
 
-  const handleClick = async () => {
+  const handleOpenModal = () => {
+    setIsOpen(true);
+  };
+
+  const handleNativeInstall = async () => {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === "accepted") {
         setDeferredPrompt(null);
+        setIsOpen(false);
       }
     } else {
       setIsOpen(true);
     }
   };
 
-  return (
-    <>
-      <button
-        type="button"
-        className={styles.installBtn}
-        onClick={handleClick}
-        title={t({
-          vi: "Cài Havi ra màn hình chính điện thoại",
-          en: "Add Havi to Home Screen",
-        })}
+  const handleDismissBanner = () => {
+    setUserDismissed(true);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("havi_pwa_banner_dismissed", "true");
+    }
+  };
+
+  const currentUrl = typeof window !== "undefined" ? window.location.origin : "https://havi.vn";
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+    currentUrl
+  )}&bgcolor=ffffff&color=090d16&margin=6`;
+
+  const modalContent = isOpen ? (
+    <div className={styles.modalOverlay} onClick={() => setIsOpen(false)}>
+      <div
+        className={styles.modalBox}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pwa-modal-title"
       >
-        <span>📲</span>
-        <span>{lang === "VN" ? "Cài App" : "Install App"}</span>
-      </button>
-
-      {isOpen ? (
-        <div className={styles.modalOverlay} onClick={() => setIsOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
-                <span>📲</span>
-                <span>
-                  {t({
-                    vi: "Cài Đặt Havi Ra Màn Hình Chính",
-                    en: "Add Havi to Home Screen",
-                  })}
-                </span>
-              </h3>
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={() => setIsOpen(false)}
-                aria-label="Đóng"
-              >
-                ✕
-              </button>
+        {/* Header */}
+        <div className={styles.modalHeader}>
+          <div className={styles.modalTitleWrap}>
+            <div className={styles.appIconBadge}>
+              <Logo size={32} />
             </div>
+            <div>
+              <h3 id="pwa-modal-title" className={styles.modalTitle}>
+                {t({
+                  vi: "Cài Đặt Havi Lên Điện Thoại",
+                  en: "Install Havi on Mobile",
+                })}
+              </h3>
+              <p className={styles.modalSubtitle}>
+                {t({
+                  vi: "Dùng mượt mà 1-chạm, tiện lợi như app tải về máy",
+                  en: "1-Tap instant access, smooth app experience",
+                })}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={() => setIsOpen(false)}
+            aria-label="Đóng"
+          >
+            ✕
+          </button>
+        </div>
 
-            <p className={styles.modalDesc}>
-              {t({
-                vi: "Dùng Havi mượt mà như app tải từ App Store/CH Play, truy cập tức thì 1-chạm không cần mở lại trình duyệt.",
-                en: "Use Havi seamlessly like an app from App Store, 1-tap instant access without re-opening browser.",
-              })}
-            </p>
+        {/* Benefits Grid */}
+        <div className={styles.benefitsRow}>
+          <div className={styles.benefitItem}>
+            <span>⚡</span>
+            <span>{lang === "VN" ? "Mở tức thì không chờ tải" : "Instant 1-tap open"}</span>
+          </div>
+          <div className={styles.benefitItem}>
+            <span>🔔</span>
+            <span>{lang === "VN" ? "Nhận tin nhắn khách 24/7" : "24/7 Lead notifications"}</span>
+          </div>
+          <div className={styles.benefitItem}>
+            <span>📱</span>
+            <span>{lang === "VN" ? "Toàn màn hình tiện lợi" : "Clean full screen"}</span>
+          </div>
+        </div>
 
+        {/* Platform Tabs */}
+        <div className={styles.platformTabs}>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === "ios" ? styles.tabBtnActive : ""}`}
+            onClick={() => setSelectedTab("ios")}
+          >
+            <span>🍎</span>
+            <span>iPhone / iPad</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === "android" ? styles.tabBtnActive : ""}`}
+            onClick={() => setSelectedTab("android")}
+          >
+            <span>🤖</span>
+            <span>Android</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTab === "desktop" ? styles.tabBtnActive : ""}`}
+            onClick={() => setSelectedTab("desktop")}
+          >
+            <span>💻</span>
+            <span>Quét Mã QR</span>
+          </button>
+        </div>
+
+        {/* Tab Content: iOS Safari */}
+        {activeTab === "ios" && (
+          <div className={styles.tabBody}>
             <div className={styles.stepsList}>
               <div className={styles.stepItem}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
                     <>
-                      Bấm vào biểu tượng <strong>Chia sẻ (Share ⎋)</strong> ở thanh công cụ dưới cùng (trên Safari iPhone) hoặc góc phải trên (trên Android).
+                      Mở Havi trên trình duyệt <strong>Safari</strong>, bấm vào nút{" "}
+                      <strong>Chia sẻ (Share ⎋)</strong> ở thanh công cụ dưới cùng.
                     </>
                   ) : (
                     <>
-                      Tap the <strong>Share (⎋)</strong> button on Safari bottom bar or top menu on Android.
+                      Open in <strong>Safari</strong>, tap the <strong>Share (⎋)</strong> button on the bottom bar.
                     </>
                   )}
                 </div>
               </div>
-
               <div className={styles.stepItem}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
                     <>
-                      Cuộn xuống danh sách tùy chọn và chọn <strong>&ldquo;Thêm vào Màn hình chính&rdquo; (Add to Home Screen ➕)</strong>.
+                      Cuộn xuống danh sách menu và chọn{" "}
+                      <strong>&ldquo;Thêm vào Màn hình chính&rdquo; (Add to Home Screen ➕)</strong>.
                     </>
                   ) : (
                     <>
-                      Scroll down and select <strong>&ldquo;Add to Home Screen&rdquo; (➕)</strong>.
+                      Scroll down and tap <strong>&ldquo;Add to Home Screen&rdquo; (➕)</strong>.
                     </>
                   )}
                 </div>
               </div>
-
               <div className={styles.stepItem}>
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
                     <>
-                      Bấm <strong>&ldquo;Thêm&rdquo; (Add)</strong> ở góc trên bên phải. Biểu tượng Havi sẽ xuất hiện trên màn hình điện thoại của bạn!
+                      Bấm nút <strong>&ldquo;Thêm&rdquo; (Add)</strong> ở góc trên bên phải. Icon Havi đã sẵn sàng trên màn hình chính của chị!
                     </>
                   ) : (
                     <>
-                      Tap <strong>&ldquo;Add&rdquo;</strong> at the top right. The Havi icon is now on your home screen!
+                      Tap <strong>&ldquo;Add&rdquo;</strong> at the top right. Havi icon is now on your home screen!
                     </>
                   )}
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
+        {/* Tab Content: Android */}
+        {activeTab === "android" && (
+          <div className={styles.tabBody}>
+            {deferredPrompt ? (
+              <div className={styles.androidDirectBox}>
+                <p className={styles.androidDirectText}>
+                  {lang === "VN"
+                    ? "Trình duyệt của bạn đã sẵn sàng cài đặt ứng dụng Havi trực tiếp chỉ với 1 cú chạm:"
+                    : "Your browser is ready to install Havi directly with 1 tap:"}
+                </p>
+                <button
+                  type="button"
+                  className={styles.primaryActionBtn}
+                  onClick={handleNativeInstall}
+                >
+                  📲 {lang === "VN" ? "Bấm Để Cài Đặt Ngay" : "Install Havi App Now"}
+                </button>
+              </div>
+            ) : (
+              <div className={styles.stepsList}>
+                <div className={styles.stepItem}>
+                  <div className={styles.stepNumber}>1</div>
+                  <div className={styles.stepText}>
+                    {lang === "VN" ? (
+                      <>
+                        Bấm vào biểu tượng <strong>Menu 3 chấm (⋮)</strong> ở góc trên bên phải trình duyệt Chrome.
+                      </>
+                    ) : (
+                      <>
+                        Tap the <strong>3 dots Menu (⋮)</strong> on the top right of Chrome.
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.stepItem}>
+                  <div className={styles.stepNumber}>2</div>
+                  <div className={styles.stepText}>
+                    {lang === "VN" ? (
+                      <>
+                        Chọn <strong>&ldquo;Cài đặt ứng dụng&rdquo;</strong> hoặc <strong>&ldquo;Thêm vào Màn hình chính&rdquo;</strong>.
+                      </>
+                    ) : (
+                      <>
+                        Select <strong>&ldquo;Install app&rdquo;</strong> or <strong>&ldquo;Add to Home screen&rdquo;</strong>.
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.stepItem}>
+                  <div className={styles.stepNumber}>3</div>
+                  <div className={styles.stepText}>
+                    {lang === "VN" ? (
+                      <>
+                        Xác nhận <strong>Cài đặt</strong>. Ứng dụng Havi sẽ xuất hiện trong danh sách App của điện thoại.
+                      </>
+                    ) : (
+                      <>
+                        Confirm <strong>Install</strong>. Havi will be added to your app drawer.
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab Content: Desktop QR Code */}
+        {activeTab === "desktop" && (
+          <div className={styles.tabBody}>
+            <div className={styles.qrContainer}>
+              <div className={styles.qrBox}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrUrl}
+                  alt="QR Cài Havi lên điện thoại"
+                  className={styles.qrImage}
+                />
+              </div>
+              <div className={styles.qrGuide}>
+                <p className={styles.qrTitle}>
+                  📸 {lang === "VN" ? "Quét mã bằng Camera điện thoại" : "Scan with Mobile Camera"}
+                </p>
+                <p className={styles.qrSubtitle}>
+                  {lang === "VN"
+                    ? "Mở camera iPhone hoặc Android quét mã để mở Havi trên điện thoại và cài ra màn hình chính trong 3 giây."
+                    : "Scan to open Havi on your mobile device and install in 3 seconds."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Footer */}
+        <div className={styles.modalFooter}>
+          <button
+            type="button"
+            className={styles.dismissBtn}
+            onClick={() => setIsOpen(false)}
+          >
+            {lang === "VN" ? "Đã hiểu, đóng hướng dẫn" : "Got it, close"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <>
+      {/* Nút Cài App ở Header */}
+      <button
+        type="button"
+        className={styles.headerInstallBtn}
+        onClick={handleOpenModal}
+        title={t({
+          vi: "Cài Havi ra màn hình chính điện thoại",
+          en: "Add Havi to Home Screen",
+        })}
+      >
+        <span className={styles.pulseDot} />
+        <span className={styles.btnIcon}>📲</span>
+        <span className={styles.btnText}>{lang === "VN" ? "Cài App Điện Thoại" : "Install App"}</span>
+      </button>
+
+      {/* Floating Smart Banner đập vô mắt trên Mobile / Web */}
+      {!isBannerDismissed && (
+        <aside
+          className={styles.smartFloatingBanner}
+          role="region"
+          aria-label="Cài đặt Havi ra màn hình chính"
+        >
+          <div className={styles.bannerLeft}>
+            <div className={styles.bannerIcon}>
+              <Logo size={28} />
+            </div>
+            <div className={styles.bannerText}>
+              <div className={styles.bannerHeadline}>
+                <span className={styles.bannerBadge}>HOT ⚡</span>
+                <strong>{lang === "VN" ? "Cài Havi Lên Điện Thoại" : "Install Havi App"}</strong>
+              </div>
+              <p className={styles.bannerDesc}>
+                {lang === "VN"
+                  ? "Mở 1 chạm cực nhanh, trực inbox 24/7 và nhận thông báo khách đặt hẹn tức thì!"
+                  : "Instant 1-tap open, 24/7 lead inbox & appointment alerts on your phone!"}
+              </p>
+            </div>
+          </div>
+          <div className={styles.bannerActions}>
             <button
               type="button"
-              className={styles.actionBtn}
-              onClick={() => setIsOpen(false)}
+              className={styles.bannerCtaBtn}
+              onClick={handleOpenModal}
             >
-              {lang === "VN" ? "Đã hiểu, đóng hướng dẫn" : "Got it, close"}
+              📲 {lang === "VN" ? "Cài App Ngay" : "Install Now"}
+            </button>
+            <button
+              type="button"
+              className={styles.bannerCloseBtn}
+              onClick={handleDismissBanner}
+              title="Đóng thông báo"
+              aria-label="Đóng"
+            >
+              ✕
             </button>
           </div>
-        </div>
-      ) : null}
+        </aside>
+      )}
+
+      {/* Render Modal ra Document.Body bằng Portal để không bao giờ bị che khuất */}
+      {mounted && typeof document !== "undefined" && document.body
+        ? createPortal(modalContent, document.body)
+        : null}
     </>
   );
 }

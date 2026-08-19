@@ -1,10 +1,10 @@
-"""Lead service — quản lý CRM khách tiềm năng."""
-
 from uuid import UUID
 
 from adapters.persistence.lead_repository import LeadRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from core.enums import LeadReplyStatus, LeadSource, LeadStage
 from domain.models.lead import Lead
+from domain.ports.telegram import TelegramNotifierPort
 
 
 class LeadNotFound(Exception):
@@ -12,8 +12,16 @@ class LeadNotFound(Exception):
 
 
 class LeadService:
-    def __init__(self, *, leads: LeadRepository) -> None:
+    def __init__(
+        self,
+        *,
+        leads: LeadRepository,
+        telegram: TelegramNotifierPort | None = None,
+        workspaces: WorkspaceRepository | None = None,
+    ) -> None:
         self._leads = leads
+        self._telegram = telegram
+        self._workspaces = workspaces
 
     async def list_leads(
         self,
@@ -42,7 +50,7 @@ class LeadService:
         message: str | None = None,
         suggested_reply: str | None = None,
     ) -> Lead:
-        return await self._leads.create(
+        lead = await self._leads.create(
             workspace_id=workspace_id,
             name=name,
             phone=phone,
@@ -52,6 +60,29 @@ class LeadService:
             message=message,
             suggested_reply=suggested_reply,
         )
+
+        if phone and self._telegram:
+            shop_name = "Tiệm của bạn"
+            if self._workspaces:
+                ws = await self._workspaces.get(workspace_id)
+                if ws and ws.name:
+                    shop_name = ws.name
+
+            platform_name = "Facebook Fanpage"
+            if source == LeadSource.TIKTOK:
+                platform_name = "TikTok"
+            elif source == LeadSource.GOOGLE_BUSINESS:
+                platform_name = "Google Maps SEO"
+
+            await self._telegram.send_hot_lead_alert(
+                shop_name=shop_name,
+                customer_name=name,
+                phone=phone,
+                message=message,
+                platform=platform_name,
+            )
+
+        return lead
 
     async def update_lead(
         self,

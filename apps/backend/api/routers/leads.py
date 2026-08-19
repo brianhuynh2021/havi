@@ -71,3 +71,21 @@ async def update_lead(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy khách hàng này",
         ) from exc
+
+
+@router.post("/test-telegram")
+async def test_telegram_alert(
+    workspace_id: WorkspaceDep,
+    lead_service: LeadServiceDep,
+    auth: AuthDep,
+) -> dict[str, str]:
+    """Bắn thử 1 thông báo chuông reo Hot Lead qua Telegram để kiểm tra kết nối."""
+    del auth
+    await lead_service.create_lead(
+        workspace_id=workspace_id,
+        name="Chị Ngọc (Thử Nghiệm)",
+        phone="0912345678",
+        source=LeadSource.FANPAGE,
+        message="Hỏi giá combo chăm sóc da buổi tối và đặt lịch hẹn",
+    )
+    return {"status": "ok", "message": "Đã phát lệnh bắn chuông Telegram thành công!"}

@@ -162,9 +162,9 @@ export function VideoStudioScreen() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerInfo}>
-          <h1>🎬 Studio Video & Hàng Đợi Render Độc Lập</h1>
+          <h1>🎬 Studio Video Tự Động</h1>
           <p>
-            Tự động tối ưu video dọc 9:16 (Reels/TikTok/Shorts), chèn kinetic subtitles và chuẩn hoá âm thanh chuẩn EBU R128 (-14 LUFS).
+            Tự động tối ưu video dọc 9:16 (TikTok, Reels, Shorts), tự chèn phụ đề chữ chạy nổi bật và chỉnh âm thanh to rõ, trong trẻo.
           </p>
         </div>
       </header>
@@ -320,7 +320,7 @@ export function VideoStudioScreen() {
                     className={styles.checkbox}
                   />
                   <label htmlFor="audio-norm" style={{ margin: 0, cursor: "pointer" }}>
-                    <strong>Chuẩn hoá Âm thanh:</strong> Tự động cân bằng âm lượng chuẩn -14 LUFS (EBU R128) để video không bị nhỏ tiếng trên TikTok/Reels.
+                    <strong>Âm thanh chuẩn nghe:</strong> Tự động cân bằng âm lượng to rõ, trong trẻo, không bị nhỏ tiếng hay rè khi xem trên điện thoại.
                   </label>
                 </div>
               </div>
@@ -331,7 +331,7 @@ export function VideoStudioScreen() {
                 disabled={isSubmitting}
                 style={{ width: "100%", marginTop: "0.5rem" }}
               >
-                {isSubmitting ? "Đang xếp hàng..." : "🚀 Bắt đầu Render Video (Queue: havi.video_render)"}
+                {isSubmitting ? "Đang xử lý video..." : "🚀 Bắt Đầu Dựng Video Ngay"}
               </button>
             </form>
           </div>

@@ -13,6 +13,7 @@ import {
   listLeads,
   listNudges,
   sendInboxReply,
+  testTelegramAlert,
   triggerNudgeScan,
   type CrmNudge,
   type InboxItem,
@@ -57,6 +58,21 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [scanningNudges, setScanningNudges] = useState(false);
   const [processingNudgeId, setProcessingNudgeId] = useState<string | null>(null);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramNotice, setTelegramNotice] = useState<string | null>(null);
+
+  const handleTestTelegram = async () => {
+    setTestingTelegram(true);
+    setTelegramNotice(null);
+    const res = await testTelegramAlert();
+    if (res.ok) {
+      setTelegramNotice(res.data);
+      loadData();
+    } else {
+      setTelegramNotice(res.message);
+    }
+    setTestingTelegram(false);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -278,6 +294,7 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
               const currentReply = replyTextMap[item.id] ?? item.ai_suggested_reply ?? "";
               const isEditing = editingId === item.id;
               const isPending = item.status === "drafted";
+              const phoneMatch = item.content.match(/(0\d{9,10}|\+84\d{9,10})/);
 
               return (
                 <article key={item.id} className={styles.leadCard}>
@@ -294,6 +311,31 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
                   </div>
 
                   <p className={styles.leadMessage}>&ldquo;{item.content}&rdquo;</p>
+
+                  {phoneMatch ? (
+                    <div className={styles.inboxHotLeadBadge}>
+                      <span className={styles.inboxHotLeadText}>
+                        🔥 {t({ vi: "Đã bắt được SĐT khách:", en: "Captured Phone:" })}{" "}
+                        <strong>{phoneMatch[0]}</strong>
+                      </span>
+                      <div className={styles.hotActionsGroup}>
+                        <a
+                          href={`tel:${phoneMatch[0].replace(/[^0-9+]/g, "")}`}
+                          className={styles.callActionBtn}
+                        >
+                          📞 {t({ vi: "Gọi ngay", en: "Call now" })}
+                        </a>
+                        <a
+                          href={`https://zalo.me/${phoneMatch[0].replace(/[^0-9+]/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.zaloActionBtn}
+                        >
+                          💬 {t({ vi: "Nhắn Zalo", en: "Chat Zalo" })}
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {item.ai_suggested_reply ? (
                     <div className={styles.replyBox}>
@@ -349,6 +391,52 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
         </section>
       ) : (
         <>
+          {/* Hot Lead Radar Telegram Banner */}
+          <div className={styles.radarBanner}>
+            <div className={styles.radarLeft}>
+              <div className={styles.radarPulse}>⚡</div>
+              <div>
+                <h3 className={styles.radarTitle}>
+                  {t({
+                    vi: "Hot Lead Radar — Chuông báo SĐT về Telegram",
+                    en: "Hot Lead Radar — Instant Telegram Alert",
+                  })}
+                  <span className={styles.radarTag}>{t({ vi: "< 3 giây", en: "< 3s" })}</span>
+                </h3>
+                <p className={styles.radarDesc}>
+                  {t({
+                    vi: "Tự động báo chuông điện thoại của bạn ngay khi có khách để lại số điện thoại trên Fanpage hoặc TikTok.",
+                    en: "Instantly alert your phone via Telegram whenever a customer leaves their phone number.",
+                  })}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                <Button
+                  variant="outline"
+                  disabled={testingTelegram}
+                  onClick={handleTestTelegram}
+                >
+                  {testingTelegram ? "Đang bắn thử…" : "⚡ Bắn Thử Chuông Báo"}
+                </Button>
+                <a
+                  href="https://t.me/HaviLeadAlertBot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.radarBtn}
+                >
+                  🔔 {t({ vi: "Mở Bot Telegram", en: "Open Telegram Bot" })}
+                </a>
+              </div>
+              {telegramNotice ? (
+                <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 700 }}>
+                  ✓ {telegramNotice}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
           {/* CRM Leads List */}
           <section className={styles.leadsSection} aria-label="Captured Leads List">
             <div className={styles.sectionHeader}>
@@ -375,7 +463,10 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
             ) : (
               <div className={styles.leadsGrid}>
                 {leads.map((lead) => (
-                  <article key={lead.id} className={styles.customerCard}>
+                  <article
+                    key={lead.id}
+                    className={`${styles.customerCard} ${lead.phone ? styles.hotLeadCard : ""}`}
+                  >
                     <div className={styles.leadHeader}>
                       <div className={styles.customerInfo}>
                         <div className={styles.avatarCircle}>
@@ -398,8 +489,27 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
                     {lead.phone ? (
                       <div className={styles.phoneRow}>
                         <span className={styles.phoneLabel}>📞 SĐT:</span>
-                        <a href={`tel:${lead.phone}`} className={styles.phoneLink}>
+                        <a href={`tel:${lead.phone.replace(/[^0-9+]/g, "")}`} className={styles.phoneLink}>
                           {lead.phone}
+                        </a>
+                      </div>
+                    ) : null}
+
+                    {lead.phone ? (
+                      <div className={styles.hotActionsGroup}>
+                        <a
+                          href={`tel:${lead.phone.replace(/[^0-9+]/g, "")}`}
+                          className={styles.callActionBtn}
+                        >
+                          📞 {t({ vi: "Gọi điện ngay", en: "Call now" })}
+                        </a>
+                        <a
+                          href={`https://zalo.me/${lead.phone.replace(/[^0-9+]/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.zaloActionBtn}
+                        >
+                          💬 {t({ vi: "Nhắn Zalo", en: "Chat Zalo" })}
                         </a>
                       </div>
                     ) : null}

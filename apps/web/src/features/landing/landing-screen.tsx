@@ -5,10 +5,12 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
+  faqs,
   heroStats,
   industryScenarios,
   principles,
   steps,
+  testimonials,
 } from "./landing.content";
 import styles from "./landing.module.css";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -20,7 +22,22 @@ export function LandingScreen() {
   const [activeChannelKey, setActiveChannelKey] = useState<ChannelTabKey>("facebook");
   const [activeStep, setActiveStep] = useState(0);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
+  const [b2bSubmitted, setB2bSubmitted] = useState(false);
+  const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
+  const [b2bForm, setB2bForm] = useState({
+    company: "",
+    name: "",
+    phone: "",
+    branches: "5-10 chi nhánh",
+    notes: "",
+  });
   const { lang } = useLanguage();
+
+  const handleB2BSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setB2bSubmitted(true);
+  };
 
   const currentScenario = industryScenarios[activeIndustryIdx] || industryScenarios[0];
   const activeTabContent = currentScenario.tabs[activeChannelKey];
@@ -31,15 +48,24 @@ export function LandingScreen() {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link href="/about" className={styles.brand}>
-            <Logo size={38} />
+            <Logo size={36} />
             <span className={styles.brandText}>Havi</span>
+            <span className={styles.logoBadge}>AI 2.0</span>
           </Link>
 
           <nav className={styles.nav} aria-label="Điều hướng trang">
-            <a href="#demo-studio">{lang === "VN" ? "Dùng thử Demo" : "Live Demo"}</a>
-            <a href="#cach-hoat-dong">{lang === "VN" ? "Cách hoạt động" : "How it works"}</a>
-            <a href="#bang-gia">{lang === "VN" ? "Bảng giá" : "Pricing"}</a>
-            <a href="#nguyen-tac">{lang === "VN" ? "Nguyên tắc" : "Principles"}</a>
+            <a href="#demo-studio" className={styles.navLink}>
+              {lang === "VN" ? "Dùng thử Demo" : "Live Demo"}
+            </a>
+            <a href="#bang-gia" className={styles.navLink}>
+              {lang === "VN" ? "Bảng giá" : "Pricing"}
+            </a>
+            <a href="#khach-hang" className={styles.navLink}>
+              {lang === "VN" ? "Đánh giá" : "Reviews"}
+            </a>
+            <a href="#faq" className={styles.navLink}>
+              {lang === "VN" ? "Hỏi đáp" : "FAQ"}
+            </a>
           </nav>
 
           <div className={styles.headerActions}>
@@ -71,18 +97,24 @@ export function LandingScreen() {
           </p>
 
           <div className={styles.heroActions}>
-            <Link href="/signup" className={styles.ctaButton}>
+            <Link href="/signup" className={styles.heroPrimaryBtn}>
               Bắt đầu dùng thử 7 ngày miễn phí
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
-            <a href="#demo-studio" className={styles.btnSecondary}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
+            <a href="#demo-studio" className={styles.heroSecondaryBtn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" strokeWidth="2.5">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
               Bấm Thử Demo Trực Tuyến
             </a>
+          </div>
+
+          <div className={styles.heroTrustLine}>
+            <span>⭐️ Được tin dùng bởi các chủ tiệm Spa, Salon, F&amp;B, BĐS &amp; Dạy Nghề</span>
+            <span>•</span>
+            <span style={{ color: "#34d399", fontWeight: 700 }}>✓ Kích hoạt 7 ngày không cần thẻ tín dụng</span>
           </div>
 
           {/* Stats Section */}
@@ -449,7 +481,7 @@ export function LandingScreen() {
           </div>
 
           {/* Gói Chuyên Nghiệp (369.000 đ/tháng hoặc 3.690.000 đ/năm - Best Seller) */}
-          <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
+          <div className={`${styles.pricingCard} ${styles.pricingCardFeatured} ${styles.pricingCardPopular}`}>
             <div className={styles.pricingBadgeTop}>
               BÁN CHẠY NHẤT ★
             </div>
@@ -499,7 +531,7 @@ export function LandingScreen() {
                 </li>
               </ul>
             </div>
-            <Link href="/signup" className={styles.ctaButton} style={{ width: "100%", justifyContent: "center" }}>
+            <Link href="/signup" className={styles.heroPrimaryBtn} style={{ width: "100%", justifyContent: "center" }}>
               Nâng cấp Chuyên Nghiệp
             </Link>
           </div>
@@ -543,7 +575,7 @@ export function LandingScreen() {
                 </li>
                 <li>
                   <span className={styles.pricingCheck}>✓</span>
-                  <span className={styles.pricingFeatureText}><strong>Phân quyền nhân viên (RBAC):</strong> Chủ, Quản lý, Sale</span>
+                  <span className={styles.pricingFeatureText}><strong>Phân quyền tài khoản:</strong> Chủ tiệm, Quản lý, Nhân viên tư vấn</span>
                 </li>
                 <li>
                   <span className={styles.pricingCheck}>✓</span>
@@ -555,14 +587,26 @@ export function LandingScreen() {
                 </li>
               </ul>
             </div>
-            <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center", borderColor: "rgba(245,158,11,0.4)" }}>
+            <Link href="/signup" className={styles.btnSecondary} style={{ width: "100%", justifyContent: "center" }}>
               Nâng cấp Gói Chuỗi
             </Link>
           </div>
         </div>
 
-        {/* Cash Flow Accelerator Banner / Custom B2B Box */}
-        <div className={styles.glassCard} style={{ padding: "24px 36px", textAlign: "left", background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,210,255,0.12))", borderColor: "rgba(139,92,246,0.4)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", marginBottom: "60px" }}>
+        {/* B2B Custom Setup Banner */}
+        <div style={{
+          maxWidth: "1200px",
+          margin: "40px auto 0",
+          background: "linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
+          border: "1px solid rgba(99, 102, 241, 0.3)",
+          borderRadius: "20px",
+          padding: "24px 32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "24px",
+          flexWrap: "wrap",
+        }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "20px" }}>🏢</span>
@@ -577,9 +621,49 @@ export function LandingScreen() {
               Havi cung cấp giải pháp Private Setup, đào tạo AI chuyên sâu và tích hợp API riêng cho các chuỗi lớn và Agency.
             </p>
           </div>
-          <Link href="/about" className={styles.ctaButton} style={{ whiteSpace: "nowrap" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsB2BModalOpen(true);
+              setB2bSubmitted(false);
+            }}
+            className={styles.b2bCtaBtn}
+          >
             Liên hệ Chuyên viên B2B
-          </Link>
+          </button>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="khach-hang" className={styles.testimonialSection}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTag} style={{ color: "#38bdf8" }}>THỰC CHIẾN &amp; HIỆU QUẢ</div>
+          <h2 className={styles.sectionTitle}>Chủ Tiệm Nói Gì Về Havi?</h2>
+          <p className={styles.sectionSubtitle}>
+            Hàng trăm chủ tiệm Spa, Quán cafe, Môi giới BĐS &amp; Cơ sở đào tạo đã tiết kiệm hàng triệu đồng mỗi tháng nhờ Havi.
+          </p>
+        </div>
+
+        <div className={styles.testimonialGrid}>
+          {testimonials.map((t) => (
+            <div key={t.name} className={styles.testimonialCard}>
+              <div>
+                <div className={styles.testimonialHeader}>
+                  <div style={{ color: "#fbbf24", fontSize: "14px" }}>{"★".repeat(t.rating)}</div>
+                  <span className={styles.testimonialBadge}>{t.badge}</span>
+                </div>
+                <div className={styles.testimonialHighlight}>&ldquo;{t.highlight}&rdquo;</div>
+                <p className={styles.testimonialQuote}>&ldquo;{t.quote}&rdquo;</p>
+              </div>
+              <div className={styles.testimonialAuthor}>
+                <div className={styles.testimonialAvatar}>{t.avatar}</div>
+                <div>
+                  <h4 className={styles.authorName}>{t.name}</h4>
+                  <p className={styles.authorRole}>{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -601,6 +685,35 @@ export function LandingScreen() {
               <p style={{ fontSize: "14.5px", color: "#b8c0d0", lineHeight: 1.6, margin: 0 }}>{pr.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* FAQ Accordion Section */}
+      <section id="faq" className={styles.faqSection}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTag} style={{ color: "#c084fc" }}>GIẢI ĐÁP THẮC MẮC</div>
+          <h2 className={styles.sectionTitle}>Câu Hỏi Thường Gặp</h2>
+          <p className={styles.sectionSubtitle}>Mọi điều bạn cần biết trước khi bắt đầu dùng thử Havi 7 ngày miễn phí.</p>
+        </div>
+
+        <div className={styles.faqList}>
+          {faqs.map((faq, idx) => {
+            const isOpen = openFaqIdx === idx;
+            return (
+              <div key={faq.question} className={`${styles.faqItem} ${isOpen ? styles.faqItemOpen : ""}`}>
+                <button
+                  type="button"
+                  className={styles.faqQuestion}
+                  onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
+                  aria-expanded={isOpen}
+                >
+                  <span>{faq.question}</span>
+                  <span className={styles.faqToggleIcon}>{isOpen ? "−" : "+"}</span>
+                </button>
+                {isOpen && <div className={styles.faqAnswer}>{faq.answer}</div>}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -706,7 +819,8 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>HỖ TRỢ &amp; HỆ THỐNG</div>
               <div style={{ fontSize: "13.5px", color: "#b8c0d0", lineHeight: 1.6 }}>
-                <div>Email: <a href="mailto:hotro@havi.vn" style={{ color: "#38bdf8" }}>hotro@havi.vn</a></div>
+                <div>Hotline / Zalo: <a href="tel:0984883750" style={{ color: "#38bdf8", fontWeight: 700 }}>0984 883 750</a></div>
+                <div style={{ marginTop: "4px" }}>Email: <a href="mailto:hotro@havi.vn" style={{ color: "#38bdf8" }}>hotro@havi.vn</a></div>
                 <div style={{ marginTop: "4px" }}>Thực chiến tại: <strong>Trung Tâm Công Nghệ Nhật Minh</strong></div>
               </div>
 
@@ -737,6 +851,137 @@ export function LandingScreen() {
           </div>
         </div>
       </footer>
+
+      {/* B2B Consultation Modal */}
+      {isB2BModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsB2BModalOpen(false)}>
+          <div
+            className={styles.b2bModal}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="b2b-modal-title"
+          >
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 id="b2b-modal-title" className={styles.modalTitle}>
+                  🏢 Tư Vấn Giải Pháp Havi Enterprise
+                </h2>
+                <p className={styles.modalSubtitle}>
+                  Dành cho chuỗi &gt; 5 cơ sở, Agency, hoặc doanh nghiệp cần xuất hoá đơn VAT &amp; tích hợp API riêng.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setIsB2BModalOpen(false)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            {b2bSubmitted ? (
+              <div className={styles.b2bSuccessAlert}>
+                <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎉</div>
+                <h3 className={styles.b2bSuccessTitle}>Gửi Yêu Cầu Thành Công!</h3>
+                <p className={styles.b2bSuccessDesc}>
+                  Chuyên viên giải pháp Havi Enterprise sẽ liên hệ lại với <strong>{b2bForm.name || "Quý Doanh Nghiệp"}</strong> qua số điện thoại/Zalo <strong>{b2bForm.phone || "của bạn"}</strong> trong vòng 15 phút.
+                </p>
+                <div style={{ marginTop: "18px" }}>
+                  <button
+                    type="button"
+                    className={styles.ctaButton}
+                    style={{ border: "none", cursor: "pointer", width: "100%" }}
+                    onClick={() => setIsB2BModalOpen(false)}
+                  >
+                    Đã Hiểu
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleB2BSubmit} className={styles.b2bForm}>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Tên Doanh Nghiệp / Chuỗi *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="VD: Viện Thẩm Mỹ Seoul Spa"
+                      className={styles.formInput}
+                      value={b2bForm.company}
+                      onChange={(e) => setB2bForm({ ...b2bForm, company: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Họ và tên người liên hệ *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="VD: Nguyễn Văn A (Giám đốc)"
+                      className={styles.formInput}
+                      value={b2bForm.name}
+                      onChange={(e) => setB2bForm({ ...b2bForm, name: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Số điện thoại / Zalo *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="VD: 0912 345 678"
+                      className={styles.formInput}
+                      value={b2bForm.phone}
+                      onChange={(e) => setB2bForm({ ...b2bForm, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Quy mô cơ sở</label>
+                    <select
+                      className={styles.formSelect}
+                      value={b2bForm.branches}
+                      onChange={(e) => setB2bForm({ ...b2bForm, branches: e.target.value })}
+                    >
+                      <option value="5-10 chi nhánh">Chuỗi 5 – 10 chi nhánh</option>
+                      <option value="> 10 chi nhánh">Chuỗi lớn &gt; 10 chi nhánh</option>
+                      <option value="Agency Marketing">Agency Marketing / Quản lý nhiều Page</option>
+                      <option value="Hợp đồng & VAT">Cần hợp đồng &amp; hoá đơn VAT</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Nhu cầu chi tiết hoặc câu hỏi</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Mô tả nhu cầu tích hợp API, đào tạo nhân viên, hoặc setup private cloud..."
+                    className={styles.formTextarea}
+                    value={b2bForm.notes}
+                    onChange={(e) => setB2bForm({ ...b2bForm, notes: e.target.value })}
+                  />
+                </div>
+
+                <button type="submit" className={styles.b2bSubmitBtn}>
+                  🚀 Gửi Yêu Cầu Tư Vấn Ngay
+                </button>
+
+                <div className={styles.b2bHotlineRow}>
+                  <span style={{ fontSize: "12px", color: "#64748b" }}>Hoặc liên hệ nhanh Hotline / Zalo:</span>
+                  <a href="tel:0984883750" className={styles.b2bHotlineBtn}>
+                    📞 0984 883 750
+                  </a>
+                  <a href="https://zalo.me/0984883750" target="_blank" rel="noreferrer" className={styles.b2bHotlineBtn}>
+                    💬 Chat Zalo Trực Tiếp
+                  </a>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

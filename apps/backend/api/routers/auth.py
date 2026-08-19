@@ -33,6 +33,7 @@ from core.schemas import (
     PhoneUpdateRequest,
     RefreshRequest,
     SignUpRequest,
+    SocialLoginRequest,
     TokenPair,
 )
 from domain.policies import rate_limits
@@ -116,6 +117,27 @@ async def login_email(
         # Không phân biệt "email không tồn tại" và "sai mật khẩu" — tránh để
         # người ngoài dò xem email nào đã đăng ký.
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email hoặc mật khẩu không đúng") from exc
+    res = _to_token_pair(result)
+    _set_refresh_cookie(response, result.refresh_token)
+    return res
+
+
+@router.post(
+    "/social-login",
+    response_model=TokenPair,
+    dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
+)
+async def social_login(
+    payload: SocialLoginRequest,
+    auth_service: AuthServiceDep,
+    response: Response,
+) -> TokenPair:
+    """Đăng nhập 1-chạm qua Google hoặc Facebook."""
+    result = await auth_service.social_sign_in(
+        provider=payload.provider,
+        email=payload.email,
+        name=payload.name or payload.email.split("@")[0],
+    )
     res = _to_token_pair(result)
     _set_refresh_cookie(response, result.refresh_token)
     return res

@@ -64,8 +64,8 @@ export function QuotaBanner({ reloadKey = 0 }: { reloadKey?: number }) {
       </p>
       <p className={styles.body}>
         {t({
-          vi: `Quota sẽ mở lại ngày ${resets}. Havi báo trước để bạn chủ động lên lịch đăng.`,
-          en: `Quota resets on ${resets}. Havi notifies you in advance to plan posts.`,
+          vi: `Lượt tạo bài sẽ mở lại ngày ${resets}. Havi báo trước để bạn chủ động lên lịch đăng.`,
+          en: `Creation limit resets on ${resets}. Havi notifies you in advance to plan posts.`,
         })}
       </p>
     </div>

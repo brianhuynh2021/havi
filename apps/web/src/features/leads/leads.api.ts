@@ -126,15 +126,28 @@ export async function approveNudge(workspaceId: string, nudgeId: string): Promis
   }
 }
 
-export async function dismissNudge(workspaceId: string, nudgeId: string): Promise<Result<CrmNudge>> {
+export async function dismissNudge(
+  workspaceId: string,
+  nudgeId: string,
+): Promise<Result<void>> {
   try {
     const res = await nudgeFetch(
       `/workspaces/${workspaceId}/crm/nudges/${nudgeId}/dismiss`,
-      { method: "POST" }
+      { method: "POST" },
     );
     if (!res.ok) return { ok: false, message: GENERIC_ERROR };
-    const data = (await res.json()) as CrmNudge;
-    return { ok: true, data };
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function testTelegramAlert(): Promise<Result<string>> {
+  try {
+    const res = await nudgeFetch("/leads/test-telegram", { method: "POST" });
+    if (!res.ok) return { ok: false, message: GENERIC_ERROR };
+    const data = (await res.json()) as { status: string; message: string };
+    return { ok: true, data: data.message };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }

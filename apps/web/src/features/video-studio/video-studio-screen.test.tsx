@@ -84,7 +84,7 @@ describe("VideoStudioScreen", () => {
     });
 
     expect(screen.getByText("📱 Bản Xem Trước 9:16")).toBeInTheDocument();
-    expect(screen.getByText(/Studio Video & Hàng Đợi Render Độc Lập/i)).toBeInTheDocument();
+    expect(screen.getByText(/Studio Video Tự Động/i)).toBeInTheDocument();
   });
 
   it("cho phép gửi form tạo job render video mới", async () => {
@@ -125,7 +125,7 @@ describe("VideoStudioScreen", () => {
     await user.clear(titleInput);
     await user.type(titleInput, "Reels Trà Sữa Đào");
 
-    const submitBtn = screen.getByRole("button", { name: /Bắt đầu Render Video/i });
+    const submitBtn = screen.getByRole("button", { name: /Bắt đầu Dựng Video/i });
     await user.click(submitBtn);
 
     await waitFor(() => {

@@ -177,7 +177,7 @@ describe("OnboardingScreen", () => {
     await user.click(screen.getByRole("button", { name: /bắt đầu/i }));
     await user.click(await screen.findByRole("button", { name: /vào app/i }));
 
-    expect(replace).toHaveBeenCalledWith("/");
+    expect(replace).toHaveBeenCalledWith("/app");
   });
 
   it("hiển thị badge đề xuất pilot và cập nhật trạng thái chọn aria-pressed", async () => {
@@ -193,5 +193,15 @@ describe("OnboardingScreen", () => {
     await user.click(spaCard);
 
     expect(spaCard).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("hiển thị bản xem trước bài viết AI (Magic Onboarding Preview)", async () => {
+    mockApi();
+    renderOnboarding();
+
+    expect(
+      screen.getByText(/Bản xem trước bài viết của tiệm bạn/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Tự động tạo mẫu/i)).toBeInTheDocument();
   });
 });

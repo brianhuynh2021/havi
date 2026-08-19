@@ -394,6 +394,166 @@
   font-style: italic;
 }
 
+/* --- Hot Lead Radar & 1-Tap Call/Zalo Actions (100/100 Weapon) --- */
+
+.radarBanner {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #090d16 0%, #1e1b4b 100%);
+  border: 1.5px solid rgba(0, 210, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.radarLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.radarPulse {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.radarTitle {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radarTag {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.radarDesc {
+  color: #94a3b8;
+  font-size: 12.5px;
+  margin: 3px 0 0 0;
+  line-height: 1.4;
+}
+
+.radarBtn {
+  background: linear-gradient(135deg, #0066ff 0%, #00d2ff 100%);
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.radarBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 210, 255, 0.5);
+}
+
+.hotLeadCard {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.inboxHotLeadBadge {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inboxHotLeadText {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hotActionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.callActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #10b981;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.callActionBtn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.zaloActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #0068ff;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 104, 255, 0.25);
+}
+
+.zaloActionBtn:hover {
+  background: #0052cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 104, 255, 0.4);
+}
+
 @media (max-width: 640px) {
   .tabBar {
     width: 100%;
@@ -410,6 +570,23 @@
   .nudgeHeader {
     flex-direction: column;
     align-items: stretch;
+  }
+  .radarBanner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+  }
+  .radarBtn {
+    text-align: center;
+    justify-content: center;
+  }
+  .hotActionsGroup {
+    width: 100%;
+  }
+  .callActionBtn,
+  .zaloActionBtn {
+    flex: 1;
+    justify-content: center;
   }
 }
 

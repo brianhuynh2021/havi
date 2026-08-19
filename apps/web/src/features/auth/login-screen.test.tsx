@@ -35,7 +35,7 @@ async function fillAndSubmit(email: string, password: string) {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Email"), email);
   await user.type(screen.getByLabelText("Mật khẩu"), password);
-  await user.click(screen.getByRole("button", { name: /đăng nhập/i }));
+  await user.click(screen.getByRole("button", { name: /^đăng nhập$/i }));
 }
 
 describe("LoginScreen", () => {
@@ -46,6 +46,12 @@ describe("LoginScreen", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("hiển thị đầy đủ nút đăng nhập 1-chạm Google và Facebook", () => {
+    renderLogin();
+    expect(screen.getByRole("button", { name: /google/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /facebook/i })).toBeInTheDocument();
   });
 
   it("đăng nhập thành công thì lưu token và vào app", async () => {

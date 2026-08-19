@@ -188,13 +188,143 @@ export function DashboardScreen() {
             </h2>
             <p className={styles.uploadBody}>
               {t({
-                vi: "Nhập vài dòng ý tưởng để Havi sáng tạo bài viết đa kênh bằng AI.",
-                en: "Enter a quick prompt to let Havi generate multi-channel AI posts.",
+                vi: "Nhập vài dòng ý tưởng hoặc bấm mic nói để Havi sáng tạo bài viết đa kênh bằng AI.",
+                en: "Enter a quick prompt or speak into the mic to let Havi generate multi-channel AI posts.",
               })}
             </p>
-            <Link href="/app/content" className={styles.primaryButton}>
-              + {t("dashboard.createContent", "Tạo nội dung mới")}
-            </Link>
+            <div className={styles.uploadActions}>
+              <Link href="/app/content" className={styles.primaryButton}>
+                + {t("dashboard.createContent", "Tạo nội dung mới")}
+              </Link>
+              <Link href="/app/content?tab=voice" className={styles.micButton}>
+                🎙️ {t({ vi: "Nói để tạo bài", en: "Voice Note to Post" })}
+              </Link>
+            </div>
+          </section>
+
+          {/* ROI Proof Card (100/100 Weapon) */}
+          <section className={styles.roiCard} aria-label="Hiệu quả đầu tư">
+            <div className={styles.roiHeader}>
+              <h2 className={styles.roiTitle}>
+                💎 {t({ vi: "Hiệu Quả Đầu Tư Của Tiệm", en: "Your Store's Marketing ROI" })}
+              </h2>
+              <span className={styles.roiBadge}>
+                ⚡ {t({ vi: "TIẾT KIỆM GẤP 14 LẦN", en: "14x COST SAVINGS" })}
+              </span>
+            </div>
+
+            <div className={styles.roiGrid}>
+              <div className={styles.roiCol}>
+                <span className={styles.roiLabel}>
+                  {t({ vi: "Chi phí thuê Havi", en: "Havi AI Subscription" })}
+                </span>
+                <span className={styles.roiValue}>299.000 đ<small style={{ fontSize: "13px", fontWeight: 500, color: "#94a3b8" }}>/tháng</small></span>
+                <span style={{ fontSize: "12px", color: "#94a3b8" }}>
+                  {t({ vi: "So với 1 nhân sự marketing: 4.500.000 đ", en: "vs. 1 part-time staff: 4.5M VND" })}
+                </span>
+              </div>
+
+              <div className={`${styles.roiCol} ${styles.roiColHighlight}`}>
+                <span className={styles.roiLabel}>
+                  {t({ vi: "Chi phí tiệm đã tiết kiệm", en: "Estimated Monthly Savings" })}
+                </span>
+                <span className={`${styles.roiValue} ${styles.roiSavedValue}`}>+4.201.000 đ</span>
+                <span style={{ fontSize: "12px", color: "#34d399" }}>
+                  {t({ vi: "Tiết kiệm 93.3% ngân sách vận hành", en: "93.3% budget savings" })}
+                </span>
+              </div>
+
+              <div className={styles.roiCol}>
+                <span className={styles.roiLabel}>
+                  {t({ vi: "Tỷ suất hoàn vốn (ROI)", en: "Estimated Return (ROI)" })}
+                </span>
+                <span className={`${styles.roiValue} ${styles.roiMultiValue}`}>61.8x ⭐</span>
+                <span style={{ fontSize: "12px", color: "#fbbf24" }}>
+                  {t({ vi: "Mỗi 1k đầu tư thu về ~61.8k doanh thu", en: "Every 1k invested brings ~61.8k" })}
+                </span>
+              </div>
+            </div>
+
+            <p className={styles.roiFootnote}>
+              💡 {t({
+                vi: "Havi thay thế 2–3 giờ làm bài thủ công mỗi ngày, tự động trực inbox và bóc tách số điện thoại để tiệm chốt đơn ngay lập tức.",
+                en: "Havi replaces 2–3 hours of manual posting daily, handles 24/7 inbox and extracts phone numbers for instant closes.",
+              })}
+            </p>
+          </section>
+
+          {/* Gamified Activation Tasks Card (100/100 Weapon) */}
+          <section className={styles.tasksCard} aria-label="Nhiệm vụ kích hoạt tiệm">
+            <div className={styles.tasksHeader}>
+              <h2 className={styles.tasksTitle}>
+                🎯 {t({
+                  vi: "Nhiệm Vụ Kích Hoạt Tiệm — Nhận Thêm +4 Ngày Dùng Thử",
+                  en: "Store Activation Tasks — Earn +4 Free Trial Days",
+                })}
+              </h2>
+            </div>
+
+            <div className={styles.tasksList}>
+              <div className={styles.taskItem}>
+                <div className={styles.taskContent}>
+                  <span className={styles.taskIcon}>🔗</span>
+                  <div>
+                    <p className={styles.taskName}>
+                      {t({ vi: "Nối Fanpage hoặc Google Maps", en: "Connect Fanpage or Google Maps" })}
+                    </p>
+                    <p className={styles.taskDesc}>
+                      {t({ vi: "Để Havi tự động đăng bài và trực inbox 24/7", en: "Enable 24/7 auto-post and inbox care" })}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span className={styles.taskReward}>+2 Ngày</span>
+                  <Link href="/app/connections" className={styles.taskActionBtn}>
+                    {t({ vi: "Nối kênh ➔", en: "Connect ➔" })}
+                  </Link>
+                </div>
+              </div>
+
+              <div className={styles.taskItem}>
+                <div className={styles.taskContent}>
+                  <span className={styles.taskIcon}>✍️</span>
+                  <div>
+                    <p className={styles.taskName}>
+                      {t({ vi: "Duyệt xuất bản bài viết đầu tiên", en: "Approve and publish your first post" })}
+                    </p>
+                    <p className={styles.taskDesc}>
+                      {t({ vi: "Trải nghiệm tốc độ tạo bài 1-chạm của Havi", en: "Experience 1-tap fast publishing" })}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span className={styles.taskReward}>+1 Ngày</span>
+                  <Link href="/app/content" className={styles.taskActionBtn}>
+                    {t({ vi: "Tạo bài ➔", en: "Create ➔" })}
+                  </Link>
+                </div>
+              </div>
+
+              <div className={styles.taskItem}>
+                <div className={styles.taskContent}>
+                  <span className={styles.taskIcon}>📲</span>
+                  <div>
+                    <p className={styles.taskName}>
+                      {t({ vi: "Cài app Havi lên màn hình điện thoại", en: "Install Havi App to Home Screen" })}
+                    </p>
+                    <p className={styles.taskDesc}>
+                      {t({ vi: "Nhận thông báo khách nóng và duyệt bài tiện lợi mọi lúc", en: "Get instant hot lead alerts anywhere" })}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span className={styles.taskReward}>+1 Ngày</span>
+                  <Link href="/app/settings" className={styles.taskActionBtn}>
+                    {t({ vi: "Cài app ➔", en: "Install ➔" })}
+                  </Link>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className={styles.darkCard}>

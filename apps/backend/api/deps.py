@@ -21,6 +21,7 @@ from adapters.oauth.google_business import GoogleBusinessOAuthClient
 from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
 from adapters.oauth.tiktok import TikTokOAuthClient
 from adapters.oauth.zalo import ZaloOAuthClient
+from adapters.outbound.telegram_notifier import TelegramNotifier
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.connection_repository import ConnectionRepository
@@ -130,11 +131,10 @@ BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
 
 
 def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxService:
-    connections = ConnectionRepository(session)
-    fb_publisher = (
+    fb_publisher: ReplyPublisherPort = (
         FakeReplyPublisher(Platform.FACEBOOK)
-        if settings.use_fake_publisher
-        else FacebookReplyAdapter(connections)
+        if settings.env == "local"
+        else FacebookReplyAdapter(ConnectionRepository(session), alerts=_alert_sink())
     )
     reply_publishers = {
         Platform.FACEBOOK: fb_publisher,
@@ -145,14 +145,20 @@ def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxServ
         profiles=BrandProfileRepository(session),
         events=EventLogRepository(session),
         reply_publishers=reply_publishers,
+        telegram=TelegramNotifier(settings),
+        leads=LeadRepository(session),
     )
 
 
 InboxServiceDep = Annotated[InboxService, Depends(get_inbox_service)]
 
 
-def get_lead_service(session: DbSessionDep) -> LeadService:
-    return LeadService(leads=LeadRepository(session))
+def get_lead_service(session: DbSessionDep, settings: SettingsDep) -> LeadService:
+    return LeadService(
+        leads=LeadRepository(session),
+        telegram=TelegramNotifier(settings),
+        workspaces=WorkspaceRepository(session),
+    )
 
 
 LeadServiceDep = Annotated[LeadService, Depends(get_lead_service)]

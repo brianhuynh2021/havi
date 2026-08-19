@@ -15,7 +15,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
     id: "notif-1",
     type: "draft_ready",
-    title: "⚡ Havi vừa tạo 3 bản nháp mới",
+    title: "Havi vừa tạo 3 bản nháp mới",
     description: "Các bản nháp bài đăng Facebook, Google Maps SEO, TikTok, YouTube Shorts đã sẵn sàng cho bạn duyệt.",
     timestamp: "Vừa xong",
     read: false,
@@ -23,7 +23,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
     id: "notif-2",
     type: "publish_success",
-    title: "🚀 Đã phát lệnh đăng bài thành công",
+    title: "Đã phát lệnh đăng bài thành công",
     description: "Bài viết chào tuần mới đã được đăng trực tiếp lên Facebook Fanpage.",
     timestamp: "10 phút trước",
     read: true,

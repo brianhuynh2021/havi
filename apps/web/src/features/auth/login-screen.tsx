@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth/session";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { login } from "./auth.api";
+import { SocialAuthButtons } from "./social-auth-buttons";
 import { isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
 
@@ -22,7 +23,7 @@ export function LoginScreen() {
 
   async function submit() {
     if (!isValidEmail(email)) {
-      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp chị nhé", en: "Invalid email — please check again" }));
+      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp nhé", en: "Invalid email — please check again" }));
       return;
     }
     if (!password) {
@@ -45,6 +46,8 @@ export function LoginScreen() {
     <>
       <h1 className={styles.title}>{t("auth.loginTitle", "Đăng nhập Havi")}</h1>
       <p className={styles.subtitle}>{t("auth.loginSubtitle", "Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
+
+      <SocialAuthButtons mode="login" />
 
       <form
         className={styles.form}
@@ -85,7 +88,7 @@ export function LoginScreen() {
           />
         </label>
 
-        <Link href="/quen-mat-khau" className={styles.inlineLink}>
+        <Link href="/forgot-password" className={styles.inlineLink}>
           {t("auth.forgotPassword", "Quên mật khẩu?")}
         </Link>
 

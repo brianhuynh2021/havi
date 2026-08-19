@@ -209,3 +209,79 @@ export const principles = [
   },
 ];
 
+export interface Testimonial {
+  name: string;
+  role: string;
+  avatar: string;
+  rating: number;
+  quote: string;
+  highlight: string;
+  badge: string;
+}
+
+export const testimonials: Testimonial[] = [
+  {
+    name: "Chị Mai Lan",
+    role: "Chủ Viện Chăm Sóc Da & Spa Lan Anh (Hà Nội)",
+    avatar: "🧖‍♀️",
+    rating: 5,
+    quote:
+      "Trước đây ngày nào mình cũng đau đầu nghĩ xem hôm nay đăng gì lên Fanpage và TikTok. Từ khi dùng Havi, sáng chụp 1 tấm ảnh liệu trình khách làm xong là chiều có ngay bài viết chỉn chu và kịch bản video 9:16 có hook 3s. Thích nhất là bài viết không bao giờ tự đăng khi mình chưa bấm duyệt!",
+    highlight: "Tiết kiệm 2 giờ làm bài mỗi ngày, bài viết chuẩn ngành Spa",
+    badge: "Spa & Thẩm Mỹ",
+  },
+  {
+    name: "Anh Quốc Hoàng",
+    role: "Chủ Chuỗi Cà Phê & Trà Sữa The Hill (TP.HCM)",
+    avatar: "☕",
+    rating: 5,
+    quote:
+      "Tiệm mình tiết kiệm được hơn 4 triệu mỗi tháng tiền thuê người làm marketing part-time. Havi trực inbox nửa đêm trả lời giá và xin số điện thoại cực khéo, sáng ra mở app đã thấy có SĐT khách để nhân viên gọi chốt bàn.",
+    highlight: "Tiết kiệm 4.2 triệu/tháng, bắt khách lúc nửa đêm cực đỉnh",
+    badge: "F&B & Quán Cafe",
+  },
+  {
+    name: "Anh Tuấn Anh",
+    role: "Giám Đốc Đào Tạo — Nhật Minh Tech (Đà Nẵng)",
+    avatar: "🏠",
+    rating: 5,
+    quote:
+      "Tính năng Hot Lead Radar báo về Telegram dưới 3 giây siêu tiện lợi. Khách vừa để lại SĐT trên Fanpage là điện thoại mình rung chuông liền, bấm nút Gọi hoặc mở Zalo 1-chạm chốt lịch hẹn tư vấn chỉ trong tích tắc!",
+    highlight: "Chuông báo Telegram < 3s, chốt lịch hẹn tăng gấp đôi",
+    badge: "BĐS & Đào Tạo",
+  },
+];
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export const faqs: FAQItem[] = [
+  {
+    question: "Tôi không rành máy tính hay công nghệ thì có dùng được Havi không?",
+    answer:
+      "Hoàn toàn dễ dàng! Havi được thiết kế trực quan đơn giản như dùng Zalo. Bạn chỉ cần chụp 1 tấm ảnh tiệm hoặc giữ nút micro nói 10 giây giọng nói đời thường, AI của Havi sẽ tự động phân tích và sáng tạo toàn bộ bài đăng Facebook, kịch bản Video TikTok và bài Google Maps hoàn chỉnh.",
+  },
+  {
+    question: "Havi có tự động đăng bài lên mạng xã hội của tôi không?",
+    answer:
+      "Tuyệt đối KHÔNG. Nguyên tắc cốt lõi số 1 của Havi là 'Bạn duyệt trước, luôn luôn'. Havi chỉ tạo sẵn bản nháp chất lượng cao, bài chỉ được phát hành khi bạn vào kiểm tra và nhấn nút 'Duyệt & Đăng'. Bạn luôn nắm 100% quyền kiểm soát uy tín thương hiệu.",
+  },
+  {
+    question: "Có cần nhập thẻ tín dụng hay thẻ Visa để dùng thử 7 ngày không?",
+    answer:
+      "Hoàn toàn KHÔNG. Bạn được kích hoạt ngay gói dùng thử 7 ngày đầy đủ tính năng tạo bài, video và trực inbox mà không cần khai báo bất kỳ thông tin thẻ ngân hàng nào. Hết 7 ngày bạn tự nguyện nâng cấp nếu thấy hiệu quả.",
+  },
+  {
+    question: "Tính năng Hot Lead Radar và chuông báo Telegram hoạt động thế nào?",
+    answer:
+      "Ngay khi có khách hàng để lại số điện thoại trên Fanpage hoặc TikTok, hệ thống Havi sẽ tự động bóc tách số và bắn chuông thông báo về Telegram của chủ tiệm trong vòng 3 giây. Kèm theo đó là 2 nút bấm tiện lợi: [📞 Gọi điện ngay] và [💬 Nhắn Zalo] để bạn chốt đơn chớp nhoáng.",
+  },
+  {
+    question: "Tôi có được đội ngũ kỹ sư Havi hỗ trợ cài đặt ban đầu không?",
+    answer:
+      "Có! Đội ngũ Havi và Founder luôn đồng hành hỗ trợ 1 kèm 1 qua Hotline & Zalo: 0984 883 750. Chúng tôi hỗ trợ bạn nối Fanpage, cài đặt thông điệp tiệm và hướng dẫn vận hành trọn đời.",
+  },
+];
+

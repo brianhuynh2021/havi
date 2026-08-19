@@ -6,18 +6,23 @@ NGUYÊN TẮC #2 & #7:
 """
 
 import logging
+import re
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
+from adapters.persistence.lead_repository import LeadRepository
 from adapters.publishers.fake_reply import FakeReplyPublisher
-from core.enums import InboxItemStatus, Platform
+from core.enums import InboxItemStatus, LeadSource, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
 from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
+from domain.ports.telegram import TelegramNotifierPort
 
 logger = logging.getLogger(__name__)
+
+PHONE_REGEX = re.compile(r"(?:0|\+84)(?:3[2-9]|5[689]|7[06-9]|8[1-9]|9\d)\d{7}")
 
 
 class InboxItemNotFound(Exception):
@@ -31,14 +36,7 @@ def _normalize(text: str) -> str:
 
 
 def _match_approved_faq(faqs: list[dict], content: str) -> str | None:
-    """Trả câu trả lời FAQ khi câu hỏi khớp *tuyệt đối*, ngược lại `None`.
-
-    Bản trước dùng `question in content`, tức là một FAQ ngắn như "giá" sẽ khớp
-    mọi tin nhắn có chữ "giá" và tự gửi câu trả lời sẵn. Nguyên tắc #1 chỉ cho
-    tự động với đúng câu chủ tiệm đã duyệt, nên so khớp phải là bằng nhau sau
-    chuẩn hoá. Khớp hụt thì tệ nhất là chủ tiệm phải bấm duyệt — khớp thừa là
-    gửi nhầm câu trả lời cho khách.
-    """
+    """Trả câu trả lời FAQ khi câu hỏi khớp *tuyệt đối*, ngược lại `None`."""
     normalized_content = _normalize(content)
     for entry in faqs:
         question = _normalize(entry.get("question") or "")
@@ -60,6 +58,8 @@ class InboxService:
         profiles: BrandProfileRepository,
         events: EventLogRepository,
         reply_publishers: dict[Platform, ReplyPublisherPort] | None = None,
+        telegram: TelegramNotifierPort | None = None,
+        leads: LeadRepository | None = None,
     ) -> None:
         self._inbox = inbox
         self._profiles = profiles
@@ -68,6 +68,8 @@ class InboxService:
             Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
             Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
         }
+        self._telegram = telegram
+        self._leads = leads
 
     async def list_items(
         self,
@@ -153,6 +155,37 @@ class InboxService:
                 )
             )
             return item
+
+        # Bắt số điện thoại tự động và bắn chuông báo Telegram tức thì (< 3 giây)
+        phone_match = PHONE_REGEX.search(content)
+        if phone_match:
+            phone_num = phone_match.group(0)
+            if self._leads:
+                try:
+                    await self._leads.create(
+                        workspace_id=workspace_id,
+                        name=author_name,
+                        phone=phone_num,
+                        source=LeadSource.FANPAGE if platform == Platform.FACEBOOK else LeadSource.INBOX,
+                        message=content,
+                    )
+                except Exception as exc:
+                    logger.warning("Không thể tự động lưu lead từ inbox: %s", exc)
+
+            if self._telegram:
+                platform_label = "Facebook Fanpage"
+                if platform == Platform.TIKTOK:
+                    platform_label = "TikTok"
+                elif platform == Platform.GOOGLE_BUSINESS:
+                    platform_label = "Google Maps SEO"
+
+                await self._telegram.send_hot_lead_alert(
+                    customer_name=author_name,
+                    phone=phone_num,
+                    message=content,
+                    platform=platform_label,
+                    shop_name="Tiệm của bạn",
+                )
 
         # Không khớp FAQ -> Tạo bản nháp gợi ý, chờ người thật duyệt
         suggested_reply = (

@@ -136,6 +136,9 @@ class Settings(BaseSettings):
     # Phần đuôi của file xác minh Zalo yêu cầu đặt ở gốc domain, ví dụ
     # `zalo_verifierAbC123.html` thì đây là `AbC123.html`.
     zalo_verifier_suffix: str = ""
+    # Telegram Bot Hot Lead Radar Alerts
+    telegram_bot_token: str = ""
+    telegram_default_chat_id: str = ""
     # Cổng thanh toán tự động VietQR & PayOS
     payos_client_id: str = ""
     payos_api_key: str = ""

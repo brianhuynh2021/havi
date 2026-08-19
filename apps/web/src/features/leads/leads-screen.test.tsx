@@ -143,4 +143,51 @@ describe("LeadsScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /duyệt & gửi tin nhắn/i })).toBeInTheDocument();
   });
+
+  it("hiển thị Hot Lead Radar và 2 nút gọi điện + nhắn Zalo cho khách có SĐT", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const url = new URL(input instanceof Request ? input.url : String(input));
+        if (url.pathname.endsWith("/leads")) {
+          return jsonResponse({
+            items: [
+              {
+                id: "lead-vip",
+                workspace_id: "w1",
+                name: "Chị Ngọc",
+                phone: "0912345678",
+                source: "facebook",
+                stage: "qualified",
+                message: "Tư vấn cho mình gói chăm sóc da mụn",
+                created_at: "2026-08-19T10:00:00Z",
+              },
+            ],
+            total: 1,
+          });
+        }
+        if (url.pathname.includes("/crm/nudges")) {
+          return jsonResponse({ items: [], total: 0 });
+        }
+        return jsonResponse({ items: [], total: 0 });
+      }
+    );
+
+    renderLeads("leads");
+
+    expect(await screen.findByText(/Hot Lead Radar/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /bắn thử chuông báo/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /mở bot telegram/i })).toHaveAttribute(
+      "href",
+      "https://t.me/HaviLeadAlertBot"
+    );
+    expect(screen.getByText("Chị Ngọc")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /gọi điện ngay/i })).toHaveAttribute(
+      "href",
+      "tel:0912345678"
+    );
+    expect(screen.getByRole("link", { name: /nhắn zalo/i })).toHaveAttribute(
+      "href",
+      "https://zalo.me/0912345678"
+    );
+  });
 });

@@ -279,7 +279,7 @@ export function ContentCreationScreen() {
     setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.");
     pushNotification({
       type: "draft_ready",
-      title: "⚡ Havi vừa tạo xong các bản nháp mới",
+      title: "Havi vừa tạo xong các bản nháp mới",
       description: "Bài viết mới cho Facebook, Google Maps SEO, TikTok, YouTube Shorts đã sẵn sàng cho bạn duyệt.",
     });
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));

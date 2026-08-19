@@ -97,7 +97,7 @@ export function OnboardingScreen() {
   }
 
   function goToApp() {
-    router.replace("/");
+    router.replace("/app");
   }
 
   return (
@@ -191,6 +191,36 @@ export function OnboardingScreen() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Magic Onboarding Live Preview (100/100 Weapon) */}
+            <div className={styles.magicPreviewCard} aria-label="Bản xem trước bài viết AI">
+              <div className={styles.magicPreviewHeader}>
+                <h3 className={styles.magicPreviewTitle}>
+                  ✨ Bản xem trước bài viết của tiệm bạn
+                </h3>
+                <span className={styles.magicBadge}>⚡ Tự động tạo mẫu</span>
+              </div>
+              <div className={styles.magicPreviewContent}>
+                <div className={styles.mockupHeader}>
+                  <div className={styles.mockupAvatar}>
+                    {(shopName || "H")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className={styles.mockupName}>{shopName.trim() || "Tiệm của bạn"}</p>
+                    <p className={styles.mockupMeta}>Fanpage · Vừa xong · 🌐</p>
+                  </div>
+                </div>
+                <p className={styles.mockupText}>
+                  ✨ &ldquo;Hân hoan chào đón quý khách ghé thăm{" "}
+                  <strong>{shopName.trim() || "tiệm"}</strong>! Tuần này tiệm ưu đãi tặng voucher 15% cho 5 khách hàng đầu tiên nhắn tin đặt lịch trước...&rdquo;
+                </p>
+                <div className={styles.mockupFooter}>
+                  <span>#{(shopName.trim() || "tiem").replace(/\s+/g, "")}</span>
+                  <span>#UuDaiTuanNay</span>
+                  <span>#ChamSocKhachHang</span>
+                </div>
               </div>
             </div>
 
