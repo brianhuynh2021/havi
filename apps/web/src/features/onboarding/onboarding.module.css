@@ -324,8 +324,8 @@
 
 .connectionListWrapper [class*="list"] > [class*="rowConnected"] {
   border-color: rgba(52, 211, 153, 0.45);
-  background: rgba(16, 185, 129, 0.06);
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 78, 59, 0.12) 100%);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
 }
 
 .connectionListWrapper [class*="rowLabel"] {
@@ -334,6 +334,30 @@
 
 .connectionListWrapper [class*="hint"] {
   color: #94a3b8;
+}
+
+.connectionListWrapper [class*="hint"] strong {
+  color: #38bdf8;
+}
+
+.connectionListWrapper [class*="accountName"] {
+  background: rgba(0, 102, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  color: #38bdf8;
+}
+
+.connectionListWrapper [class*="rowRight"] button[class*="outline"] {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f1f5f9;
+  box-shadow: none;
+}
+
+.connectionListWrapper [class*="rowRight"] button[class*="outline"]:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
 }
 
 .stepActions {

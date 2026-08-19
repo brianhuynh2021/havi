@@ -89,6 +89,7 @@ class FacebookOAuthClient(OAuthClientPort):
             "redirect_uri": self._redirect_uri,
             "state": state,
             "response_type": "code",
+            "auth_type": "rerequest",
         }
         if self._config_id:
             params["config_id"] = self._config_id
@@ -220,14 +221,17 @@ class FacebookOAuthClient(OAuthClientPort):
 def _pick_page(pages: list[dict]) -> dict:
     """Chọn Page khi chủ tiệm quản lý nhiều Trang.
 
-    Ưu tiên Page có task `CREATE_CONTENT` — Page mà tài khoản này thật sự đăng
-    bài được. Chủ tiệm hay được add vào Page của người khác với vai trò
-    Analyst/Advertiser (chỉ xem), nối nhầm vào đó thì mọi bài đều hỏng.
-
-    Còn lại lấy Page đầu danh sách. Đây là chỗ MVP cố ý đơn giản: đúng cho
-    trường hợp phổ biến (chủ tiệm có một Trang). Chọn Trang trong UI nằm ở
-    P1 — khi có, `exchange_code` sẽ nhận thêm `page_id` mong muốn.
+    Ưu tiên Page có task `CREATE_CONTENT` và ưu tiên Page thật (không chứa chữ sandbox)
+    nếu chủ tiệm có cả trang thật lẫn trang thử nghiệm.
     """
+    non_sandbox_actionable = [
+        p for p in pages
+        if "sandbox" not in (p.get("name") or "").lower()
+        and "CREATE_CONTENT" in (p.get("tasks") or [])
+    ]
+    if non_sandbox_actionable:
+        return non_sandbox_actionable[0]
+
     for page in pages:
         tasks = page.get("tasks") or []
         if "CREATE_CONTENT" in tasks:

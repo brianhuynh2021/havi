@@ -195,7 +195,18 @@ export function ConnectionCard({
                     })}
                   </Badge>
                   {connection.account_name ? (
-                    <span className={styles.accountName}>{connection.account_name}</span>
+                    <span className={styles.accountName}>
+                      <span className={styles.accountPrefix}>
+                        {platform === "facebook"
+                          ? "Fanpage: "
+                          : platform === "google_business"
+                            ? "Địa điểm: "
+                            : platform === "tiktok"
+                              ? "Kênh: "
+                              : "Tài khoản: "}
+                      </span>
+                      <strong>{connection.account_name}</strong>
+                    </span>
                   ) : null}
                 </>
               ) : (
