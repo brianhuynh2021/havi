@@ -2,8 +2,7 @@
 
 Documentation in `docs/` is grouped by audience and purpose:
 
-- [`handoff/`](handoff/) — design-to-implementation handoff and
-  [DEPLOYMENT.md](handoff/DEPLOYMENT.md)
+- [`handoff/`](handoff/) — design-to-implementation handoff, [DEPLOYMENT.md](handoff/DEPLOYMENT.md), and [CREDENTIALS_AND_SECRETS_GUIDE.md](handoff/CREDENTIALS_AND_SECRETS_GUIDE.md)
 - [`product/`](product/) — roadmap, product direction, and [COMMERCIALIZATION_PHASES.md](product/COMMERCIALIZATION_PHASES.md)
 - [`architecture/`](architecture/) — technical spec, repository strategy, and
   architecture decisions
