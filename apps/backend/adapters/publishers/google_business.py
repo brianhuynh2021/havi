@@ -66,18 +66,29 @@ class GoogleBusinessPublisher(PublisherPort):
                 raise AuthPermissionError(
                     self.channel, "Google Business token expired or permissions revoked"
                 )
-            if resp.status_code == 429 or resp.status_code >= 500:
+            if resp.status_code == 429:
+                raise TemporaryPublishError(
+                    self.channel,
+                    "Google Business API Quota bị giới hạn (cần đăng ký hạn mức Google Business Profile API)",
+                )
+            if resp.status_code >= 500:
                 raise TemporaryPublishError(
                     self.channel, f"Google Business API HTTP {resp.status_code}"
                 )
             if resp.status_code >= 400:
-                data = resp.json() if resp.content else {}
-                err_msg = data.get("error", {}).get("message") or resp.text
+                try:
+                    data = resp.json() if resp.content else {}
+                    err_msg = data.get("error", {}).get("message") or resp.text
+                except Exception:
+                    err_msg = resp.text[:200]
                 raise ValidationPublishError(
                     self.channel, f"Google API Error {resp.status_code}: {err_msg}"
                 )
 
-            data = resp.json()
+            try:
+                data = resp.json()
+            except Exception:
+                data = {}
             now = datetime.now(UTC)
             post_id = data.get("name") or f"google_post_{int(now.timestamp())}"
             return PublishResult(external_post_id=post_id, published_at=now)
