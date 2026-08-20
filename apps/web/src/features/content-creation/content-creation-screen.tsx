@@ -649,7 +649,7 @@ export function ContentCreationScreen() {
     if (!item) return;
 
     setRenderingVideoId(itemId);
-    addToast({
+    const toastId = addToast({
       type: "loading",
       title: "AI đang dựng Video 9:16...",
       description: "Đang tự động bóc tách Hook 3s, tạo hiệu ứng chuyển động và chèn phụ đề chữ vàng nhảy nhót.",
@@ -683,13 +683,15 @@ export function ContentCreationScreen() {
             : i,
         ),
       );
+      removeToast(toastId);
       addToast({
         type: "success",
         icon: "🎬",
         title: "Đã dựng xong Video 9:16!",
-        description: "Clip đã sẵn sàng để bạn xem thử và phát lệnh đăng lên kênh ngay.",
+        description: "Clip dài 6s đã sẵn sàng để bạn xem thử và phát lệnh đăng lên kênh ngay.",
       });
     } catch {
+      removeToast(toastId);
       await generateItemVideo(itemId, "9:16");
     } finally {
       setRenderingVideoId(null);

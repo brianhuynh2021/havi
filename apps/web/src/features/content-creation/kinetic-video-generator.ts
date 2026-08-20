@@ -74,11 +74,14 @@ export async function generateKineticShortVideo(
   });
 
   const fps = 30;
-  const totalFrames = fps * 4; // 4 giây loop
+  const durationSec = 6;
+  const totalFrames = fps * durationSec; // 6 giây hoàn chỉnh
   const stream = canvas.captureStream(fps);
 
   let mimeType = "video/webm";
-  if (MediaRecorder.isTypeSupported("video/mp4")) {
+  if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
+    mimeType = "video/mp4;codecs=avc1";
+  } else if (MediaRecorder.isTypeSupported("video/mp4")) {
     mimeType = "video/mp4";
   } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) {
     mimeType = "video/webm;codecs=vp9";
@@ -115,7 +118,8 @@ export async function generateKineticShortVideo(
       }
     };
 
-    recorder.start();
+    // Khởi chạy với timeslice 100ms để ghi timestamp chính xác
+    recorder.start(100);
 
     let frame = 0;
     const channelLabel =
@@ -128,9 +132,12 @@ export async function generateKineticShortVideo(
     const brand = options.brandName || "TRUNG TÂM CÔNG NGHỆ NHẬT MINH";
     const hotline = options.hotline || "0984 883 750";
 
-    function drawFrame() {
+    const intervalId = setInterval(() => {
       if (frame >= totalFrames) {
-        recorder.stop();
+        clearInterval(intervalId);
+        if (recorder.state === "recording") {
+          recorder.stop();
+        }
         return;
       }
 
@@ -258,10 +265,7 @@ export async function generateKineticShortVideo(
       ctx!.restore();
 
       frame++;
-      requestAnimationFrame(drawFrame);
-    }
-
-    drawFrame();
+    }, 1000 / fps);
   });
 }
 
