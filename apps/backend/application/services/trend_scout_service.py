@@ -137,16 +137,50 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
 DEFAULT_HOT_TRENDS: list[TrendingTopic] = ALL_DYNAMIC_TREND_POOLS[:5]
 
 
+import xml.etree.ElementTree as ET
+
 class TrendScoutService:
     def __init__(self) -> None:
-        self._trends = {t.id: t for t in ALL_DYNAMIC_TREND_POOLS}
+        self._trends: dict[str, TrendingTopic] = {t.id: t for t in ALL_DYNAMIC_TREND_POOLS}
+        self._last_fetched_at: datetime | None = None
+
+    async def _fetch_google_trends_live_vn(self, count: int = 5) -> list[dict[str, str]]:
+        """Quét luồng dữ liệu tìm kiếm xu hướng thời gian thực từ Google Trends Việt Nam."""
+        url = "https://trends.google.com/trending/rss?geo=VN"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        try:
+            async with httpx.AsyncClient(timeout=6.0, headers=headers) as client:
+                res = await client.get(url)
+                if res.status_code == 200:
+                    root = ET.fromstring(res.text)
+                    items = root.findall(".//item")
+                    results = []
+                    for it in items[:count]:
+                        title = it.find("title").text if it.find("title") is not None else ""
+                        approx_traffic = it.find("{https://trends.google.com/trending/rss}approx_traffic")
+                        traffic = approx_traffic.text if approx_traffic is not None else "10K+"
+                        if title:
+                            results.append({"keyword": title.strip(), "traffic": traffic.strip()})
+                    return results
+        except Exception as exc:
+            logger.warning("Google Trends live RSS fetch error: %s", exc)
+        return []
 
     async def get_hot_trends(self, workspace_id: UUID) -> list[TrendingTopic]:
         """Lấy danh sách các chủ đề hot nhất hôm nay được xếp hạng theo trend_score."""
+        # Nếu chưa từng quét hoặc dữ liệu cũ, kích hoạt quét ngầm thời gian thực
+        if not self._last_fetched_at:
+            try:
+                await self.refresh_trends(workspace_id)
+            except Exception as e:
+                logger.warning("Auto refresh hot trends failed: %s", e)
         return sorted(self._trends.values(), key=lambda t: t.trend_score, reverse=True)[:5]
 
     async def _scout_trends_with_gemini(
         self,
+        live_keywords: list[dict[str, str]],
         industry: str = "Đào tạo nghề & Công nghệ",
         brand_name: str = "Trung Tâm Công Nghệ Nhật Minh",
         count: int = 5,
@@ -155,16 +189,21 @@ class TrendScoutService:
         if not settings.gemini_api_key or settings.gemini_api_key in ("mock", "mock-gemini-key", "change-me"):
             return None
 
+        live_kw_context = "\n".join([f"- {k['keyword']} (Lượt tìm kiếm: {k['traffic']})" for k in live_keywords]) if live_keywords else "Các xu hướng công nghệ, AI Agent, việc làm đang hot."
+
         prompt = f"""
-Bạn là AI Trend Scout & Radar Trinh Sát Xu Hướng Short-form Video (TikTok, YouTube Shorts, Facebook Reels) tại Việt Nam hôm nay.
-Hãy phát hiện và đề xuất {count} chủ đề xu hướng nóng hổi, độc lạ, giật gân và thu hút tương tác nhất cho cơ sở "{brand_name}" (Ngành: {industry}).
+Bạn là Giám đốc Sáng tạo & Radar Trinh Sát Xu Hướng Short-form Video (TikTok, YouTube Shorts, Facebook Reels) tại Việt Nam hôm nay.
+Dưới đây là các từ khóa đang tìm kiếm trực tiếp trên Google Trends Việt Nam hôm nay:
+{live_kw_context}
+
+Hãy biến các trend này thành {count} kịch bản Newsjacking (Bắt trend xã hội giật gân $\\rightarrow$ Bẻ lái sang giải pháp & khóa học của "{brand_name}" - Ngành: {industry}).
 
 Quy tắc bắt buộc:
 - Keyword ngắn gọn, trực diện, kích thích tò mò.
-- `sample_hook`: Câu Hook 3s đầu tiên cực kỳ giật gân, in hoa, giữ chân người xem ngay lập tức (Ví dụ: "DỪNG LẠI! 90% NGƯỜI LÀM ĐỀU MẮC SAI LẦM NÀY!").
+- `sample_hook`: Câu Hook 3s đầu tiên cực kỳ giật gân, in hoa, giữ chân người xem ngay lập tức (Ví dụ: "KHI THIÊN HẠ MÃI HÓNG BIẾN THÌ DÂN AI ĐANG LÀM GÌ?").
 - `trend_score`: Độ nóng từ 90 đến 99.
-- `source`: Nguồn phát hiện (ví dụ "TikTok Trending VN", "YouTube Shorts Viral", "Google Trends Hot").
-- `suggested_angle`: 1-2 câu hướng dẫn góc quay thực tế.
+- `source`: Nguồn phát hiện (ví dụ "Google Trends VN Live", "TikTok Trending VN").
+- `suggested_angle`: Cú bẻ lái (Plot Twist) từ trend nóng sang dịch vụ/giá trị của {brand_name}.
 - `suggested_hashtags`: 4-6 hashtag viral tiếng Việt.
 - Trả về danh sách JSON đúng cấu trúc.
 """
@@ -223,18 +262,18 @@ Quy tắc bắt buộc:
                             keyword=it["keyword"],
                             category=TrendCategory.TECH_EDUCATION,
                             trend_score=int(it.get("trend_score", 95)),
-                            source=it.get("source", "Gemini Real-Time Trend Radar"),
+                            source=it.get("source", "Google Trends Live VN"),
                             hook_style=HookStyle.WARNING_MISTAKE,
                             sample_hook=it["sample_hook"],
                             suggested_angle=it["suggested_angle"],
-                            suggested_hashtags=it.get("suggested_hashtags", ["#viral", "#shorts"]),
+                            suggested_hashtags=it.get("suggested_hashtags", ["#viral", "#shorts", "#xuhuong"]),
                             discovered_at=datetime.now(UTC),
                         )
                         results.append(t)
                         self._trends[t.id] = t
                     return sorted(results, key=lambda x: x.trend_score, reverse=True)
         except Exception as exc:
-            logger.warning("Gemini live trend scouting error, falling back to dynamic pool: %s", exc)
+            logger.warning("Gemini live trend scouting error, falling back: %s", exc)
         return None
 
     async def refresh_trends(
@@ -244,20 +283,47 @@ Quy tắc bắt buộc:
         brand_name: str = "Trung Tâm Công Nghệ Nhật Minh",
         count: int = 5,
     ) -> list[TrendingTopic]:
-        """Quét và làm mới danh sách xu hướng thời gian thực từ Gemini AI Radar."""
-        # 1. Gọi trực tiếp Gemini Live Trend Scout
-        gemini_trends = await self._scout_trends_with_gemini(industry, brand_name, count)
+        """Quét và làm mới danh sách xu hướng thời gian thực từ Google Trends Live VN + Gemini AI Radar."""
+        self._last_fetched_at = datetime.now(UTC)
+
+        # 1. Quét dữ liệu thời gian thực từ Google Trends VN
+        live_kw = await self._fetch_google_trends_live_vn(count=count)
+
+        # 2. Gọi Gemini kết hợp Live Trends để bẻ lái sang Nhật Minh
+        gemini_trends = await self._scout_trends_with_gemini(live_kw, industry, brand_name, count)
         if gemini_trends:
             return gemini_trends
 
-        # 2. Fallback pool
+        # 3. Nếu live_kw có dữ liệu mà chưa có Gemini key, tự động tạo newsjacking từ live Google Trends
+        if live_kw:
+            live_synthesized: list[TrendingTopic] = []
+            for idx, kw_item in enumerate(live_kw):
+                kw = kw_item["keyword"]
+                traffic = kw_item["traffic"]
+                trend_id = f"google-live-{abs(hash(kw)) % 10000}"
+                t = TrendingTopic(
+                    id=trend_id,
+                    keyword=f"Trend nóng: {kw.upper()} ({traffic} tìm kiếm)",
+                    category=TrendCategory.TECH_EDUCATION if idx % 2 == 0 else TrendCategory.VIRAL_MEME,
+                    trend_score=99 - idx,
+                    source="Google Trends Live VN",
+                    hook_style=HookStyle.REAL_COMPARISON,
+                    sample_hook=f"TẠI SAO CẢ NƯỚC ĐANG TÌM KIẾM '{kw.upper()}'?",
+                    suggested_angle=f"Bẻ lái từ độ nóng của '{kw}' sang cách dân công nghệ tại {brand_name} tự động hóa công việc bằng AI Agent để tăng thu nhập.",
+                    suggested_hashtags=["#googletrends", "#xuhuong", "#aiagent", "#nhatminhtech", "#shorts"],
+                    discovered_at=datetime.now(UTC),
+                )
+                self._trends[t.id] = t
+                live_synthesized.append(t)
+            return sorted(live_synthesized, key=lambda x: x.trend_score, reverse=True)
+
+        # 4. Fallback pool
         shuffled = list(ALL_DYNAMIC_TREND_POOLS)
         random.shuffle(shuffled)
         selected = shuffled[:count]
 
         for idx, t in enumerate(selected):
-            # Tạo score sống động 99, 97, 95...
-            t.trend_score = 99 - (idx * random.randint(1, 3))
+            t.trend_score = 99 - idx
             t.discovered_at = datetime.now(UTC)
             self._trends[t.id] = t
 
