@@ -30,6 +30,19 @@ const vnTime = new Intl.DateTimeFormat("vi-VN", {
 function getTopicImage(mediaNote?: string | null, text?: string | null): string {
   const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
   if (
+    combined.includes("công nghệ") ||
+    combined.includes("tech") ||
+    combined.includes("ai") ||
+    combined.includes("agent") ||
+    combined.includes("lập trình") ||
+    combined.includes("máy tính") ||
+    combined.includes("khóa học") ||
+    combined.includes("đào tạo") ||
+    combined.includes("nhật minh")
+  ) {
+    return "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80";
+  }
+  if (
     combined.includes("quà") ||
     combined.includes("gift") ||
     combined.includes("thưởng") ||
