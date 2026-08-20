@@ -20,31 +20,33 @@ export async function generateKineticShortVideo(
     return "/test_tiktok.mp4";
   }
 
-  // Trích xuất Hook 3 giây từ văn bản bài viết
-  let hookTitle = "⚡ BÍ QUYẾT BẮT TREND AI";
+  // 1. Trích xuất & Tinh chỉnh Hook 3s cực kỳ sắc bén, bắt mắt
+  let hookTitle = "3 BƯỚC TỰ TẠO AI AGENT CHO RIÊNG BẠN";
   const rawText = options.text || "";
 
-  // Ưu tiên 1: Lấy nội dung trong dấu ngoặc kép ("..." hoặc “...”)
-  const quoteMatch = rawText.match(/["“]([^"”\n]{6,90})["”]/);
+  // Bóc tách nội dung thật, loại bỏ các tiền tố dài dòng
+  let cleanedText = rawText
+    .replace(/trung tâm công nghệ nhật minh/gi, "")
+    .replace(/chia sẻ kỹ thuật thực tế:?/gi, "")
+    .replace(/thông báo quan trọng:?/gi, "")
+    .replace(/trân trọng giới thiệu:?/gi, "")
+    .replace(/tiệm vừa có dịch vụ mới/gi, "giải pháp AI mới")
+    .replace(/^[^:]*:\s*/, "")
+    .replace(/[•*"-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const quoteMatch = rawText.match(/["“]([^"”\n]{6,60})["”]/);
   if (quoteMatch && quoteMatch[1]) {
     hookTitle = quoteMatch[1].trim().toUpperCase();
-  } else if (rawText.toLowerCase().includes("hook")) {
-    const hookLine = rawText
-      .split("\n")
-      .find((l) => l.toLowerCase().includes("hook"));
-    if (hookLine) {
-      const cleaned = hookLine
-        .replace(/^[^:]*:\s*/, "")
-        .replace(/[•*"-]/g, "")
-        .trim();
-      if (cleaned.length > 5) {
-        hookTitle = cleaned.slice(0, 70).toUpperCase();
-      }
-    }
-  } else {
-    const firstSentence = rawText.split(/[.!?\n]/)[0];
-    if (firstSentence && firstSentence.length > 8) {
-      hookTitle = firstSentence.slice(0, 60).trim().toUpperCase();
+  } else if (cleanedText.length >= 10) {
+    const firstSent = cleanedText.split(/[.!?\n]/)[0].trim();
+    if (firstSent.length >= 8 && firstSent.length <= 50) {
+      hookTitle = firstSent.toUpperCase();
+    } else if (rawText.toLowerCase().includes("agent") || rawText.toLowerCase().includes("ai")) {
+      hookTitle = "BÍ QUYẾT TỰ HỌC AI AGENT TỪ A-Z";
+    } else {
+      hookTitle = "ĐỘT PHÁ NĂNG SUẤT VỚI CÔNG NGHỆ AI MỚI";
     }
   }
 
@@ -94,7 +96,7 @@ export async function generateKineticShortVideo(
     try {
       recorder = new MediaRecorder(stream, {
         mimeType: mimeType,
-        videoBitsPerSecond: 2500000,
+        videoBitsPerSecond: 3000000,
       });
     } catch {
       resolve("/test_tiktok.mp4");
@@ -118,7 +120,7 @@ export async function generateKineticShortVideo(
       }
     };
 
-    // Khởi chạy với timeslice 100ms để ghi timestamp chính xác
+    // Khởi chạy ghi hình
     recorder.start(100);
 
     let frame = 0;
@@ -143,7 +145,7 @@ export async function generateKineticShortVideo(
 
       const progress = frame / totalFrames;
 
-      // 1. Vẽ nền với hiệu ứng Ken Burns zoom nhẹ nhàng
+      // 1. Nền chuyển động Ken Burns zoom mượt
       ctx!.save();
       const scale = 1.0 + progress * 0.08;
       ctx!.translate(width / 2, height / 2);
@@ -160,85 +162,84 @@ export async function generateKineticShortVideo(
         }
         ctx!.drawImage(bgImg, -drawW / 2, -drawH / 2, drawW, drawH);
       } else {
-        // Fallback gradient hiện đại
         const grad = ctx!.createLinearGradient(-width / 2, -height / 2, width / 2, height / 2);
-        grad.addColorStop(0, "#1e1b4b");
-        grad.addColorStop(0.5, "#312e81");
-        grad.addColorStop(1, "#4338ca");
+        grad.addColorStop(0, "#0f172a");
+        grad.addColorStop(0.5, "#1e1b4b");
+        grad.addColorStop(1, "#312e81");
         ctx!.fillStyle = grad;
         ctx!.fillRect(-width / 2, -height / 2, width, height);
       }
       ctx!.restore();
 
-      // 2. Lớp phủ Gradient Tối (Dark Vignette Gradient) để nổi bật Text Hook
+      // 2. Lớp phủ Dark Vignette sang trọng
       const overlay = ctx!.createLinearGradient(0, 0, 0, height);
-      overlay.addColorStop(0, "rgba(15, 23, 42, 0.75)");
-      overlay.addColorStop(0.3, "rgba(15, 23, 42, 0.45)");
-      overlay.addColorStop(0.7, "rgba(15, 23, 42, 0.65)");
-      overlay.addColorStop(1, "rgba(15, 23, 42, 0.92)");
+      overlay.addColorStop(0, "rgba(15, 23, 42, 0.85)");
+      overlay.addColorStop(0.3, "rgba(15, 23, 42, 0.55)");
+      overlay.addColorStop(0.7, "rgba(15, 23, 42, 0.70)");
+      overlay.addColorStop(1, "rgba(15, 23, 42, 0.95)");
       ctx!.fillStyle = overlay;
       ctx!.fillRect(0, 0, width, height);
 
       // 3. Top Channel Badge
       ctx!.save();
-      ctx!.fillStyle = "rgba(255, 255, 255, 0.15)";
-      ctx!.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      ctx!.lineWidth = 1.5;
-      roundRect(ctx!, width / 2 - 110, 40, 220, 36, 18);
+      ctx!.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx!.strokeStyle = "#38BDF8";
+      ctx!.lineWidth = 2;
+      roundRect(ctx!, width / 2 - 120, 50, 240, 42, 21);
       ctx!.fill();
       ctx!.stroke();
 
       ctx!.fillStyle = "#38BDF8";
-      ctx!.font = "bold 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx!.font = "bold 15px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
       ctx!.textAlign = "center";
-      ctx!.fillText(channelLabel, width / 2, 63);
+      ctx!.fillText(channelLabel, width / 2, 77);
       ctx!.restore();
 
-      // 4. Center: Viral Hook Box (Kinetic Typography)
+      // 4. Center: Hero Hook Card (Glassmorphic)
       ctx!.save();
-      const hookBoxY = 280;
-      const hookBoxW = width - 48;
-      const hookBoxH = 260;
+      const hookBoxY = 270;
+      const hookBoxW = width - 56;
+      const hookBoxH = 290;
 
-      // Glow viền vàng neon bắt mắt
-      ctx!.shadowColor = "rgba(251, 191, 36, 0.5)";
-      ctx!.shadowBlur = 20;
-      ctx!.fillStyle = "rgba(0, 0, 0, 0.75)";
+      // Hộp đen mờ viền vàng neon
+      ctx!.shadowColor = "rgba(251, 191, 36, 0.6)";
+      ctx!.shadowBlur = 24;
+      ctx!.fillStyle = "rgba(15, 23, 42, 0.88)";
       ctx!.strokeStyle = "#F59E0B";
       ctx!.lineWidth = 3;
-      roundRect(ctx!, 24, hookBoxY, hookBoxW, hookBoxH, 20);
+      roundRect(ctx!, 28, hookBoxY, hookBoxW, hookBoxH, 24);
       ctx!.fill();
       ctx!.stroke();
       ctx!.shadowBlur = 0;
 
-      // Nhãn Hook trên đầu hộp
+      // Tag nhỏ màu vàng
       ctx!.fillStyle = "#F59E0B";
       ctx!.font = "800 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
       ctx!.textAlign = "center";
-      ctx!.fillText("⚡ 3-SECOND VIRAL HOOK", width / 2, hookBoxY + 36);
+      ctx!.fillText("⚡ 3-SECOND VIRAL HOOK", width / 2, hookBoxY + 40);
 
-      // Chữ Hook chính to, đậm, ngắt dòng tự động
+      // Tiêu đề Hook vàng / trắng to rõ
       ctx!.fillStyle = "#FFFFFF";
       ctx!.font = "900 24px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-      wrapText(ctx!, hookTitle, width / 2, hookBoxY + 80, hookBoxW - 40, 34);
+      wrapText(ctx!, hookTitle, width / 2, hookBoxY + 86, hookBoxW - 44, 34);
 
-      // Điểm nhấn lợi ích dưới
-      ctx!.fillStyle = "#A7F3D0";
-      ctx!.font = "bold 15px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-      ctx!.fillText("🚀 Học thực hành • Làm được việc ngay", width / 2, hookBoxY + hookBoxH - 30);
+      // 2 Tag nổi bật bên dưới
+      ctx!.fillStyle = "#10B981";
+      ctx!.font = "bold 14px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+      ctx!.fillText("✨ Cầm tay chỉ việc 1:1 • Thực hành dự án thật", width / 2, hookBoxY + hookBoxH - 32);
       ctx!.restore();
 
-      // 5. Animated Soundwave Bars (Sóng nhạc chuyển động sống động)
+      // 5. Soundwave Visualizer (Equalizer)
       ctx!.save();
-      const waveY = height - 190;
-      const numBars = 16;
+      const waveY = height - 200;
+      const numBars = 18;
       const barW = 6;
       const barGap = 6;
       const totalWaveW = numBars * (barW + barGap);
       const waveStartX = (width - totalWaveW) / 2;
 
       for (let i = 0; i < numBars; i++) {
-        const barH = 12 + Math.sin(frame * 0.25 + i * 0.5) * 18 + Math.random() * 6;
+        const barH = 12 + Math.sin(frame * 0.25 + i * 0.45) * 22 + Math.random() * 6;
         ctx!.fillStyle = i % 2 === 0 ? "#F59E0B" : "#38BDF8";
         roundRect(
           ctx!,
@@ -252,16 +253,16 @@ export async function generateKineticShortVideo(
       }
       ctx!.restore();
 
-      // 6. Brand Footer & Hotline
+      // 6. Brand Footer
       ctx!.save();
-      ctx!.fillStyle = "#E2E8F0";
-      ctx!.font = "bold 15px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+      ctx!.fillStyle = "#F8FAFC";
+      ctx!.font = "bold 16px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
       ctx!.textAlign = "center";
-      ctx!.fillText(brand, width / 2, height - 100);
+      ctx!.fillText(brand, width / 2, height - 110);
 
       ctx!.fillStyle = "#FDE047";
-      ctx!.font = "800 16px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-      ctx!.fillText(`📞 Hotline: ${hotline} • #Shorts #xuhuong`, width / 2, height - 70);
+      ctx!.font = "800 15px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+      ctx!.fillText(`📞 Hotline: ${hotline} • #Shorts #xuhuong`, width / 2, height - 80);
       ctx!.restore();
 
       frame++;
