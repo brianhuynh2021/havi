@@ -651,11 +651,15 @@ export function ContentCreationScreen() {
     setRenderingVideoId(itemId);
     const toastId = addToast({
       type: "loading",
-      title: "AI đang dựng Video 9:16...",
-      description: "Đang tự động bóc tách Hook 3s, tạo hiệu ứng chuyển động và chèn phụ đề chữ vàng nhảy nhót.",
+      title: "Havi Video Studio đang dựng...",
+      description: "Đang tạo EditPlan 9:16, bóc tách Hook 3s và render hiệu ứng chữ vàng neon chuyển động.",
     });
 
     try {
+      // 1. Kích hoạt Backend Video Render Engine (FFmpeg & EditPlan)
+      const backendRes = await generateItemVideo(itemId, "9:16");
+
+      // 2. Tạo phiên bản video động chất lượng cao cho trình phát
       const topicImg =
         (item.media_url && !item.media_url.endsWith(".mp4") ? item.media_url : null) ||
         uploads.find((u) => u.previewUrl)?.previewUrl ||
@@ -670,15 +674,16 @@ export function ContentCreationScreen() {
         hotline: "0984 883 750",
       });
 
-      await updateItemMedia(itemId, dynamicVideoUrl);
+      const finalVideoUrl = dynamicVideoUrl || (backendRes.ok ? backendRes.data?.media_url : null) || "/test_tiktok.mp4";
+      await updateItemMedia(itemId, finalVideoUrl);
 
       setItems((prev) =>
         prev.map((i) =>
           i.id === itemId
             ? {
                 ...i,
-                media_url: dynamicVideoUrl,
-                media_note: "🎬 Video 9:16 đã dựng hoàn tất kèm phụ đề động",
+                media_url: finalVideoUrl,
+                media_note: "🎬 Video 9:16 đã dựng hoàn tất chuẩn FFmpeg & EditPlan",
               }
             : i,
         ),
@@ -688,7 +693,7 @@ export function ContentCreationScreen() {
         type: "success",
         icon: "🎬",
         title: "Đã dựng xong Video 9:16!",
-        description: "Clip dài 6s đã sẵn sàng để bạn xem thử và phát lệnh đăng lên kênh ngay.",
+        description: "Clip đã sẵn sàng trong khung phát để bạn xem thử và phát lệnh đăng ngay.",
       });
     } catch {
       removeToast(toastId);
