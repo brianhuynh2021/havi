@@ -26,43 +26,54 @@ _TEMPLATES: list[tuple[str, str, str]] = [
     (
         "facebook_page",
         "Bài ảnh",
-        "Chào cả nhà, {tiem} có tin vui nè! {noi_dung} "
-        "Tiệm làm cẩn thận từng bước nên chị em cứ yên tâm nha. "
-        "Chị nào quan tâm thì nhắn tiệm để được tư vấn thêm ạ!",
+        "🚀 ĐỘT PHÁ NĂNG SUẤT CÙNG {tiem}!\n\n"
+        "💡 {noi_dung}\n\n"
+        "✨ Điểm khác biệt tại Nhật Minh:\n"
+        "• Đào tạo thực chiến 100% trên dự án thật.\n"
+        "• Giảng viên cầm tay chỉ việc 1:1.\n"
+        "• Ứng dụng AI Agent tự động hóa vận hành hiệu quả ngay sau khóa học.\n\n"
+        "📞 Hotline / Zalo tư vấn: 0984 883 750\n"
+        "#{tiem_tag} #AIAgent #KhoaHocAI #CongNgheThucChien",
     ),
     (
         "youtube",
         "YouTube Shorts",
-        "{tiem} chia sẻ kỹ thuật thực tế: {noi_dung} "
-        "Theo dõi kênh để xem thêm nhiều bài học bổ ích nhé! #Shorts",
+        "⚡ KHÁM PHÁ THỰC TẾ TẠI {tiem}!\n\n"
+        "{noi_dung}\n\n"
+        "👉 Đăng ký kênh (Subscribe) để cập nhật những kiến thức AI Agent mới nhất! #Shorts #AIAgent #NhatMinhTech",
     ),
     (
         "tiktok",
         "TikTok Clip",
-        "Góc thực chiến tại {tiem}! {noi_dung} "
-        "Bạn thấy thế nào? Hãy bình luận bên dưới nhé! #fyp #viral",
+        "🎬 3 BƯỚC TỰ TẠO AI AGENT CHO RIÊNG BẠN — KHÔNG CẦN BIẾT CODE!\n\n"
+        "💡 {noi_dung}\n\n"
+        "🚀 Học thực hành 1:1 tại {tiem}. Nhấn Follow kênh để nhận trọn bộ tài liệu AI Agent miễn phí! #AIAgent #TechTrend #xuhuong #HocAI",
     ),
     (
         "reels",
         "Facebook Reels",
-        "{tiem} bật mí phương pháp mới: {noi_dung} "
-        "Thả tim và lưu lại clip để áp dụng ngay nhé!",
+        "🔥 BÍ QUYẾT TỰ ĐỘNG HÓA x5 LẦN NĂNG SUẤT VỚI AI AGENT!\n\n"
+        "{noi_dung}\n\n"
+        "📞 Hotline tư vấn: 0984 883 750 • {tiem}\n"
+        "#ReelsVN #AIAgent #NhatMinhTech #XuHuong",
     ),
     (
         "zalo_oa",
         "Tin Zalo",
-        "Chào chị, {tiem} gửi chị thông tin ạ: {noi_dung} "
-        "Chị nhắn lại tin này để em sắp lịch giúp chị nhé!",
+        "Chào Quý anh/chị, {tiem} xin gửi thông tin chi tiết: {noi_dung}\n\n"
+        "Quý anh/chị vui lòng liên hệ Hotline 0984 883 750 để được hỗ trợ tư vấn và nhận ưu đãi học phí tốt nhất!",
     ),
     (
         "google_business",
         "Cập nhật Google",
-        "{tiem} thông báo: {noi_dung} "
-        "Quý khách vui lòng liên hệ trước để được phục vụ chu đáo nhất.",
+        "📍 {tiem} — ĐÀO TẠO & GIẢI PHÁP AI AGENT THỰC CHIẾN TẠI TP.HCM\n\n"
+        "📌 {noi_dung}\n\n"
+        "⭐ Đào tạo thực hành 1:1 trên máy thật • Giảng viên hướng dẫn trực tiếp • Cam kết làm được việc ngay.\n"
+        "📞 Hotline: 0984 883 750 | Địa chỉ: TP. Hồ Chí Minh.",
     ),
 ]
 
-_SHOP_FALLBACK = "Tiệm"
+_SHOP_FALLBACK = "Trung Tâm Công Nghệ Nhật Minh"
 
 
 def _extract(pattern: str, text: str, fallback: str) -> str:
@@ -71,12 +82,6 @@ def _extract(pattern: str, text: str, fallback: str) -> str:
 
 
 def _join_raw_inputs(user_prompt: str) -> str:
-    """Gom liệu thô từ khối "Liệu thô chủ tiệm vừa nạp:" trong user prompt.
-
-    Bám đúng cấu trúc `build_user_prompt` dựng ra: mỗi dòng dạng
-    `- <nhãn>: <text>`, và khối kết thúc ở dòng trống. Ảnh/ghi âm không có text
-    nên bị bỏ qua — mock chỉ kể lại được phần chữ.
-    """
     lines = user_prompt.splitlines()
     try:
         start = next(i for i, line in enumerate(lines) if line.startswith("Liệu thô"))
@@ -99,55 +104,58 @@ def _join_raw_inputs(user_prompt: str) -> str:
 
 
 def _generate_smart_draft(channel: str, kind: str, tiem: str, noi_dung: str, is_tech: bool) -> tuple[str, str]:
-    """Sinh nội dung chuyên sâu, văn phong sắc bén theo đặc thù từng kênh và ngành nghề."""
+    """Sinh nội dung chuyên sâu, văn phong công nghệ sắc bén, chuẩn mực cho từng kênh."""
     clean_content = noi_dung.rstrip(".")
+    tiem_tag = tiem.replace(" ", "")
     
     if channel == "facebook_page":
         text = (
-            f"🌟 {tiem.upper()} THÔNG BÁO QUAN TRỌNG!\n\n"
-            f"👉 {clean_content}.\n\n"
-            "✨ Lý do bạn không nên bỏ lỡ dịp này:\n"
-            "• Dịch vụ & giải pháp được thiết kế tỉ mỉ, tối ưu trải nghiệm thực tế.\n"
-            "• Đội ngũ tận tâm, đồng hành hỗ trợ chu đáo từ A đến Z.\n"
-            "• Ưu đãi đặc biệt dành riêng cho khách hàng tương tác sớm hôm nay.\n\n"
-            "📩 Inbox ngay cho Fanpage hoặc để lại bình luận để nhận thông tin chi tiết và voucher ưu đãi độc quyền nhé!\n\n"
-            f"#{tiem.replace(' ', '')} #DichVuMoi #UuDaiDacBiet #TraiNghiemTuyetVoi"
+            f"🚀 ĐỘT PHÁ NĂNG SUẤT CÙNG {tiem.upper()}!\n\n"
+            f"💡 {clean_content}.\n\n"
+            "✨ 3 giá trị thực chiến vượt trội tại Nhật Minh:\n"
+            "1️⃣ Cầm tay chỉ việc 1:1, học trên máy tính và dự án thật.\n"
+            "2️⃣ Tự xây dựng hệ thống AI Agent tự động hóa vận hành, nhân bản năng suất x5 lần.\n"
+            "3️⃣ Đội ngũ chuyên gia đồng hành hỗ trợ kỹ thuật lâu dài.\n\n"
+            "📞 Hotline / Zalo tư vấn: 0984 883 750\n\n"
+            f"#{tiem_tag} #AIAgent #TuDongHoa #KhoaHocAI #CongNgheThucChien"
         )
-        media_note = "Ảnh chụp thực tế không gian hoặc poster nổi bật của dịch vụ mới"
+        media_note = "Ảnh chụp thực tế không gian phòng học công nghệ hoặc infographic giải pháp AI"
     elif channel == "google_business":
         text = (
-            f"📌 {tiem} trân trọng giới thiệu: {clean_content}.\n\n"
-            "Chúng tôi cam kết mang đến chất lượng dịch vụ chuẩn mực, tận tâm và chuyên nghiệp hàng đầu khu vực. "
-            "Quý khách có thể ghé trực tiếp cơ sở hoặc liên hệ Hotline 0984 883 750 để được tư vấn chu đáo và nhận báo giá ưu đãi tốt nhất!"
+            f"📍 {tiem.upper()} — ĐÀO TẠO & GIẢI PHÁP AI AGENT THỰC CHIẾN\n\n"
+            f"📌 {clean_content}.\n\n"
+            "⭐ Chương trình đào tạo chuyên sâu từ cơ bản đến thực tế, giảng viên hướng dẫn trực tiếp 1:1, thực hành trên máy thật và dự án thực tế.\n"
+            "📞 Hotline tư vấn: 0984 883 750 | Địa chỉ: TP. Hồ Chí Minh."
         )
-        media_note = "Ảnh chụp mặt tiền cơ sở hoặc sản phẩm / dịch vụ thực tế"
+        media_note = "Ảnh chụp mặt tiền trung tâm công nghệ hoặc phòng thực hành hiện đại"
     elif channel == "tiktok":
         text = (
-            f"🎬 [HOOK 3S]: Bạn đã biết tin cực hot này tại {tiem} chưa?\n\n"
-            f"💡 [THỰC TẾ]: {clean_content}! Trải nghiệm thực tế cực kỳ chất lượng và đáng tiền.\n\n"
-            "🚀 [KÊU GỌI]: Bấm Follow kênh ngay hôm nay và thả tim để không bỏ lỡ những bí quyết hữu ích tiếp theo nhé! #fyp #xuhuong #trending #viral #khampha"
+            f"🎬 3 BƯỚC TỰ TẠO AI AGENT CHO RIÊNG BẠN — KHÔNG CẦN BIẾT CODE!\n\n"
+            f"💡 {clean_content}!\n\n"
+            f"🚀 Đào tạo thực hành 1:1 tại {tiem}. Nhấn Follow kênh để nhận trọn bộ tài liệu và Prompt AI Agent độc quyền! #AIAgent #TechTrend #xuhuong #HocAI #{tiem_tag}"
         )
-        media_note = "Video dọc 9:16 quay nhanh 15s các điểm nhấn dịch vụ với nhạc nền xu hướng"
+        media_note = "Video dọc 9:16 có chuyển động zoom và phụ đề vàng neon nổi bật ở 3 giây đầu"
     elif channel == "youtube":
         text = (
-            f"⚡ [SHORTS]: Khám phá thực tế tại {tiem}!\n\n"
-            f"Hôm nay cùng xem trải nghiệm đặc biệt: {clean_content}. Từng công đoạn đều được thực hiện cẩn thận và chuyên nghiệp.\n\n"
-            "👉 Đăng ký kênh (Subscribe) để cập nhật thêm nhiều video thực tế hấp dẫn nhé! #Shorts #ReviewThucTe"
+            f"⚡ KHÁM PHÁ CÔNG NGHỆ AI AGENT THỰC CHIẾN TẠI {tiem.upper()}!\n\n"
+            f"{clean_content}.\n\n"
+            "👉 Đăng ký kênh (Subscribe) để cập nhật những video chia sẻ giải pháp tự động hóa AI mới nhất! #Shorts #AIAgent #NhatMinhTech"
         )
         media_note = "Clip ngắn 9:16 có phụ đề chữ vàng viền đen nổi bật ở 3 giây đầu"
     elif channel == "reels":
         text = (
-            f"🔥 [REELS]: Bí quyết độc quyền từ {tiem}!\n\n"
-            f"{clean_content}. Đừng quên lưu lại video này để áp dụng ngay cùng bạn bè nhé!\n\n"
-            "#ReelsVN #XuHuong #KhamPha"
+            f"🔥 BÍ QUYẾT TỰ ĐỘNG HÓA x5 LẦN NĂNG SUẤT VỚI AI AGENT!\n\n"
+            f"{clean_content}.\n\n"
+            f"📞 Hotline tư vấn: 0984 883 750 • {tiem}\n"
+            f"#ReelsVN #AIAgent #{tiem_tag} #XuHuong"
         )
         media_note = "Video ngắn 15s nhịp điệu nhanh, bắt mắt"
     else:
         text = (
-            f"Chào anh/chị, {tiem} xin gửi thông tin dịch vụ: {clean_content}. "
-            "Anh/chị nhắn lại tin này để nhận hỗ trợ tư vấn và ưu đãi tốt nhất nhé!"
+            f"Chào Quý anh/chị, {tiem} xin gửi thông tin chi tiết: {clean_content}.\n\n"
+            "Quý anh/chị vui lòng liên hệ Hotline 0984 883 750 để nhận hỗ trợ tư vấn và ưu đãi học phí tốt nhất!"
         )
-        media_note = "Ảnh tóm tắt ưu đãi"
+        media_note = "Ảnh tóm tắt ưu đãi khóa học"
 
     return text, media_note
 

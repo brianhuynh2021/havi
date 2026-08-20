@@ -305,7 +305,7 @@ export function ContentCreationScreen() {
     addToast({
       type: "success",
       title: "Havi đã sáng tạo xong bài mới!",
-      description: "Đã nạp vào danh sách bên dưới — mời chị cuộn xuống duyệt nhé.",
+      description: "Đã nạp vào danh sách bên dưới — cuộn xuống để duyệt bài ngay.",
     });
     loadItems();
   }, [addToast, loadItems]);
