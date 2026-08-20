@@ -7,6 +7,7 @@ export type ToastItem = {
   type: "loading" | "success" | "info" | "error";
   title: string;
   description?: string;
+  icon?: string;
 };
 
 type ToastContainerProps = {
@@ -25,7 +26,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
             <span className={styles.spinner} aria-hidden="true" />
           ) : (
             <span className={styles.toastIcon}>
-              {toast.type === "success" ? "🎉" : toast.type === "error" ? "⚠️" : "⚡"}
+              {toast.icon ?? (toast.type === "success" ? "🎉" : toast.type === "error" ? "⚠️" : "⚡")}
             </span>
           )}
 

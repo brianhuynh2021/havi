@@ -127,6 +127,19 @@ function renderClipEligibility(asset: MediaAsset | undefined) {
 function getTopicImage(mediaNote?: string | null, text?: string | null): string {
   const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
   if (
+    combined.includes("công nghệ") ||
+    combined.includes("tech") ||
+    combined.includes("ai") ||
+    combined.includes("agent") ||
+    combined.includes("lập trình") ||
+    combined.includes("máy tính") ||
+    combined.includes("khóa học") ||
+    combined.includes("đào tạo") ||
+    combined.includes("nhật minh")
+  ) {
+    return "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80";
+  }
+  if (
     combined.includes("quà") ||
     combined.includes("gift") ||
     combined.includes("thưởng") ||
@@ -285,7 +298,7 @@ export function ContentCreationScreen() {
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({
       type: "success",
-      title: "🎉 Havi đã sáng tạo xong bài mới!",
+      title: "Havi đã sáng tạo xong bài mới!",
       description: "Đã nạp vào danh sách bên dưới — mời chị cuộn xuống duyệt nhé.",
     });
     loadItems();
@@ -478,7 +491,7 @@ export function ContentCreationScreen() {
     // Hiển thị Toast góc phải màn hình
     addToast({
       type: "loading",
-      title: "⚡ Havi đang viết bài cho tiệm...",
+      title: "Havi đang viết bài cho tiệm...",
       description: "Đang hoàn thiện bài viết và tối ưu cho từng kênh. Bản nháp sẽ sẵn sàng trong giây lát!",
     });
   }
@@ -516,7 +529,7 @@ export function ContentCreationScreen() {
 
     addToast({
       type: "loading",
-      title: "⚡ Havi đang viết bài từ giọng nói...",
+      title: "Havi đang viết bài từ giọng nói...",
       description: "Nhân viên AI đang sáng tạo bài viết đa kênh từ lời thu âm của chị!",
     });
   }
@@ -526,7 +539,8 @@ export function ContentCreationScreen() {
     setNoteOpen(true);
     addToast({
       type: "success",
-      title: "🎙️ Đã chèn giọng nói vào ô ghi chú",
+      icon: "🎙️",
+      title: "Đã chèn giọng nói vào ô ghi chú",
       description: "Chị có thể sửa lại câu chữ hoặc bấm nút 'Để Havi viết cho chị' bên dưới.",
     });
   }
