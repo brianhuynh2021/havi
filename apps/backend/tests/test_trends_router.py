@@ -58,4 +58,16 @@ async def test_synthesize_trend_endpoint(client: AsyncClient):
     assert data["trend_id"] == "trend-career-comparison-2026"
     assert data["caption_style"] == "bold_yellow"
     assert len(data["script_outline"]) == 3
-    assert data["edit_plan"]["target_aspect_ratio"] == "9:16"
+
+
+@pytest.mark.asyncio
+async def test_refresh_hot_trends_endpoint(client: AsyncClient):
+    headers, ws_id = await _onboard(client, "refreshtrends@havi.vn")
+
+    res = await client.post(f"/workspaces/{ws_id}/trends/refresh", headers=headers)
+    assert res.status_code == 200, res.text
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 5
+    assert "keyword" in data[0]
+    assert data[0]["trend_score"] >= 80

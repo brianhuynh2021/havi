@@ -89,14 +89,15 @@ describe("VideoStudioScreen", () => {
 
   it("cho phép gửi form tạo job render video mới", async () => {
     const user = userEvent.setup();
-    let createdPayload: { title?: string } | null = null;
+    let createdPayload: any = null;
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
-      const method = init?.method || "GET";
+      const method = input instanceof Request ? input.method : init?.method || "GET";
 
       if (url.pathname.includes("/render-jobs") && method === "POST") {
-        createdPayload = JSON.parse(init?.body as string);
+        const bodyStr = input instanceof Request ? await input.clone().text() : (init?.body as string);
+        createdPayload = JSON.parse(bodyStr || "{}");
         return jsonResponse({
           id: "job-2",
           workspace_id: "ws-123",
@@ -170,6 +171,40 @@ describe("VideoStudioScreen", () => {
 
     const hookInput = screen.getByLabelText("3s Hook Subtitle (Chữ động giữ chân)") as HTMLInputElement;
     expect(hookInput.value).toBe("ĐỪNG MẤT 4 NĂM NẾU CHƯA BIẾT ĐIỀU NÀY!");
+  });
+
+  it("cho phép quét lại xu hướng mới khi bấm nút Quét xu hướng mới", async () => {
+    const user = userEvent.setup();
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname.includes("/trends/refresh")) {
+        return jsonResponse([
+          {
+            id: "trend-fresh-1",
+            keyword: "Ứng dụng AI Agent tự động hóa doanh nghiệp",
+            category: "tech_news",
+            trend_score: 99,
+            source: "Google Trends VN",
+            hook_style: "warning_mistake",
+            sample_hook: "DOANH NGHIỆP CỦA BẠN ĐANG MẤT TIỀN NẾU CHƯA DÙNG AI NÀY!",
+            suggested_angle: "Trình diễn AI Agent",
+            suggested_hashtags: ["#aiagent", "#tudonghoa"],
+          },
+        ]);
+      }
+      return jsonResponse({ items: [], total: 0, limit: 20, offset: 0 });
+    });
+
+    renderScreen();
+
+    const refreshBtn = await screen.findByRole("button", { name: /Quét xu hướng mới/i });
+    await user.click(refreshBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Ứng dụng AI Agent tự động hóa doanh nghiệp")).toBeInTheDocument();
+      expect(screen.getByText(/Hot 99%/i)).toBeInTheDocument();
+    });
   });
 });
 

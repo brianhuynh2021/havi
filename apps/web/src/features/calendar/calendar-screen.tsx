@@ -16,6 +16,7 @@ import {
   toVnDateString,
   type CalendarDay,
 } from "./calendar.api";
+import { rejectItem } from "@/features/content-creation/content-creation.api";
 import { statusLabel, statusTone } from "./calendar.fixture";
 import styles from "./calendar.module.css";
 
@@ -193,6 +194,22 @@ export function CalendarScreen() {
     setReloadKey((k) => k + 1);
   }
 
+  const [cancelling, setCancelling] = useState(false);
+
+  async function handleCancelScheduledPost() {
+    if (!selectedItem) return;
+    setCancelling(true);
+    setRescheduleError(null);
+    const result = await rejectItem(selectedItem.item.id);
+    setCancelling(false);
+    if (!result.ok) {
+      setRescheduleError(result.message);
+      return;
+    }
+    setSelectedItem(null);
+    setReloadKey((k) => k + 1);
+  }
+
   function applyPresetTime(timeStr: string) {
     if (!targetIso) return;
     const datePart = targetIso.split("T")[0];
@@ -204,6 +221,7 @@ export function CalendarScreen() {
     return days.map((day) => ({
       ...day,
       items: day.items.filter((item) => {
+        if (item.status === "draft") return false;
         const matchesChannel =
           channelFilter === "all" ||
           item.channel === channelFilter ||
@@ -640,10 +658,19 @@ export function CalendarScreen() {
                   <div className={styles.rescheduleActions}>
                     <Button
                       type="button"
+                      variant="outline"
+                      style={{ color: "#D97706", borderColor: "#FCD34D", background: "#FFFBEB" }}
+                      disabled={cancelling}
+                      onClick={handleCancelScheduledPost}
+                    >
+                      {cancelling ? "Đang chuyển…" : "⏸️ Hoãn lại về Bản nháp"}
+                    </Button>
+                    <Button
+                      type="button"
                       variant="ghost"
                       onClick={() => setSelectedItem(null)}
                     >
-                      Huỷ
+                      Đóng
                     </Button>
                     <Button
                       type="submit"

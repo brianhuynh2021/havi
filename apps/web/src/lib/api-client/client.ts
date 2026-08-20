@@ -86,6 +86,7 @@ async function authedFetch(input: Request): Promise<Response> {
   return fetch(retry, { credentials: "include" });
 }
 
+export { authedFetch };
 export const apiClient = createClient<paths>({ baseUrl, fetch: authedFetch });
 
 /** Client không kèm token — cho /auth/login, /auth/sign-up, reset mật khẩu.

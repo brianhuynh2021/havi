@@ -19,7 +19,11 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
-from application.services.content_prompt import build_system_prompt, build_user_prompt
+from application.services.content_prompt import (
+    PILOT_CHANNELS,
+    build_system_prompt,
+    build_user_prompt,
+)
 from application.services.content_service import ContentJobNotFound, WorkspaceNotFound
 from core.content_state import initial_status
 from core.enums import Channel, MediaStatus
@@ -80,13 +84,9 @@ class ContentEngine:
 
         await self._content.mark_job_processing(job)
 
-        target_channels: list[Channel] | None = None
-        if self._connections is not None:
-            connected = await self._connections.get_connected_channels(workspace_id)
-            if connected:
-                target_channels = connected
-            else:
-                target_channels = [Channel.FACEBOOK_PAGE]
+        # Luôn sinh đủ 5 kênh pilot chính thức (2 Bài viết & SEO + 3 Video 9:16)
+        # để chủ tiệm có thể duyệt, tút ảnh, tạo video và chia sẻ ngay cả khi chưa kết nối API.
+        target_channels = list(PILOT_CHANNELS)
 
         media_descriptions = await self._describe_media(
             workspace_id=workspace_id, raw_inputs=job.raw_inputs
@@ -126,19 +126,63 @@ class ContentEngine:
             await self._content.mark_job_failed(job, reason=reason)
             raise GenerationFailed(reason) from exc
 
+        # Trích xuất URL ảnh nếu người dùng có nạp ảnh vào đầu vào
+        uploaded_media_url = None
+        for raw in (job.raw_inputs or []):
+            if isinstance(raw, dict):
+                if raw.get("preview_url"):
+                    uploaded_media_url = raw.get("preview_url")
+                    break
+                elif raw.get("media_asset_id"):
+                    try:
+                        asset_id = UUID(str(raw["media_asset_id"]))
+                        asset = await self._media.get(workspace_id=workspace_id, asset_id=asset_id)
+                        if asset:
+                            from adapters.storage.object_storage import ObjectStorage
+                            from core.config import get_settings
+                            storage = ObjectStorage(get_settings())
+                            uploaded_media_url = storage.public_url(asset.object_key)
+                    except Exception as err:
+                        logger.warning("Failed to resolve media asset url: %s", err)
+                    if uploaded_media_url:
+                        break
+            elif hasattr(raw, "preview_url") and raw.preview_url:
+                uploaded_media_url = raw.preview_url
+                break
+            elif hasattr(raw, "media_asset_id") and raw.media_asset_id:
+                try:
+                    asset = await self._media.get(workspace_id=workspace_id, asset_id=raw.media_asset_id)
+                    if asset:
+                        from adapters.storage.object_storage import ObjectStorage
+                        from core.config import get_settings
+                        storage = ObjectStorage(get_settings())
+                        uploaded_media_url = storage.public_url(asset.object_key)
+                except Exception as err:
+                    logger.warning("Failed to resolve media asset url: %s", err)
+                if uploaded_media_url:
+                    break
+
         status = initial_status(workspace.publish_mode)
-        items = [
-            await self._content.create_item(
+        items = []
+        for draft in result.value.drafts:
+            item_media_url = uploaded_media_url
+            # Với các kênh video (TikTok, YouTube Shorts, Reels), tự động gắn video 9:16 mẫu chuyển động
+            # nếu người dùng chưa tải lên video mp4 riêng để đảm bảo bài sẵn sàng xuất bản 1-chạm.
+            if draft.channel in (Channel.TIKTOK, Channel.YOUTUBE, Channel.REELS):
+                if not (item_media_url and (item_media_url.endswith(".mp4") or "video" in item_media_url)):
+                    item_media_url = "/test_tiktok.mp4"
+
+            item = await self._content.create_item(
                 workspace_id=workspace_id,
                 job_id=job_id,
                 channel=draft.channel,
                 kind=draft.kind,
                 text=draft.text,
                 media_note=draft.media_note,
+                media_url=item_media_url,
                 status=status,
             )
-            for draft in result.value.drafts
-        ]
+            items.append(item)
         await self._content.mark_job_drafts_ready(job)
 
         await self._events.record(

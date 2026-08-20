@@ -30,12 +30,18 @@ logger = logging.getLogger(__name__)
 
 def build_provider_router() -> ProviderRouter:
     settings = get_settings()
+    if settings.gemini_api_key and settings.gemini_api_key not in ("mock", "mock-gemini-key", "change-me"):
+        return ProviderRouter(
+            {
+                LLMProvider.GEMINI: GeminiProvider(settings),
+                LLMProvider.ANTHROPIC: AnthropicProvider(settings),
+                LLMProvider.OPENAI: OpenAIProvider(settings),
+            }
+        )
     if settings.use_mock_llm:
-        # Chỉ tới được đây khi HAVI_ENV=local — Settings ném lỗi lúc khởi động
-        # nếu bật mock ở staging/production.
         logger.warning(
-            "Running LLM in MOCK mode (HAVI_USE_MOCK_LLM=true) — drafts use mock templates, "
-            "not live models. Set to false to call live LLMs."
+            "Running LLM in MOCK mode (HAVI_USE_MOCK_LLM=true) — drafts use smart dynamic templates, "
+            "not live models. Configure GEMINI_API_KEY to call live LLMs."
         )
         return ProviderRouter({LLMProvider.GEMINI: MockProvider()})
     return ProviderRouter(

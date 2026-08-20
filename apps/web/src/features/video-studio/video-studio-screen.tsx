@@ -8,6 +8,7 @@ import {
   cancelRenderJob,
   getActiveWorkspaceId,
   getHotTrends,
+  refreshHotTrends,
   type VideoRenderJob,
   type VideoCaptionStyle,
   type TrendingTopic,
@@ -59,27 +60,34 @@ export function VideoStudioScreen() {
     const res = await listRenderJobs(workspaceId);
     if (res.ok) {
       setJobs(res.data.items);
-      if (!selectedJob && res.data.items.length > 0) {
-        setSelectedJob(res.data.items[0]);
-      } else if (selectedJob) {
-        const updated = res.data.items.find((j) => j.id === selectedJob.id);
-        if (updated) setSelectedJob(updated);
-      }
+      setSelectedJob((prev) => {
+        if (!prev) return res.data.items[0] ?? null;
+        const updated = res.data.items.find((j) => j.id === prev.id);
+        if (!updated) return res.data.items[0] ?? null;
+        if (
+          updated.status === prev.status &&
+          updated.progress_percent === prev.progress_percent &&
+          updated.output_url === prev.output_url &&
+          updated.error_message === prev.error_message
+        ) {
+          return prev;
+        }
+        return updated;
+      });
     } else {
       setError(res.message);
     }
     setIsLoading(false);
-  }, [workspaceId, selectedJob]);
+  }, [workspaceId]);
 
   useEffect(() => {
     let isMounted = true;
-    const load = async () => {
-      if (!workspaceId) return;
-      await Promise.all([fetchJobs(), fetchTrends()]);
-    };
-    void load();
+    if (workspaceId) {
+      void fetchJobs();
+      void fetchTrends();
+    }
     const interval = setInterval(() => {
-      if (isMounted) void fetchJobs();
+      if (isMounted && workspaceId) void fetchJobs();
     }, 4000);
     return () => {
       isMounted = false;
@@ -158,6 +166,21 @@ export function VideoStudioScreen() {
     }
   };
 
+  const [isRefreshingTrends, setIsRefreshingTrends] = useState(false);
+
+  const handleRefreshTrends = async () => {
+    if (!workspaceId) return;
+    setIsRefreshingTrends(true);
+    setError(null);
+    const res = await refreshHotTrends(workspaceId);
+    setIsRefreshingTrends(false);
+    if (res.ok) {
+      setTrends(res.data);
+    } else {
+      setError(res.message);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -181,9 +204,41 @@ export function VideoStudioScreen() {
           <div className={styles.trendScoutTitle}>
             <span>🔥 Xu Hướng Nóng Hổi Hôm Nay (AI Trend Scout)</span>
           </div>
-          <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-            Tự động quét & tối ưu cho TikTok / YouTube Shorts
-          </span>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              Tự động quét & tối ưu cho TikTok / YouTube Shorts
+            </span>
+            <button
+              type="button"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid #C7D2FE",
+                background: "#EEF2FF",
+                color: "#4338CA",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              disabled={isRefreshingTrends}
+              onClick={handleRefreshTrends}
+              title="Quét lại các xu hướng mới nhất từ TikTok và YouTube"
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  animation: isRefreshingTrends ? "spin 1s linear infinite" : "none",
+                }}
+              >
+                🔄
+              </span>
+              {isRefreshingTrends ? "Đang quét..." : "Quét xu hướng mới"}
+            </button>
+          </div>
         </div>
 
         {isLoadingTrends ? (
@@ -365,7 +420,7 @@ export function VideoStudioScreen() {
                         </span>
                       </div>
                       <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                        {job.target_aspect_ratio} • Engine: {job.renderer_engine.toUpperCase()} • {new Date(job.created_at).toLocaleTimeString("vi-VN")}
+                        {job.target_aspect_ratio} • Engine: {(job.renderer_engine || "FFMPEG").toUpperCase()} • {new Date(job.created_at).toLocaleTimeString("vi-VN")}
                       </div>
 
                       {/* Thanh tiến độ nếu đang render */}

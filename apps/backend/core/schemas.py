@@ -239,6 +239,7 @@ class RawInput(HaviModel):
     kind: RawInputKind
     text: str | None = None
     media_asset_id: UUID | None = None
+    preview_url: str | None = None
 
 
 class ContentJobCreate(HaviModel):
@@ -264,6 +265,7 @@ class ContentItem(HaviModel):
     kind: str = Field(examples=["Bài ảnh", "Bài đánh giá", "Video ngắn"])
     text: str
     media_note: str | None = None
+    media_url: str | None = None
     status: ContentStatus
     version_no: int = 1
     scheduled_at: datetime | None = None
@@ -278,7 +280,29 @@ class ContentItemUpdate(HaviModel):
 
     text: str | None = None
     media_note: str | None = None
+    media_url: str | None = None
     scheduled_at: datetime | None = None
+
+
+class GenerateImageRequest(HaviModel):
+    prompt: str | None = None
+    style: str | None = Field(default="photorealistic", description="photorealistic | 3d_studio | cinematic")
+
+
+class GenerateImageResponse(HaviModel):
+    media_url: str
+    prompt_used: str
+
+
+class GenerateVideoRequest(HaviModel):
+    target_aspect_ratio: str = Field(default="9:16", description="9:16 | 1:1 | 16:9")
+    title: str | None = None
+
+
+class GenerateVideoResponse(HaviModel):
+    media_url: str
+    target_aspect_ratio: str = "9:16"
+    status: str = "completed"
 
 
 class ContentItemVersion(HaviModel):
@@ -299,6 +323,7 @@ class BulkApproveRequest(HaviModel):
     """Nút "Duyệt & đăng hết" trên thanh duyệt nhanh."""
 
     content_item_ids: list[UUID] = Field(min_length=1)
+    publish_now: bool = Field(default=True, description="Đăng ngay lập tức thay vì chờ giờ vàng")
 
 
 class BulkApproveResult(HaviModel):
@@ -309,6 +334,16 @@ class BulkApproveResult(HaviModel):
 class BulkApproveFailure(HaviModel):
     content_item_id: UUID
     reason: str
+
+
+class BulkDismissRequest(HaviModel):
+    """Nút "Xoá tất cả bản nháp" trên thanh tác vụ."""
+
+    content_item_ids: list[UUID] = Field(min_length=1)
+
+
+class BulkDismissResult(HaviModel):
+    dismissed: list[UUID]
 
 
 # --- Calendar ---------------------------------------------------------------

@@ -1,4 +1,5 @@
 import { readTokens } from "@/lib/auth/token-store";
+import { authedFetch } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
 
 export type VideoRenderStatus = "queued" | "rendering" | "completed" | "failed" | "cancelled";
@@ -72,12 +73,15 @@ export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const GENERIC_ERROR = "Không thể kết nối đến máy chủ render video.";
 
-function getAuthHeaders(): HeadersInit {
-  const tokens = readTokens();
-  return {
-    "Content-Type": "application/json",
-    ...(tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {}),
-  };
+async function fetchWithAuth(url: string, init?: RequestInit): Promise<Response> {
+  const req = new Request(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+  return authedFetch(req);
 }
 
 export function getActiveWorkspaceId(): string | null {
@@ -95,11 +99,8 @@ export async function listRenderJobs(
     if (options?.offset) params.set("offset", options.offset.toString());
 
     const queryStr = params.toString() ? `?${params.toString()}` : "";
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${baseUrl}/workspaces/${workspaceId}/video/render-jobs${queryStr}`,
-      {
-        headers: getAuthHeaders(),
-      },
     );
 
     if (!res.ok) {
@@ -122,11 +123,8 @@ export async function getRenderJob(
   jobId: string,
 ): Promise<Result<VideoRenderJob>> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${baseUrl}/workspaces/${workspaceId}/video/render-jobs/${jobId}`,
-      {
-        headers: getAuthHeaders(),
-      },
     );
 
     if (!res.ok) {
@@ -149,9 +147,8 @@ export async function createRenderJob(
   payload: CreateRenderJobPayload,
 ): Promise<Result<VideoRenderJob>> {
   try {
-    const res = await fetch(`${baseUrl}/workspaces/${workspaceId}/video/render-jobs`, {
+    const res = await fetchWithAuth(`${baseUrl}/workspaces/${workspaceId}/video/render-jobs`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -175,11 +172,10 @@ export async function retryRenderJob(
   jobId: string,
 ): Promise<Result<VideoRenderJob>> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${baseUrl}/workspaces/${workspaceId}/video/render-jobs/${jobId}/retry`,
       {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify({}),
       },
     );
@@ -204,11 +200,10 @@ export async function cancelRenderJob(
   jobId: string,
 ): Promise<Result<{ ok: boolean }>> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${baseUrl}/workspaces/${workspaceId}/video/render-jobs/${jobId}/cancel`,
       {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify({}),
       },
     );
@@ -255,9 +250,8 @@ export async function getHotTrends(
   workspaceId: string,
 ): Promise<Result<TrendingTopic[]>> {
   try {
-    const res = await fetch(`${baseUrl}/workspaces/${workspaceId}/trends/hot`, {
+    const res = await fetchWithAuth(`${baseUrl}/workspaces/${workspaceId}/trends/hot`, {
       method: "GET",
-      headers: getAuthHeaders(),
     });
 
     if (!res.ok) {
@@ -281,9 +275,8 @@ export async function synthesizeTrend(
   options?: { target_aspect_ratio?: "9:16" | "1:1" | "16:9"; duration_seconds?: number },
 ): Promise<Result<SynthesizeTrendResult>> {
   try {
-    const res = await fetch(`${baseUrl}/workspaces/${workspaceId}/trends/synthesize`, {
+    const res = await fetchWithAuth(`${baseUrl}/workspaces/${workspaceId}/trends/synthesize`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({
         trend_id: trendId,
         target_aspect_ratio: options?.target_aspect_ratio || "9:16",
@@ -306,3 +299,25 @@ export async function synthesizeTrend(
   }
 }
 
+export async function refreshHotTrends(
+  workspaceId: string,
+): Promise<Result<TrendingTopic[]>> {
+  try {
+    const res = await fetchWithAuth(`${baseUrl}/workspaces/${workspaceId}/trends/refresh`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, message: detailToMessage(err.detail, GENERIC_ERROR) };
+    }
+
+    const data: TrendingTopic[] = await res.json();
+    return { ok: true, data };
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return { ok: false, message: NETWORK_ERROR_MESSAGE };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+}

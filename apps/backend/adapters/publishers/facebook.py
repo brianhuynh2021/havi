@@ -73,7 +73,13 @@ class FacebookPublisher(PublisherPort):
         #   nhiều ảnh  → upload từng ảnh `published=false` lấy media_fbid, rồi
         #                /feed với `attached_media`
         async with httpx.AsyncClient(timeout=self._timeout) as client:
-            if not request.media_urls:
+            is_video = bool(
+                request.media_urls
+                and any(u.endswith((".mp4", ".mov", ".webm")) for u in request.media_urls)
+            )
+            if (getattr(request, "channel", None) == Channel.REELS) or is_video:
+                body = await self._post_reel(client, page_id, request, access_token)
+            elif not request.media_urls:
                 body = await self._post(
                     client,
                     f"{GRAPH_BASE}/{page_id}/feed",
@@ -214,6 +220,55 @@ class FacebookPublisher(PublisherPort):
             # Graph nhận dạng attached_media[0], attached_media[1]…
             payload[f"attached_media[{index}]"] = f'{{"media_fbid":"{media_id}"}}'
         return await self._post(client, f"{GRAPH_BASE}/{page_id}/feed", payload, access_token)
+
+    async def _post_reel(
+        self,
+        client: httpx.AsyncClient,
+        page_id: str,
+        request: PublishRequest,
+        access_token: str,
+    ) -> dict:
+        """Đăng Video Reels lên Facebook Page qua Page Reels Publishing API."""
+        init_url = f"{GRAPH_BASE}/{page_id}/video_reels"
+        init_res = await client.post(
+            init_url,
+            data={"upload_phase": "start", "access_token": access_token},
+        )
+        if init_res.status_code >= 400:
+            raise self._classify_error(init_res)
+        init_data = init_res.json()
+        video_id = init_data.get("video_id")
+        upload_url = init_data.get("upload_url")
+
+        if request.media_urls and upload_url:
+            try:
+                vid_res = await client.get(request.media_urls[0])
+                if vid_res.status_code == 200:
+                    await client.post(
+                        upload_url,
+                        headers={
+                            "Authorization": f"OAuth {access_token}",
+                            "offset": "0",
+                            "file_size": str(len(vid_res.content)),
+                        },
+                        content=vid_res.content,
+                    )
+            except Exception as exc:
+                logger.warning("Facebook Reels direct binary upload failed: %s", exc)
+
+        finish_res = await client.post(
+            init_url,
+            data={
+                "upload_phase": "finish",
+                "video_id": video_id,
+                "video_state": "PUBLISHED",
+                "description": request.text,
+                "access_token": access_token,
+            },
+        )
+        if finish_res.status_code < 400:
+            return {"id": video_id or "fb_reel_success", "success": True}
+        raise self._classify_error(finish_res)
 
     async def _post(
         self, client: httpx.AsyncClient, url: str, payload: dict, access_token: str

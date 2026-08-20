@@ -106,6 +106,7 @@ class ContentRepository:
         kind: str,
         text: str,
         media_note: str | None,
+        media_url: str | None = None,
         status: ContentStatus,
     ) -> ContentItem:
         item = ContentItem(
@@ -115,6 +116,7 @@ class ContentRepository:
             kind=kind,
             text=text,
             media_note=media_note,
+            media_url=media_url,
             status=status,
         )
         self._session.add(item)
@@ -147,6 +149,8 @@ class ContentRepository:
         filters = [ContentItem.workspace_id == workspace_id]
         if status is not None:
             filters.append(ContentItem.status == status)
+        else:
+            filters.append(ContentItem.status != ContentStatus.DISMISSED)
         if channel is not None:
             filters.append(ContentItem.channel == channel)
 
@@ -254,12 +258,13 @@ class ContentRepository:
         """Lịch đăng — projection trên `scheduled_at`, không phải bảng riêng.
 
         `start` inclusive, `end` exclusive: caller truyền nguyên ngày kế tiếp nên
-        bài đăng lúc 23:59:59 của ngày cuối vẫn nằm trong khoảng.
+        bài đăng lúc 23:59:59 của ngày cuối vẫn nằm trong khoảng. Bỏ qua bản nháp (DRAFT).
         """
         result = await self._session.execute(
             select(ContentItem)
             .where(
                 ContentItem.workspace_id == workspace_id,
+                ContentItem.status != ContentStatus.DRAFT,
                 ContentItem.scheduled_at.is_not(None),
                 ContentItem.scheduled_at >= start,
                 ContentItem.scheduled_at < end,
@@ -274,6 +279,7 @@ class ContentRepository:
         *,
         text: str | None,
         media_note: str | None,
+        media_url: str | None = None,
         scheduled_at: datetime | None,
         edited_by: UUID,
     ) -> ContentItem:
@@ -296,6 +302,8 @@ class ContentRepository:
             )
         if media_note is not None:
             item.media_note = media_note
+        if media_url is not None:
+            item.media_url = None if media_url == "__NONE__" else media_url
         if scheduled_at is not None:
             item.scheduled_at = scheduled_at
         await self._session.flush()
@@ -316,12 +324,15 @@ class ContentRepository:
         status: ContentStatus,
         approved_by: UUID | None = None,
         scheduled_at: datetime | None = None,
+        clear_schedule: bool = False,
     ) -> ContentItem:
         item.status = status
         if approved_by is not None:
             item.approved_by = approved_by
             item.approved_at = datetime.now(UTC)
-        if scheduled_at is not None:
+        if clear_schedule or status in {ContentStatus.DRAFT, ContentStatus.DISMISSED}:
+            item.scheduled_at = None
+        elif scheduled_at is not None:
             item.scheduled_at = scheduled_at
         await self._session.flush()
         return item

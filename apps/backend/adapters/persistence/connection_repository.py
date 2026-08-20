@@ -9,7 +9,7 @@ from core.token_crypto import decrypt_token, encrypt_token
 from domain.models.connection import PlatformConnection
 
 PLATFORM_TO_CHANNELS: dict[Platform, list[Channel]] = {
-    Platform.FACEBOOK: [Channel.FACEBOOK_PAGE],
+    Platform.FACEBOOK: [Channel.FACEBOOK_PAGE, Channel.REELS],
     Platform.ZALO_OA: [Channel.ZALO_OA],
     Platform.GOOGLE_BUSINESS: [Channel.GOOGLE_BUSINESS],
     Platform.TIKTOK: [Channel.TIKTOK],

@@ -5,7 +5,8 @@ from typing import Any
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
-from api.deps import WorkspaceDep
+from api.deps import DbSessionDep, WorkspaceDep
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.trend_scout_service import TrendScoutService
 from domain.models.trend_scout import (
     HookStyle,
@@ -57,6 +58,42 @@ async def get_hot_trends(
     workspace_id: WorkspaceDep,
 ) -> list[TrendingTopicResponse]:
     trends = await trend_scout_service.get_hot_trends(workspace_id)
+    return [
+        TrendingTopicResponse(
+            id=t.id,
+            keyword=t.keyword,
+            category=t.category,
+            trend_score=t.trend_score,
+            source=t.source,
+            hook_style=t.hook_style,
+            sample_hook=t.sample_hook,
+            suggested_angle=t.suggested_angle,
+            suggested_hashtags=t.suggested_hashtags,
+        )
+        for t in trends
+    ]
+
+
+@router.post(
+    "/refresh",
+    response_model=list[TrendingTopicResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Quét và làm mới danh sách các Hot Trends mới nhất từ Radar AI",
+)
+async def refresh_hot_trends(
+    workspace_id: WorkspaceDep,
+    session: DbSessionDep,
+) -> list[TrendingTopicResponse]:
+    ws_repo = WorkspaceRepository(session)
+    ws = await ws_repo.get_by_id(workspace_id)
+    industry = ws.industry if ws and ws.industry else "Đào tạo nghề & Công nghệ"
+    brand_name = ws.name if ws and ws.name else "Trung Tâm Công Nghệ Nhật Minh"
+
+    trends = await trend_scout_service.refresh_trends(
+        workspace_id=workspace_id,
+        industry=industry,
+        brand_name=brand_name,
+    )
     return [
         TrendingTopicResponse(
             id=t.id,

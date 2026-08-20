@@ -424,6 +424,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspace_id}/trends/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Quét và làm mới danh sách các Hot Trends mới nhất từ Radar AI */
+        post: operations["refresh_hot_trends_workspaces__workspace_id__trends_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/trends/synthesize": {
         parameters: {
             query?: never;
@@ -713,7 +730,11 @@ export interface paths {
         get: operations["get_content_content__content_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Dismiss Content
+         * @description Xoá bỏ bài nháp vĩnh viễn: PENDING_APPROVAL/DRAFT/SCHEDULED → DISMISSED.
+         */
+        delete: operations["dismiss_content_content__content_id__delete"];
         options?: never;
         head?: never;
         /**
@@ -724,6 +745,46 @@ export interface paths {
          *     sửa lúc đó sẽ làm bản trên Facebook khác bản trong DB.
          */
         patch: operations["update_content_content__content_id__patch"];
+        trace?: never;
+    };
+    "/content/{content_id}/generate-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Item Image
+         * @description Tạo sinh ảnh AI mới bằng Gemini / Imagen theo ngữ cảnh bài viết.
+         */
+        post: operations["generate_item_image_content__content_id__generate_image_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/{content_id}/generate-video": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Item Video
+         * @description Tự động dựng video ngắn 9:16 có chuyển động và phụ đề động cho bài viết.
+         */
+        post: operations["generate_item_video_content__content_id__generate_video_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/content/{content_id}/versions": {
@@ -754,9 +815,29 @@ export interface paths {
         put?: never;
         /**
          * Approve All
-         * @description Nút "Duyệt & đăng hết" — bài nào không duyệt được thì báo lý do, không fail cả lô.
+         * @description Nút "Duyệt & đăng hết" — publish_now=True kích hoạt đăng ngay lập tức.
          */
         post: operations["approve_all_content_approve_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/dismiss-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss All
+         * @description Nút "Xoá tất cả bản nháp" — chuyển hàng loạt item sang DISMISSED.
+         */
+        post: operations["dismiss_all_content_dismiss_all_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -797,9 +878,29 @@ export interface paths {
         put?: never;
         /**
          * Reject Content
-         * @description Từ chối: pending_approval → draft.
+         * @description Hoãn bài về bản nháp: pending_approval/scheduled → draft.
          */
         post: operations["reject_content_content__content_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/{content_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss Content
+         * @description Xoá bỏ bài nháp vĩnh viễn: PENDING_APPROVAL/DRAFT/SCHEDULED → DISMISSED.
+         */
+        post: operations["dismiss_content_content__content_id__dismiss_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1587,6 +1688,12 @@ export interface components {
         BulkApproveRequest: {
             /** Content Item Ids */
             content_item_ids: string[];
+            /**
+             * Publish Now
+             * @description Đăng ngay lập tức thay vì chờ giờ vàng
+             * @default true
+             */
+            publish_now: boolean;
         };
         /** BulkApproveResult */
         BulkApproveResult: {
@@ -1594,6 +1701,19 @@ export interface components {
             approved: string[];
             /** Rejected */
             rejected: components["schemas"]["BulkApproveFailure"][];
+        };
+        /**
+         * BulkDismissRequest
+         * @description Nút "Xoá tất cả bản nháp" trên thanh tác vụ.
+         */
+        BulkDismissRequest: {
+            /** Content Item Ids */
+            content_item_ids: string[];
+        };
+        /** BulkDismissResult */
+        BulkDismissResult: {
+            /** Dismissed */
+            dismissed: string[];
         };
         /**
          * CalendarDay
@@ -1682,6 +1802,8 @@ export interface components {
             text: string;
             /** Media Note */
             media_note?: string | null;
+            /** Media Url */
+            media_url?: string | null;
             status: components["schemas"]["ContentStatus"];
             /**
              * Version No
@@ -1711,6 +1833,8 @@ export interface components {
             text?: string | null;
             /** Media Note */
             media_note?: string | null;
+            /** Media Url */
+            media_url?: string | null;
             /** Scheduled At */
             scheduled_at?: string | null;
         };
@@ -1773,7 +1897,7 @@ export interface components {
          * ContentStatus
          * @enum {string}
          */
-        ContentStatus: "draft" | "pending_approval" | "approved" | "scheduled" | "publishing" | "published" | "failed" | "dead_letter";
+        ContentStatus: "draft" | "pending_approval" | "approved" | "scheduled" | "publishing" | "published" | "failed" | "dead_letter" | "dismissed";
         /** CreateVideoRenderJobRequest */
         CreateVideoRenderJobRequest: {
             /**
@@ -1935,6 +2059,50 @@ export interface components {
              * @default false
              */
             approved: boolean;
+        };
+        /** GenerateImageRequest */
+        GenerateImageRequest: {
+            /** Prompt */
+            prompt?: string | null;
+            /**
+             * Style
+             * @description photorealistic | 3d_studio | cinematic
+             * @default photorealistic
+             */
+            style: string | null;
+        };
+        /** GenerateImageResponse */
+        GenerateImageResponse: {
+            /** Media Url */
+            media_url: string;
+            /** Prompt Used */
+            prompt_used: string;
+        };
+        /** GenerateVideoRequest */
+        GenerateVideoRequest: {
+            /**
+             * Target Aspect Ratio
+             * @description 9:16 | 1:1 | 16:9
+             * @default 9:16
+             */
+            target_aspect_ratio: string;
+            /** Title */
+            title?: string | null;
+        };
+        /** GenerateVideoResponse */
+        GenerateVideoResponse: {
+            /** Media Url */
+            media_url: string;
+            /**
+             * Target Aspect Ratio
+             * @default 9:16
+             */
+            target_aspect_ratio: string;
+            /**
+             * Status
+             * @default completed
+             */
+            status: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2612,6 +2780,8 @@ export interface components {
             text?: string | null;
             /** Media Asset Id */
             media_asset_id?: string | null;
+            /** Preview Url */
+            preview_url?: string | null;
         };
         /**
          * RawInputKind
@@ -3783,6 +3953,26 @@ export interface operations {
             };
         };
     };
+    refresh_hot_trends_workspaces__workspace_id__trends_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendingTopicResponse"][];
+                };
+            };
+        };
+    };
     synthesize_trend_workspaces__workspace_id__trends_synthesize_post: {
         parameters: {
             query?: never;
@@ -4260,6 +4450,37 @@ export interface operations {
             };
         };
     };
+    dismiss_content_content__content_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_content_content__content_id__patch: {
         parameters: {
             query?: never;
@@ -4282,6 +4503,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_item_image_content__content_id__generate_image_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateImageRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateImageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_item_video_content__content_id__generate_video_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateVideoRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateVideoResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4359,6 +4650,39 @@ export interface operations {
             };
         };
     };
+    dismiss_all_content_dismiss_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkDismissRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkDismissResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     approve_content_content__content_id__approve_post: {
         parameters: {
             query?: never;
@@ -4395,6 +4719,37 @@ export interface operations {
         };
     };
     reject_content_content__content_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_content_content__content_id__dismiss_post: {
         parameters: {
             query?: never;
             header?: never;

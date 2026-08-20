@@ -99,71 +99,55 @@ def _join_raw_inputs(user_prompt: str) -> str:
 
 
 def _generate_smart_draft(channel: str, kind: str, tiem: str, noi_dung: str, is_tech: bool) -> tuple[str, str]:
-    """Sinh nội dung chuyên sâu theo đặc thù từng kênh và ngành nghề."""
-    if is_tech:
-        if channel == "facebook_page":
-            text = (
-                f"🔥 {tiem} chính thức khai giảng: {noi_dung}\n\n"
-                "📌 Quyền lợi đặc quyền cho học viên:\n"
-                "• Đào tạo thực chiến 1 kèm 1 với chuyên gia công nghệ.\n"
-                "• Tự tay xây dựng và triển khai AI Agent tự động hóa doanh nghiệp.\n"
-                "• Cấp source code & tài liệu độc quyền từ phòng Lab.\n\n"
-                "👉 Đăng ký ngay hôm nay để nhận ưu đãi. Nhắn tin trực tiếp cho Fanpage hoặc liên hệ Hotline để được tư vấn lộ trình chi tiết!"
-            )
-            media_note = "Ảnh chụp phòng Lab công nghệ hoặc poster khóa học AI Agent"
-        elif channel == "google_business":
-            text = (
-                f"{tiem} thông báo lịch khai giảng và chương trình đào tạo mới: {noi_dung}. "
-                "Chương trình phù hợp cho chủ doanh nghiệp, lập trình viên và người muốn ứng dụng AI vào thực tế. "
-                "Địa chỉ đào tạo và phòng Lab tại cơ sở chính thức. Liên hệ Hotline để nhận lộ trình học chi tiết."
-            )
-            media_note = "Ảnh thực tế không gian đào tạo tại cơ sở"
-        elif channel == "tiktok":
-            text = (
-                f"🎬 [HOOK 3S]: Bạn có muốn tự tay xây AI Agent chốt khách tự động 24/7 chỉ sau 1 khóa học?\n\n"
-                f"💡 [THỰC CHIẾN]: Tại {tiem}, {noi_dung}. Học viên không học lý thuyết suông mà được cầm tay chỉ việc trực tiếp trên máy trạm!\n\n"
-                "🚀 [CTA]: Follow kênh và để lại comment hoặc nhắn tin để nhận ngay voucher giảm 20% học phí nhé! #AIAgent #NhatMinhTech #TuDongHoa #HocLapTrinh #viral"
-            )
-            media_note = "Quay video dọc 9:16 cận cảnh thao tác lập trình bot trên màn hình và tương tác 1 kèm 1"
-        elif channel == "youtube":
-            text = (
-                f"⚡ [SHORTS]: Hướng dẫn xây dựng AI Agent thực chiến cùng {tiem}!\n\n"
-                f"Hôm nay mình chia sẻ thông tin: {noi_dung}. Đào tạo 1 kèm 1 giúp bạn làm chủ công nghệ tự động hóa ngay từ buổi học đầu tiên.\n\n"
-                "👉 Đăng ký kênh để xem thêm nhiều bài học AI bổ ích! #Shorts #AIAgent #NhatMinhTech"
-            )
-            media_note = "Video demo chạy thử bot AI Agent tự động trả lời khách hàng"
-        else:
-            text = f"Chào anh/chị, {tiem} xin gửi thông tin khóa học: {noi_dung}. Anh/chị nhắn lại tin này để nhận tư vấn lộ trình và giữ suất ưu đãi nhé!"
-            media_note = "Ảnh tóm tắt lộ trình đào tạo"
+    """Sinh nội dung chuyên sâu, văn phong sắc bén theo đặc thù từng kênh và ngành nghề."""
+    clean_content = noi_dung.rstrip(".")
+    
+    if channel == "facebook_page":
+        text = (
+            f"🌟 {tiem.upper()} THÔNG BÁO QUAN TRỌNG!\n\n"
+            f"👉 {clean_content}.\n\n"
+            "✨ Lý do bạn không nên bỏ lỡ dịp này:\n"
+            "• Dịch vụ & giải pháp được thiết kế tỉ mỉ, tối ưu trải nghiệm thực tế.\n"
+            "• Đội ngũ tận tâm, đồng hành hỗ trợ chu đáo từ A đến Z.\n"
+            "• Ưu đãi đặc biệt dành riêng cho khách hàng tương tác sớm hôm nay.\n\n"
+            "📩 Inbox ngay cho Fanpage hoặc để lại bình luận để nhận thông tin chi tiết và voucher ưu đãi độc quyền nhé!\n\n"
+            f"#{tiem.replace(' ', '')} #DichVuMoi #UuDaiDacBiet #TraiNghiemTuyetVoi"
+        )
+        media_note = "Ảnh chụp thực tế không gian hoặc poster nổi bật của dịch vụ mới"
+    elif channel == "google_business":
+        text = (
+            f"📌 {tiem} trân trọng giới thiệu: {clean_content}.\n\n"
+            "Chúng tôi cam kết mang đến chất lượng dịch vụ chuẩn mực, tận tâm và chuyên nghiệp hàng đầu khu vực. "
+            "Quý khách có thể ghé trực tiếp cơ sở hoặc liên hệ Hotline 0984 883 750 để được tư vấn chu đáo và nhận báo giá ưu đãi tốt nhất!"
+        )
+        media_note = "Ảnh chụp mặt tiền cơ sở hoặc sản phẩm / dịch vụ thực tế"
+    elif channel == "tiktok":
+        text = (
+            f"🎬 [HOOK 3S]: Bạn đã biết tin cực hot này tại {tiem} chưa?\n\n"
+            f"💡 [THỰC TẾ]: {clean_content}! Trải nghiệm thực tế cực kỳ chất lượng và đáng tiền.\n\n"
+            "🚀 [KÊU GỌI]: Bấm Follow kênh ngay hôm nay và thả tim để không bỏ lỡ những bí quyết hữu ích tiếp theo nhé! #fyp #xuhuong #trending #viral #khampha"
+        )
+        media_note = "Video dọc 9:16 quay nhanh 15s các điểm nhấn dịch vụ với nhạc nền xu hướng"
+    elif channel == "youtube":
+        text = (
+            f"⚡ [SHORTS]: Khám phá thực tế tại {tiem}!\n\n"
+            f"Hôm nay cùng xem trải nghiệm đặc biệt: {clean_content}. Từng công đoạn đều được thực hiện cẩn thận và chuyên nghiệp.\n\n"
+            "👉 Đăng ký kênh (Subscribe) để cập nhật thêm nhiều video thực tế hấp dẫn nhé! #Shorts #ReviewThucTe"
+        )
+        media_note = "Clip ngắn 9:16 có phụ đề chữ vàng viền đen nổi bật ở 3 giây đầu"
+    elif channel == "reels":
+        text = (
+            f"🔥 [REELS]: Bí quyết độc quyền từ {tiem}!\n\n"
+            f"{clean_content}. Đừng quên lưu lại video này để áp dụng ngay cùng bạn bè nhé!\n\n"
+            "#ReelsVN #XuHuong #KhamPha"
+        )
+        media_note = "Video ngắn 15s nhịp điệu nhanh, bắt mắt"
     else:
-        if channel == "facebook_page":
-            text = (
-                f"Chào cả nhà, {tiem} có thông báo mới nè! {noi_dung}\n\n"
-                "Tiệm luôn chăm chút tỉ mỉ từng chi tiết để mang lại trải nghiệm tốt nhất cho quý khách. "
-                "Mọi người nhanh tay nhắn tin cho tiệm để nhận ưu đãi sớm nhất nhé!"
-            )
-            media_note = "Ảnh chụp sản phẩm / dịch vụ thực tế tại tiệm"
-        elif channel == "google_business":
-            text = (
-                f"{tiem} thông báo: {noi_dung}. "
-                "Quý khách vui lòng liên hệ trước để được phục vụ chu đáo nhất."
-            )
-            media_note = "Ảnh cơ sở kinh doanh"
-        elif channel == "tiktok":
-            text = (
-                f"Góc thực chiến tại {tiem}! {noi_dung} "
-                "Bạn thấy thế nào? Hãy thả tim và bình luận bên dưới nhé! #fyp #viral"
-            )
-            media_note = "Video ngắn 15-30s quay không gian và trải nghiệm khách hàng"
-        elif channel == "youtube":
-            text = (
-                f"{tiem} chia sẻ trải nghiệm thực tế: {noi_dung}. "
-                "Theo dõi kênh để đón xem nhiều nội dung thú vị nhé! #Shorts"
-            )
-            media_note = "Video ngắn giới thiệu dịch vụ"
-        else:
-            text = f"Chào anh/chị, {tiem} gửi anh/chị thông tin ưu đãi: {noi_dung}. Anh/chị nhắn lại tin này để em hỗ trợ đặt lịch nhanh nhất nhé!"
-            media_note = "Ảnh ưu đãi"
+        text = (
+            f"Chào anh/chị, {tiem} xin gửi thông tin dịch vụ: {clean_content}. "
+            "Anh/chị nhắn lại tin này để nhận hỗ trợ tư vấn và ưu đãi tốt nhất nhé!"
+        )
+        media_note = "Ảnh tóm tắt ưu đãi"
 
     return text, media_note
 
@@ -205,7 +189,6 @@ class MockProvider(LLMProviderPort):
                 ("tiktok", "Video TikTok"),
                 ("youtube", "YouTube Shorts"),
                 ("reels", "Facebook Reels"),
-                ("zalo_oa", "Tin Zalo"),
             ]
 
         drafts = []

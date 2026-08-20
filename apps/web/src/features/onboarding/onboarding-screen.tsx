@@ -306,7 +306,7 @@ export function OnboardingScreen() {
                   {[
                     { id: 0, text: "⚡ Đang phân tích ngành nghề & dịch vụ tiệm" },
                     { id: 1, text: "🎨 Đang hiệu chỉnh Brand Voice & văn phong thu hút" },
-                    { id: 2, text: "✨ Đã sẵn sàng kịch bản & 3 bản nháp đầu tiên!" },
+                    { id: 2, text: "✨ Đã sẵn sàng kịch bản & 4 bản nháp đầu tiên!" },
                   ].map((stg) => {
                     const isDone = completedStages.includes(stg.id);
                     return (

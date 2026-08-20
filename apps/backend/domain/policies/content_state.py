@@ -12,17 +12,28 @@ from core.enums import ContentStatus, PublishMode
 MAX_PUBLISH_RETRIES = 3
 
 _TRANSITIONS: dict[ContentStatus, frozenset[ContentStatus]] = {
-    ContentStatus.DRAFT: frozenset({ContentStatus.PENDING_APPROVAL, ContentStatus.SCHEDULED}),
-    ContentStatus.PENDING_APPROVAL: frozenset({ContentStatus.APPROVED, ContentStatus.DRAFT}),
-    ContentStatus.APPROVED: frozenset({ContentStatus.SCHEDULED}),
-    ContentStatus.SCHEDULED: frozenset({ContentStatus.PUBLISHING, ContentStatus.DRAFT}),
+    ContentStatus.DRAFT: frozenset(
+        {ContentStatus.PENDING_APPROVAL, ContentStatus.SCHEDULED, ContentStatus.DISMISSED}
+    ),
+    ContentStatus.PENDING_APPROVAL: frozenset(
+        {ContentStatus.APPROVED, ContentStatus.DRAFT, ContentStatus.DISMISSED}
+    ),
+    ContentStatus.APPROVED: frozenset({ContentStatus.SCHEDULED, ContentStatus.DISMISSED}),
+    ContentStatus.SCHEDULED: frozenset(
+        {ContentStatus.PUBLISHING, ContentStatus.DRAFT, ContentStatus.DISMISSED}
+    ),
     ContentStatus.PUBLISHING: frozenset({ContentStatus.PUBLISHED, ContentStatus.FAILED}),
     ContentStatus.PUBLISHED: frozenset(),
-    ContentStatus.FAILED: frozenset({ContentStatus.PUBLISHING, ContentStatus.DEAD_LETTER}),
-    ContentStatus.DEAD_LETTER: frozenset(),
+    ContentStatus.FAILED: frozenset(
+        {ContentStatus.PUBLISHING, ContentStatus.DEAD_LETTER, ContentStatus.DISMISSED}
+    ),
+    ContentStatus.DEAD_LETTER: frozenset({ContentStatus.DISMISSED}),
+    ContentStatus.DISMISSED: frozenset(),
 }
 
-TERMINAL_STATUSES = frozenset({ContentStatus.PUBLISHED, ContentStatus.DEAD_LETTER})
+TERMINAL_STATUSES = frozenset(
+    {ContentStatus.PUBLISHED, ContentStatus.DEAD_LETTER, ContentStatus.DISMISSED}
+)
 
 #: Đã lên mạng rồi thì không cho sửa giờ đăng (kéo-thả trên Lịch đăng).
 RESCHEDULABLE_STATUSES = frozenset({ContentStatus.APPROVED, ContentStatus.SCHEDULED})

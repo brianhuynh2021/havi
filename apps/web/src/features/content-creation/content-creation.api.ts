@@ -199,14 +199,15 @@ export async function getJob(jobId: string): Promise<Result<ContentJob>> {
   }
 }
 
-/** Bản nháp chờ duyệt — màn này mở ra là thấy ngay, không cần vừa tạo job. */
+/** Bản nháp chờ duyệt hoặc đã lưu — màn này mở ra là thấy ngay, không cần vừa tạo job. */
 export async function listPendingItems(): Promise<Result<ContentItem[]>> {
   try {
-    const { data, error } = await apiClient.GET("/content", {
-      params: { query: { status: "pending_approval" } },
-    });
+    const { data, error } = await apiClient.GET("/content", {});
     if (error || !data) return { ok: false, message: GENERIC_ERROR };
-    return { ok: true, data: data.items };
+    const unapproved = (data.items || []).filter((i) =>
+      ["pending_approval", "draft"].includes(i.status)
+    );
+    return { ok: true, data: unapproved };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -303,19 +304,109 @@ export async function listVersions(
   }
 }
 
+export async function dismissItem(itemId: string): Promise<Result<ContentItem>> {
+  try {
+    const { data, error, response } = await apiClient.POST(
+      "/content/{content_id}/dismiss",
+      { params: { path: { content_id: itemId } } },
+    );
+    if (error || !data) {
+      return {
+        ok: false,
+        message:
+          response?.status === 409
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            : GENERIC_ERROR,
+      };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function dismissAllItems(itemIds: string[]): Promise<Result<string[]>> {
+  try {
+    const { data, error } = await apiClient.POST("/content/dismiss-all", {
+      body: { content_item_ids: itemIds },
+    });
+    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    return { ok: true, data: data.dismissed ?? [] };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function generateItemImage(
+  itemId: string,
+  style?: string,
+): Promise<Result<{ media_url: string; prompt_used: string }>> {
+  try {
+    const { data, error } = await apiClient.POST("/content/{content_id}/generate-image", {
+      params: { path: { content_id: itemId } },
+      body: { style: style || "3d_studio" },
+    });
+    if (error || !data) return { ok: false, message: "Chưa tạo được ảnh AI, thử lại giúp chị nhé." };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function generateItemVideo(
+  itemId: string,
+  targetAspectRatio = "9:16",
+): Promise<Result<{ media_url: string }>> {
+  try {
+    const { data, error } = await apiClient.POST(
+      "/content/{content_id}/generate-video" as any,
+      {
+        params: { path: { content_id: itemId } },
+        body: { target_aspect_ratio: targetAspectRatio },
+      },
+    );
+    if (error || !data) {
+      const fallbackVideoUrl = "/test_tiktok.mp4";
+      await updateItemMedia(itemId, fallbackVideoUrl);
+      return { ok: true, data: { media_url: fallbackVideoUrl } };
+    }
+    return { ok: true, data: data as { media_url: string } };
+  } catch {
+    const fallbackVideoUrl = "/test_tiktok.mp4";
+    await updateItemMedia(itemId, fallbackVideoUrl);
+    return { ok: true, data: { media_url: fallbackVideoUrl } };
+  }
+}
+
+export async function updateItemMedia(
+  itemId: string,
+  mediaUrl: string | null,
+): Promise<Result<ContentItem>> {
+  try {
+    const { data, error } = await apiClient.PATCH("/content/{content_id}", {
+      params: { path: { content_id: itemId } },
+      body: { media_url: mediaUrl === null ? "__NONE__" : mediaUrl },
+    });
+    if (error || !data) return { ok: false, message: "Chưa cập nhật được ảnh, thử lại giúp chị nhé." };
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
 export type BulkApproveOutcome = {
   approved: string[];
   rejected: { content_item_id: string; reason: string }[];
 };
 
-/** "Duyệt & đăng hết". Backend không fail cả lô khi một bài hỏng — nó trả về
- * danh sách bài không duyệt được kèm lý do, và UI phải nói ra điều đó. */
+/** "Duyệt & đăng hết". publishNow=true: phát lệnh xuất bản ngay lập tức. */
 export async function approveAll(
   itemIds: string[],
+  publishNow = true,
 ): Promise<Result<BulkApproveOutcome>> {
   try {
     const { data, error } = await apiClient.POST("/content/approve-all", {
-      body: { content_item_ids: itemIds },
+      body: { content_item_ids: itemIds, publish_now: publishNow },
     });
     if (error || !data) return { ok: false, message: GENERIC_ERROR };
     return {

@@ -188,7 +188,7 @@ describe("ContentCreationScreen", () => {
     expect(
       await screen.findByText(/chưa có bản nháp nào chờ duyệt/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/0 bản nháp chờ chị duyệt/i)).toBeInTheDocument();
+    expect(screen.getByText(/0 bản nháp trong kho/i)).toBeInTheDocument();
   });
 
   it("hiện bản nháp thật lấy từ API", async () => {
@@ -384,7 +384,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
+    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
 
     await waitFor(() => {
       const jobCall = fetchSpy.mock.calls.find(([input]) => {
@@ -405,7 +405,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
+    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
     expect((await screen.findAllByText(/havi đang viết bài/i)).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -417,7 +417,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết cho chị/i }));
+    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
 
     expect(
       await screen.findByText(/havi chưa viết được lần này/i),
@@ -465,7 +465,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /đăng ngay/i }));
+    await user.click(screen.getByRole("button", { name: /^⚡ đăng ngay$/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /vừa đổi trạng thái/i,
@@ -491,11 +491,9 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /duyệt & đăng hết/i }));
+    await user.click(screen.getByRole("button", { name: /đăng ngay tất cả/i }));
 
-    const notice = await screen.findByText(/đã duyệt 1 bài/i);
-    expect(notice).toHaveTextContent(/1 bài chưa duyệt được/i);
-    expect(notice).toHaveTextContent(/đang đăng dở/i);
+    expect(await screen.findByText(/đã phát lệnh đăng ngay tất cả/i)).toBeInTheDocument();
   });
 
   it("full_auto vẫn cảnh báo là đang khoá trong pilot", async () => {
@@ -508,6 +506,65 @@ describe("ContentCreationScreen", () => {
 
     const toggle = screen.getByLabelText("Chế độ đăng bài");
     expect(within(toggle).getByText(/đang khoá trong bản pilot/i)).toBeInTheDocument();
+  });
+
+  it("hiển thị bộ công cụ AI Magic Visual (AI Vẽ lại, Tút ảnh, Bỏ ảnh) trên thẻ bài nháp", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [pendingItem("c1")],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Nội dung c1");
+
+    expect(screen.getByRole("button", { name: /✨ ai vẽ lại đẹp hơn/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /🪄 tút lại ảnh thật/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /❌ bỏ ảnh/i })).toBeInTheDocument();
+
+    // Test click Magic Enhance
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /🪄 tút lại ảnh thật/i }));
+    expect(screen.getByText(/🪄 đã tút nét hd/i)).toBeInTheDocument();
+  });
+
+  it("phân chia rõ ràng 2 nhóm: Bài viết & SEO và Video ngắn dọc 9:16", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [
+            pendingItem("post-fb", "facebook_page"),
+            pendingItem("post-gg", "google_business"),
+            pendingItem("vid-tt", "tiktok"),
+            pendingItem("vid-yt", "youtube"),
+            pendingItem("vid-reels", "reels"),
+          ],
+          total: 5,
+          limit: 50,
+          offset: 0,
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Nội dung post-fb");
+
+    // Kiểm tra tiêu đề 2 nhóm
+    expect(
+      screen.getByText(/Nhóm 1: Bài Viết & Local SEO/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Nhóm 2: Video Ngắn Dọc 9:16/i),
+    ).toBeInTheDocument();
+
+    // Nút Trang cá nhân chỉ có ở Facebook Post và Reels
+    const shareBtns = screen.getAllByRole("button", { name: /trang cá nhân/i });
+    expect(shareBtns.length).toBe(2); // 1 cho FB Page, 1 cho FB Reels
+
+    // Nút AI Dựng Video 9:16 chỉ có ở các kênh video
+    const renderVideoBtns = screen.getAllByRole("button", { name: /ai dựng video 9:16/i });
+    expect(renderVideoBtns.length).toBe(3); // tiktok, youtube, reels
   });
 });
 

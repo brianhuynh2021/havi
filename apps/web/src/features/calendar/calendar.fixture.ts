@@ -13,6 +13,7 @@ export const statusLabel: Record<PublishStatus, string> = {
   published: "Đã đăng",
   failed: "Đăng lỗi",
   dead_letter: "Cần xem lại",
+  dismissed: "Đã huỷ",
 };
 
 export const statusTone: Record<
@@ -27,6 +28,7 @@ export const statusTone: Record<
   published: "success",
   failed: "warning",
   dead_letter: "warning",
+  dismissed: "neutral",
 };
 
 export const weekdayLabels = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];

@@ -36,6 +36,8 @@ class PublishRequest:
     #: chính nền tảng cũng chặn trùng — lớp phòng thủ thứ hai sau unique
     #: constraint của Havi.
     idempotency_key: str | None = None
+    #: Kênh xuất bản cụ thể (Facebook Post, Facebook Reels...)
+    channel: Channel | None = None
 
 
 @dataclass

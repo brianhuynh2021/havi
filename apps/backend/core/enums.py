@@ -75,6 +75,7 @@ class ContentStatus(StrEnum):
     PUBLISHED = "published"
     FAILED = "failed"
     DEAD_LETTER = "dead_letter"
+    DISMISSED = "dismissed"
 
 
 class ContentJobStatus(StrEnum):

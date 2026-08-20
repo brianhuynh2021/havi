@@ -13,19 +13,11 @@ export type AppNotification = {
 
 const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
-    id: "notif-1",
-    type: "draft_ready",
-    title: "Havi vừa tạo 3 bản nháp mới",
-    description: "Các bản nháp bài đăng Facebook, Google Maps SEO, TikTok, YouTube Shorts đã sẵn sàng cho bạn duyệt.",
-    timestamp: "Vừa xong",
-    read: false,
-  },
-  {
-    id: "notif-2",
-    type: "publish_success",
-    title: "Đã phát lệnh đăng bài thành công",
-    description: "Bài viết chào tuần mới đã được đăng trực tiếp lên Facebook Fanpage.",
-    timestamp: "10 phút trước",
+    id: "notif-welcome",
+    type: "info",
+    title: "Chào mừng bạn đến với Havi AI",
+    description: "Havi đã sẵn sàng hỗ trợ bạn sáng tạo nội dung đa kênh và tương tác khách hàng tự động.",
+    timestamp: "Hôm nay",
     read: true,
   },
 ];

@@ -351,11 +351,12 @@ async function freezeClock(page: Page) {
     const fixedNow = new Date(fixedNowIso as string).valueOf();
     const RealDate = Date;
     class MockDate extends RealDate {
-      constructor(...args: ConstructorParameters<typeof Date>) {
+      constructor(...args: any[]) {
         if (args.length === 0) {
           super(fixedNow);
           return;
         }
+        // @ts-expect-error super with spread
         super(...args);
       }
       static now() {

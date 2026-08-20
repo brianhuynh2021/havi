@@ -59,6 +59,7 @@ class ApprovalService:
         user_id: UUID,
         text: str | None,
         media_note: str | None,
+        media_url: str | None = None,
         scheduled_at: datetime | None,
     ) -> ContentItem:
         item = await self._require_item(workspace_id=workspace_id, item_id=item_id)
@@ -70,9 +71,13 @@ class ApprovalService:
             item,
             text=text,
             media_note=media_note,
+            media_url=media_url,
             scheduled_at=scheduled_at,
             edited_by=user_id,
         )
+
+    async def get_item(self, *, workspace_id: UUID, item_id: UUID) -> ContentItem:
+        return await self._require_item(workspace_id=workspace_id, item_id=item_id)
 
     async def list_versions(self, *, workspace_id: UUID, item_id: UUID) -> list[ContentItemVersion]:
         await self._require_item(workspace_id=workspace_id, item_id=item_id)
@@ -112,10 +117,10 @@ class ApprovalService:
         return item
 
     async def reject(self, *, workspace_id: UUID, item_id: UUID, user_id: UUID) -> ContentItem:
-        """pending_approval → draft. Giữ lại bài để chủ sửa, không xoá."""
+        """pending_approval/scheduled → draft. Giữ lại bài để chủ sửa, gỡ khỏi lịch đăng."""
         item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         assert_transition(item.status, ContentStatus.DRAFT)
-        await self._content.set_item_status(item, status=ContentStatus.DRAFT)
+        await self._content.set_item_status(item, status=ContentStatus.DRAFT, scheduled_at=None)
         await self._audit(
             workspace_id=workspace_id,
             item=item,
@@ -124,23 +129,59 @@ class ApprovalService:
         )
         return item
 
-    async def approve_many(
+    async def dismiss(self, *, workspace_id: UUID, item_id: UUID, user_id: UUID) -> ContentItem:
+        """pending_approval/draft/scheduled → dismissed. Xoá bỏ vĩnh viễn khỏi hàng chờ."""
+        item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
+        assert_transition(item.status, ContentStatus.DISMISSED)
+        await self._content.set_item_status(item, status=ContentStatus.DISMISSED, scheduled_at=None)
+        await self._audit(
+            workspace_id=workspace_id,
+            item=item,
+            action="content.dismiss",
+            summary=f"user={user_id}",
+        )
+        return item
+
+    async def dismiss_many(
         self, *, workspace_id: UUID, item_ids: list[UUID], user_id: UUID
+    ) -> list[UUID]:
+        """Xoá hàng loạt bản nháp."""
+        dismissed: list[UUID] = []
+        for item_id in item_ids:
+            try:
+                await self.dismiss(
+                    workspace_id=workspace_id,
+                    item_id=item_id,
+                    user_id=user_id,
+                )
+                dismissed.append(item_id)
+            except Exception:
+                continue
+        return dismissed
+
+    async def approve_many(
+        self,
+        *,
+        workspace_id: UUID,
+        item_ids: list[UUID],
+        user_id: UUID,
+        publish_now: bool = False,
     ) -> BulkApproveOutcome:
         """Nút "Duyệt & đăng hết".
 
-        Bài nào không duyệt được thì báo lý do riêng cho bài đó — một item đã bị
-        duyệt ở tab khác không được làm hỏng cả lô 5 bài.
+        Bài nào không duyệt được thì báo lý do riêng cho bài đó.
+        Nếu publish_now=True: đặt scheduled_at = now (UTC) để đăng ngay lập tức.
         """
         approved: list[UUID] = []
         failures: list[tuple[UUID, str]] = []
+        scheduled_target = datetime.now(UTC) if publish_now else None
         for item_id in item_ids:
             try:
                 await self.approve(
                     workspace_id=workspace_id,
                     item_id=item_id,
                     user_id=user_id,
-                    scheduled_at=None,
+                    scheduled_at=scheduled_target,
                 )
             except ContentItemNotFound:
                 failures.append((item_id, "Không tìm thấy bài trong workspace này"))

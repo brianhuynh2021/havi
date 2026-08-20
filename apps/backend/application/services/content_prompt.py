@@ -12,11 +12,10 @@ from domain.models.workspace import BrandProfile, Workspace
 #: không hứa capability chưa có).
 PILOT_CHANNELS: tuple[Channel, ...] = (
     Channel.FACEBOOK_PAGE,
-    Channel.REELS,
+    Channel.GOOGLE_BUSINESS,
     Channel.TIKTOK,
     Channel.YOUTUBE,
-    Channel.ZALO_OA,
-    Channel.GOOGLE_BUSINESS,
+    Channel.REELS,
 )
 
 _INDUSTRY_LABELS: dict[Industry, str] = {
@@ -48,34 +47,33 @@ Quy tắc bắt buộc:
 - `media_note` là gợi ý cho chủ tiệm về ảnh/video cần chuẩn bị (với video thì \
 ghi rõ gợi ý góc quay/hành động), viết ngắn.
 
-Trả về JSON đúng schema đã cho, gồm {num_channels} bản — mỗi kênh trong danh sách \
-một bản.\
+Trả về JSON đúng schema đã cho, gồm chính xác {num_channels} bản nháp cho đúng {num_channels} kênh được yêu cầu — mỗi kênh trong danh sách một bản, tuyệt đối không bỏ sót kênh nào.\
 """
 
 _CHANNEL_GUIDANCE: dict[Channel, str] = {
     Channel.FACEBOOK_PAGE: (
-        "Facebook Page: 3-6 câu, có thể dùng emoji vừa phải, kết bằng lời mời ghé tiệm "
-        'hoặc nhắn tin. `kind` đặt là "Bài ảnh".'
+        "Facebook Page: bài viết dài kể chuyện cảm xúc (3-6 câu), có emoji vừa phải, kết bằng lời mời ghé tiệm "
+        'hoặc nhắn tin tư vấn. `kind` đặt là "Bài ảnh".'
     ),
-    Channel.REELS: (
-        "Facebook Reels: kịch bản video ngắn 15-30s bắt trend, có Hook 3s đầu ấn tượng "
-        'và lời bình tự nhiên. `kind` đặt là "Facebook Reels".'
+    Channel.GOOGLE_BUSINESS: (
+        "Google Business: bài cập nhật chuẩn SEO địa điểm Google Maps, mô tả dịch vụ rõ ràng, chuyên nghiệp, "
+        'kéo khách ghé cơ sở hoặc liên hệ Hotline. `kind` đặt là "Cập nhật Google".'
     ),
     Channel.TIKTOK: (
-        "TikTok: kịch bản video ngắn (Hook 3s đầu kích thích tò mò, nội dung cô đọng 15-30s, "
-        'lời kêu gọi follow/ghé tiệm, 3-5 hashtag ngành). `kind` đặt là "Video TikTok".'
+        "TikTok: kịch bản video ngắn (Hook 3s đầu kích thích tò mò giật tít, nội dung cô đọng 15-30s, "
+        'lời kêu gọi follow/ghé tiệm, 3-5 hashtag ngành #fyp #xuhuong). `kind` đặt là "Video TikTok".'
     ),
     Channel.YOUTUBE: (
-        "YouTube Shorts: kịch bản video dọc dưới 60s (Hook mở đầu, hướng dẫn/chia sẻ mẹo hữu ích, "
+        "YouTube Shorts: kịch bản video dọc dưới 60s (Hook mở đầu, hướng dẫn/chia sẻ mẹo kỹ thuật hữu ích, "
         'kết bằng tag #Shorts). `kind` đặt là "YouTube Shorts".'
+    ),
+    Channel.REELS: (
+        "Facebook Reels: kịch bản video ngắn 15-30s bắt trend tương tác cao, có Hook 3s đầu ấn tượng "
+        'và lời bình tự nhiên. `kind` đặt là "Facebook Reels".'
     ),
     Channel.ZALO_OA: (
         "Zalo OA: nhắn như nói với khách quen, xưng hô đúng (chị/anh), rất ngắn "
         '(2-3 câu), có lời mời cụ thể. `kind` đặt là "Tin Zalo".'
-    ),
-    Channel.GOOGLE_BUSINESS: (
-        "Google Business: mô tả dịch vụ rõ ràng, không emoji, giọng trung tính, "
-        'nêu điểm khác biệt. `kind` đặt là "Cập nhật Google".'
     ),
 }
 

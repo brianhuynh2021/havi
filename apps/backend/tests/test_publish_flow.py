@@ -400,7 +400,10 @@ class TestConnectionRepository:
         conn = await repo.upsert(
             workspace_id=ws.id, platform=Platform.FACEBOOK, access_token="token-fb"
         )
-        assert await repo.get_connected_channels(ws.id) == [Channel.FACEBOOK_PAGE]
+        assert await repo.get_connected_channels(ws.id) == [
+            Channel.FACEBOOK_PAGE,
+            Channel.REELS,
+        ]
 
         await repo.mark_unusable(conn, status=ConnectionStatus.REVOKED, reason="revoked")
         assert await repo.get_connected_channels(ws.id) == []

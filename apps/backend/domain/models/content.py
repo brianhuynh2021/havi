@@ -50,6 +50,7 @@ class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     kind: Mapped[str]
     text: Mapped[str]
     media_note: Mapped[str | None] = mapped_column(default=None)
+    media_url: Mapped[str | None] = mapped_column(default=None)
     status: Mapped[ContentStatus] = mapped_column(
         Enum(ContentStatus, native_enum=False), default=ContentStatus.PENDING_APPROVAL
     )

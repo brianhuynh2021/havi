@@ -455,3 +455,119 @@ def test_khung_gio_vang_luon_o_tuong_lai(now_vn: datetime, expected_vn: datetime
     result = next_golden_hour(now=now_vn)
     assert result > now_vn
     assert result.astimezone(VIETNAM_TZ).replace(tzinfo=None) == expected_vn
+
+
+# --- Xoá bỏ / Dismiss & Hoãn về nháp ---------------------------------------
+
+
+async def test_dismiss_item_chuyen_sang_dismissed_va_an_khoi_list(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="dismiss1@havi.vn")
+    item = await _draft(db_session, token_pair)
+
+    # Dismiss item
+    resp = await client.post(f"/content/{item.id}/dismiss", headers=_headers(token_pair))
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "dismissed"
+
+    # Verify that it is filtered out of default list_content
+    list_resp = await client.get("/content", headers=_headers(token_pair))
+    assert list_resp.status_code == 200
+    item_ids = [i["id"] for i in list_resp.json()["items"]]
+    assert str(item.id) not in item_ids
+
+
+async def test_dismiss_all_xoa_hang_loat(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="dismiss_all@havi.vn")
+    item1 = await _draft(db_session, token_pair)
+    item2 = await _draft(db_session, token_pair)
+
+    resp = await client.post(
+        "/content/dismiss-all",
+        json={"content_item_ids": [str(item1.id), str(item2.id)]},
+        headers=_headers(token_pair),
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["dismissed"]) == 2
+
+    # Verify both are filtered out
+    list_resp = await client.get("/content", headers=_headers(token_pair))
+    assert list_resp.status_code == 200
+    assert list_resp.json()["items"] == []
+
+
+async def test_hoan_bai_tren_lich_ve_nhap_xoa_scheduled_at(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="unschedule1@havi.vn")
+    item = await _draft(db_session, token_pair)
+
+    # Approve and schedule
+    when = datetime.now(UTC) + timedelta(days=2)
+    approve_resp = await client.post(
+        f"/content/{item.id}/approve",
+        json={"scheduled_at": when.isoformat()},
+        headers=_headers(token_pair),
+    )
+    assert approve_resp.status_code == 200
+    assert approve_resp.json()["status"] == "scheduled"
+
+    # Reject / Unschedule to draft
+    reject_resp = await client.post(f"/content/{item.id}/reject", headers=_headers(token_pair))
+    assert reject_resp.status_code == 200
+    body = reject_resp.json()
+    assert body["status"] == "draft"
+    assert body["scheduled_at"] is None
+
+
+async def test_generate_ai_image_cap_nhat_media_url(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="genimage1@havi.vn")
+    item = await _draft(db_session, token_pair)
+
+    resp = await client.post(
+        f"/content/{item.id}/generate-image",
+        json={"style": "3d_studio"},
+        headers=_headers(token_pair),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "media_url" in data
+    assert data["media_url"].startswith("http")
+
+    # Verify persisted in item
+    get_resp = await client.get("/content", headers=_headers(token_pair))
+    assert get_resp.status_code == 200
+    items = get_resp.json()["items"]
+    assert len(items) == 1
+    assert items[0]["media_url"] == data["media_url"]
+
+
+async def test_update_item_media_url_va_xoa_anh(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="editmedia1@havi.vn")
+    item = await _draft(db_session, token_pair)
+
+    # Set custom media url
+    patch_resp = await client.patch(
+        f"/content/{item.id}",
+        json={"media_url": "https://example.com/my-uploaded-photo.jpg"},
+        headers=_headers(token_pair),
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["media_url"] == "https://example.com/my-uploaded-photo.jpg"
+
+    # Remove photo (__NONE__)
+    remove_resp = await client.patch(
+        f"/content/{item.id}",
+        json={"media_url": "__NONE__"},
+        headers=_headers(token_pair),
+    )
+    assert remove_resp.status_code == 200
+    assert remove_resp.json()["media_url"] is None
+
