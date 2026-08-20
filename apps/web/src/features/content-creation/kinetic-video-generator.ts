@@ -24,10 +24,22 @@ export async function generateKineticShortVideo(
   let hookTitle = "⚡ BÍ QUYẾT BẮT TREND AI";
   const rawText = options.text || "";
 
-  if (rawText.includes("Hook:")) {
-    const match = rawText.match(/Hook:\s*["“]?([^"”\n!?.]{10,80})/i);
-    if (match && match[1]) {
-      hookTitle = match[1].trim().toUpperCase();
+  // Ưu tiên 1: Lấy nội dung trong dấu ngoặc kép ("..." hoặc “...”)
+  const quoteMatch = rawText.match(/["“]([^"”\n]{6,90})["”]/);
+  if (quoteMatch && quoteMatch[1]) {
+    hookTitle = quoteMatch[1].trim().toUpperCase();
+  } else if (rawText.toLowerCase().includes("hook")) {
+    const hookLine = rawText
+      .split("\n")
+      .find((l) => l.toLowerCase().includes("hook"));
+    if (hookLine) {
+      const cleaned = hookLine
+        .replace(/^[^:]*:\s*/, "")
+        .replace(/[•*"-]/g, "")
+        .trim();
+      if (cleaned.length > 5) {
+        hookTitle = cleaned.slice(0, 70).toUpperCase();
+      }
     }
   } else {
     const firstSentence = rawText.split(/[.!?\n]/)[0];

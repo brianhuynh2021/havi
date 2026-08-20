@@ -1237,25 +1237,32 @@ export function ContentCreationScreen() {
                         item.channel === "reels" ? (
                           <div style={{ marginBottom: "12px" }}>
                             <div className={styles.inPlaceVideoContainer}>
-                              <video
-                                key={item.id}
-                                poster={getTopicImage(item.media_note, item.text)}
-                                controls
-                                playsInline
-                                className={styles.inPlaceVideoPlayer}
-                              >
-                                <source
-                                  src={
-                                    item.media_url &&
-                                    (item.media_url.endsWith(".mp4") ||
+                              {(() => {
+                                const isCustom = Boolean(
+                                  item.media_url &&
+                                    (item.media_url.startsWith("blob:") ||
+                                      item.media_url.endsWith(".mp4") ||
                                       item.media_url.includes("video") ||
-                                      item.media_url.startsWith("/"))
-                                      ? item.media_url
-                                      : "/test_tiktok.mp4"
-                                  }
-                                  type="video/mp4"
-                                />
-                              </video>
+                                      item.media_url.startsWith("/") ||
+                                      item.media_url.startsWith("http")),
+                                );
+                                const videoSrc = isCustom ? item.media_url! : "/test_tiktok.mp4";
+                                const isBlob = Boolean(item.media_url?.startsWith("blob:"));
+                                return (
+                                  <video
+                                    key={`${item.id}-${item.media_url || "default"}`}
+                                    src={videoSrc}
+                                    poster={isBlob ? undefined : getTopicImage(item.media_note, item.text)}
+                                    controls
+                                    playsInline
+                                    autoPlay={isBlob}
+                                    className={styles.inPlaceVideoPlayer}
+                                  >
+                                    <source src={videoSrc} type="video/mp4" />
+                                    <source src={videoSrc} type="video/webm" />
+                                  </video>
+                                );
+                              })()}
                               <div className={styles.inPlaceVideoFooter}>
                                 <span>🎬 Video 9:16 Sẵn Sàng (Phụ đề động &amp; Nhạc)</span>
                                 <button
