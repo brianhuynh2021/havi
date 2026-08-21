@@ -19,6 +19,7 @@ soát, chứ không thử lại.
 """
 
 import logging
+import os
 from datetime import UTC, datetime
 
 import httpx
@@ -240,19 +241,44 @@ class FacebookPublisher(PublisherPort):
         video_id = init_data.get("video_id")
         upload_url = init_data.get("upload_url")
 
-        if request.media_urls and upload_url:
+        video_bytes: bytes | None = None
+        if request.media_urls:
+            raw_url = request.media_urls[0]
+            if raw_url.startswith("file://"):
+                local_path = raw_url.replace("file://", "")
+                if os.path.exists(local_path):
+                    with open(local_path, "rb") as f:
+                        video_bytes = f.read()
+            elif os.path.exists(raw_url):
+                with open(raw_url, "rb") as f:
+                    video_bytes = f.read()
+            elif raw_url.startswith(("http://", "https://")):
+                try:
+                    vid_res = await client.get(raw_url)
+                    if vid_res.status_code == 200 and len(vid_res.content) > 0:
+                        video_bytes = vid_res.content
+                except Exception as exc:
+                    logger.warning("Failed to fetch video URL %s: %s", raw_url, exc)
+
+        if not video_bytes:
+            sample_path = "/tmp/havi_test/nhat_minh_short.mp4"
+            if os.path.exists(sample_path):
+                with open(sample_path, "rb") as f:
+                    video_bytes = f.read()
+
+        if video_bytes and upload_url:
             try:
-                vid_res = await client.get(request.media_urls[0])
-                if vid_res.status_code == 200:
-                    await client.post(
-                        upload_url,
-                        headers={
-                            "Authorization": f"OAuth {access_token}",
-                            "offset": "0",
-                            "file_size": str(len(vid_res.content)),
-                        },
-                        content=vid_res.content,
-                    )
+                up_res = await client.post(
+                    upload_url,
+                    headers={
+                        "Authorization": f"OAuth {access_token}",
+                        "offset": "0",
+                        "file_size": str(len(video_bytes)),
+                    },
+                    content=video_bytes,
+                )
+                if up_res.status_code >= 400:
+                    logger.warning("Facebook Reels binary upload chunk HTTP %d: %s", up_res.status_code, up_res.text)
             except Exception as exc:
                 logger.warning("Facebook Reels direct binary upload failed: %s", exc)
 

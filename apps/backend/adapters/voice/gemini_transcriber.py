@@ -85,34 +85,42 @@ class GeminiVoiceTranscriber(VoiceTranscriberPort):
             },
         }
 
-        url = f"{_BASE_URL}/{self._model}:generateContent"
+        candidate_models = [self._model, "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.6-flash"]
+        # Loại bỏ trùng lặp giữ nguyên thứ tự
+        seen = set()
+        models_to_try = [m for m in candidate_models if m and not (m in seen or seen.add(m))]
 
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(url, params={"key": self._api_key}, json=payload)
-        except httpx.TimeoutException as exc:
-            raise VoiceTranscribeError(f"Nhận diện giọng nói timeout sau {self._timeout}s") from exc
-        except httpx.HTTPError as exc:
-            raise VoiceTranscribeError(f"Lỗi kết nối Gemini: {exc}") from exc
+        last_error = None
+        for model_name in models_to_try:
+            url = f"{_BASE_URL}/{model_name}:generateContent"
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    response = await client.post(url, params={"key": self._api_key}, json=payload)
+                if response.status_code == 200:
+                    body = response.json()
+                    raw_text = body["candidates"][0]["content"]["parts"][0]["text"]
+                    try:
+                        parsed = json.loads(raw_text)
+                        return TranscribeResult(
+                            text=parsed.get("text", "").strip(),
+                            summary=parsed.get("summary", "").strip(),
+                            detected_intent=parsed.get("detected_intent", "").strip(),
+                        )
+                    except Exception as exc:
+                        logger.warning("Không thể parse JSON từ Gemini transcribe response (%s): %s", model_name, exc)
+                        return TranscribeResult(
+                            text=raw_text.strip(),
+                            summary="Ghi âm giọng nói",
+                            detected_intent="general",
+                        )
+                else:
+                    logger.warning("Gemini model %s trả về lỗi %s: %s, đang thử model tiếp theo...", model_name, response.status_code, response.text[:150])
+                    last_error = f"Lỗi API Gemini ({response.status_code}): {response.text[:200]}"
+            except httpx.TimeoutException as exc:
+                logger.warning("Gemini model %s bị timeout sau %ss, thử model tiếp...", model_name, self._timeout)
+                last_error = f"Nhận diện giọng nói timeout sau {self._timeout}s"
+            except httpx.HTTPError as exc:
+                logger.warning("Gemini model %s lỗi kết nối: %s", model_name, exc)
+                last_error = f"Lỗi kết nối Gemini: {exc}"
 
-        if response.status_code != 200:
-            logger.error("Gemini audio transcription failed (%s): %s", response.status_code, response.text)
-            raise VoiceTranscribeError(f"Lỗi API Gemini ({response.status_code}): {response.text[:200]}")
-
-        try:
-            body = response.json()
-            raw_text = body["candidates"][0]["content"]["parts"][0]["text"]
-            parsed = json.loads(raw_text)
-            return TranscribeResult(
-                text=parsed.get("text", "").strip(),
-                summary=parsed.get("summary", "").strip(),
-                detected_intent=parsed.get("detected_intent", "").strip(),
-            )
-        except Exception as exc:
-            logger.warning("Không thể parse JSON từ Gemini transcribe response: %s", exc)
-            # Fallback nếu text thuần
-            return TranscribeResult(
-                text=raw_text.strip() if "raw_text" in locals() else "",
-                summary="Ghi âm giọng nói",
-                detected_intent="general",
-            )
+        raise VoiceTranscribeError(last_error or "Không thể nhận diện giọng nói qua Gemini API.")

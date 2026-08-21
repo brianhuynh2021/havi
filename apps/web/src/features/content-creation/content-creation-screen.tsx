@@ -19,6 +19,7 @@ import {
   mediaTypeOf,
   rejectItem,
   updateItemMedia,
+  uploadRenderedVideoBlob,
   uploadMedia,
   type Channel,
   type ContentItem,
@@ -32,7 +33,7 @@ import { QuotaBanner } from "./quota-banner";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
-import { generateKineticShortVideo } from "./kinetic-video-generator";
+import { TeleprompterModal } from "./teleprompter-modal";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -79,16 +80,7 @@ function describeClip(asset: MediaAsset): string {
   return parts.join(" · ");
 }
 
-/** "Clip này đăng được Reels nhưng không đăng được Shorts" — ngay lúc upload.
- *
- * Kiểm ngay bây giờ vì bây giờ là lúc còn quay lại được. Nếu ràng buộc chỉ lộ ra
- * lúc scheduler gọi API nền tảng thì chủ tiệm biết mình quay ngang sau khi đã lỡ
- * giờ đăng tối thứ Bảy (`domain/policies/video_constraints.py`).
- *
- * `aspect_ratio == null` nghĩa là chưa probe được, KHÔNG phải không hợp kênh nào:
- * nói "clip này không đăng được đâu cả" về một clip Havi chưa đọc nổi là bịa ra
- * một kết luận từ chỗ không có dữ liệu.
- */
+/** "Clip này đăng được Reels nhưng không đăng được Shorts" — ngay lúc upload. */
 function renderClipEligibility(asset: MediaAsset | undefined) {
   if (!asset) return null;
   if (!asset.aspect_ratio) {
@@ -118,8 +110,6 @@ function renderClipEligibility(asset: MediaAsset | undefined) {
               key={channel}
               className={fits ? styles.clipChannelFits : styles.clipChannelUnfit}
             >
-              {/* Dấu ✓/✕ là trang trí; câu đầy đủ nằm trong một text node duy
-                  nhất để trình đọc màn hình không phải ghép từ màu sắc. */}
               <span aria-hidden="true">{fits ? "✓" : "✕"}</span>
               <span>{`${label}: ${fits ? "đăng được" : "không đăng được"}`}</span>
             </li>
@@ -211,12 +201,15 @@ export function ContentCreationScreen() {
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Đổi giá trị này để QuotaBanner nạp lại số token còn lại.
   const [quotaKey, setQuotaKey] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [leadConversionEnabled, setLeadConversionEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<"all" | "video" | "posts">("all");
+  const [selectedPlaybook, setSelectedPlaybook] = useState<string | null>(null);
+
   const [publishedModal, setPublishedModal] = useState<{
     title: string;
     body: string;
@@ -226,9 +219,41 @@ export function ContentCreationScreen() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef(new Set<string>());
 
-  /** `keepError` cho lượt nạp lại *sau khi* một hành động thất bại: nạp lại
-   * thành công không có nghĩa là lỗi vừa rồi biến mất, và xoá nó đi thì chủ
-   * tiệm thấy bài tự nhiên đổi trạng thái mà không biết vì sao. */
+  const CAMPAIGN_PLAYBOOKS = [
+    {
+      id: "flash_sale",
+      icon: "🚀",
+      tag: "Doanh Thu Đột Phá",
+      title: "Flash Sale & Kéo Khách Gấp",
+      desc: "Ưu đãi giờ vàng, tặng voucher trải nghiệm cho 20 khách đầu tiên nhắn tin/đặt lịch hôm nay.",
+      text: "Ưu đãi giờ vàng đặc biệt cuối tuần: Tặng Voucher 20% hoặc quà tặng trải nghiệm cho 20 khách hàng đầu tiên nhắn tin/đặt lịch hôm nay.",
+    },
+    {
+      id: "viral_trend",
+      icon: "🔥",
+      tag: "Hút Triệu View TikTok",
+      title: "Bắt Trend Video Viral",
+      desc: "Kịch bản so sánh thực tế bắt trend drama/công nghệ, giữ chân người xem 3s đầu cực đỉnh.",
+      text: "Bắt trend câu chuyện đời thực: Trong khi người ta còn loay hoay thì học viên/khách hàng tại cơ sở đã đạt kết quả vượt bậc chỉ sau 3 bước đơn giản.",
+    },
+    {
+      id: "local_seo",
+      icon: "📍",
+      tag: "Kéo Khách Quanh 5km",
+      title: "Thống Trị Google Maps SEO",
+      desc: "Bài viết chuẩn SEO địa phương, tối ưu từ khóa ngành nghề để kéo khách vãng lai quanh tiệm.",
+      text: "Dịch vụ chuyên nghiệp top đầu khu vực: Uy tín tận tâm, đội ngũ tay nghề cao, nhận tư vấn và báo giá minh bạch ngay trong 15 phút.",
+    },
+    {
+      id: "social_proof",
+      icon: "💎",
+      tag: "Tăng Tỷ Lệ Chốt Đơn",
+      title: "Khoe Kết Quả & Uy Tín",
+      desc: "Câu chuyện khách hàng thật, ca cứu máy/dịch vụ xuất sắc tạo niềm tin tuyệt đối khi chốt sale.",
+      text: "Cảm nhận thực tế của khách hàng/học viên sau khi trải nghiệm: Giải quyết triệt để vấn đề, an tâm tuyệt đối với chế độ bảo hành và đồng hành lâu dài.",
+    },
+  ];
+
   const loadItems = useCallback(async (keepError = false) => {
     const result = await listPendingItems();
     if (result.ok) {
@@ -242,9 +267,6 @@ export function ContentCreationScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    // Bọc trong hàm async: mọi setState nằm sau `await`, không chạy đồng bộ
-    // trong thân effect. `cancelled` chặn setState sau khi component đã unmount
-    // — chủ tiệm đổi tab giữa lúc đang tải là chuyện thường.
     async function load() {
       const result = await listPendingItems();
       if (cancelled) return;
@@ -293,7 +315,6 @@ export function ContentCreationScreen() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Job xong thì nạp lại hàng chờ duyệt và hiển thị thông báo Toast + Chuông thông báo ở góc phải.
   const onJobReady = useCallback(() => {
     setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.");
     pushNotification({
@@ -391,7 +412,6 @@ export function ContentCreationScreen() {
               : upload,
           ),
         );
-        // Đưa media vừa upload vào chip liệu thô
         setChips((prev) => [
           ...prev,
           {
@@ -408,8 +428,6 @@ export function ContentCreationScreen() {
         ]);
       }),
     );
-    // Cho phép chọn lại đúng file vừa bỏ ra: input file không bắn `change` nếu
-    // value không đổi.
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -448,31 +466,29 @@ export function ContentCreationScreen() {
     }
     forgetPreviewUrl(upload?.previewUrl);
     setUploads((prev) => prev.filter((item) => item.key !== key));
-    if (upload?.assetId) {
-      setChips((prev) => prev.filter((c) => c.key !== upload.assetId));
-    }
+    const chip = chips.find((c) => c.key === upload?.assetId);
+    if (chip) removeChip(chip.key);
   }
 
-  const generating = poll.activeCount > 0 || poll.status === "queued" || poll.status === "processing";
   const uploading = uploads.some((upload) => upload.status === "uploading");
+  const generating = poll.status === "queued" || poll.status === "processing";
 
   async function generate() {
     let currentChips = [...chips];
-    if (!currentChips.length && note.trim()) {
-      const text = note.trim();
-      const newChip: RawChip = {
-        key: makeNoteChipKey(chips.length),
+    if (note.trim()) {
+      const extraChip: RawChip = {
+        key: makeNoteChipKey(currentChips.length),
         kind: "text",
-        label: text.length > 40 ? `${text.slice(0, 40)}…` : text,
-        input: { kind: "text", text },
+        label: note.trim().length > 40 ? `${note.trim().slice(0, 40)}…` : note.trim(),
+        input: { kind: "text", text: note.trim() },
       };
-      currentChips = [newChip];
+      currentChips = [...currentChips, extraChip];
     }
     if (!currentChips.length) return;
+
     setError(null);
     setNotice(null);
 
-    // Key gắn với bộ liệu thô và thời điểm gửi để tạo được nhiều job liên tiếp
     const key = makeJobKey(currentChips);
     const result = await createJob(
       currentChips.map((c) => c.input),
@@ -480,13 +496,10 @@ export function ContentCreationScreen() {
     );
     if (!result.ok) {
       setError(result.message);
-      // Nạp lại quota: nếu vừa bị chặn vì hết lượt thì banner phải hiện ngay,
-      // đừng để chủ tiệm bấm lại lần nữa mới hiểu chuyện gì.
       setQuotaKey((k) => k + 1);
       return;
     }
-    // Async Non-blocking: Xóa sạch nạp liệu ngay lập tức để chủ tiệm có thể
-    // nạp tiếp liệu thô khác hoặc thao tác thoải mái không phải ngồi chờ.
+
     for (const chip of currentChips) forgetPreviewUrl(chip.previewUrl);
     setChips([]);
     setUploads([]);
@@ -495,10 +508,8 @@ export function ContentCreationScreen() {
 
     poll.addJobId(result.data.id);
     setJobId(result.data.id);
-    // Job vừa tạo sẽ tiêu token — nạp lại số còn lại sau khi worker chạy xong.
     setQuotaKey((k) => k + 1);
 
-    // Hiển thị Toast góc phải màn hình
     addToast({
       type: "loading",
       title: "Havi đang viết bài cho tiệm...",
@@ -561,7 +572,6 @@ export function ContentCreationScreen() {
     setBusyIds((prev) => prev.filter((b) => b !== id));
     if (!result.ok) {
       setError(result.message);
-      // Backend từ chối thì trạng thái trên màn đang sai — nạp lại cho khớp.
       loadItems(true);
       return;
     }
@@ -622,84 +632,152 @@ export function ContentCreationScreen() {
     });
   }
 
-  async function onApproveAll() {
-    const ids = items.map((i) => i.id);
+  async function onApprovePostsGroup(instant: boolean) {
+    const ids = postGroup.map((i) => i.id);
     if (!ids.length) return;
     setBusyIds(ids);
-    const result = await approveAll(ids, true);
+    const result = await approveAll(ids, instant);
     setBusyIds([]);
     if (!result.ok) {
       setError(result.message);
       return;
     }
     setPublishedModal({
-      title: "🚀 Đã phát lệnh đăng ngay tất cả!",
-      body: `Havi đang đồng loạt gửi ${result.data.approved.length} bài lên các kênh Facebook, TikTok, YouTube, Google Maps. Bạn có thể kiểm tra trực tiếp trên các kênh hoặc Lịch đăng bài nhé!`,
-      isInstant: true,
+      title: instant
+        ? "🚀 Đã phát lệnh đăng Bài Viết (Facebook & Google Maps)!"
+        : "📅 Đã lên lịch đăng Bài Viết lúc 11:30 trưa!",
+      body: `Havi đã ${instant ? "phát lệnh đăng ngay" : "lên lịch tự động"} ${result.data.approved.length} bài viết chuẩn SEO lên Facebook Page & Google Business. Nhóm Video vẫn được lưu an toàn để chị quay clip xong đăng sau nhé!`,
+      isInstant: instant,
     });
     loadItems();
   }
 
+  async function onApproveVideosGroup(instant: boolean) {
+    const readyVideos = videoGroup.filter(
+      (i) => i.media_url && (i.media_url.startsWith("blob:") || i.media_url.endsWith(".mp4") || i.media_url.endsWith(".mov") || i.media_url.includes("video")),
+    );
+    if (!readyVideos.length) {
+      addToast({
+        type: "warning",
+        title: "Chưa có clip quay thật",
+        description: "Chị vui lòng bấm 'Tải Video Vừa Quay Lên' ở bên dưới trước khi duyệt đăng nhóm Video nhé!",
+      });
+      return;
+    }
+    const ids = readyVideos.map((i) => i.id);
+    setBusyIds(ids);
+    const result = await approveAll(ids, instant);
+    setBusyIds([]);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setPublishedModal({
+      title: instant
+        ? "🎬 Đã phát lệnh xuất bản Video lên TikTok & Reels!"
+        : "📅 Đã lên lịch xuất bản Video lúc 20:00 tối!",
+      body: `Havi đã ${instant ? "phát lệnh xuất bản ngay" : "lên lịch khung giờ vàng"} ${result.data.approved.length} video ngắn thật lên TikTok, YouTube Shorts, Reels.`,
+      isInstant: instant,
+    });
+    loadItems();
+  }
+
+  async function onApproveSmartReady(instant: boolean) {
+    const readyItems = items.filter((i) => {
+      const isVideo = i.channel === "tiktok" || i.channel === "youtube" || i.channel === "reels";
+      if (!isVideo) return true;
+      return Boolean(i.media_url && (i.media_url.startsWith("blob:") || i.media_url.endsWith(".mp4") || i.media_url.endsWith(".mov") || i.media_url.includes("video")));
+    });
+    if (!readyItems.length) return;
+    const ids = readyItems.map((i) => i.id);
+    setBusyIds(ids);
+    const result = await approveAll(ids, instant);
+    setBusyIds([]);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    const pendingVideosCount = videoGroup.length - readyItems.filter((i) => i.channel === "tiktok" || i.channel === "youtube" || i.channel === "reels").length;
+    setPublishedModal({
+      title: instant
+        ? `🚀 Đã phát lệnh đăng ${result.data.approved.length} kênh đã sẵn sàng!`
+        : `📅 Đã lên lịch Khung Giờ Vàng cho ${result.data.approved.length} kênh đã sẵn sàng!`,
+      body: pendingVideosCount > 0
+        ? `Đã xử lý ${result.data.approved.length} bài viết (Facebook & Google Maps). Còn ${pendingVideosCount} kịch bản Video ngắn được giữ lại an toàn ở mục nháp để chị quay clip xong bấm đăng sau nhé!`
+        : `Toàn bộ ${result.data.approved.length} kênh đã được ${instant ? "phát lệnh đăng ngay" : "xếp vào Lịch đăng tự động (11:30 trưa & 20:00 tối)"}.`,
+      isInstant: instant,
+    });
+    loadItems();
+  }
+
+  async function onApproveAll() {
+    return onApproveSmartReady(true);
+  }
+
+  async function onSmartScheduleAll() {
+    return onApproveSmartReady(false);
+  }
+
   const [generatingImageId, setGeneratingImageId] = useState<string | null>(null);
-  const [renderingVideoId, setRenderingVideoId] = useState<string | null>(null);
   const [enhancedImageIds, setEnhancedImageIds] = useState<string[]>([]);
+  const [teleprompterItem, setTeleprompterItem] = useState<ContentItem | null>(null);
 
-  async function handleAiRenderVideo(itemId: string) {
-    const item = items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    setRenderingVideoId(itemId);
+  async function handleUploadRealVideoForItem(itemId: string, file: File) {
     const toastId = addToast({
       type: "loading",
-      title: "Havi Video Studio đang dựng...",
-      description: "Đang tạo EditPlan 9:16, bóc tách Hook 3s và render hiệu ứng chữ vàng neon chuyển động.",
+      title: "Đang gắn video thật...",
+      description: `Đang tải clip "${file.name}" lên hệ thống Havi.`,
     });
 
     try {
-      // 1. Kích hoạt Backend Video Render Engine (FFmpeg & EditPlan)
-      const backendRes = await generateItemVideo(itemId, "9:16");
-
-      // 2. Tạo phiên bản video động chất lượng cao cho trình phát
-      const topicImg =
-        (item.media_url && !item.media_url.endsWith(".mp4") ? item.media_url : null) ||
-        uploads.find((u) => u.previewUrl)?.previewUrl ||
-        getTopicImage(item.media_note, item.text);
-
-      const dynamicVideoUrl = await generateKineticShortVideo({
-        text: item.text,
-        channel: item.channel,
-        mediaNote: item.media_note,
-        imageUrl: topicImg,
-        brandName: "TRUNG TÂM CÔNG NGHỆ NHẬT MINH",
-        hotline: "0984 883 750",
-      });
-
-      const finalVideoUrl = dynamicVideoUrl || (backendRes.ok ? backendRes.data?.media_url : null) || "/test_tiktok.mp4";
-      await updateItemMedia(itemId, finalVideoUrl);
-
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === itemId
-            ? {
-                ...i,
-                media_url: finalVideoUrl,
-                media_note: "🎬 Video 9:16 đã dựng hoàn tất chuẩn FFmpeg & EditPlan",
-              }
-            : i,
-        ),
-      );
+      const uploadRes = await uploadRenderedVideoBlob(itemId, file);
       removeToast(toastId);
-      addToast({
-        type: "success",
-        icon: "🎬",
-        title: "Đã dựng xong Video 9:16!",
-        description: "Clip đã sẵn sàng trong khung phát để bạn xem thử và phát lệnh đăng ngay.",
-      });
+      if (uploadRes.ok) {
+        const previewUrl = URL.createObjectURL(file);
+        const isVideoItem = videoGroup.some((v) => v.id === itemId);
+        const targetIds = isVideoItem ? videoGroup.map((v) => v.id) : [itemId];
+
+        setItems((prev) =>
+          prev.map((i) =>
+            targetIds.includes(i.id)
+              ? {
+                  ...i,
+                  media_url: previewUrl,
+                  media_note: `🎬 Video thật của tiệm (${file.name})`,
+                }
+              : i,
+          ),
+        );
+
+        if (isVideoItem) {
+          const otherVideoIds = videoGroup.map((v) => v.id).filter((id) => id !== itemId);
+          for (const otherId of otherVideoIds) {
+            uploadRenderedVideoBlob(otherId, file).catch(() => {});
+          }
+        }
+
+        addToast({
+          type: "success",
+          icon: "🎬",
+          title: "Đã gắn & đồng bộ video thật!",
+          description: isVideoItem && videoGroup.length > 1
+            ? `Video thật đã được tự động gắn cho toàn bộ ${videoGroup.length} kênh video ngắn (TikTok, Reels, Shorts)!`
+            : "Video thật của bạn đã sẵn sàng để phát hành lên kênh.",
+        });
+      } else {
+        addToast({
+          type: "error",
+          title: "Không thể tải video",
+          description: uploadRes.message || "Vui lòng thử lại với file video khác.",
+        });
+      }
     } catch {
       removeToast(toastId);
-      await generateItemVideo(itemId, "9:16");
-    } finally {
-      setRenderingVideoId(null);
+      addToast({
+        type: "error",
+        title: "Lỗi tải video",
+        description: "Có lỗi khi tải video lên máy chủ, vui lòng thử lại.",
+      });
     }
   }
 
@@ -738,7 +816,7 @@ export function ContentCreationScreen() {
     addToast({
       type: "success",
       icon: "🪄",
-      title: "Đã tút lại ảnh (Magic Enhance)!",
+      title: "🪄 Đã tút nét HD!",
       description: "Đã nâng cao ánh sáng, tăng độ sắc nét HD và làm nổi bật chủ thể.",
     });
   }
@@ -775,21 +853,440 @@ export function ContentCreationScreen() {
     }
   }
 
+  const channelBadges: Record<
+    string,
+    { icon: string; bg: string; color: string; border: string }
+  > = {
+    facebook_page: {
+      icon: "📘",
+      bg: "#EFF6FF",
+      color: "#1D4ED8",
+      border: "#BFDBFE",
+    },
+    google_business: {
+      icon: "📍",
+      bg: "#ECFDF5",
+      color: "#047857",
+      border: "#A7F3D0",
+    },
+    tiktok: {
+      icon: "🎵",
+      bg: "#FDF2F8",
+      color: "#BE185D",
+      border: "#FBCFE8",
+    },
+    youtube: {
+      icon: "▶️",
+      bg: "#FEF2F2",
+      color: "#B91C1C",
+      border: "#FECACA",
+    },
+    reels: {
+      icon: "🎬",
+      bg: "#FAF5FF",
+      color: "#7E22CE",
+      border: "#E9D5FF",
+    },
+    zalo_oa: {
+      icon: "💬",
+      bg: "#F0F9FF",
+      color: "#0369A1",
+      border: "#BAE6FD",
+    },
+  };
+
+  const postGroup = items.filter(
+    (i) =>
+      i.channel === "facebook_page" ||
+      i.channel === "google_business" ||
+      i.channel === "zalo_oa",
+  );
+  const videoGroup = items.filter(
+    (i) =>
+      i.channel === "tiktok" ||
+      i.channel === "youtube" ||
+      i.channel === "reels",
+  );
+  const otherGroup = items.filter(
+    (i) => !postGroup.includes(i) && !videoGroup.includes(i),
+  );
+
+  const readyVideosCount = videoGroup.filter(
+    (i) =>
+      i.media_url &&
+      (i.media_url.startsWith("blob:") ||
+        i.media_url.endsWith(".mp4") ||
+        i.media_url.endsWith(".mov") ||
+        i.media_url.endsWith(".webm") ||
+        i.media_url.includes("video")),
+  ).length;
+
+  const totalReadyCount = postGroup.length + readyVideosCount;
+  const pendingVideosCount = videoGroup.length - readyVideosCount;
+
+  const renderDraftCard = (item: ContentItem) => {
+    const busy = busyIds.includes(item.id);
+    const badgeInfo = channelBadges[item.channel];
+    const isVideoChannel =
+      item.channel === "tiktok" ||
+      item.channel === "youtube" ||
+      item.channel === "reels";
+
+    // Extract hook 3s if available
+    let hookSnippet = "";
+    if (isVideoChannel) {
+      const match = item.text.match(/["“]([^"”\n]{6,80})["”]/) || item.text.match(/Hook[^:]*:\s*([^\n]+)/i);
+      if (match && match[1]) {
+        hookSnippet = match[1].trim();
+      } else {
+        const firstLine = item.text.split("\n")[0];
+        if (firstLine.length <= 80) hookSnippet = firstLine;
+      }
+    }
+
+    return (
+      <article key={item.id} className={styles.draftCard}>
+        <div className={styles.draftMeta}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "3px 10px",
+              borderRadius: "999px",
+              fontSize: "12px",
+              fontWeight: 700,
+              background: badgeInfo?.bg || "#F1F5F9",
+              color: badgeInfo?.color || "#334155",
+              border: `1px solid ${badgeInfo?.border || "#E2E8F0"}`,
+            }}
+          >
+            <span>{badgeInfo?.icon || "📄"}</span>
+            <span>
+              {channelLabels[item.channel as keyof typeof channelLabels] ?? item.channel}
+            </span>
+          </span>
+          <span className={styles.draftKind}>{item.kind}</span>
+        </div>
+
+        {editingId === item.id ? (
+          <DraftEditor
+            item={item}
+            onClose={() => setEditingId(null)}
+            onSaved={(saved) => {
+              setItems((prev) =>
+                prev.map((i) => (i.id === saved.id ? saved : i)),
+              );
+              setNotice("Đã lưu bản sửa — bài vẫn đang chờ chị duyệt.");
+            }}
+          />
+        ) : (
+          <>
+            {isVideoChannel ? (
+              <div style={{ marginBottom: "12px" }}>
+                {(() => {
+                  const hasRealVideo = Boolean(
+                    item.media_url &&
+                      (item.media_url.startsWith("blob:") ||
+                        item.media_url.endsWith(".mp4") ||
+                        item.media_url.endsWith(".mov") ||
+                        item.media_url.endsWith(".webm") ||
+                        item.media_url.includes("video")),
+                  );
+
+                  if (hasRealVideo) {
+                    return (
+                      <div className={styles.realVideoContainer}>
+                        <div className={styles.realVideoBadge}>
+                          <span>🟢 Clip Thật Đã Sẵn Sàng</span>
+                        </div>
+                        <video
+                          key={`${item.id}-${item.media_url}`}
+                          src={item.media_url!}
+                          controls
+                          playsInline
+                          className={styles.inPlaceVideoPlayer}
+                        />
+                        <div className={styles.realVideoFooter}>
+                          <span>🎬 Video quay thực tế của tiệm</span>
+                          <button
+                            type="button"
+                            className={styles.inPlaceVideoResetBtn}
+                            onClick={() => handleRemoveImage(item.id)}
+                          >
+                            ❌ Đổi clip khác
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const firstSentence = item.text.split(/[.\n!?]/)[0]?.replace(/^[•*"-]\s*/, "").trim() || "";
+                  const hookDisplay = hookSnippet || (firstSentence.length > 5 ? firstSentence.toUpperCase() : "BÍ QUYẾT TỰ HỌC & LÀM CHỦ CÔNG NGHỆ THỰC CHIẾN");
+
+                  return (
+                    <div className={styles.scriptCard}>
+                      <div className={styles.scriptBadge}>
+                        <span>🎬 Kịch Bản Quay 30s • Người Thật Việc Thật</span>
+                      </div>
+
+                      <div className={styles.scriptSection}>
+                        <div className={styles.scriptSectionTitle}>
+                          🎯 Câu Mở Đầu 3 Giây Giữ Chân (Hook)
+                        </div>
+                        <div className={`${styles.scriptSectionContent} ${styles.scriptHookHighlight}`}>
+                          "{hookDisplay}"
+                        </div>
+                      </div>
+
+                      <div className={styles.scriptSection}>
+                        <div className={styles.scriptSectionTitle}>
+                          📹 Góc Máy Gợi Ý (Chủ tiệm quay 15-30s)
+                        </div>
+                        <div className={styles.scriptSectionContent}>
+                          💡 {item.media_note || "Cầm điện thoại quay cận cảnh thao tác thực tế tại tiệm hoặc góc làm việc của bạn."}
+                        </div>
+                      </div>
+
+                      <div className={styles.scriptSection}>
+                        <div className={styles.scriptSectionTitle}>
+                          💬 Lời Thoại Gợi Ý (Đọc ngắn gọn 20s)
+                        </div>
+                        <div className={styles.scriptSectionContent}>
+                          "{item.text.length > 180 ? item.text.slice(0, 175) + "..." : item.text}"
+                        </div>
+                      </div>
+
+                      <div className={styles.scriptActions}>
+                        <button
+                          type="button"
+                          className={styles.openTeleprompterBtn}
+                          onClick={() => setTeleprompterItem(item)}
+                        >
+                          📱 Bật Máy Nhắc Chữ (30s)
+                        </button>
+                        <input
+                          type="file"
+                          id={`upload-real-video-${item.id}`}
+                          accept="video/mp4,video/quicktime,video/webm"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadRealVideoForItem(item.id, f);
+                          }}
+                        />
+                        <label
+                          htmlFor={`upload-real-video-${item.id}`}
+                          className={styles.uploadRealVideoBtn}
+                        >
+                          📤 Tải Video Vừa Quay Lên (1 Chạm)
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : null}
+
+            {/* Bài viết Facebook/Google Maps */}
+            {!isVideoChannel ? (
+              <div style={{ marginBottom: "12px" }}>
+                {item.media_url && !item.media_url.endsWith(".mp4") ? (
+                  <div className={styles.generatedAiImageBox}>
+                    <img
+                      src={item.media_url}
+                      alt="Ảnh bài viết"
+                      className={styles.generatedAiImage}
+                      style={{
+                        filter: enhancedImageIds.includes(item.id)
+                          ? "contrast(1.15) saturate(1.2) brightness(1.05)"
+                          : "none",
+                      }}
+                    />
+                    <div className={styles.aiImageBadge}>
+                      {enhancedImageIds.includes(item.id)
+                        ? "🪄 Đã tối ưu chất lượng HD"
+                        : "✨ Ảnh bài viết"}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "6px",
+                    marginTop: "8px",
+                    marginBottom: "12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={generatingImageId === item.id}
+                    onClick={() => handleAiGenerateImage(item.id)}
+                    style={{ fontSize: "11px", padding: "4px 8px" }}
+                  >
+                    {generatingImageId === item.id ? "⏳ Đang vẽ…" : "✨ AI Vẽ lại đẹp hơn"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleMagicEnhance(item.id)}
+                    style={{ fontSize: "11px", padding: "4px 8px" }}
+                  >
+                    🪄 Tút lại ảnh thật
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleRemoveImage(item.id)}
+                    style={{
+                      fontSize: "11px",
+                      padding: "4px 8px",
+                      color: "#DC2626",
+                    }}
+                  >
+                    ❌ Bỏ ảnh
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            <p className={styles.draftBody}>{item.text}</p>
+
+            {item.media_note ? (
+              <div className={styles.mediaNoteBox}>
+                <p className={styles.mediaNoteText}>
+                  💡 <strong>Gợi ý hình ảnh/góc quay:</strong> {item.media_note}
+                </p>
+              </div>
+            ) : null}
+
+            <div className={styles.draftFooter}>
+              <div className={styles.draftActions}>
+                <Button
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => onApprove(item.id, new Date().toISOString())}
+                  style={{ flex: 1 }}
+                >
+                  {busy ? "Đang gửi…" : "⚡ Đăng ngay"}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => onApprove(item.id)}
+                >
+                  Lên lịch
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setEditingId(item.id)}
+                >
+                  Sửa
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => onDismiss(item.id)}
+                  aria-label={`Bỏ bài ${item.channel}`}
+                >
+                  Bỏ qua
+                </Button>
+              </div>
+
+              {item.channel === "facebook_page" || item.channel === "reels" ? (
+                <div style={{ marginTop: "10px" }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleShareToPersonalProfile(item.text)}
+                    style={{
+                      width: "100%",
+                      fontSize: "12px",
+                      color: "#1877F2",
+                      borderColor: "#BAE6FD",
+                      background: "#F0F9FF",
+                    }}
+                  >
+                    📋 Copy &amp; Đăng Trang Cá Nhân Facebook
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </>
+        )}
+      </article>
+    );
+  };
+
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Tạo nội dung</h1>
+        <h1 className={styles.title}>
+          <span>🎯 Trung Tâm Chiến Dịch Tăng Trưởng</span>
+        </h1>
         <p className={styles.subtitle}>
-          Nạp ảnh, ghi âm hoặc vài dòng — Havi viết bài theo từng kênh, chị chỉ
-          cần duyệt.
+          Sáng tạo đa kênh chuẩn thuật toán 2026: Video 9:16 Kinetic Subtitles, SEO Google Maps &amp; Tự động chốt Lead qua Inbox.
         </p>
+        <div className={styles.roiBadgeContainer}>
+          <span className={styles.roiBadge}>
+            💰 Tiết kiệm 15.000.000đ/tháng chi phí Marketing Agency
+          </span>
+          <span className={`${styles.roiBadge} ${styles.roiBadgePurple}`}>
+            ⚡ Tự động tối ưu Hook 3s &amp; SEO địa phương
+          </span>
+        </div>
       </header>
 
-      {/* Trên ô nạp liệu: chủ tiệm phải biết còn bao nhiêu lượt TRƯỚC khi bỏ công
-          nạp ảnh, không phải sau khi bấm "Để Havi viết" rồi bị chặn. */}
       <QuotaBanner reloadKey={quotaKey} />
 
+      {/* BƯỚC 1: CHỌN CHIẾN DỊCH TĂNG TRƯỞNG */}
+      <section className={styles.playbookSection} aria-label="Chọn chiến dịch">
+        <div className={styles.stepTitle}>
+          <span className={styles.stepNumber}>1</span>
+          <span>Chọn Mục Tiêu Chiến Dịch Tăng Trưởng</span>
+        </div>
+        <div className={styles.playbookGrid}>
+          {CAMPAIGN_PLAYBOOKS.map((playbook) => {
+            const isActive = selectedPlaybook === playbook.id;
+            return (
+              <button
+                key={playbook.id}
+                type="button"
+                className={`${styles.playbookCard} ${isActive ? styles.playbookCardActive : ""}`}
+                onClick={() => {
+                  setSelectedPlaybook(playbook.id);
+                  setNote(playbook.text);
+                  setNoteOpen(true);
+                  addToast({
+                    type: "info",
+                    title: `Đã chọn: ${playbook.title}`,
+                    description: "Đã nạp sẵn kịch bản chiến lược — bạn có thể bấm tạo bài ngay!",
+                  });
+                }}
+              >
+                <div className={styles.playbookIconHeader}>
+                  <span className={styles.playbookIcon}>{playbook.icon}</span>
+                  <span className={styles.playbookTag}>{playbook.tag}</span>
+                </div>
+                <h3 className={styles.playbookCardTitle}>{playbook.title}</h3>
+                <p className={styles.playbookCardDesc}>{playbook.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* BƯỚC 2: NẠP Ý TƯỞNG NHANH */}
       <section className={styles.dropZone} aria-label="Nạp liệu mới">
+        <div className={styles.stepTitle} style={{ justifyContent: "center", marginBottom: "16px" }}>
+          <span className={styles.stepNumber}>2</span>
+          <span>Nạp Ý Tưởng 1-Chạm (Voice, Ảnh Thật Hoặc Vài Dòng)</span>
+        </div>
+
         <p className={styles.dropTitle}>Chụp ảnh, quay video hoặc gõ vài dòng — Nhân viên AI viết bài ngay</p>
         <div className={styles.dropActions}>
           <input
@@ -855,7 +1352,7 @@ export function ContentCreationScreen() {
           </div>
         ) : null}
 
-        {/* 1-Tap Fast Template Presets */}
+        {/* Preset chips */}
         <div className={styles.presetSection}>
           <div className={styles.presetHeader}>
             <span>⚡</span>
@@ -909,6 +1406,30 @@ export function ContentCreationScreen() {
             ))}
           </div>
         </div>
+
+        {/* Lead Conversion Booster Box */}
+        <div className={styles.conversionBooster}>
+          <div className={styles.conversionBoosterLeft}>
+            <span className={styles.conversionBoosterIcon}>🤖</span>
+            <div>
+              <div className={styles.conversionBoosterTitle}>
+                Tự Động Chốt Lead &amp; Trả Lời Tin Nhắn 24/7 (AI Lead Agent)
+              </div>
+              <div className={styles.conversionBoosterDesc}>
+                Tự động gắn mã ưu đãi và kích hoạt AI tiếp đón khách khi có người bình luận hoặc nhắn tin.
+              </div>
+            </div>
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700, color: "#15803D" }}>
+            <input
+              type="checkbox"
+              checked={leadConversionEnabled}
+              onChange={(e) => setLeadConversionEnabled(e.target.checked)}
+              style={{ width: "16px", height: "16px", accentColor: "#16A34A" }}
+            />
+            <span>Đang kích hoạt</span>
+          </label>
+        </div>
       </section>
 
       {uploads.length ? (
@@ -919,7 +1440,6 @@ export function ContentCreationScreen() {
               className={`${styles.uploadItem} ${
                 upload.status === "failed" ? styles.uploadItemFailed : ""
               }`}
-              style={{ maxWidth: "540px", margin: "8px 0" }}
             >
               {upload.isVideo ? (
                 <video
@@ -1068,7 +1588,7 @@ export function ContentCreationScreen() {
           onClick={generate}
           disabled={(!chips.length && !note.trim()) || uploading || generating}
         >
-          {generating ? "⏳ Havi đang viết bài (5 Kênh)…" : "⚡ Để Havi viết bài ngay (5 Kênh)"}
+          {generating ? "⏳ Havi đang sáng tạo nội dung…" : "⚡ Tạo Ngay Bài Viết Đa Kênh & Kịch Bản Video 30s"}
         </Button>
       </div>
 
@@ -1097,19 +1617,24 @@ export function ContentCreationScreen() {
       ) : null}
       {poll.error ? <ErrorState title={poll.error} /> : null}
 
+      {/* BƯỚC 3: VISUAL MULTI-CHANNEL COMMAND CENTER */}
       <section className={styles.draftsSection} aria-label="Bản nháp đã sẵn sàng">
         <div className={styles.draftsHeader}>
           <div>
+            <div className={styles.stepTitle} style={{ marginBottom: "4px" }}>
+              <span className={styles.stepNumber}>3</span>
+              <span>Visual Multi-Channel Command Center</span>
+            </div>
             <h2 className={styles.draftsTitle}>
               {items.length} bản nháp trong kho
             </h2>
             {items.length > 0 ? (
               <p style={{ fontSize: "13px", color: "#64748B", marginTop: "3px" }}>
-                Gồm: {items.filter((i) => i.channel === "facebook_page" || i.channel === "google_business" || i.channel === "zalo_oa").length} Bài Viết &amp; Local SEO • {items.filter((i) => i.channel === "tiktok" || i.channel === "youtube" || i.channel === "reels").length} Video Ngắn 9:16
+                🟢 {postGroup.length} Bài Viết &amp; Local SEO (Sẵn sàng) • 🎬 {videoGroup.length} Video Ngắn 9:16 {pendingVideosCount > 0 ? `(${pendingVideosCount} kịch bản chờ clip)` : "(Đã có clip)"}
               </p>
             ) : null}
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
             <Button
               type="button"
               variant="outline"
@@ -1117,7 +1642,16 @@ export function ContentCreationScreen() {
               onClick={onDismissAll}
               disabled={!items.length || busyIds.length > 0}
             >
-              🗑️ Xoá tất cả bản nháp
+              🗑️ Xoá tất cả
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              style={{ color: "#4F46E5", borderColor: "#C7D2FE", background: "#EEF2FF" }}
+              onClick={onSmartScheduleAll}
+              disabled={!items.length || busyIds.length > 0}
+            >
+              📅 Hẹn Giờ Vàng (11h30 &amp; 20h00)
             </Button>
             <Button
               type="button"
@@ -1125,10 +1659,46 @@ export function ContentCreationScreen() {
               onClick={onApproveAll}
               disabled={!items.length || busyIds.length > 0}
             >
-              🚀 Duyệt &amp; Đăng ngay tất cả ({items.length === 5 ? "5 Kênh" : `${items.length} bài`})
+              🚀 Duyệt &amp; Đăng Ngay {totalReadyCount < items.length ? `(${totalReadyCount} Kênh Sẵn Sàng)` : "Tất Cả"}
             </Button>
           </div>
         </div>
+
+        {/* Segmented Channel Tabs */}
+        {items.length > 0 ? (
+          <div className={styles.channelTabs} role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "all"}
+              className={`${styles.channelTabBtn} ${activeTab === "all" ? styles.channelTabBtnActive : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              <span>🌐 Tất Cả Kênh</span>
+              <span className={styles.channelTabCount}>{items.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "video"}
+              className={`${styles.channelTabBtn} ${activeTab === "video" ? styles.channelTabBtnActive : ""}`}
+              onClick={() => setActiveTab("video")}
+            >
+              <span>📱 Video Ngắn Dọc 9:16</span>
+              <span className={styles.channelTabCount}>{videoGroup.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "posts"}
+              className={`${styles.channelTabBtn} ${activeTab === "posts" ? styles.channelTabBtnActive : ""}`}
+              onClick={() => setActiveTab("posts")}
+            >
+              <span>📰 Bài Viết &amp; Local SEO</span>
+              <span className={styles.channelTabCount}>{postGroup.length}</span>
+            </button>
+          </div>
+        ) : null}
 
         {loading ? (
           <LoadingState title="Đang tải bản nháp…" />
@@ -1139,496 +1709,137 @@ export function ContentCreationScreen() {
           />
         ) : (
           <div>
-            {(() => {
-              const channelBadges: Record<
-                string,
-                { icon: string; bg: string; color: string; border: string }
-              > = {
-                facebook_page: {
-                  icon: "📘",
-                  bg: "#EFF6FF",
-                  color: "#1D4ED8",
-                  border: "#BFDBFE",
-                },
-                google_business: {
-                  icon: "📍",
-                  bg: "#ECFDF5",
-                  color: "#047857",
-                  border: "#A7F3D0",
-                },
-                tiktok: {
-                  icon: "🎵",
-                  bg: "#FDF2F8",
-                  color: "#BE185D",
-                  border: "#FBCFE8",
-                },
-                youtube: {
-                  icon: "▶️",
-                  bg: "#FEF2F2",
-                  color: "#B91C1C",
-                  border: "#FECACA",
-                },
-                reels: {
-                  icon: "🎬",
-                  bg: "#FAF5FF",
-                  color: "#7E22CE",
-                  border: "#E9D5FF",
-                },
-                zalo_oa: {
-                  icon: "💬",
-                  bg: "#F0F9FF",
-                  color: "#0369A1",
-                  border: "#BAE6FD",
-                },
-              };
-
-              const postGroup = items.filter(
-                (i) =>
-                  i.channel === "facebook_page" ||
-                  i.channel === "google_business" ||
-                  i.channel === "zalo_oa",
-              );
-              const videoGroup = items.filter(
-                (i) =>
-                  i.channel === "tiktok" ||
-                  i.channel === "youtube" ||
-                  i.channel === "reels",
-              );
-              const otherGroup = items.filter(
-                (i) => !postGroup.includes(i) && !videoGroup.includes(i),
-              );
-
-              const renderDraftCard = (item: ContentItem) => {
-                const busy = busyIds.includes(item.id);
-                const badgeInfo = channelBadges[item.channel];
-                return (
-                  <article key={item.id} className={styles.draftCard}>
-                    <div className={styles.draftMeta}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          padding: "3px 10px",
-                          borderRadius: "999px",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          background: badgeInfo?.bg || "#F1F5F9",
-                          color: badgeInfo?.color || "#334155",
-                          border: `1px solid ${badgeInfo?.border || "#E2E8F0"}`,
-                        }}
-                      >
-                        <span>{badgeInfo?.icon || "📄"}</span>
-                        <span>
-                          {channelLabels[item.channel as keyof typeof channelLabels] ??
-                            item.channel}
-                        </span>
-                      </span>
-                      <span className={styles.draftKind}>{item.kind}</span>
-                    </div>
-                    {editingId === item.id ? (
-                      <DraftEditor
-                        item={item}
-                        onClose={() => setEditingId(null)}
-                        onSaved={(saved) => {
-                          setItems((prev) =>
-                            prev.map((i) => (i.id === saved.id ? saved : i)),
-                          );
-                          setNotice("Đã lưu bản sửa — bài vẫn đang chờ chị duyệt.");
-                        }}
-                      />
-                    ) : (
-                      <>
-                        {item.channel === "tiktok" ||
-                        item.channel === "youtube" ||
-                        item.channel === "reels" ? (
-                          <div style={{ marginBottom: "12px" }}>
-                            <div className={styles.inPlaceVideoContainer}>
-                              {(() => {
-                                const isCustom = Boolean(
-                                  item.media_url &&
-                                    (item.media_url.startsWith("blob:") ||
-                                      item.media_url.endsWith(".mp4") ||
-                                      item.media_url.includes("video") ||
-                                      item.media_url.startsWith("/") ||
-                                      item.media_url.startsWith("http")),
-                                );
-                                const videoSrc = isCustom ? item.media_url! : "/test_tiktok.mp4";
-                                const isBlob = Boolean(item.media_url?.startsWith("blob:"));
-                                return (
-                                  <video
-                                    key={`${item.id}-${item.media_url || "default"}`}
-                                    src={videoSrc}
-                                    poster={isBlob ? undefined : getTopicImage(item.media_note, item.text)}
-                                    controls
-                                    playsInline
-                                    autoPlay={isBlob}
-                                    className={styles.inPlaceVideoPlayer}
-                                  >
-                                    <source src={videoSrc} type="video/mp4" />
-                                    <source src={videoSrc} type="video/webm" />
-                                  </video>
-                                );
-                              })()}
-                              <div className={styles.inPlaceVideoFooter}>
-                                <span>🎬 Video 9:16 Sẵn Sàng (Phụ đề động &amp; Nhạc)</span>
-                                <button
-                                  type="button"
-                                  className={styles.inPlaceVideoResetBtn}
-                                  onClick={() => handleRemoveImage(item.id)}
-                                >
-                                  ❌ Đổi lại
-                                </button>
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "6px",
-                                marginTop: "8px",
-                                marginBottom: "12px",
-                                flexWrap: "wrap",
-                              }}
-                            >
-                              <button
-                                type="button"
-                                className={styles.inPlaceRenderVideoBtn}
-                                disabled={renderingVideoId === item.id}
-                                onClick={() => handleAiRenderVideo(item.id)}
-                              >
-                                {renderingVideoId === item.id
-                                  ? "⏳ Đang dựng Video 9:16…"
-                                  : "🎬 AI Dựng Video 9:16 Ngay"}
-                              </button>
-                              <button
-                                type="button"
-                                style={{
-                                  fontSize: "12px",
-                                  padding: "4px 10px",
-                                  borderRadius: "6px",
-                                  border: "1px solid #93C5FD",
-                                  background: "#EFF6FF",
-                                  color: "#1D4ED8",
-                                  cursor: "pointer",
-                                  fontWeight: 600,
-                                }}
-                                disabled={generatingImageId === item.id}
-                                onClick={() => handleAiGenerateImage(item.id)}
-                              >
-                                {generatingImageId === item.id
-                                  ? "✨ Đang vẽ…"
-                                  : "✨ AI Vẽ Lại Đẹp Hơn"}
-                              </button>
-                              <button
-                                type="button"
-                                style={{
-                                  fontSize: "12px",
-                                  padding: "4px 10px",
-                                  borderRadius: "6px",
-                                  border: "1px solid #FCD34D",
-                                  background: "#FFFBEB",
-                                  color: "#B45309",
-                                  cursor: "pointer",
-                                  fontWeight: 600,
-                                }}
-                                onClick={() => handleMagicEnhance(item.id)}
-                              >
-                                {enhancedImageIds.includes(item.id)
-                                  ? "🪄 Đã tút nét HD"
-                                  : "🪄 Tút Lại Ảnh Thật"}
-                              </button>
-                              <button
-                                type="button"
-                                style={{
-                                  fontSize: "12px",
-                                  padding: "4px 10px",
-                                  borderRadius: "6px",
-                                  border: "1px solid #E5E7EB",
-                                  background: "#F9FAFB",
-                                  color: "#4B5563",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => handleRemoveImage(item.id)}
-                                title="Xoá video này"
-                              >
-                                ❌ Bỏ video
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ marginBottom: "12px" }}>
-                            {item.media_url !== "__NONE__" ? (
-                              <>
-                                <div className={styles.generatedAiImageBox}>
-                                  <img
-                                    src={
-                                      item.media_url && !item.media_url.endsWith(".mp4")
-                                        ? item.media_url
-                                        : uploads.find((u) => u.previewUrl)?.previewUrl ||
-                                          getTopicImage(item.media_note, item.text)
-                                    }
-                                    alt="Ảnh đính kèm bài viết"
-                                    className={styles.generatedAiImage}
-                                    onError={(e) => {
-                                      (e.currentTarget as HTMLImageElement).src = getTopicImage(
-                                        item.media_note,
-                                        item.text,
-                                      );
-                                    }}
-                                    style={
-                                      enhancedImageIds.includes(item.id)
-                                        ? {
-                                            filter: "contrast(1.15) brightness(1.08) saturate(1.2)",
-                                            transform: "scale(1.02)",
-                                            transition: "all 0.3s ease",
-                                          }
-                                        : undefined
-                                    }
-                                  />
-                                  <span className={styles.aiImageBadge}>
-                                    {enhancedImageIds.includes(item.id)
-                                      ? "🪄 Đã tút nét & tăng sáng (Magic Enhance)"
-                                      : item.media_url || uploads.some((u) => u.previewUrl)
-                                      ? "📸 Ảnh bạn nạp đính kèm"
-                                      : "✨ Ảnh minh hoạ AI"}
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: "6px",
-                                    marginTop: "8px",
-                                    marginBottom: "12px",
-                                    flexWrap: "wrap",
-                                  }}
-                                >
-                                  <button
-                                    type="button"
-                                    style={{
-                                      fontSize: "12px",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      border: "1px solid #FCD34D",
-                                      background: "#FFFBEB",
-                                      color: "#B45309",
-                                      cursor: "pointer",
-                                      fontWeight: 600,
-                                    }}
-                                    onClick={() => handleMagicEnhance(item.id)}
-                                  >
-                                    {enhancedImageIds.includes(item.id)
-                                      ? "🪄 Đã tút nét HD"
-                                      : "🪄 Tút Lại Ảnh Thật"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    style={{
-                                      fontSize: "12px",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      border: "1px solid #93C5FD",
-                                      background: "#EFF6FF",
-                                      color: "#1D4ED8",
-                                      cursor: "pointer",
-                                      fontWeight: 600,
-                                    }}
-                                    disabled={generatingImageId === item.id}
-                                    onClick={() => handleAiGenerateImage(item.id)}
-                                  >
-                                    {generatingImageId === item.id
-                                      ? "✨ Đang vẽ…"
-                                      : "✨ AI Vẽ Lại Đẹp Hơn"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    style={{
-                                      fontSize: "12px",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      border: "1px solid #E5E7EB",
-                                      background: "#F9FAFB",
-                                      color: "#4B5563",
-                                      cursor: "pointer",
-                                    }}
-                                    onClick={() => handleRemoveImage(item.id)}
-                                    title="Xoá ảnh này để đăng bài thuần chữ"
-                                  >
-                                    ❌ Bỏ ảnh
-                                  </button>
-                                </div>
-                              </>
-                            ) : (
-                              <div
-                                style={{
-                                  padding: "10px 14px",
-                                  background: "#F8FAFC",
-                                  borderRadius: "8px",
-                                  marginBottom: "12px",
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  flexWrap: "wrap",
-                                  gap: "8px",
-                                  border: "1px dashed #CBD5E1",
-                                }}
-                              >
-                                <span style={{ fontSize: "13px", color: "#64748B" }}>
-                                  📄 Bài viết thuần văn bản (Không đính kèm ảnh)
-                                </span>
-                                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                                  <button
-                                    type="button"
-                                    style={{
-                                      fontSize: "12px",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      border: "1px solid #93C5FD",
-                                      background: "#EFF6FF",
-                                      color: "#1D4ED8",
-                                      cursor: "pointer",
-                                      fontWeight: 600,
-                                    }}
-                                    disabled={generatingImageId === item.id}
-                                    onClick={() => handleAiGenerateImage(item.id)}
-                                  >
-                                    {generatingImageId === item.id
-                                      ? "✨ Đang vẽ…"
-                                      : "✨ Tạo ảnh AI"}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <p className={styles.draftBody}>{item.text}</p>
-                        {item.media_note ? (
-                          <div className={styles.mediaNoteBox}>
-                            <p className={styles.mediaNoteText}>
-                              💡 <strong>Gợi ý ảnh/video:</strong> {item.media_note}
-                            </p>
-                          </div>
-                        ) : null}
-                      </>
-                    )}
-                    <div className={styles.draftFooter}>
-                      <div className={styles.draftActions}>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          disabled={busy}
-                          onClick={() => onApprove(item.id, new Date().toISOString())}
-                        >
-                          {busyIds.includes(item.id) ? "⚡ Đang đăng…" : "⚡ Đăng ngay"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => onApprove(item.id)}
-                        >
-                          📅 Lên lịch
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() =>
-                            setEditingId(editingId === item.id ? null : item.id)
-                          }
-                        >
-                          {editingId === item.id ? "Đang sửa" : "Sửa"}
-                        </Button>
-                        {(item.channel === "facebook_page" || item.channel === "reels") && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            style={{ color: "#1877F2", borderColor: "#BFDBFE" }}
-                            onClick={() => handleShareToPersonalProfile(item.text)}
-                            title="Copy nội dung và mở Facebook để đăng nhanh lên Trang cá nhân"
-                          >
-                            📲 Trang cá nhân
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          style={{ color: "#DC2626", borderColor: "#FCA5A5" }}
-                          disabled={busy}
-                          onClick={() => onDismiss(item.id)}
-                        >
-                          🗑️ Xoá
-                        </Button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              };
-
-              return (
-                <div>
-                  {postGroup.length > 0 && (
-                    <div className={styles.groupSection}>
-                      <div className={styles.groupHeaderPost}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontSize: "17px", fontWeight: 800, color: "#0F172A" }}>
-                            📸 Nhóm 1: Bài Viết &amp; Local SEO ({postGroup.length} bản)
-                          </span>
-                          <span className={styles.groupBadgePost}>
-                            Facebook Fanpage &amp; Google Maps
-                          </span>
-                        </div>
-                        <span style={{ fontSize: "12.5px", color: "#64748B", fontWeight: 500 }}>
-                          Kể chuyện cảm xúc &amp; Kéo khách ghé tiệm
-                        </span>
-                      </div>
-                      <div className={styles.draftsGrid}>
-                        {postGroup.map(renderDraftCard)}
-                      </div>
-                    </div>
-                  )}
-
-                  {videoGroup.length > 0 && (
-                    <div className={styles.groupSection}>
-                      <div className={styles.groupHeaderVideo}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontSize: "17px", fontWeight: 800, color: "#7E22CE" }}>
-                            🎬 Nhóm 2: Video Ngắn Dọc 9:16 ({videoGroup.length} bản)
-                          </span>
-                          <span className={styles.groupBadgeVideo}>
-                            TikTok, YouTube Shorts, Facebook Reels (1-Chạm Dựng Video)
-                          </span>
-                        </div>
-                        <span style={{ fontSize: "12.5px", color: "#9333EA", fontWeight: 500 }}>
-                          Hook 3s giật tít &amp; Phụ đề nhảy nhót
-                        </span>
-                      </div>
-                      <div className={styles.draftsGrid}>
-                        {videoGroup.map(renderDraftCard)}
-                      </div>
-                    </div>
-                  )}
-
-                  {otherGroup.length > 0 && (
-                    <div className={styles.draftsGrid}>
-                      {otherGroup.map(renderDraftCard)}
-                    </div>
-                  )}
+            {/* 1. Nhóm Bài Viết Mạng Xã Hội & Local SEO */}
+            {(activeTab === "all" || activeTab === "posts") && postGroup.length > 0 ? (
+              <div className={styles.groupSection}>
+                <div className={styles.groupHeaderPost}>
+                  <div className={styles.groupHeaderTitleBox}>
+                    <span style={{ fontSize: "20px" }}>📰</span>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#1E293B" }}>
+                      Nhóm 1: Bài Viết &amp; Local SEO (Facebook Page, Google Maps)
+                    </span>
+                    <span className={styles.statusPillReady}>🟢 Sẵn Sàng 100%</span>
+                    <span className={styles.groupBadgePost}>
+                      {postGroup.length} Bài Viết
+                    </span>
+                  </div>
+                  <div className={styles.groupHeaderActions}>
+                    <button
+                      type="button"
+                      className={styles.btnGroupScheduleSubtle}
+                      onClick={() => onApprovePostsGroup(false)}
+                      disabled={busyIds.length > 0}
+                    >
+                      📅 Hẹn Giờ Trưa (11:30)
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnGroupPublishPosts}
+                      onClick={() => onApprovePostsGroup(true)}
+                      disabled={busyIds.length > 0}
+                    >
+                      📢 Duyệt Đăng Bài Viết (1 Chạm)
+                    </button>
+                  </div>
                 </div>
-              );
-            })()}
+                <div className={styles.draftsGrid}>
+                  {postGroup.map(renderDraftCard)}
+                </div>
+              </div>
+            ) : null}
+
+            {/* 2. Nhóm Video Ngắn Dọc 9:16 */}
+            {(activeTab === "all" || activeTab === "video") && videoGroup.length > 0 ? (
+              <div className={styles.groupSection} style={{ background: "#FAF5FF", borderColor: "#E9D5FF" }}>
+                <div className={styles.groupHeaderVideo}>
+                  <div className={styles.groupHeaderTitleBox}>
+                    <span style={{ fontSize: "20px" }}>🎬</span>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: "#581C87" }}>
+                      Nhóm 2: Video Ngắn Dọc 9:16 (TikTok, YouTube Shorts, Reels)
+                    </span>
+                    {readyVideosCount > 0 ? (
+                      <span className={styles.statusPillReady}>🟢 {readyVideosCount}/{videoGroup.length} Clip Sẵn Sàng</span>
+                    ) : (
+                      <span className={styles.statusPillPending}>🎬 Kịch Bản 30s Chờ Quay</span>
+                    )}
+                    <span className={styles.groupBadgeVideo}>
+                      {videoGroup.length} Kênh Video
+                    </span>
+                  </div>
+                  <div className={styles.groupHeaderActions}>
+                    {readyVideosCount > 0 ? (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.btnGroupScheduleSubtle}
+                          onClick={() => onApproveVideosGroup(false)}
+                          disabled={busyIds.length > 0}
+                        >
+                          📅 Hẹn Giờ Tối (20:00)
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnGroupPublishVideos}
+                          onClick={() => onApproveVideosGroup(true)}
+                          disabled={busyIds.length > 0}
+                        >
+                          🎬 Xuất Bản Video ({readyVideosCount} clip)
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "#7E22CE", fontWeight: 600 }}>
+                        💡 Nhìn kịch bản quay 15-30s bên dưới rồi tải clip lên nhé
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.draftsGrid}>
+                  {videoGroup.map(renderDraftCard)}
+                </div>
+              </div>
+            ) : null}
+
+            {/* 3. Các kênh khác nếu có */}
+            {otherGroup.length > 0 && activeTab === "all" ? (
+              <div className={styles.groupSection}>
+                <div className={styles.draftsGrid}>
+                  {otherGroup.map(renderDraftCard)}
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </section>
 
-      {/* Popup Modal Thông Báo Đã Đăng Bài Thành Công */}
+      {/* Voice Recorder Modal */}
+      <VoiceRecorderModal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onInsertNote={handleVoiceInsertNote}
+        onDirectGenerate={handleVoiceDirectGenerate}
+      />
+
+      {/* Máy Nhắc Chữ 30s Teleprompter Modal */}
+      {teleprompterItem ? (
+        <TeleprompterModal
+          isOpen={Boolean(teleprompterItem)}
+          onClose={() => setTeleprompterItem(null)}
+          title={`Kịch bản ${channelLabels[teleprompterItem.channel as keyof typeof channelLabels] || teleprompterItem.channel}`}
+          hookText={
+            teleprompterItem.text.match(/["“]([^"”\n]{6,80})["”]/)?.[1] ||
+            teleprompterItem.text.split(/[.\n!?]/)[0]?.replace(/^[•*"-]\s*/, "").trim() ||
+            "BÍ QUYẾT TỰ HỌC & LÀM CHỦ CÔNG NGHỆ THỰC CHIẾN"
+          }
+          cameraAngle={teleprompterItem.media_note || "Cầm điện thoại quay cận cảnh thao tác thực tế tại tiệm."}
+          scriptText={teleprompterItem.text}
+          onUploadVideo={(file) => handleUploadRealVideoForItem(teleprompterItem.id, file)}
+        />
+      ) : null}
+
+      {/* Modal thông báo sau khi phát lệnh đăng hoặc lên lịch */}
       {publishedModal ? (
-        <div
-          className={styles.modalOverlay}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setPublishedModal(null);
-          }}
-        >
-          <div className={styles.publishModalCard} role="dialog" aria-modal="true">
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.publishModalCard}>
             <div className={styles.publishModalHeader}>
               <span className={styles.publishModalIcon}>
                 {publishedModal.isInstant ? "🚀" : "📅"}
@@ -1637,31 +1848,26 @@ export function ContentCreationScreen() {
             </div>
             <p className={styles.publishModalBody}>{publishedModal.body}</p>
             <div className={styles.publishModalActions}>
-              <Button variant="outline" onClick={() => setPublishedModal(null)}>
+              <Button
+                variant="outline"
+                onClick={() => setPublishedModal(null)}
+              >
                 Đóng
               </Button>
               <Button
                 variant="primary"
                 onClick={() => {
                   setPublishedModal(null);
-                  window.location.href = "/lich-dang";
+                  window.location.href = "/app/calendar";
                 }}
               >
-                Xem Lịch Đăng →
+                Xem Lịch đăng bài 📅
               </Button>
             </div>
           </div>
         </div>
       ) : null}
 
-      <VoiceRecorderModal
-        isOpen={voiceModalOpen}
-        onClose={() => setVoiceModalOpen(false)}
-        onInsertNote={handleVoiceInsertNote}
-        onDirectGenerate={handleVoiceDirectGenerate}
-      />
-
-      {/* Floating Toast Notification ở góc phải màn hình theo chuẩn MIT */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </>
   );

@@ -7,11 +7,12 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 """
 
 import logging
+import os
 import re
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
 from api.deps import (
     ApprovalServiceDep,
@@ -100,9 +101,17 @@ async def create_content_job(
     key trong cùng workspace luôn trả về job đầu tiên và không enqueue lần nữa.
     """
     try:
+        raw_inputs_data = [item.model_dump(mode="json") for item in payload.raw_inputs]
+        if payload.target_channels:
+            raw_inputs_data.append({
+                "kind": "text",
+                "text": "",
+                "meta": "channels_filter",
+                "target_channels": [c.value for c in payload.target_channels],
+            })
         created = await content_service.create_job(
             workspace_id=workspace_id,
-            raw_inputs=[item.model_dump(mode="json") for item in payload.raw_inputs],
+            raw_inputs=raw_inputs_data,
             idempotency_key=idempotency_key,
         )
     except SubscriptionExpired as exc:
@@ -378,6 +387,40 @@ async def generate_item_video(
     return GenerateVideoResponse(
         media_url=video_url, target_aspect_ratio=target_ratio, status="completed"
     )
+
+
+@router.post("/{content_id}/upload-rendered-video")
+async def upload_rendered_video(
+    content_id: UUID,
+    request: Request,
+    auth: AuthDep,
+    workspace_id: WorkspaceDep,
+    approvals: ApprovalServiceDep,
+) -> dict:
+    """Lưu file video 9:16 vừa render từ Client Canvas lên hệ thống lưu trữ của Havi."""
+    content_bytes = await request.body()
+    if not content_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Thiếu dữ liệu video nhị phân",
+        )
+
+    os.makedirs("/tmp/havi_rendered", exist_ok=True)
+    file_path = f"/tmp/havi_rendered/{content_id}.mp4"
+    with open(file_path, "wb") as f:
+        f.write(content_bytes)
+
+    saved_url = f"file://{file_path}"
+    await approvals.update_item(
+        workspace_id=workspace_id,
+        item_id=content_id,
+        user_id=auth.user_id,
+        text=None,
+        media_note="🎬 Video 9:16 thật đã được render và sẵn sàng xuất bản",
+        media_url=saved_url,
+        scheduled_at=None,
+    )
+    return {"status": "ok", "media_url": saved_url}
 
 
 @router.get("/{content_id}/versions", response_model=list[ContentItemVersion])

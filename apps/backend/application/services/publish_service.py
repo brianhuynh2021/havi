@@ -250,7 +250,10 @@ class PublishService:
             )
 
         media_urls: list[str] = []
-        if self._media:
+        if item.media_url and not item.media_url.startswith("blob:"):
+            media_urls.append(item.media_url)
+
+        if self._media and not media_urls:
             job_obj = await self._content.get_job(workspace_id=job.workspace_id, job_id=item.job_id)
             if job_obj and job_obj.raw_inputs:
                 for inp in job_obj.raw_inputs:

@@ -384,7 +384,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
+    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
 
     await waitFor(() => {
       const jobCall = fetchSpy.mock.calls.find(([input]) => {
@@ -405,7 +405,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
+    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
     expect((await screen.findAllByText(/havi đang viết bài/i)).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -417,7 +417,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /để havi viết/i }));
+    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
 
     expect(
       await screen.findByText(/havi chưa viết được lần này/i),
@@ -491,9 +491,9 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /đăng ngay tất cả/i }));
+    await user.click(screen.getByRole("button", { name: /duyệt & đăng ngay/i }));
 
-    expect(await screen.findByText(/đã phát lệnh đăng ngay tất cả/i)).toBeInTheDocument();
+    expect(await screen.findByText(/đã phát lệnh đăng/i)).toBeInTheDocument();
   });
 
   it("full_auto vẫn cảnh báo là đang khoá trong pilot", async () => {
@@ -562,9 +562,79 @@ describe("ContentCreationScreen", () => {
     const shareBtns = screen.getAllByRole("button", { name: /trang cá nhân/i });
     expect(shareBtns.length).toBe(2); // 1 cho FB Page, 1 cho FB Reels
 
-    // Nút AI Dựng Video 9:16 chỉ có ở các kênh video
-    const renderVideoBtns = screen.getAllByRole("button", { name: /ai dựng video 9:16/i });
-    expect(renderVideoBtns.length).toBe(3); // tiktok, youtube, reels
+    // Kịch bản quay 30s người thật việc thật hiển thị ở 3 kênh video
+    const uploadVideoLabels = screen.getAllByText(/tải video vừa quay lên/i);
+    expect(uploadVideoLabels.length).toBe(3); // tiktok, youtube, reels
+  });
+
+  it("bấm chọn Campaign Playbook thì tự động điền kịch bản chiến lược vào ô ghi chú", async () => {
+    mockApi();
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    const user = userEvent.setup();
+    const flashSaleBtn = screen.getByRole("button", { name: /flash sale & kéo khách/i });
+    await user.click(flashSaleBtn);
+
+    const textarea = screen.getByPlaceholderText(/tuần này giảm 20%/i) as HTMLTextAreaElement;
+    expect(textarea.value).toContain("Ưu đãi giờ vàng");
+  });
+
+  it("chuyển Tab Video và Bài viết lọc danh sách trực quan", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [
+            pendingItem("post-fb", "facebook_page"),
+            pendingItem("vid-tt", "tiktok"),
+          ],
+          total: 2,
+          limit: 50,
+          offset: 0,
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Nội dung post-fb");
+
+    const user = userEvent.setup();
+    const videoTab = screen.getByRole("tab", { name: /video ngắn/i });
+    await user.click(videoTab);
+
+    expect(screen.getByText("Nội dung vid-tt")).toBeInTheDocument();
+    expect(screen.queryByText("Nội dung post-fb")).not.toBeInTheDocument();
+
+    const postsTab = screen.getByRole("tab", { name: /bài viết/i });
+    await user.click(postsTab);
+
+    expect(screen.getByText("Nội dung post-fb")).toBeInTheDocument();
+    expect(screen.queryByText("Nội dung vid-tt")).not.toBeInTheDocument();
+  });
+
+  it("bấm Hẹn Giờ Vàng thì lên lịch hàng loạt khung giờ vàng", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [pendingItem("c1"), pendingItem("c2")],
+          total: 2,
+          limit: 50,
+          offset: 0,
+        }),
+      approveAll: () =>
+        jsonResponse({
+          approved: ["c1", "c2"],
+          rejected: [],
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Nội dung c1");
+
+    const user = userEvent.setup();
+    const goldHourBtn = screen.getByRole("button", { name: /hẹn giờ vàng/i });
+    await user.click(goldHourBtn);
+
+    expect(
+      await screen.findByText(/đã lên lịch khung giờ vàng/i),
+    ).toBeInTheDocument();
   });
 });
 

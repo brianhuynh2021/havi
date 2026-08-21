@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
+import { readTokens } from "@/lib/auth/token-store";
 import type { components } from "@/lib/api-client/schema";
 
 export type ContentItem = components["schemas"]["ContentItem"];
@@ -375,6 +376,30 @@ export async function generateItemVideo(
     const fallbackVideoUrl = "/test_tiktok.mp4";
     await updateItemMedia(itemId, fallbackVideoUrl);
     return { ok: true, data: { media_url: fallbackVideoUrl } };
+  }
+}
+
+export async function uploadRenderedVideoBlob(
+  itemId: string,
+  blob: Blob,
+): Promise<Result<{ media_url: string }>> {
+  try {
+    const token = readTokens()?.accessToken;
+    const res = await fetch(`/api/content/${itemId}/upload-rendered-video`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "video/mp4",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: blob,
+    });
+    if (!res.ok) {
+      return { ok: false, message: "Lỗi tải video lên máy chủ" };
+    }
+    const data = await res.json();
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
 

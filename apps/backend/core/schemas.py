@@ -246,6 +246,7 @@ class ContentJobCreate(HaviModel):
     """Nút "Để Havi viết cho chị" — 1 job, 1 lần gọi LLM, nhiều đầu ra."""
 
     raw_inputs: list[RawInput] = Field(min_length=1)
+    target_channels: list[Channel] | None = None
 
 
 class ContentJob(HaviModel):
