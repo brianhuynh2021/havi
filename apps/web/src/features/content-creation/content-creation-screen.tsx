@@ -34,6 +34,7 @@ import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import { TeleprompterModal } from "./teleprompter-modal";
+import { generateKineticShortVideo } from "./kinetic-video-generator";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -721,6 +722,64 @@ export function ContentCreationScreen() {
   const [generatingImageId, setGeneratingImageId] = useState<string | null>(null);
   const [enhancedImageIds, setEnhancedImageIds] = useState<string[]>([]);
   const [teleprompterItem, setTeleprompterItem] = useState<ContentItem | null>(null);
+  const [shootingModes, setShootingModes] = useState<Record<string, "talking" | "broll">>({});
+  const [generatingVideoId, setGeneratingVideoId] = useState<string | null>(null);
+
+  async function handleGenerateAiCapCutVideo(itemId: string) {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    setGeneratingVideoId(itemId);
+    const toastId = addToast({
+      type: "loading",
+      title: "Đang tạo Video CapCut 9:16...",
+      description: "Havi đang lồng chữ nổi 3D, chuyển động ảnh và beat nhạc nền synth...",
+    });
+
+    try {
+      const generatedUrl = await generateKineticShortVideo({
+        text: item.text,
+        channel: item.channel,
+        mediaNote: item.media_note,
+        imageUrl: item.media_url && !item.media_url.endsWith(".mp4") ? item.media_url : undefined,
+      });
+
+      const isVideoItem = videoGroup.some((v) => v.id === itemId);
+      const targetIds = isVideoItem ? videoGroup.map((v) => v.id) : [itemId];
+
+      setItems((prev) =>
+        prev.map((i) =>
+          targetIds.includes(i.id)
+            ? {
+                ...i,
+                media_url: generatedUrl,
+                media_note: `🎬 Video CapCut 9:16 tự động lồng chữ & nhạc`,
+              }
+            : i,
+        ),
+      );
+
+      removeToast(toastId);
+      addToast({
+        type: "success",
+        icon: "✨",
+        title: "Tạo Video CapCut 9:16 thành công!",
+        description:
+          isVideoItem && videoGroup.length > 1
+            ? `Đã tạo và đồng bộ video cho toàn bộ ${videoGroup.length} kênh video ngắn!`
+            : "Video ngắn dọc 9:16 đã sẵn sàng để phát hành.",
+      });
+    } catch {
+      removeToast(toastId);
+      addToast({
+        type: "error",
+        title: "Lỗi tạo video",
+        description: "Không thể tạo video tự động, vui lòng thử lại.",
+      });
+    } finally {
+      setGeneratingVideoId(null);
+    }
+  }
 
   async function handleUploadRealVideoForItem(itemId: string, file: File) {
     const toastId = addToast({
@@ -1024,47 +1083,78 @@ export function ContentCreationScreen() {
                   const firstSentence = item.text.split(/[.\n!?]/)[0]?.replace(/^[•*"-]\s*/, "").trim() || "";
                   const hookDisplay = hookSnippet || (firstSentence.length > 5 ? firstSentence.toUpperCase() : "BÍ QUYẾT TỰ HỌC & LÀM CHỦ CÔNG NGHỆ THỰC CHIẾN");
 
+                  const currentMode = shootingModes[item.id] || "talking";
+
                   return (
                     <div className={styles.scriptCard}>
                       <div className={styles.scriptBadge}>
-                        <span>🎬 Kịch Bản Quay 30s • Người Thật Việc Thật</span>
+                        <span>🎬 Kịch Bản Video 9:16 • 2 Cách Làm Siêu Dễ</span>
                       </div>
 
-                      <div className={styles.scriptSection}>
-                        <div className={styles.scriptSectionTitle}>
-                          🎯 Câu Mở Đầu 3 Giây Giữ Chân (Hook)
-                        </div>
-                        <div className={`${styles.scriptSectionContent} ${styles.scriptHookHighlight}`}>
-                          "{hookDisplay}"
-                        </div>
-                      </div>
-
-                      <div className={styles.scriptSection}>
-                        <div className={styles.scriptSectionTitle}>
-                          📹 Góc Máy Gợi Ý (Chủ tiệm quay 15-30s)
-                        </div>
-                        <div className={styles.scriptSectionContent}>
-                          💡 {item.media_note || "Cầm điện thoại quay cận cảnh thao tác thực tế tại tiệm hoặc góc làm việc của bạn."}
-                        </div>
-                      </div>
-
-                      <div className={styles.scriptSection}>
-                        <div className={styles.scriptSectionTitle}>
-                          💬 Lời Thoại Gợi Ý (Đọc ngắn gọn 20s)
-                        </div>
-                        <div className={styles.scriptSectionContent}>
-                          "{item.text.length > 180 ? item.text.slice(0, 175) + "..." : item.text}"
-                        </div>
-                      </div>
-
-                      <div className={styles.scriptActions}>
+                      {/* Bộ chuyển đổi 2 Chế Độ Quay */}
+                      <div className={styles.shootingModeTabs}>
                         <button
                           type="button"
-                          className={styles.openTeleprompterBtn}
-                          onClick={() => setTeleprompterItem(item)}
+                          className={`${styles.shootingModeTab} ${currentMode === "talking" ? styles.shootingModeTabActive : ""}`}
+                          onClick={() => setShootingModes((prev) => ({ ...prev, [item.id]: "talking" }))}
                         >
-                          📱 Bật Máy Nhắc Chữ (30s)
+                          🗣️ Cách 1: Đọc Kịch Bản
                         </button>
+                        <button
+                          type="button"
+                          className={`${styles.shootingModeTab} ${currentMode === "broll" ? styles.shootingModeTabActive : ""}`}
+                          onClick={() => setShootingModes((prev) => ({ ...prev, [item.id]: "broll" }))}
+                        >
+                          📹 Cách 2: Quay Thao Tác 10s (Không Lộ Mặt)
+                        </button>
+                      </div>
+
+                      {currentMode === "talking" ? (
+                        <>
+                          <div className={styles.scriptSection}>
+                            <div className={styles.scriptSectionTitle}>
+                              🎯 Câu Mở Đầu 3 Giây Giữ Chân (Hook)
+                            </div>
+                            <div className={`${styles.scriptSectionContent} ${styles.scriptHookHighlight}`}>
+                              "{hookDisplay}"
+                            </div>
+                          </div>
+
+                          <div className={styles.scriptSection}>
+                            <div className={styles.scriptSectionTitle}>
+                              💬 Lời Thoại Gợi Ý (Đọc ngắn gọn 20s)
+                            </div>
+                            <div className={styles.scriptSectionContent}>
+                              "{item.text.length > 180 ? item.text.slice(0, 175) + "..." : item.text}"
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={styles.brollGuideBox}>
+                          <div className={styles.brollGuideTitle}>
+                            <span>📹 Hướng Dẫn Quay 10s Không Cần Lộ Mặt</span>
+                          </div>
+                          <p className={styles.brollGuideDesc}>
+                            💡 {item.media_note || "Cầm điện thoại quay cận cảnh thao tác tay nghề thực tế tại tiệm trong 10-15s."}
+                            <br />
+                            <span style={{ color: "#059669", fontWeight: 700 }}>
+                              ✨ Bạn không cần nói một lời nào — Havi sẽ tự động lồng nhạc nền và chữ nổi 3D thu hút!
+                            </span>
+                          </p>
+                        </div>
+                      )}
+
+                      <div className={styles.scriptActions}>
+                        {currentMode === "talking" ? (
+                          <button
+                            type="button"
+                            className={styles.openTeleprompterBtn}
+                            onClick={() => setTeleprompterItem(item)}
+                          >
+                            📱 Bật Máy Nhắc Chữ (30s)
+                          </button>
+                        ) : null}
+
                         <input
                           type="file"
                           id={`upload-real-video-${item.id}`}
@@ -1079,8 +1169,18 @@ export function ContentCreationScreen() {
                           htmlFor={`upload-real-video-${item.id}`}
                           className={styles.uploadRealVideoBtn}
                         >
-                          📤 Tải Video Vừa Quay Lên (1 Chạm)
+                          📤 {currentMode === "broll" ? "Tải Clip 10s Vừa Quay Lên" : "Tải Video Vừa Quay Lên"}
                         </label>
+
+                        <button
+                          type="button"
+                          className={styles.aiCapcutBtn}
+                          disabled={generatingVideoId === item.id}
+                          onClick={() => handleGenerateAiCapCutVideo(item.id)}
+                          title="Tự động lồng chữ nổi 3D CapCut, hiệu ứng chuyển cảnh và nhạc nền"
+                        >
+                          {generatingVideoId === item.id ? "⏳ Đang tạo video..." : "🪄 Tạo Video CapCut (9:16)"}
+                        </button>
                       </div>
                     </div>
                   );

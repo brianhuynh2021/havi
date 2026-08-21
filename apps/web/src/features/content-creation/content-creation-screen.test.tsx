@@ -636,6 +636,30 @@ describe("ContentCreationScreen", () => {
       await screen.findByText(/đã lên lịch khung giờ vàng/i),
     ).toBeInTheDocument();
   });
+
+  it("thẻ kịch bản video cho phép chuyển đổi giữa 2 chế độ quay (Đọc kịch bản vs Quay thao tác 10s)", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [{ ...pendingItem("vid-1"), channel: "tiktok", text: "Bí quyết tự học công nghệ thực chiến" }],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await screen.findByText(/kịch bản video 9:16/i);
+
+    const user = userEvent.setup();
+    expect(screen.getByText(/cách 1: đọc kịch bản/i)).toBeInTheDocument();
+    expect(screen.getByText(/cách 2: quay thao tác 10s/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /bật máy nhắc chữ/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /tạo video capcut/i })).toBeInTheDocument();
+
+    // Bấm sang chế độ Quay thao tác 10s B-Roll
+    await user.click(screen.getByText(/cách 2: quay thao tác 10s/i));
+    expect(screen.getByText(/hướng dẫn quay 10s không cần lộ mặt/i)).toBeInTheDocument();
+  });
 });
 
 describe("DraftEditor trong màn Tạo nội dung", () => {
