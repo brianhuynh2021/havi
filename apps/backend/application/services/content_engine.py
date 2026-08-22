@@ -84,18 +84,42 @@ class ContentEngine:
 
         await self._content.mark_job_processing(job)
 
-        # Luôn sinh đủ 5 kênh pilot chính thức (2 Bài viết & SEO + 3 Video 9:16)
-        # để chủ tiệm có thể duyệt, tút ảnh, tạo video và chia sẻ ngay cả khi chưa kết nối API.
-        target_channels = list(PILOT_CHANNELS)
+        # Chủ tiệm chọn rõ "Bài viết" hoặc "Video ngắn" trước khi tạo. Router
+        # lưu lựa chọn cùng raw_inputs để worker nền nhận được mà không cần thêm
+        # cột DB chỉ dành cho metadata của một job.
+        creative_inputs = [
+            raw
+            for raw in job.raw_inputs
+            if not (isinstance(raw, dict) and raw.get("meta") == "channels_filter")
+        ]
+        requested_channel_values = next(
+            (
+                raw.get("target_channels")
+                for raw in job.raw_inputs
+                if isinstance(raw, dict) and raw.get("meta") == "channels_filter"
+            ),
+            None,
+        )
+        has_explicit_channel_filter = requested_channel_values is not None
+        target_channels: list[Channel] = []
+        for value in requested_channel_values or []:
+            try:
+                channel = Channel(value)
+            except ValueError:
+                continue
+            if channel in PILOT_CHANNELS and channel not in target_channels:
+                target_channels.append(channel)
+        if not target_channels:
+            target_channels = list(PILOT_CHANNELS)
 
         media_descriptions = await self._describe_media(
-            workspace_id=workspace_id, raw_inputs=job.raw_inputs
+            workspace_id=workspace_id, raw_inputs=creative_inputs
         )
         request = LLMRequest(
             system_prompt=build_system_prompt(workspace, profile, target_channels=target_channels),
             user_prompt=build_user_prompt(
                 workspace=workspace,
-                raw_inputs=job.raw_inputs,
+                raw_inputs=creative_inputs,
                 media_descriptions=media_descriptions,
                 target_channels=target_channels,
             ),
@@ -119,7 +143,7 @@ class ContentEngine:
                     workspace_id=workspace_id,
                     job_id=job_id,
                     job_kind="content.generate_drafts",
-                    input_summary=f"{len(job.raw_inputs)} raw input",
+                    input_summary=f"{len(creative_inputs)} raw input",
                     error=reason,
                 )
             )
@@ -165,13 +189,11 @@ class ContentEngine:
         status = initial_status(workspace.publish_mode)
         items = []
         for draft in result.value.drafts:
+            # Prompt đã yêu cầu đúng tập kênh, nhưng vẫn lọc ở boundary để một
+            # output LLM thừa kênh không làm user nhận cả bài viết lẫn video.
+            if has_explicit_channel_filter and draft.channel not in target_channels:
+                continue
             item_media_url = uploaded_media_url
-            # Với các kênh video (TikTok, YouTube Shorts, Reels), tự động gắn video 9:16 mẫu chuyển động
-            # nếu người dùng chưa tải lên video mp4 riêng để đảm bảo bài sẵn sàng xuất bản 1-chạm.
-            if draft.channel in (Channel.TIKTOK, Channel.YOUTUBE, Channel.REELS):
-                if not (item_media_url and (item_media_url.endswith(".mp4") or "video" in item_media_url)):
-                    item_media_url = "/test_tiktok.mp4"
-
             item = await self._content.create_item(
                 workspace_id=workspace_id,
                 job_id=job_id,
@@ -190,7 +212,7 @@ class ContentEngine:
                 workspace_id=workspace_id,
                 job_id=job_id,
                 job_kind="content.generate_drafts",
-                input_summary=f"{len(job.raw_inputs)} raw input",
+                input_summary=f"{len(creative_inputs)} raw input",
                 output_summary=(
                     f"{len(items)} draft, provider={result.served_by}, "
                     f"attempts={len(result.attempts)}"

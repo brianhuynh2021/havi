@@ -121,13 +121,14 @@ async def receive_meta_webhook(
             author_name=event.author_name,
             content=event.text,
             external_message_id=event.message_id,
+            recipient_id=event.sender_id,
         )
         await events.record(
             EventLogEntry(
                 workspace_id=connection.workspace_id,
                 job_kind="inbox.webhook_received",
                 input_summary=f"meta_webhook:page_{event.page_id}",
-                output_summary=f"msg_id:{event.message_id} | item_id:{item.id}",
+                output_summary=f"msg_id:{event.message_id} | psid:{event.sender_id} | item_id:{item.id}",
             )
         )
         accepted += 1
@@ -170,13 +171,22 @@ async def simulate_inbound(
 class _Inquiry:
     """Một sự kiện đã bóc tách, chuẩn hoá khỏi khác biệt giữa các loại webhook."""
 
-    __slots__ = ("page_id", "message_id", "author_name", "text")
+    __slots__ = ("page_id", "message_id", "author_name", "text", "sender_id")
 
-    def __init__(self, *, page_id: str, message_id: str, author_name: str, text: str):
+    def __init__(
+        self,
+        *,
+        page_id: str,
+        message_id: str,
+        author_name: str,
+        text: str,
+        sender_id: str | None = None,
+    ):
         self.page_id = page_id
         self.message_id = message_id
         self.author_name = author_name
         self.text = text
+        self.sender_id = sender_id
 
 
 def _iter_inquiries(payload: dict):
@@ -206,6 +216,7 @@ def _iter_inquiries(payload: dict):
                 message_id=str(message_id),
                 author_name=f"Khách {str(sender_id)[-4:]}" if sender_id else "Khách",
                 text=text,
+                sender_id=str(sender_id) if sender_id else None,
             )
 
         for change in entry.get("changes", []) or []:
@@ -219,11 +230,13 @@ def _iter_inquiries(payload: dict):
             if not text or not comment_id:
                 continue
             author = (value.get("from") or {}).get("name") or "Khách"
+            from_id = (value.get("from") or {}).get("id")
             yield _Inquiry(
                 page_id=page_id,
                 message_id=str(comment_id),
                 author_name=author,
                 text=text,
+                sender_id=str(from_id) if from_id else None,
             )
 
 

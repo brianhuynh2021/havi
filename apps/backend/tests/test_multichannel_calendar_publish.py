@@ -24,7 +24,15 @@ from adapters.publishers.fake import FakePublisher
 from application.services.approval_service import ApprovalService
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
-from core.enums import Channel, ContentStatus, Industry, Platform, PublishStatus, WorkspaceRole
+from core.enums import (
+    Channel,
+    ContentStatus,
+    Industry,
+    MediaType,
+    Platform,
+    PublishStatus,
+    WorkspaceRole,
+)
 
 
 @pytest.mark.asyncio
@@ -81,9 +89,19 @@ async def test_multichannel_approval_and_publish_flow(db_session: AsyncSession):
     )
 
     # 3. Create Drafts across channels
+    asset = await media_repo.create(
+        workspace_id=ws.id,
+        filename="spa_treatment_video.mp4",
+        content_type="video/mp4",
+        type=MediaType.VIDEO,
+        object_key="spa_treatment_video.mp4",
+    )
     job, _ = await content_repo.create_job(
         workspace_id=ws.id,
-        raw_inputs=[{"kind": "text", "value": "Chăm sóc da spa"}],
+        raw_inputs=[
+            {"kind": "text", "value": "Chăm sóc da spa"},
+            {"kind": "media", "media_asset_id": str(asset.id)},
+        ],
         idempotency_key="idemp_test_123",
     )
 

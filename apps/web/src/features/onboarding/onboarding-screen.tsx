@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { ConnectionList } from "@/features/connections/connection-list";
 import { useSession } from "@/lib/auth/session";
-import { createWorkspace, fetchDefaultShopName } from "./onboarding.api";
+import {
+  createWorkspace,
+  fetchDefaultShopName,
+  initializeBusinessTruthPack,
+} from "./onboarding.api";
 import {
   industryOptions,
   getIndustrySamplePreview,
@@ -44,30 +48,22 @@ export function OnboardingScreen() {
 
   const previewSample = getIndustrySamplePreview(industry, shopName);
 
-  useEffect(() => {
-    if (!learning) return;
+  async function handleStartLearning() {
+    setLearning(true);
+    setProgressPercent(25);
+    setCompletedStages([0]);
 
-    const timer0 = setTimeout(() => {
-      setProgressPercent(25);
-      setCompletedStages([0]);
-    }, 0);
+    // Kích hoạt Business Truth Pack: lưu Brand Voice & FAQ mẫu chuẩn ngành vào database
+    await initializeBusinessTruthPack(industry, shopName);
 
-    const timer1 = setTimeout(() => {
-      setProgressPercent(70);
-      setCompletedStages([0, 1]);
-    }, 400);
+    setProgressPercent(70);
+    setCompletedStages([0, 1]);
 
-    const timer2 = setTimeout(() => {
+    setTimeout(() => {
       setProgressPercent(100);
       setCompletedStages([0, 1, 2]);
-    }, 900);
-
-    return () => {
-      clearTimeout(timer0);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, [learning]);
+    }, 150);
+  }
 
   // Tên đã nhập lúc đăng ký thường chính là tên tiệm — điền sẵn để chủ tiệm
   // không phải gõ lại. Vẫn sửa được: nhiều người đăng ký bằng tên riêng.
@@ -280,7 +276,7 @@ export function OnboardingScreen() {
             </p>
             {!learning ? (
               <div className={styles.actions}>
-                <Button variant="primary" scale="large" onClick={() => setLearning(true)}>
+                <Button variant="primary" scale="large" onClick={handleStartLearning}>
                   Bắt đầu ngay 🚀
                 </Button>
               </div>

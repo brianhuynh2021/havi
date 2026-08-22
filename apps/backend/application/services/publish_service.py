@@ -5,8 +5,6 @@
 """
 
 import logging
-import os
-import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
@@ -38,22 +36,6 @@ from domain.ports.publisher import (
 )
 
 logger = logging.getLogger("havi.publish_service")
-
-
-def get_sample_short_video_path() -> str:
-    """Tạo hoặc lấy file video ngắn mẫu 9:16 cho các kênh video (YouTube Shorts, TikTok, Reels)."""
-    path = "/tmp/havi_test/nhat_minh_short.mp4"
-    if not os.path.exists(path):
-        os.makedirs("/tmp/havi_test", exist_ok=True)
-        subprocess.run(
-            [
-                "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x1e3a8a:s=1080x1920:d=5",
-                "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5",
-                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", path
-            ],
-            capture_output=True,
-        )
-    return f"file://{path}"
 
 
 def select_topic_image(media_note: str | None, text: str | None) -> str:
@@ -269,8 +251,11 @@ class PublishService:
         if job.channel in (Channel.YOUTUBE, Channel.TIKTOK, Channel.REELS):
             has_video = any(u.endswith((".mp4", ".mov", ".webm")) or "video" in u for u in media_urls)
             if not has_video:
-                sample_vid = get_sample_short_video_path()
-                media_urls = [sample_vid]
+                return await self._mark_failed_with_event(
+                    job,
+                    kind=PublishFailureKind.VALIDATION_PERMANENT,
+                    detail="Video chưa có file hoàn chỉnh — cần dựng bằng AI hoặc tải clip lên trước khi đăng",
+                )
         elif not media_urls:
             # Bài do AI sinh (hoặc không đính kèm ảnh thô): tự động chọn ảnh minh hoạ
             # chất lượng cao đúng chủ đề để bài đăng trên Facebook luôn có hình đẹp.

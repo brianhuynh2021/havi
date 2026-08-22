@@ -56,6 +56,29 @@ GOOD_OUTPUT = json.dumps(
     ensure_ascii=False,
 )
 
+MIXED_OUTPUT = json.dumps(
+    {
+        "drafts": [
+            {
+                "channel": "facebook_page",
+                "kind": "Bài ảnh",
+                "text": "Bài Facebook giới thiệu ưu đãi cuối tuần.",
+            },
+            {
+                "channel": "google_business",
+                "kind": "Cập nhật Google",
+                "text": "Cập nhật Google Maps về ưu đãi cuối tuần.",
+            },
+            {
+                "channel": "tiktok",
+                "kind": "Video ngắn",
+                "text": "Hook TikTok không được tạo khi user chọn Bài viết.",
+            },
+        ]
+    },
+    ensure_ascii=False,
+)
+
 
 async def _onboard(client: AsyncClient, *, email: str) -> dict:
     signup = await client.post(
@@ -251,6 +274,58 @@ async def test_sinh_draft_dung_so_luong_va_dung_pending_approval(
         "zalo_oa",
         "google_business",
     }
+
+
+async def test_chon_bai_viet_thi_engine_khong_tao_draft_video(
+    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
+):
+    token_pair = await _onboard(client, email="content-track-posts@havi.vn")
+    job = (
+        await client.post(
+            "/content/jobs",
+            json={
+                "raw_inputs": [{"kind": "text", "text": "Ưu đãi cuối tuần"}],
+                "target_channels": ["facebook_page", "google_business"],
+            },
+            headers=_headers(token_pair),
+        )
+    ).json()
+
+    engine = _engine(db_session, FakeProvider(response_text=MIXED_OUTPUT))
+    result = await engine.generate_drafts(
+        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
+    )
+
+    assert {item.channel.value for item in result.items} == {
+        "facebook_page",
+        "google_business",
+    }
+
+
+async def test_draft_video_khong_duoc_gan_clip_mau_gia_san_sang(
+    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
+):
+    token_pair = await _onboard(client, email="video-no-fake-clip@havi.vn")
+    job = (
+        await client.post(
+            "/content/jobs",
+            json={
+                "raw_inputs": [{"kind": "text", "text": "Ưu đãi cuối tuần"}],
+                "target_channels": ["tiktok", "youtube", "reels"],
+            },
+            headers=_headers(token_pair),
+        )
+    ).json()
+
+    engine = _engine(db_session, FakeProvider(response_text=MIXED_OUTPUT))
+    result = await engine.generate_drafts(
+        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
+    )
+
+    assert [item.channel.value for item in result.items] == ["tiktok"]
+    assert result.items[0].media_url is None, (
+        "kịch bản chưa được dựng không được gắn /test_tiktok.mp4 để giả trạng thái sẵn sàng"
+    )
 
 
 async def test_full_auto_thi_draft_vao_thang_scheduled(
@@ -580,4 +655,3 @@ async def test_upload_rendered_video_binary(
     data = res.json()
     assert data["status"] == "ok"
     assert data["media_url"].startswith("file://")
-

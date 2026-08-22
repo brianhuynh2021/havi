@@ -55,7 +55,7 @@ async def test_list_invoices_empty_on_creation(client: AsyncClient):
 async def test_change_plan_success_issues_invoice(client: AsyncClient):
     tokens = await _onboard(client, email="billing_change_plan@havi.vn")
 
-    # Upgrade to tiem_nho
+    # Request plan change to tiem_nho -> creates pending invoice without premature plan grant
     res = await client.post(
         "/billing/plan",
         json={"plan": "tiem_nho"},
@@ -63,10 +63,10 @@ async def test_change_plan_success_issues_invoice(client: AsyncClient):
     )
     assert res.status_code == 200, res.text
     data = res.json()
-    assert data["plan"] == Plan.TIEM_NHO
-    assert data["status"] == SubscriptionStatus.ACTIVE
+    assert data["plan"] == Plan.TRIAL
+    assert data["status"] == SubscriptionStatus.TRIALING
 
-    # Check invoice created
+    # Check invoice created with PENDING status
     inv_res = await client.get("/billing/invoices", headers=_headers(tokens))
     assert inv_res.status_code == 200, inv_res.text
     invoices = inv_res.json()
@@ -104,7 +104,8 @@ async def test_change_plan_downgrade_to_trial_rejected(client: AsyncClient):
         headers=_headers(tokens),
     )
     assert res.status_code == 400, res.text
-    assert "Không quay lại gói dùng thử" in res.json()["detail"]
+    detail = res.json()["detail"]
+    assert "gói trial" in detail or "Không quay lại gói dùng thử" in detail
 
 
 async def test_billing_tenant_isolation(client: AsyncClient):

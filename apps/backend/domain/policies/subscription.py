@@ -96,7 +96,7 @@ def state_for(
     paid_until_utc = _to_utc(paid_until)
 
     if plan is not Plan.TRIAL:
-        if paid_until_utc is None or paid_until_utc > now_utc:
+        if paid_until_utc is not None and paid_until_utc > now_utc:
             return SubscriptionState(plan, SubscriptionStatus.ACTIVE, paid_until_utc)
         return SubscriptionState(plan, SubscriptionStatus.PAST_DUE, paid_until_utc)
 

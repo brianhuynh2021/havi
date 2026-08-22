@@ -116,7 +116,7 @@ class GeminiVoiceTranscriber(VoiceTranscriberPort):
                 else:
                     logger.warning("Gemini model %s trả về lỗi %s: %s, đang thử model tiếp theo...", model_name, response.status_code, response.text[:150])
                     last_error = f"Lỗi API Gemini ({response.status_code}): {response.text[:200]}"
-            except httpx.TimeoutException as exc:
+            except httpx.TimeoutException:
                 logger.warning("Gemini model %s bị timeout sau %ss, thử model tiếp...", model_name, self._timeout)
                 last_error = f"Nhận diện giọng nói timeout sau {self._timeout}s"
             except httpx.HTTPError as exc:

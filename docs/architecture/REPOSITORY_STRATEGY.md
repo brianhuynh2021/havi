@@ -101,7 +101,7 @@ apps/backend/scheduler -> Railway/AWS/Fly/etc.
 Frontend:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.example.com
+NEXT_PUBLIC_API_BASE_URL=https://api.example.com
 NEXT_PUBLIC_MEDIA_URL=https://media.example.com
 ```
 

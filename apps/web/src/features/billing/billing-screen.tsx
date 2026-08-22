@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { useLanguage } from "@/lib/i18n/language-context";
 import {
-  changePlan,
   checkInvoiceStatus,
   createCheckout,
   fetchInvoices,
@@ -182,28 +181,28 @@ export function BillingScreen() {
     if (res.ok) {
       setCheckoutData(res.data);
     } else {
-      // Fallback nếu API checkout local chưa cấu hình
-      setUpgrading(true);
-      const changeRes = await changePlan(plan);
-      setUpgrading(false);
-      if (changeRes.ok) {
-        await reloadData();
-      } else {
-        alert(changeRes.message);
-      }
+      alert(res.message || "Không thể khởi tạo mã VietQR lúc này. Vui lòng thử lại sau giây lát.");
     }
   }
 
   async function handleManualConfirm() {
     if (!checkoutData) return;
     setUpgrading(true);
-    const res = await changePlan(checkoutData.plan);
+    const res = await checkInvoiceStatus(checkoutData.invoice_id);
     setUpgrading(false);
-    if (res.ok) {
-      await reloadData();
-      setCheckoutData(null);
+    if (res.ok && res.data.status === "paid") {
+      setPaymentSuccess(true);
+      setTimeout(async () => {
+        await reloadData();
+        setCheckoutData(null);
+        setPaymentSuccess(false);
+      }, 1200);
     } else {
-      alert(res.message);
+      alert(
+        "Hệ thống đang chờ tín hiệu đối soát từ Ngân hàng. " +
+        "Sau khi bạn chuyển khoản đúng số tiền và nội dung, gói cước sẽ tự động kích hoạt trong vòng vài giây. " +
+        "Nếu đã chuyển khoản nhưng chưa thấy kích hoạt, vui lòng liên hệ Hotline/Zalo: 0984 883 750."
+      );
     }
   }
 

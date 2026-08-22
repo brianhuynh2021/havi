@@ -1,6 +1,5 @@
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
-import { readTokens } from "@/lib/auth/token-store";
 import type { components } from "@/lib/api-client/schema";
 
 export type ContentItem = components["schemas"]["ContentItem"];
@@ -126,10 +125,16 @@ export async function uploadMedia(
 export async function createJob(
   rawInputs: RawInput[],
   idempotencyKey: string,
+  targetChannels?: Channel[],
 ): Promise<Result<ContentJob>> {
   try {
     const { data, error, response } = await apiClient.POST("/content/jobs", {
-      body: { raw_inputs: rawInputs },
+      body: {
+        raw_inputs: rawInputs,
+        target_channels: targetChannels,
+      } as components["schemas"]["ContentJobCreate"] & {
+        target_channels?: Channel[];
+      },
       headers: { "Idempotency-Key": encodeURIComponent(idempotencyKey) },
     });
     if (error || !data) {
@@ -354,53 +359,19 @@ export async function generateItemImage(
   }
 }
 
-export async function generateItemVideo(
-  itemId: string,
-  targetAspectRatio = "9:16",
-): Promise<Result<{ media_url: string }>> {
-  try {
-    const { data, error } = await apiClient.POST(
-      "/content/{content_id}/generate-video" as any,
-      {
-        params: { path: { content_id: itemId } },
-        body: { target_aspect_ratio: targetAspectRatio },
-      },
-    );
-    if (error || !data) {
-      const fallbackVideoUrl = "/test_tiktok.mp4";
-      await updateItemMedia(itemId, fallbackVideoUrl);
-      return { ok: true, data: { media_url: fallbackVideoUrl } };
-    }
-    return { ok: true, data: data as { media_url: string } };
-  } catch {
-    const fallbackVideoUrl = "/test_tiktok.mp4";
-    await updateItemMedia(itemId, fallbackVideoUrl);
-    return { ok: true, data: { media_url: fallbackVideoUrl } };
-  }
-}
-
 export async function uploadRenderedVideoBlob(
   itemId: string,
   blob: Blob,
 ): Promise<Result<{ media_url: string }>> {
-  try {
-    const token = readTokens()?.accessToken;
-    const res = await fetch(`/api/content/${itemId}/upload-rendered-video`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "video/mp4",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: blob,
-    });
-    if (!res.ok) {
-      return { ok: false, message: "Lỗi tải video lên máy chủ" };
-    }
-    const data = await res.json();
-    return { ok: true, data };
-  } catch {
-    return { ok: false, message: NETWORK_ERROR_MESSAGE };
-  }
+  const contentType = blob.type || "video/webm";
+  const file = new File([blob], `havi-render-${itemId}.${contentType.includes("mp4") ? "mp4" : "webm"}`, {
+    type: contentType,
+  });
+  const uploaded = await uploadMedia(file);
+  if (!uploaded.ok) return { ok: false, message: uploaded.message };
+  const updated = await updateItemMedia(itemId, uploaded.data.url);
+  if (!updated.ok) return { ok: false, message: updated.message };
+  return { ok: true, data: { media_url: uploaded.data.url } };
 }
 
 export async function updateItemMedia(

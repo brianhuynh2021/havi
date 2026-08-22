@@ -32,11 +32,14 @@ export function TeleprompterModal({
 
   // Screen Wake Lock API để màn hình điện thoại không bị tắt khi đọc
   useEffect(() => {
-    let wakeLock: any = null;
-    if (isOpen && "wakeLock" in navigator) {
-      (navigator as any).wakeLock
+    let wakeLock: { release: () => Promise<void> } | null = null;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (type: string) => Promise<{ release: () => Promise<void> }> };
+    };
+    if (isOpen && nav.wakeLock) {
+      nav.wakeLock
         .request("screen")
-        .then((lock: any) => {
+        .then((lock) => {
           wakeLock = lock;
         })
         .catch(() => {});
@@ -46,16 +49,6 @@ export function TeleprompterModal({
         wakeLock.release().catch(() => {});
       }
     };
-  }, [isOpen]);
-
-  // Handle countdown & auto-scroll
-  useEffect(() => {
-    if (!isOpen) {
-      setIsPlaying(false);
-      setCountdown(null);
-      if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
-      return;
-    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -108,6 +101,13 @@ export function TeleprompterModal({
     }
   }
 
+  function handleClose() {
+    setIsPlaying(false);
+    setCountdown(null);
+    if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+    onClose();
+  }
+
   if (!isOpen) return null;
 
   return (
@@ -118,10 +118,10 @@ export function TeleprompterModal({
       aria-label="Máy nhắc chữ quay video 30s"
     >
       {/* Top Header */}
-      <header className={styles.topBar}>
-        <div className={styles.titleArea}>
-          <span className={styles.titleBadge}>📱 Máy Nhắc Chữ 30s</span>
-          <span className={styles.titleText}>{title}</span>
+      <header className={styles.topHeader}>
+        <div className={styles.topInfo}>
+          <span className={styles.prompterBadge}>Studio Teleprompter</span>
+          <h2 className={styles.prompterTitle}>{title || "Lời thoại kịch bản video"}</h2>
         </div>
 
         <div className={styles.topControls}>
@@ -153,7 +153,7 @@ export function TeleprompterModal({
           <button
             type="button"
             className={styles.closeBtn}
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Đóng máy nhắc chữ"
           >
             ✕
@@ -180,7 +180,7 @@ export function TeleprompterModal({
           <div className={styles.hookCard}>
             <div className={styles.hookLabel}>🎯 3 Giây Đầu • Nói To &amp; Dứt Khoát</div>
             <div className={styles.hookText} style={{ fontSize: `${fontSize * 1.25}px` }}>
-              "{hookText || "BÍ QUYẾT TỰ HỌC & LÀM CHỦ CÔNG NGHỆ THỰC CHIẾN"}"
+              &ldquo;{hookText || "BÍ QUYẾT TỰ HỌC & LÀM CHỦ CÔNG NGHỆ THỰC CHIẾN"}&rdquo;
             </div>
           </div>
 

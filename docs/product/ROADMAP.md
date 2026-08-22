@@ -224,33 +224,48 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 
 ## 7. Current Priority Queue
 
-> Re-derived from the 2026-08-13 code audit. The list below the divider is the
-> shipped External Beta queue and is left intact as history. The active queue is
-> §15, because the audit found that the outcome loop the product sells is not
-> closed and one uncommitted endpoint is a security blocker.
+> Re-derived from the 2026-08-22 public-launch audit. The list below the divider
+> is retained as delivery history. The active source of truth is now §25,
+> **10/10 Public Launch Program**. A checked historical item does not override a
+> regressed test, a newer security finding, or a failed end-to-end release gate.
 
 > Zalo scope is deferred by decision on 2026-08-13. Zalo OAuth, publishing,
 > webhooks, and domain verification stay in the codebase but are out of the
 > active queue and out of the gates below until the channel is picked back up.
 
-Active now — see §15 for full acceptance criteria:
+Active now — execute in this order; full acceptance criteria are in §25:
 
-1. [x] P0 — replaced the traversal-prone `/zalo_verifier{rest:path}` handler in
-   `apps/backend/api/main.py`; suffix is now compared exactly against settings,
-   no request input reaches the filesystem, and the route 404s unless configured.
-2. [x] P0 — inbound event plane: `POST/GET /webhooks/meta` with
-   `X-Hub-Signature-256` verification, challenge handshake, page→workspace
-   lookup, and platform-message-id dedupe backed by a unique constraint.
-3. [x] P0 — deliver replies through publisher adapters (`ReplyPublisherPort` and `FakeReplyPublisher`) instead of marking rows `sent`.
-4. [x] P1 — real outcome metrics in `/analytics/summary` (inquiries, new leads,
-   walk-ins, returning customers, win rate, period-over-period change).
-5. [x] P1 — `/connections/capabilities` now derives from the registered OAuth
-   clients, so Google Business is no longer advertised as connectable.
-6. [x] P1 — measure cost per job and cost per approved draft rollups in `/analytics/operations` before pricing; then build the billing path.
-7. [x] P1 — `/app/inbox` screen with loading, empty, error, retry, and reply actions so ingested messages are visible to a shop owner.
-8. [ ] P0 — Live Outbound Meta Graph API reply dispatch for automated 24/7 inbox consultations (§19.2).
-9. [ ] P1 — Mobile-First UX optimization: touch targets >= 48px, single-thumb 30-second ingest & 1-tap approval, non-technical copy (§18, §19.2).
-10. [ ] P1 — Automated VietQR (PayOS / SePay) subscription webhook for instant 3-second plan activation and invoice generation (§20.2).
+1. [ ] **P0 Revenue integrity** — remove every production path that activates a
+   plan before a verified payment; validate webhook signature, invoice, amount,
+   currency, status, and unique gateway reference; add replay and reconciliation
+   tests.
+2. [ ] **P0 Production boot and secret safety** — make the production compose
+   configuration boot with real providers, fail on missing secrets, remove
+   default credentials, keep PostgreSQL/Redis/object storage private, and use
+   private media with signed access.
+3. [ ] **P0 Truthful delivery state** — never mark publish or reply success until
+   the platform confirms it; persist the Facebook sender PSID; separate message
+   replies from comment replies; reconcile ambiguous external outcomes.
+4. [ ] **P0 Release test gate** — restore backend to 100% pass and repair the
+   visual/accessibility harness to 36/36 on the current routes and UI. No release
+   is allowed with a red check.
+5. [ ] **P1 First-value journey** — replace simulated onboarding with a Business
+   Truth Pack, connect one Facebook Page, and reach one verified live post in a
+   median of five minutes or less.
+6. [ ] **P1 Mobile product excellence** — reduce Content Studio to one primary
+   mobile flow, move advanced controls behind progressive disclosure, meet WCAG
+   2.2 AA, and meet Core Web Vitals `Good` thresholds at p75.
+7. [ ] **P1 Server-side entitlements** — enforce plan/channel/post/video/lead/
+   location limits in the backend and align all prices, quotas, trial copy, and
+   invoices.
+8. [ ] **P1 Facebook closed loop** — Multi-Page Picker, verified Page publishing,
+   Messenger reply delivery, inbox-to-lead conversion, and real outcome reports.
+9. [ ] **P2 Platform approvals** — run Meta review, Google Business approval,
+   TikTok Direct Post audit, and YouTube audit in parallel; keep unapproved
+   channels labeled Beta/export-only.
+10. [ ] **P2 Paid pilot and SLO proof** — Customer Zero plus 5–10 design partners,
+    real low-value PayOS transactions, alerting, restore rehearsal, and 30 days
+    of measured SLO/activation/retention evidence before public launch.
 
 ---
 
@@ -330,7 +345,11 @@ Follow-ups completed for external beta:
 
 ### P1: Visual Regression and Accessibility Baseline
 
-Status: completed in `docs/testing/VISUAL_ACCESSIBILITY.md`.
+Status: **regressed and release-blocking as of 2026-08-22**. The historical
+baseline repair reached 36/36, but the current audit run reached only 2/36 after
+subsequent route, heading, and UI changes. This result means the harness and its
+baselines are no longer current; it does not by itself prove that every route
+has an accessibility defect.
 
 Acceptance criteria:
 
@@ -346,19 +365,34 @@ Acceptance criteria:
       **cookie**, which edge middleware can read and `localStorage` is invisible to.
       Every authenticated route redirected to `/login` before React ran. Now 36/36
       pass, `/app/inbox` has a baseline, and axe runs clean on every route
+- [ ] Repair 2026-08-22 regression: update the route readiness contract and
+      intentional screenshots for the current product only after reviewing each
+      diff; add Billing and Video Studio coverage; return the suite to 36/36 or
+      higher without blindly updating snapshots.
 
 ## 9. Metrics That Matter
 
+North Star metric:
+
+- **verified weekly business outcomes per active workspace**: a platform-confirmed
+  published post, delivered reply, created lead, booked appointment, attributed
+  POS sale, or verified returning customer. Drafts and clicks are not outcomes.
+
 Product metrics:
 
-- time from signup to first draft
+- signup → Business Truth Pack completion rate
+- signup → first connected Page rate
+- signup → first verified live publish activation rate
+- median and p90 time from signup to first verified value
 - time from first draft to first approved post
 - approved drafts per workspace
-- published posts per workspace
+- platform-confirmed published posts per workspace
 - publish failures by kind
 - reconnect rate
 - owner edits per draft
 - support time per workspace
+- day-1/day-7 activation and week-4 retention by acquisition cohort
+- weekly active workspaces with at least one verified outcome
 
 Operational metrics:
 
@@ -377,6 +411,9 @@ Business metrics:
 - cost per published post
 - founder support time
 - conversion from trial to paid plan
+- payment checkout → verified payment → activated subscription conversion
+- unpaid activation count (target: zero)
+- month-one paid renewal and gross revenue retention
 
 ## 10. Risks and Mitigations
 
@@ -623,9 +660,20 @@ reads zero.
       (`HAVI_ZALO_SITE_VERIFICATION`, `HAVI_ZALO_VERIFIER_SUFFIX`); both empty by
       default, so the routes are inert until an environment opts in
 - [x] `/` returns a static page and does not shadow any router path
-- [ ] A deploy target exists at all — there is no Dockerfile, Procfile, or host
-      config in the repo, so "deploy" is currently a manual sequence in
-      `docs/handoff/DEPLOYMENT.md` with no automation to run
+- [x] Dockerfiles, production compose, nginx configuration, and deploy scripts
+      now exist.
+- [ ] Production configuration boots successfully with `HAVI_ENV=production`
+      and explicit real email, LLM, and publisher providers. The 2026-08-22
+      audit fails at configuration validation because production inherits the
+      debug email default; mock LLM/fake publisher defaults would also be
+      rejected if not explicitly disabled.
+- [ ] Remove all default production database, object-storage, JWT, webhook, and
+      token-encryption secrets; fail startup when a required secret is absent.
+- [ ] PostgreSQL, Redis, and object storage are internal-only; media is private
+      by default and delivered through signed access rather than an anonymous
+      bucket with wildcard CORS.
+- [ ] Readiness checks verify PostgreSQL, Redis, object storage, and the worker
+      queue; liveness checks only process health; a failed deploy rolls back.
 
 ### Gate G: Trustworthy Inbound Loop (blocks external beta)
 
@@ -661,10 +709,24 @@ reads zero.
 ### Gate I: Monetization
 
 - [x] Trial start/expiry persisted (`trial_ends_at`) and enforced in ContentService
-- [x] Plan change endpoint (`POST /billing/plan`) with `invoices` row & audit event
-- [x] VNPay/Momo integration design behind backend; no secret reaches frontend
-- [x] `/billing/subscription`, `/billing/invoices`, and `/billing/plan` implemented & tested
-- [x] Margin model derived from measured cost per job, recorded in this roadmap
+- [x] `/billing/subscription`, `/billing/invoices`, checkout creation, and PayOS/
+      VietQR webhook routes exist.
+- [ ] Remove or local-gate `POST /billing/plan`: it currently changes the plan
+      and grants 30 days while creating only a `PENDING` invoice.
+- [ ] Remove frontend fallback/manual confirmation paths that call `changePlan`
+      when checkout fails or when a user claims to have transferred money.
+- [ ] Require and verify the PayOS signature in every non-local environment;
+      reject a generic webhook when its required signature is missing.
+- [ ] Activate a subscription only when invoice, amount, currency, successful
+      payment state, and unique gateway reference all match in one transaction.
+- [ ] Add replay protection, idempotent redelivery, reconciliation, refund/
+      cancellation handling, and an immutable payment audit trail.
+- [ ] Enforce plan entitlements in the backend and align posts, token quota,
+      video, lead, channel, location, and branch limits with pricing copy.
+- [ ] Execute real low-value PayOS end-to-end tests because PayOS has no sandbox;
+      prove success, wrong amount, invalid signature, replay, timeout, and retry.
+- [ ] Margin model and final price points are derived from measured pilot cost
+      per verified outcome and month-one renewal behavior.
 
 
 ### Gate J: Channel Truthfulness
@@ -856,15 +918,24 @@ The complete 5-phase product, engineering, and monetization roadmap from Local D
 
 ## 22. Comprehensive Strategic & Architectural Appraisal (MIT/Stanford Board Review)
 
-### 22.1 Executive Commercial Readiness Scorecard (91/100)
+### 22.1 Executive Commercial Readiness Scorecard — superseded 2026-08-22
 
-| Pillar | Score | Verdict & Assessment |
-|---|---|---|
-| **1. System Architecture & Engineering (MIT Rigor)** | **94 / 100** | Clean Hexagonal DDD, Cryptographic Multi-Tenancy (AES-128 Fernet, constant-time HMAC, Argon2id), strict Idempotency, Celery Worker/Beat decoupling, and Fake-mode guardrails. |
-| **2. Product, HCI & Mobile-First (Stanford Design)** | **91 / 100** | "Selling Outcomes, Not Tools" — 30s Capture, 1-Tap Approval, 24/7 Lead Care. Zero DIY cognitive fatigue. |
-| **3. Monetization & Unit Economics (FAANG Growth)** | **88 / 100** | PayOS/VietQR instant activation (<1s). Gross margin >= 85% via tiered multi-provider token routing. |
-| **4. Long-Term Moat & 10-Year Horizon** | **89 / 100** | Proprietary Brand Knowledge Base & Closed-Loop POS Attribution create compounding switching costs. |
-| **OVERALL COMMERCIAL READINESS** | **91 / 100** | **FULLY CLEARED FOR IMMEDIATE COMMERCIAL LAUNCH (COHORT 1: 10–50 PILOTS)** |
+The earlier 91/100 appraisal mixed architectural intent, planned work, and UI
+copy with production evidence. It is retained in Git history, but it is not a
+valid launch decision. The 2026-08-22 audit grades only what a new merchant can
+complete safely end to end with real external systems.
+
+| Pillar | Audited score | Current decision |
+|---|---:|---|
+| Product idea and customer value | 7/10 | Strong thesis; paid renewal and verified outcome evidence are still missing. |
+| Overall interface | 6/10 | Visually credible, but Content Studio is dense and the mobile path delays first value. |
+| New-user activation | 4/10 | Onboarding simulates learning/drafts instead of producing one verified live outcome. |
+| Real channel integrations | 3/10 | Facebook is the first viable wedge; Google/TikTok/YouTube require contract fixes and/or external approval. |
+| Payment and revenue protection | 1/10 | A pending invoice can currently grant a paid plan; webhook amount/signature gates are incomplete. |
+| Production operations | 2/10 | Production configuration, secret/network posture, alert delivery, readiness, and current test gates are not launch-ready. |
+| **Public commercial readiness** | **3/10** | **NO-GO for public paid launch. Founder dogfood only; supervised design partners after P0 closes.** |
+
+The replacement target scorecard, execution plan, and evidence gates are in §25.
 
 ### 22.2 The 10-Year Evolution Roadmap (2026–2036)
 
@@ -893,7 +964,7 @@ The complete 5-phase product, engineering, and monetization roadmap from Local D
 
 ---
 
-## 23. Planned Milestone #11: Super-Admin Portal & Enterprise Customer Support
+## 23. Planned Milestone #12: Super-Admin Portal & Enterprise Customer Support
 
 To support cohort scaling (50–300 pilot workspaces) and ensure zero unassisted customer churn, the following Super-Admin and Customer Support capabilities are planned for upcoming implementation:
 
@@ -915,7 +986,7 @@ To support cohort scaling (50–300 pilot workspaces) and ensure zero unassisted
 
 ---
 
-## 24. Planned Milestone #12: Multi-Page Picker & Dynamic Channel Switcher (Dropdown)
+## 24. Planned Milestone #11: Multi-Page Picker & Dynamic Channel Switcher (Dropdown)
 
 Based on direct founder dogfooding feedback with multi-brand accounts (*Trung Tâm Công Nghệ Nhật Minh* & *Havi Sandbox*):
 
@@ -931,3 +1002,401 @@ When a shop owner manages multiple Facebook Pages (e.g., separate brand pages, m
 3. **Instant Active Page Switcher:**
    - 1-click active page switching without re-triggering the Facebook OAuth popup.
    - Dynamic update to AI Lead Agent webhook listeners and scheduled calendar jobs for the active page.
+
+---
+
+## 25. 10/10 Public Launch Program (2026-08-22)
+
+### 25.1 Decision, Scope, and Scoring Rule
+
+Status: **active; supersedes earlier commercial launch declarations**.
+
+The objective is not to add enough features to claim 10/10. The objective is to
+produce repeatable evidence that a Vietnamese shop owner can receive value,
+publish safely, collect a lead, pay, and continue using Havi without founder
+intervention. A workstream reaches 10/10 only after all acceptance criteria pass
+and the target metrics hold for 30 consecutive pilot days.
+
+Until Gate 10 in §25.10 passes:
+
+- public paid acquisition is blocked;
+- Founder Customer Zero dogfooding is allowed;
+- supervised design-partner access is allowed only after P0 closes;
+- unapproved external channels must be hidden, disabled, or labeled Beta/
+  export-only with truthful limitations;
+- no marketing surface may display hypothetical ROI as measured customer value.
+
+### 25.2 North Star and Golden Journey
+
+North Star:
+
+> **Verified weekly business outcomes per active workspace.**
+
+A verified outcome is a platform-confirmed published post, a delivered reply, a
+created lead, a booked appointment, an attributed POS sale, or a verified
+returning customer. Draft generation, clicks, impressions, and simulated states
+do not qualify.
+
+Golden journey:
+
+1. Sign up.
+2. Complete the Business Truth Pack.
+3. Connect and select one Facebook Page.
+4. Capture one photo, voice note, or short text.
+5. Receive one best grounded draft.
+6. Review and approve.
+7. Publish and receive a real external ID/permalink.
+8. Receive/reply to an inquiry and convert it to a lead.
+9. See the verified outcome report.
+10. Create PayOS checkout, complete payment, and activate the entitled plan from
+    a verified webhook only.
+
+Required product events:
+
+```text
+signup_completed
+business_truth_completed
+channel_connected
+first_draft_generated
+first_draft_approved
+first_publish_verified
+first_inquiry_received
+first_value_verified
+checkout_created
+payment_verified
+subscription_activated
+```
+
+Every event must include workspace, timestamp, source, correlation/request ID,
+and a schema version without storing secrets or unnecessary customer content.
+
+### 25.3 Target Scorecard
+
+| Workstream | 10/10 evidence standard |
+|---|---|
+| Product idea and customer value | At least 5 real paying pilots; >=80% month-one renewal; >=60% weekly use; each retained shop proves either >=2 hours/week saved or at least one verified lead/outcome. |
+| Overall interface | >=90% golden-journey task completion without assistance; System Usability Scale >=80; WCAG 2.2 AA; no critical mobile defect; p75 Core Web Vitals all `Good`. |
+| New-user activation | >=60% of qualified signups reach first verified live publish; median time-to-value <=5 minutes and p90 <=10 minutes; no simulated learning or phantom drafts. |
+| Real channel integrations | Approved/capable channels publish >=99% of valid requests; zero false success; every success stores external ID/permalink; ambiguous outcomes reconcile automatically. |
+| Payment and revenue protection | Zero unpaid activations; 100% non-local webhooks require valid signatures; exact amount/currency/invoice match; replay-safe and daily-reconciled ledger. |
+| Production operations | User-journey SLO >=99.9%; P1 MTTR <30 minutes; RPO <=24 hours; RTO <=2 hours; restore rehearsed; 100% required automated checks pass before release. |
+
+### 25.4 Workstream A — Product Value: 7/10 → 10/10
+
+Owner outcome: the product proves useful operational value before it claims
+marketing ROI.
+
+- [ ] Interview at least 15 owners across Nhật Minh, local services, F&B, beauty,
+      repair, and real-estate workflows; record job, trigger, current workaround,
+      frequency, consequence, and willingness to pay.
+- [ ] Recruit 5–10 design partners with explicit baseline measurements: weekly
+      content time, posts, response time, inquiries, leads, appointments, and POS
+      revenue where available.
+- [ ] Freeze the paid MVP promise to: **one capture → one approved Facebook post
+      → one verified publish → one inbox/lead loop**.
+- [ ] Remove hardcoded savings, agency-cost, ROI multiple, trial-extension, and
+      algorithm-year claims unless backed by workspace data or labeled clearly
+      as an example.
+- [ ] Build proof-of-value reporting from platform, inbox, lead, and POS records;
+      expose the data lineage and confidence level for attribution.
+- [ ] Measure cost per generated draft, approved draft, verified publish, reply,
+      lead, and retained paid workspace.
+- [ ] Run willingness-to-pay interviews only after the owner has experienced a
+      verified outcome; finalize price/limits from margin and renewal evidence.
+- [ ] Do not resume broad feature expansion until at least 5 pilots pay and the
+      month-one renewal threshold is measured.
+
+### 25.5 Workstream B — Interface: 6/10 → 10/10
+
+Owner outcome: a non-technical merchant can complete the golden journey with one
+thumb and without learning marketing terminology.
+
+- [ ] Redesign the first viewport of Content Studio around only three decisions:
+      source, goal, and **Create post**.
+- [ ] Move review mode, automation, variants, per-channel settings, trend/SEO,
+      hook controls, and schedule tuning behind progressive disclosure.
+- [ ] Keep one primary CTA per state; add explicit loading, empty, blocked,
+      retry, reconnect, and partial-success states.
+- [ ] Replace technical/internal copy with owner language; mark examples, Beta
+      capabilities, and external-platform completion steps truthfully.
+- [ ] Use >=48 px internal touch targets and validate single-thumb operation at
+      375 px, 390 px, and 430 px widths plus desktop.
+- [ ] Reach WCAG 2.2 AA across auth, onboarding, dashboard, content, calendar,
+      inbox, reports, billing, settings, connections, video, and operations.
+- [ ] Instrument real-user Core Web Vitals and meet p75 LCP <=2.5 s, INP <=200
+      ms, and CLS <=0.1 on mobile and desktop.
+- [ ] Run three moderated usability rounds with at least five target owners per
+      round; close all critical/high findings and reach >=90% unassisted task
+      completion plus SUS >=80.
+- [ ] Restore reviewed visual baselines and accessibility checks; snapshot
+      updates require an intentional diff review.
+
+Research baseline:
+
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/)
+- [Core Web Vitals thresholds](https://web.dev/articles/defining-core-web-vitals-thresholds)
+- [Stanford Fogg Behavior Model](https://behaviordesign.stanford.edu/resources/fogg-behavior-model)
+
+### 25.6 Workstream C — Activation: 4/10 → 10/10
+
+Owner outcome: the first session creates one real, observable result.
+
+- [ ] Replace timer-based onboarding claims with persisted progress and real API
+      operations; never claim that Havi learned the business or created drafts
+      unless those artifacts exist.
+- [ ] Build a Business Truth Pack covering name, address, opening hours,
+      services, prices, offer conditions, CTA/contact, FAQs, prohibited claims,
+      and media/automation consent.
+- [ ] Add starter templates by industry without inventing business facts; every
+      generated factual claim must trace to the Truth Pack or owner input.
+- [ ] Make channel capability/precondition checks explicit; if no channel is
+      connected, offer an honest demo/export path rather than an active publish
+      control.
+- [ ] Connect and select the first Facebook Page during onboarding; resume safely
+      after OAuth interruption or failure.
+- [ ] Generate one best draft first; expose variants only after first value.
+- [ ] Return platform-confirmed status and permalink after the first publish.
+- [ ] Start the meaningful trial window at first connected channel or first
+      verified value, and make every trial-extension rule a backend-owned,
+      audited policy.
+- [ ] Build activation/cohort dashboards for every event in §25.2 and segment by
+      industry, acquisition source, device, and failure reason.
+- [ ] Meet >=60% qualified signup-to-verified-publish activation, median <=5
+      minutes, p90 <=10 minutes, and measure day-1/day-7/week-4 retention.
+
+Research baseline:
+
+- [Amplitude 2025 Product Benchmark Report](https://amplitude.com/resources/product-benchmark-report)
+
+### 25.7 Workstream D — Real Channels: 3/10 → 10/10
+
+Owner outcome: Havi reports only what the external platform actually accepted.
+
+All publisher/reply adapters must implement:
+
+- OAuth and reconnect;
+- account/Page/location/channel selection;
+- capability and permission detection;
+- media and metadata eligibility before approval;
+- idempotency and external correlation ID;
+- documented rate-limit behavior and bounded retry with jitter;
+- platform-confirmed external ID/permalink;
+- `PENDING_RECONCILIATION` for ambiguous timeout outcomes;
+- reconciliation, dead-letter, and actionable owner guidance;
+- token revocation, disconnect, and data deletion;
+- contract, integration, failure-injection, and live smoke tests.
+
+Execution order:
+
+1. [ ] **Facebook Page** — finish Multi-Page Picker, permission inspection,
+       verified publishing, permalink capture, token refresh/reconnect, and one
+       real Page smoke test before each beta wave.
+2. [ ] **Facebook Messenger** — persist sender PSID, respect the messaging
+       window, separate messages from comments, and mark `SENT` only after Graph
+       API confirmation.
+3. [ ] **Instagram Business** — build only through supported Meta APIs and the
+       approved Facebook/Instagram asset relationship; repeat the same truth and
+       reconciliation contract.
+4. [ ] **Google Business Profile** — obtain project approval, enable required
+       APIs, list real accounts/locations, let the owner choose a location, and
+       use `validateOnly` where supported; never derive a location ID from Google
+       userinfo.
+5. [ ] **YouTube** — complete OAuth/upload contract and audit; unverified-project
+       uploads remain private and must not be sold as public auto-publishing.
+6. [ ] **TikTok** — implement Direct Post creator-info, privacy, metadata, consent,
+       status polling, verified-domain media, `video.publish`, and audit; use an
+       honest inbox/export flow until direct public posting is approved.
+7. [ ] Keep Zalo deferred until business/legal prerequisites justify reopening
+       the scope.
+
+Platform references:
+
+- [Google Business Profile basic setup](https://developers.google.com/my-business/content/basic-setup)
+- [TikTok Direct Post setup](https://developers.tiktok.com/docs/en/content-posting-api-get-started)
+- [TikTok Content Sharing Guidelines](https://developers.tiktok.com/docs/en/content-sharing-guidelines)
+- [YouTube `videos.insert`](https://developers.google.com/youtube/v3/docs/videos/insert)
+- [Meta Messenger Platform API reference](https://www.postman.com/meta/messenger-platform-api/documentation/iyp204x/messenger-platform-api)
+
+### 25.8 Workstream E — Revenue Protection: 1/10 → 10/10
+
+Owner outcome: payment state is correct, explainable, and cannot be activated by
+a client claim.
+
+Required state machine:
+
+```text
+CHECKOUT_CREATED → PENDING → WEBHOOK_VERIFIED → PAID → SUBSCRIPTION_ACTIVE
+```
+
+- [ ] Delete or hard local-gate the direct production plan-mutation path.
+- [ ] Delete checkout-error fallback and manual-transfer-confirmation calls that
+      activate a plan from the frontend.
+- [ ] Make PayOS client ID, API key, checksum key, webhook URL, and public return/
+      cancel URLs required non-local configuration.
+- [ ] Verify every PayOS webhook signature in constant time and reject missing or
+      invalid signatures; do the same for any generic provider-specific webhook.
+- [ ] Match exact invoice ID/order code, workspace, expected amount, VND currency,
+      success status, payment-link ID, and unique gateway reference.
+- [ ] Lock invoice/subscription rows and update invoice, payment record,
+      entitlement, and audit event atomically.
+- [ ] Treat redelivery as idempotent; prevent a replay from adding another paid
+      period; retain evidence of rejected mismatches without leaking secrets.
+- [ ] Add provider status reconciliation, timeout handling, refund/cancel/dunning,
+      daily ledger reconciliation, and founder-visible discrepancy alerts.
+- [ ] Implement server-side entitlement policy and tests for every plan feature,
+      channel, post/video allowance, lead automation, location, member, and
+      branch limit.
+- [ ] Test real low-value payments end to end: success, cancel, invalid/missing
+      signature, wrong amount, wrong currency, unknown invoice, duplicate
+      gateway reference, replay, delayed webhook, timeout, and reconciliation.
+- [ ] Adopt OWASP ASVS 5.0 Level 2 as the public-launch application security
+      baseline and record each applicable control with test/evidence links.
+
+Payment/security references:
+
+- [PayOS webhook schema](https://payos.vn/docs/du-lieu-tra-ve/webhook/)
+- [PayOS webhook verification](https://payos.vn/docs/sdks/back-end/node/)
+- [PayOS production-only test guidance](https://payos.vn/docs/moi-truong-test/)
+- [OWASP ASVS 5.0](https://github.com/OWASP/ASVS)
+
+### 25.9 Workstream F — Production Operations: 2/10 → 10/10
+
+Owner outcome: a failure is detected, contained, explained, and recovered before
+it silently loses posts, replies, payments, or customer data.
+
+- [ ] Make production configuration boot with real providers and fail fast on
+      every missing/placeholder secret, URL, origin, provider, or encryption key.
+- [ ] Remove host exposure for PostgreSQL, Redis, MinIO API/console; use internal
+      networks and explicit firewall rules.
+- [ ] Replace anonymous media bucket/wildcard CORS with private source assets,
+      signed access, narrow origins, and a deliberate public-derivative policy.
+- [ ] Pin immutable container versions; run migrations as one controlled release
+      job; add rolling deployment, rollback, and forward-only repair procedures.
+- [ ] Add liveness, dependency readiness, and startup checks for API, database,
+      Redis, object storage, worker queue, scheduler, and required external
+      credentials.
+- [ ] Replace logging-only operational alerts with a real alert adapter and
+      routing for API error/latency, queue depth, dead letters, OAuth refresh,
+      invalid payment webhooks, payment mismatches, LLM spend/latency, backup
+      age, and SLO burn rate.
+- [ ] Add metrics, traces, correlation IDs, safe structured logs, dashboards,
+      synthetic golden-journey checks, and automated log-redaction tests.
+- [ ] Rehearse PostgreSQL and object-storage restore monthly and after material
+      infrastructure changes; prove RPO <=24 hours and RTO <=2 hours.
+- [ ] Create incident severity, owner, communication, rollback, and blameless
+      postmortem procedures; P1 MTTR target is <30 minutes.
+- [ ] Adopt user-journey SLOs and stop feature releases when the error budget is
+      exhausted.
+
+Initial SLOs:
+
+| User journey | Objective |
+|---|---:|
+| Login and core API availability | >=99.9% |
+| Draft generation | >=99% complete within 30 seconds |
+| Valid scheduled publish dispatch | >=99% within ±2 minutes |
+| Verified payment webhook processing | >=99.9% within 10 seconds |
+| False publish/reply/payment success | 0 |
+| P1 mean time to recovery | <30 minutes |
+| Backup recovery point | <=24 hours |
+| Restore time | <=2 hours |
+
+Reliability reference:
+
+- [Google SRE Service Level Objectives](https://sre.google/sre-book/service-level-objectives/)
+- [Google SRE Error Budgets](https://sre.google/sre-book/embracing-risk/)
+
+### 25.10 Phased Execution and Release Gates
+
+#### Phase 0 — Trust Foundation (target weeks 1–2)
+
+- [ ] Close Gate I revenue-integrity defects.
+- [ ] Close Gate F production boot, secret, network, and media defects.
+- [ ] Fix reply/publish truth-state defects and the TikTok media-eligibility
+      approval/publish contract.
+- [ ] Achieve 100% backend and web unit/integration pass.
+- [ ] Achieve reviewed visual/accessibility pass on all covered desktop/mobile
+      routes; add Billing and Video Studio.
+
+Exit gate: no unpaid activation, no false success, production config validates,
+and every required automated check is green.
+
+#### Phase 1 — Facebook Cash-Flow Loop (target weeks 3–5)
+
+- [ ] Business Truth Pack and honest onboarding.
+- [ ] Milestone #11 Multi-Page Picker.
+- [ ] One-photo/voice → one-draft mobile flow.
+- [ ] Verified Facebook publish with permalink.
+- [ ] Messenger reply with sender PSID and delivered state.
+- [ ] Activation and verified-outcome event pipeline.
+
+Exit gate: Nhật Minh completes the golden journey without database/manual state
+editing; median first verified value <=5 minutes across five fresh test accounts.
+
+#### Phase 2 — Product Excellence and Entitlements (target weeks 6–8)
+
+- [ ] Progressive-disclosure Content Studio and WCAG/Core Web Vitals work.
+- [ ] Three usability rounds and >=90% unassisted task completion.
+- [ ] Server-side plan entitlements and consistent pricing/quota/trial copy.
+- [ ] Outcome and proof-of-value reports from real data.
+
+Exit gate: UI and activation scorecard thresholds pass on target mobile devices.
+
+#### Phase 3 — External Channel Approval (parallel target weeks 6–10+)
+
+- [ ] Submit/complete Meta permissions and business verification.
+- [ ] Submit/complete Google Business Profile access and location workflow.
+- [ ] Submit/complete YouTube audit.
+- [ ] Submit/complete TikTok Direct Post audit.
+- [ ] Maintain an evidence folder with reviewer steps, screencasts, test assets,
+      permissions, privacy/deletion URLs, and exact approved capability.
+
+Exit gate per channel: external approval plus live smoke, failure, reconnect,
+reconciliation, and deletion evidence. Approval timing is external and cannot be
+represented as an engineering completion date.
+
+#### Phase 4 — Customer Zero and Paid Pilot (target weeks 9–12+)
+
+- [ ] Seven consecutive days of Nhật Minh dogfooding.
+- [ ] Five to ten supervised design partners.
+- [ ] Real PayOS low-value transactions and daily reconciliation.
+- [ ] Alerts, incident drill, rollback, and restore rehearsal.
+- [ ] Four-week cohort measurement for activation, weekly use, outcomes, support
+      load, conversion, margin, and month-one renewal.
+
+Exit gate: all §25.3 thresholds hold for 30 consecutive days; no open P0/P1
+release blocker; founder signs the public-launch checklist.
+
+#### Gate 10 — Public Paid Launch
+
+All boxes are mandatory:
+
+- [ ] 100% required automated tests pass on the release candidate.
+- [ ] Zero known critical/high payment, tenant-isolation, secret, OAuth, publish,
+      reply, or data-loss defect.
+- [ ] Zero false-success event during the 30-day pilot.
+- [ ] Production SLO/error budget, alert, backup, restore, rollback, and incident
+      evidence is current.
+- [ ] At least 5 real paying pilots and >=80% measured month-one renewal.
+- [ ] >=60% qualified signup-to-verified-publish activation; median <=5 minutes.
+- [ ] Every advertised channel has the exact required external approval and live
+      evidence; all others are hidden or truthfully labeled Beta/export-only.
+- [ ] Pricing, plan entitlements, invoice amounts, landing copy, dashboard copy,
+      and in-app billing are consistent.
+- [ ] Privacy, terms, deletion, consent, support, and incident communication are
+      available on the production domain.
+- [ ] Founder approval is recorded after Customer Zero review. Commit and push
+      remain explicit user-controlled actions.
+
+### 25.11 Resourcing and Sequencing Constraints
+
+Planning estimate, not a launch promise:
+
+- three strong engineers plus product/design: roughly 10–14 weeks for the work
+  Havi controls;
+- one founder-engineer using AI assistance: roughly 16–24 weeks;
+- Meta/Google/TikTok/YouTube review time is external and may exceed either plan.
+
+Do not parallelize feature breadth ahead of trust. Phase 0 is strictly first;
+platform submissions may start immediately, but a channel cannot enter paid
+scope until its own approval and evidence gate passes.

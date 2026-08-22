@@ -89,7 +89,7 @@ describe("VideoStudioScreen", () => {
 
   it("cho phép gửi form tạo job render video mới", async () => {
     const user = userEvent.setup();
-    let createdPayload: any = null;
+    let createdPayload: { title?: string; edit_plan?: unknown } | null = null;
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = new URL(input instanceof Request ? input.url : String(input));

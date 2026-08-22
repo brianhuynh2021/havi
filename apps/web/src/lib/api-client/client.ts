@@ -9,7 +9,13 @@ import type { paths } from "./schema";
 
 // Frontend không giữ database credential, OAuth secret hay token nền tảng
 // (ROADMAP §1 nguyên tắc #6) — chỉ JWT của chính user.
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Local dev chạy Next ở :3000 và API ở :8000. Khi production đi qua Nginx,
+// dùng same-origin để không phải hard-code localhost vào bundle trình duyệt.
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (typeof window !== "undefined" && window.location.port !== "3000"
+    ? window.location.origin
+    : "http://localhost:8000");
 
 /** Refresh token xoay vòng: dùng lại token cũ bị backend từ chối. Nên khi nhiều
  * request cùng nhận 401 một lúc (dashboard gọi 3 API song song), chỉ được có

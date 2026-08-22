@@ -90,3 +90,19 @@ async def test_voice_to_content_1tap(client: AsyncClient):
     assert data["job_status"] == "queued"
     assert "text" in data
     assert len(data["text"]) > 0
+
+
+@pytest.mark.asyncio
+async def test_voice_tts_generate_audio(client: AsyncClient):
+    headers = _headers(await _onboard(client, email="voice.tts@havi.vn"))
+
+    payload = {
+        "text": "Chào mừng quý khách đến với dịch vụ của tiệm!",
+        "voice": "vi-VN-HoaiMyNeural",
+        "rate": "+0%",
+    }
+
+    res = await client.post("/voice/tts", json=payload, headers=headers)
+    assert res.status_code == 200, res.text
+    assert res.headers["content-type"] == "audio/mpeg"
+    assert len(res.content) > 1000

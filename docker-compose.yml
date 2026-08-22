@@ -58,7 +58,8 @@ services:
       /bin/sh -c "
       mc alias set local http://minio:9000 minioadmin minioadmin &&
       mc mb --ignore-existing local/havi-media &&
-      mc anonymous set download local/havi-media
+      mc anonymous set download local/havi-media &&
+      printf '%s' '<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>POST</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>' | mc cors set local/havi-media -
       "
 
 volumes:

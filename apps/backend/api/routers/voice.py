@@ -3,7 +3,7 @@
 import base64
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
 from api.deps import ContentServiceDep, VoiceServiceDep, WorkspaceDep
@@ -140,4 +140,53 @@ async def voice_to_content(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
+        ) from exc
+
+
+class VoiceTTSRequest(BaseModel):
+    """Payload yêu cầu tạo file âm thanh giọng đọc tiếng Việt từ văn bản."""
+
+    text: str = Field(..., max_length=2000, description="Văn bản tiếng Việt cần chuyển thành giọng đọc")
+    voice: str = Field(default="vi-VN-HoaiMyNeural", description="Giọng đọc AI (vi-VN-HoaiMyNeural hoặc vi-VN-NamMinhNeural)")
+    rate: str = Field(default="+0%", description="Tốc độ đọc (+0%, +10%, -10%...)")
+
+
+@router.post("/tts")
+async def generate_speech_audio(
+    payload: VoiceTTSRequest,
+    workspace_id: WorkspaceDep,
+):
+    """Tạo file âm thanh giọng đọc tiếng Việt siêu tự nhiên 0 VNĐ bằng Edge-TTS."""
+    import edge_tts
+
+    clean_text = payload.text.strip()
+    if not clean_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vui lòng cung cấp văn bản để tạo giọng đọc",
+        )
+
+    try:
+        communicate = edge_tts.Communicate(
+            text=clean_text,
+            voice=payload.voice,
+            rate=payload.rate,
+        )
+        chunks = []
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                chunks.append(chunk["data"])
+
+        audio_bytes = b"".join(chunks)
+        if not audio_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Không thể tạo file âm thanh từ văn bản",
+            )
+
+        return Response(content=audio_bytes, media_type="audio/mpeg")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lỗi tạo giọng đọc AI: {exc}",
         ) from exc

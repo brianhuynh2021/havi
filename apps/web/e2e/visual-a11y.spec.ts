@@ -351,7 +351,7 @@ async function freezeClock(page: Page) {
     const fixedNow = new Date(fixedNowIso as string).valueOf();
     const RealDate = Date;
     class MockDate extends RealDate {
-      constructor(...args: any[]) {
+      constructor(...args: (string | number | Date)[]) {
         if (args.length === 0) {
           super(fixedNow);
           return;

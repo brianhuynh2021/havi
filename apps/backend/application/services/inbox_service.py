@@ -96,6 +96,7 @@ class InboxService:
         author_name: str,
         content: str,
         external_message_id: str | None = None,
+        recipient_id: str | None = None,
     ) -> InboxItem:
         """Nhận inbox mới: kiểm tra FAQ hoặc sinh câu trả lời gợi ý.
 
@@ -126,6 +127,7 @@ class InboxService:
                         workspace_id=workspace_id,
                         platform=platform,
                         text=matched_answer,
+                        recipient_id=recipient_id,
                         external_message_id=external_message_id,
                     )
                 )

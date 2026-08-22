@@ -537,6 +537,52 @@ class TestPublishServiceEndToEnd:
         assert event.error is None
         assert jobs[0].external_post_id in event.output_summary
 
+    async def test_video_chua_co_file_thi_worker_chan_khong_dung_clip_mau(
+        self, db_session: AsyncSession
+    ):
+        from adapters.persistence.connection_repository import ConnectionRepository
+        from adapters.persistence.content_repository import ContentRepository
+        from application.services.publish_service import PublishService
+        from core.enums import ContentStatus
+        from domain.models.content import ContentItem
+
+        publisher = FakePublisher(channel=Channel.TIKTOK)
+        ws = await _workspace(db_session)
+        await ConnectionRepository(db_session).upsert(
+            workspace_id=ws.id,
+            platform=Platform.TIKTOK,
+            access_token="tiktok-token",
+            external_account_id="open-id-1",
+        )
+        item = ContentItem(
+            workspace_id=ws.id,
+            job_id=None,
+            channel=Channel.TIKTOK,
+            kind="Video TikTok",
+            text="Hook video chưa được dựng",
+            media_url=None,
+            status=ContentStatus.SCHEDULED,
+            scheduled_at=_at(20),
+        )
+        db_session.add(item)
+        await db_session.flush()
+
+        service = PublishService(
+            content=ContentRepository(db_session),
+            connections=ConnectionRepository(db_session),
+            publishes=PublishRepository(db_session),
+            events=EventLogRepository(db_session),
+            publishers={Channel.TIKTOK: publisher},
+        )
+        await service.dispatch_due(now=_at(21))
+        await service.run_due(now=_at(21))
+
+        jobs = await PublishRepository(db_session).list_for_workspace(workspace_id=ws.id)
+        assert jobs[0].status is PublishStatus.DEAD_LETTER
+        assert jobs[0].failure_kind is PublishFailureKind.VALIDATION_PERMANENT
+        assert "chưa có file hoàn chỉnh" in (jobs[0].failure_detail or "")
+        assert publisher.calls == [], "worker không được tự thay bằng clip mẫu rồi gọi TikTok"
+
     async def test_scheduler_chay_lai_khong_dang_hai_lan(self, db_session: AsyncSession):
         """Beat quét mỗi 5 phút — chạy lại không được sinh job trùng."""
         publisher = FakePublisher()

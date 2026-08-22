@@ -34,17 +34,7 @@ export function VideoStudioScreen() {
 
   const workspaceId = getActiveWorkspaceId() || "default-ws";
 
-  const fetchTrends = useCallback(async () => {
-    if (!workspaceId) return;
-    setIsLoadingTrends(true);
-    const res = await getHotTrends(workspaceId);
-    if (res.ok && Array.isArray(res.data)) {
-      setTrends(res.data);
-    } else {
-      setTrends([]);
-    }
-    setIsLoadingTrends(false);
-  }, [workspaceId]);
+
 
   const handleApplyTrend = async (trend: TrendingTopic) => {
     setTitle(`${trend.keyword} - TikTok Shorts`);
@@ -82,18 +72,56 @@ export function VideoStudioScreen() {
 
   useEffect(() => {
     let isMounted = true;
-    if (workspaceId) {
-      void fetchJobs();
-      void fetchTrends();
+
+    async function loadInitialData() {
+      if (!workspaceId) return;
+      try {
+        const [jobsRes, trendsRes] = await Promise.all([
+          listRenderJobs(workspaceId),
+          getHotTrends(workspaceId),
+        ]);
+        if (!isMounted) return;
+        if (jobsRes.ok) {
+          setJobs(jobsRes.data.items);
+          setSelectedJob((prev) => {
+            if (!prev) return jobsRes.data.items[0] ?? null;
+            const updated = jobsRes.data.items.find((j) => j.id === prev.id);
+            return updated ?? jobsRes.data.items[0] ?? null;
+          });
+        } else {
+          setError(jobsRes.message);
+        }
+
+        if (trendsRes.ok && Array.isArray(trendsRes.data)) {
+          setTrends(trendsRes.data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Lỗi kết nối");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+          setIsLoadingTrends(false);
+        }
+      }
     }
-    const interval = setInterval(() => {
-      if (isMounted && workspaceId) void fetchJobs();
+
+    void loadInitialData();
+
+    const interval = setInterval(async () => {
+      if (!isMounted || !workspaceId) return;
+      const res = await listRenderJobs(workspaceId);
+      if (isMounted && res.ok) {
+        setJobs(res.data.items);
+      }
     }, 4000);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [workspaceId, fetchJobs, fetchTrends]);
+  }, [workspaceId]);
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();

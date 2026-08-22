@@ -22,11 +22,14 @@ class MockStorage:
     def __init__(self):
         self.files: dict[str, bytes] = {}
 
-    def get_bytes(self, key: str) -> bytes:
+    async def read_object(self, key: str) -> bytes:
         return self.files.get(key, b"MOCK_STORAGE_BYTES")
 
-    def put_bytes(self, object_key: str, data: bytes, content_type: str) -> None:
+    async def put_object(self, object_key: str, data: bytes, content_type: str = "video/mp4") -> None:
         self.files[object_key] = data
+
+    def get_public_url(self, object_key: str) -> str:
+        return f"https://storage.havi.vn/{object_key}"
 
     def public_url(self, object_key: str) -> str:
         return f"https://storage.havi.vn/{object_key}"

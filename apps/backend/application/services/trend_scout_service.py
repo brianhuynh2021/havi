@@ -3,6 +3,7 @@
 import json
 import logging
 import random
+import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -136,8 +137,6 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
 
 DEFAULT_HOT_TRENDS: list[TrendingTopic] = ALL_DYNAMIC_TREND_POOLS[:5]
 
-
-import xml.etree.ElementTree as ET
 
 class TrendScoutService:
     def __init__(self) -> None:

@@ -58,19 +58,25 @@ class FacebookReplyAdapter(ReplyPublisherPort):
         access_token = self._connections.read_access_token(connection)
         page_id = connection.external_account_id or "me"
 
-        recipient_id = request.recipient_id or request.external_message_id
-        if not recipient_id:
+        # Phân biệt Messenger (dùng PSID của người nhận) và Comment trên bài viết
+        if request.recipient_id:
+            url = f"{GRAPH_BASE}/{page_id}/messages"
+            payload: dict[str, Any] = {
+                "recipient": {"id": request.recipient_id},
+                "message": {"text": request.text},
+                "messaging_type": "RESPONSE",
+            }
+        elif request.external_message_id and not request.external_message_id.startswith("m_") and not request.external_message_id.startswith("mid."):
+            # Bình luận bài viết Facebook feed: trả lời trực tiếp dưới comment
+            url = f"{GRAPH_BASE}/{request.external_message_id}/comments"
+            payload = {
+                "message": request.text,
+            }
+        else:
             raise ReplyError(
                 self.platform,
-                "Không có recipient_id hoặc external_message_id để gửi tin nhắn đến khách.",
+                "Không có recipient_id (PSID) của khách hàng để gửi tin nhắn Messenger phản hồi.",
             )
-
-        url = f"{GRAPH_BASE}/{page_id}/messages"
-        payload: dict[str, Any] = {
-            "recipient": {"id": recipient_id},
-            "message": {"text": request.text},
-            "messaging_type": "RESPONSE",
-        }
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:

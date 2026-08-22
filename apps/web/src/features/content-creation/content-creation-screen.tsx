@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -14,12 +14,9 @@ import {
   dismissAllItems,
   dismissItem,
   generateItemImage,
-  generateItemVideo,
   listPendingItems,
   mediaTypeOf,
-  rejectItem,
   updateItemMedia,
-  uploadRenderedVideoBlob,
   uploadMedia,
   type Channel,
   type ContentItem,
@@ -34,7 +31,11 @@ import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import { TeleprompterModal } from "./teleprompter-modal";
-import { generateKineticShortVideo } from "./kinetic-video-generator";
+import {
+  generateKineticShortVideo,
+  type VideoStylePreset,
+  type VideoVoiceChoice,
+} from "./kinetic-video-generator";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -65,6 +66,31 @@ const VIDEO_CHANNEL_LABELS: Record<string, string> = {
   tiktok: "TikTok",
   youtube: "YouTube Shorts",
 };
+
+type ContentTrack = "posts" | "video";
+type VideoIdeaSource = "own" | "upload";
+
+type VideoPreviewDraft = {
+  url: string;
+  itemId: string;
+  batchIds: string[];
+};
+
+const CONTENT_TARGET_CHANNELS: Record<ContentTrack, Channel[]> = {
+  posts: ["facebook_page", "google_business"],
+  video: ["tiktok", "youtube", "reels"],
+};
+
+function isPublishableVideoUrl(url: string | null | undefined): boolean {
+  if (!url || url.startsWith("blob:") || url === "/test_tiktok.mp4") return false;
+  const normalized = url.toLowerCase().split("?")[0];
+  return (
+    normalized.endsWith(".mp4") ||
+    normalized.endsWith(".mov") ||
+    normalized.endsWith(".webm") ||
+    normalized.includes("/video")
+  );
+}
 
 function isEligible(asset: MediaAsset, channel: string): boolean {
   return (asset.eligible_channels ?? []).includes(channel as Channel);
@@ -121,69 +147,6 @@ function renderClipEligibility(asset: MediaAsset | undefined) {
   );
 }
 
-function getTopicImage(mediaNote?: string | null, text?: string | null): string {
-  const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
-  if (
-    combined.includes("công nghệ") ||
-    combined.includes("tech") ||
-    combined.includes("ai") ||
-    combined.includes("agent") ||
-    combined.includes("lập trình") ||
-    combined.includes("máy tính") ||
-    combined.includes("khóa học") ||
-    combined.includes("đào tạo") ||
-    combined.includes("nhật minh")
-  ) {
-    return "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80";
-  }
-  if (
-    combined.includes("quà") ||
-    combined.includes("gift") ||
-    combined.includes("thưởng") ||
-    combined.includes("khuyến mãi") ||
-    combined.includes("ưu đãi") ||
-    combined.includes("bốc thăm") ||
-    combined.includes("voucher") ||
-    combined.includes("trò chơi") ||
-    combined.includes("game")
-  ) {
-    return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80";
-  }
-  if (
-    combined.includes("tóc") ||
-    combined.includes("hair") ||
-    combined.includes("gội") ||
-    combined.includes("cắt") ||
-    combined.includes("uốn") ||
-    combined.includes("nhuộm") ||
-    combined.includes("styling")
-  ) {
-    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80";
-  }
-  if (
-    combined.includes("cafe") ||
-    combined.includes("cà phê") ||
-    combined.includes("trà") ||
-    combined.includes("ăn") ||
-    combined.includes("uống") ||
-    combined.includes("food")
-  ) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80";
-  }
-  if (
-    combined.includes("da") ||
-    combined.includes("dưỡng") ||
-    combined.includes("mặt") ||
-    combined.includes("trị liệu") ||
-    combined.includes("massage") ||
-    combined.includes("facial") ||
-    combined.includes("chân")
-  ) {
-    return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80";
-  }
-  return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80";
-}
-
 function makeNoteChipKey(chipCount: number): string {
   return `note-${chipCount}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -193,6 +156,8 @@ function makeJobKey(chips: RawChip[]): string {
 }
 
 export function ContentCreationScreen() {
+  const [contentTrack, setContentTrack] = useState<ContentTrack>("posts");
+  const [videoIdeaSource, setVideoIdeaSource] = useState<VideoIdeaSource>("own");
   const [publishMode, setPublishMode] = useState<PublishMode>("review_first");
   const [chips, setChips] = useState<RawChip[]>([]);
   const [note, setNote] = useState("");
@@ -208,21 +173,25 @@ export function ContentCreationScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [leadConversionEnabled, setLeadConversionEnabled] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all" | "video" | "posts">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "video" | "posts">("posts");
   const [selectedPlaybook, setSelectedPlaybook] = useState<string | null>(null);
+  const [videoPreview, setVideoPreview] = useState<VideoPreviewDraft | null>(null);
 
   const [publishedModal, setPublishedModal] = useState<{
     title: string;
     body: string;
     isInstant: boolean;
+    showTikTokLink?: boolean;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const previewUrlsRef = useRef(new Set<string>());
+  const autoGenerateVideoRef = useRef(false);
 
   const CAMPAIGN_PLAYBOOKS = [
     {
       id: "flash_sale",
+      tracks: ["posts", "video"] as ContentTrack[],
       icon: "🚀",
       tag: "Doanh Thu Đột Phá",
       title: "Flash Sale & Kéo Khách Gấp",
@@ -231,6 +200,7 @@ export function ContentCreationScreen() {
     },
     {
       id: "viral_trend",
+      tracks: ["video"] as ContentTrack[],
       icon: "🔥",
       tag: "Hút Triệu View TikTok",
       title: "Bắt Trend Video Viral",
@@ -239,6 +209,7 @@ export function ContentCreationScreen() {
     },
     {
       id: "local_seo",
+      tracks: ["posts"] as ContentTrack[],
       icon: "📍",
       tag: "Kéo Khách Quanh 5km",
       title: "Thống Trị Google Maps SEO",
@@ -247,6 +218,7 @@ export function ContentCreationScreen() {
     },
     {
       id: "social_proof",
+      tracks: ["posts", "video"] as ContentTrack[],
       icon: "💎",
       tag: "Tăng Tỷ Lệ Chốt Đơn",
       title: "Khoe Kết Quả & Uy Tín",
@@ -255,15 +227,24 @@ export function ContentCreationScreen() {
     },
   ];
 
-  const loadItems = useCallback(async (keepError = false) => {
+  function selectContentTrack(track: ContentTrack) {
+    setContentTrack(track);
+    setActiveTab(track);
+    setSelectedPlaybook(null);
+  }
+
+  const loadItems = useCallback(async (keepError = false): Promise<ContentItem[]> => {
     const result = await listPendingItems();
     if (result.ok) {
       setItems(result.data);
       if (!keepError) setError(null);
+      setLoading(false);
+      return result.data;
     } else {
       setError(result.message);
     }
     setLoading(false);
+    return [];
   }, []);
 
   useEffect(() => {
@@ -317,20 +298,31 @@ export function ContentCreationScreen() {
   }, []);
 
   const onJobReady = useCallback(() => {
-    setNotice("⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.");
+    const isVideo = contentTrack === "video";
+    setNotice(
+      isVideo
+        ? "🎬 Kịch bản đã xong — Havi đang tự dựng bản xem thử 9:16."
+        : "⚡ Havi vừa viết xong bài mới! Đã nạp vào danh sách chờ duyệt bên dưới.",
+    );
     pushNotification({
       type: "draft_ready",
-      title: "Havi vừa tạo 5 bản nháp mới đa kênh",
-      description: "Các bản nháp bài đăng Facebook, Google Maps SEO, TikTok, YouTube Shorts, Facebook Reels đã sẵn sàng cho bạn duyệt.",
+      title: isVideo
+        ? "Havi vừa tạo kịch bản video ngắn đa kênh"
+        : "Havi vừa tạo bài viết Facebook & Google Maps",
+      description: isVideo
+        ? "Havi đang dựng một video master để chị xem thử trước khi gửi lên ba kênh."
+        : "Bản nháp Facebook Page và Google Maps đã sẵn sàng cho chị duyệt.",
     });
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({
       type: "success",
-      title: "Havi đã sáng tạo xong bài mới!",
-      description: "Đã nạp vào danh sách bên dưới — cuộn xuống để duyệt bài ngay.",
+      title: isVideo ? "Kịch bản xong — đang dựng video AI" : "Havi đã sáng tạo xong bài mới!",
+      description: isVideo
+        ? "Bản xem thử 1080 × 1920 sẽ tự mở khi dựng xong."
+        : "Đã nạp vào danh sách bên dưới — cuộn xuống để duyệt bài ngay.",
     });
     loadItems();
-  }, [addToast, loadItems]);
+  }, [addToast, contentTrack, loadItems]);
 
   const poll = useJobPolling(jobId, onJobReady);
 
@@ -494,6 +486,7 @@ export function ContentCreationScreen() {
     const result = await createJob(
       currentChips.map((c) => c.input),
       key,
+      CONTENT_TARGET_CHANNELS[contentTrack],
     );
     if (!result.ok) {
       setError(result.message);
@@ -510,11 +503,15 @@ export function ContentCreationScreen() {
     poll.addJobId(result.data.id);
     setJobId(result.data.id);
     setQuotaKey((k) => k + 1);
+    autoGenerateVideoRef.current = contentTrack === "video";
 
     addToast({
       type: "loading",
-      title: "Havi đang viết bài cho tiệm...",
-      description: "Đang hoàn thiện bài viết và tối ưu cho từng kênh. Bản nháp sẽ sẵn sàng trong giây lát!",
+      title: contentTrack === "video" ? "Havi đang viết kịch bản video..." : "Havi đang viết bài cho tiệm...",
+      description:
+        contentTrack === "video"
+          ? "Đang tạo hook 3 giây, lời thoại và góc quay cho TikTok, Reels, Shorts."
+          : "Đang hoàn thiện bài viết cho Facebook và Google Maps. Bản nháp sẽ sẵn sàng trong giây lát!",
     });
   }
 
@@ -533,6 +530,7 @@ export function ContentCreationScreen() {
     const result = await createJob(
       currentChips.map((c) => c.input),
       key,
+      CONTENT_TARGET_CHANNELS[contentTrack],
     );
     if (!result.ok) {
       setError(result.message);
@@ -548,11 +546,15 @@ export function ContentCreationScreen() {
     poll.addJobId(result.data.id);
     setJobId(result.data.id);
     setQuotaKey((k) => k + 1);
+    autoGenerateVideoRef.current = contentTrack === "video";
 
     addToast({
       type: "loading",
-      title: "Havi đang viết bài từ giọng nói...",
-      description: "Nhân viên AI đang sáng tạo bài viết đa kênh từ lời thu âm của chị!",
+      title: contentTrack === "video" ? "Havi đang viết kịch bản video từ giọng nói..." : "Havi đang viết bài từ giọng nói...",
+      description:
+        contentTrack === "video"
+          ? "Havi đang biến lời thu âm thành hook và kịch bản video ngắn."
+          : "Nhân viên AI đang sáng tạo bài viết Facebook và Google Maps từ lời thu âm của chị!",
     });
   }
 
@@ -612,7 +614,13 @@ export function ContentCreationScreen() {
   }
 
   async function onDismissAll() {
-    const ids = items.map((i) => i.id);
+    const ids = items
+      .filter((item) =>
+        contentTrack === "video"
+          ? item.channel === "tiktok" || item.channel === "youtube" || item.channel === "reels"
+          : item.channel === "facebook_page" || item.channel === "google_business" || item.channel === "zalo_oa",
+      )
+      .map((item) => item.id);
     if (!ids.length) return;
     if (!confirm(`Bạn có chắc chắn muốn xoá tất cả ${ids.length} bản nháp này không?`)) {
       return;
@@ -653,15 +661,16 @@ export function ContentCreationScreen() {
     loadItems();
   }
 
-  async function onApproveVideosGroup(instant: boolean) {
-    const readyVideos = videoGroup.filter(
-      (i) => i.media_url && (i.media_url.startsWith("blob:") || i.media_url.endsWith(".mp4") || i.media_url.endsWith(".mov") || i.media_url.includes("video")),
-    );
+  async function onApproveVideosGroup(
+    instant: boolean,
+    videoBatch: ContentItem[] = videoGroup,
+  ) {
+    const readyVideos = videoBatch.filter((item) => isPublishableVideoUrl(item.media_url));
     if (!readyVideos.length) {
       addToast({
-        type: "warning",
-        title: "Chưa có clip quay thật",
-        description: "Chị vui lòng bấm 'Tải Video Vừa Quay Lên' ở bên dưới trước khi duyệt đăng nhóm Video nhé!",
+        type: "info",
+        title: "Video chưa sẵn sàng để gửi",
+        description: "Hãy tạo video AI hoặc tải clip riêng rồi xem lại trước khi duyệt.",
       });
       return;
     }
@@ -675,99 +684,86 @@ export function ContentCreationScreen() {
     }
     setPublishedModal({
       title: instant
-        ? "🎬 Đã phát lệnh xuất bản Video lên TikTok & Reels!"
-        : "📅 Đã lên lịch xuất bản Video lúc 20:00 tối!",
-      body: `Havi đã ${instant ? "phát lệnh xuất bản ngay" : "lên lịch khung giờ vàng"} ${result.data.approved.length} video ngắn thật lên TikTok, YouTube Shorts, Reels.`,
+        ? "🎬 Video đã được gửi tới ba kênh"
+        : "📅 Video đã được xếp lịch lúc 20:00",
+      body: instant
+        ? "Reels và YouTube Shorts đã nhận lệnh xuất bản. TikTok đã nhận video vào Hộp thư — mở TikTok, kiểm tra lần cuối và bấm Đăng để lên sóng."
+        : "Havi sẽ gửi Reels và Shorts theo lịch. Với TikTok, video sẽ vào Hộp thư TikTok để chị mở app và bấm Đăng.",
       isInstant: instant,
-    });
-    loadItems();
-  }
-
-  async function onApproveSmartReady(instant: boolean) {
-    const readyItems = items.filter((i) => {
-      const isVideo = i.channel === "tiktok" || i.channel === "youtube" || i.channel === "reels";
-      if (!isVideo) return true;
-      return Boolean(i.media_url && (i.media_url.startsWith("blob:") || i.media_url.endsWith(".mp4") || i.media_url.endsWith(".mov") || i.media_url.includes("video")));
-    });
-    if (!readyItems.length) return;
-    const ids = readyItems.map((i) => i.id);
-    setBusyIds(ids);
-    const result = await approveAll(ids, instant);
-    setBusyIds([]);
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
-    const pendingVideosCount = videoGroup.length - readyItems.filter((i) => i.channel === "tiktok" || i.channel === "youtube" || i.channel === "reels").length;
-    setPublishedModal({
-      title: instant
-        ? `🚀 Đã phát lệnh đăng ${result.data.approved.length} kênh đã sẵn sàng!`
-        : `📅 Đã lên lịch Khung Giờ Vàng cho ${result.data.approved.length} kênh đã sẵn sàng!`,
-      body: pendingVideosCount > 0
-        ? `Đã xử lý ${result.data.approved.length} bài viết (Facebook & Google Maps). Còn ${pendingVideosCount} kịch bản Video ngắn được giữ lại an toàn ở mục nháp để chị quay clip xong bấm đăng sau nhé!`
-        : `Toàn bộ ${result.data.approved.length} kênh đã được ${instant ? "phát lệnh đăng ngay" : "xếp vào Lịch đăng tự động (11:30 trưa & 20:00 tối)"}.`,
-      isInstant: instant,
+      showTikTokLink: true,
     });
     loadItems();
   }
 
   async function onApproveAll() {
-    return onApproveSmartReady(true);
+    return contentTrack === "video"
+      ? onApproveVideosGroup(true)
+      : onApprovePostsGroup(true);
   }
 
   async function onSmartScheduleAll() {
-    return onApproveSmartReady(false);
+    return contentTrack === "video"
+      ? onApproveVideosGroup(false)
+      : onApprovePostsGroup(false);
   }
 
   const [generatingImageId, setGeneratingImageId] = useState<string | null>(null);
   const [enhancedImageIds, setEnhancedImageIds] = useState<string[]>([]);
+  const [lastUploadedPhoto, setLastUploadedPhoto] = useState<string | null>(null);
   const [teleprompterItem, setTeleprompterItem] = useState<ContentItem | null>(null);
   const [shootingModes, setShootingModes] = useState<Record<string, "talking" | "broll">>({});
+  const [videoStyles, setVideoStyles] = useState<Record<string, VideoStylePreset>>({});
+  const [videoVoices, setVideoVoices] = useState<Record<string, VideoVoiceChoice>>({});
   const [generatingVideoId, setGeneratingVideoId] = useState<string | null>(null);
 
-  async function handleGenerateAiCapCutVideo(itemId: string) {
+  async function handleGenerateAiCapCutVideo(
+    itemId: string,
+    voiceOverride?: VideoVoiceChoice,
+  ) {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
+    const batch = videoGroup.filter((video) => video.job_id === item.job_id);
 
     setGeneratingVideoId(itemId);
     const toastId = addToast({
       type: "loading",
       title: "Đang tạo Video CapCut 9:16...",
-      description: "Havi đang lồng chữ nổi 3D, chuyển động ảnh và beat nhạc nền synth...",
+      description: "Havi đang lồng chữ nổi 3D, giọng đọc AI và beat nhạc nền synth...",
     });
 
     try {
-      const generatedUrl = await generateKineticShortVideo({
+      const selectedStyle = videoStyles[itemId] || "capcut_pop";
+      const selectedVoice = voiceOverride || videoVoices[itemId] || "vi-VN-HoaiMyNeural";
+      const photoChip = chips.find((c) => c.kind === "photo" && c.previewUrl)?.previewUrl;
+      const anyImageInBatch = items.find((i) => i.media_url && !i.media_url.endsWith(".mp4") && !i.media_url.startsWith("blob:http") && !i.media_url.includes("video"))?.media_url;
+      const effectiveImg: string | undefined = (item.media_url && !item.media_url.endsWith(".mp4") && !item.media_url.includes("video")) ? item.media_url : lastUploadedPhoto || photoChip || anyImageInBatch || undefined;
+
+      const generatedPreviewUrl = await generateKineticShortVideo({
         text: item.text,
         channel: item.channel,
         mediaNote: item.media_note,
-        imageUrl: item.media_url && !item.media_url.endsWith(".mp4") ? item.media_url : undefined,
+        imageUrl: effectiveImg,
+        brandName: "Trung Tâm Công Nghệ Nhật Minh",
+        hotline: "0984 883 750",
+        stylePreset: selectedStyle,
+        voiceChoice: selectedVoice,
       });
-
-      const isVideoItem = videoGroup.some((v) => v.id === itemId);
-      const targetIds = isVideoItem ? videoGroup.map((v) => v.id) : [itemId];
-
-      setItems((prev) =>
-        prev.map((i) =>
-          targetIds.includes(i.id)
-            ? {
-                ...i,
-                media_url: generatedUrl,
-                media_note: `🎬 Video CapCut 9:16 tự động lồng chữ & nhạc`,
-              }
-            : i,
-        ),
-      );
+      if (generatedPreviewUrl === "/test_tiktok.mp4") {
+        throw new Error("Trình duyệt không hỗ trợ render video trực tiếp");
+      }
+      rememberPreviewUrl(generatedPreviewUrl);
+      setVideoPreview({
+        url: generatedPreviewUrl,
+        itemId,
+        batchIds: batch.length ? batch.map((video) => video.id) : [itemId],
+      });
 
       removeToast(toastId);
       addToast({
         type: "success",
-        icon: "✨",
-        title: "Tạo Video CapCut 9:16 thành công!",
-        description:
-          isVideoItem && videoGroup.length > 1
-            ? `Đã tạo và đồng bộ video cho toàn bộ ${videoGroup.length} kênh video ngắn!`
-            : "Video ngắn dọc 9:16 đã sẵn sàng để phát hành.",
+        icon: "▶️",
+        title: "Bản xem thử 1080 × 1920 đã sẵn sàng",
+        description: "Xem và nghe thử trước; Havi chỉ lưu vào ba kênh khi chị đồng ý.",
       });
     } catch {
       removeToast(toastId);
@@ -781,6 +777,74 @@ export function ContentCreationScreen() {
     }
   }
 
+  function discardVideoPreview() {
+    if (!videoPreview) return;
+    forgetPreviewUrl(videoPreview.url);
+    setVideoPreview(null);
+  }
+
+  async function persistVideoPreview() {
+    if (!videoPreview) return;
+    setBusyIds(videoPreview.batchIds);
+    try {
+      const generatedResponse = await fetch(videoPreview.url);
+      if (!generatedResponse.ok) throw new Error("Không đọc được video vừa render");
+      const generatedBlob = await generatedResponse.blob();
+      const generatedType = generatedBlob.type || "video/webm";
+      const generatedFile = new File(
+        [generatedBlob],
+        `havi-video-master-${videoPreview.itemId}.${generatedType.includes("mp4") ? "mp4" : "webm"}`,
+        { type: generatedType },
+      );
+      const persisted = await uploadMedia(generatedFile);
+      if (!persisted.ok) throw new Error(persisted.message);
+      const updateResults = await Promise.all(
+        videoPreview.batchIds.map((targetId) => updateItemMedia(targetId, persisted.data.url)),
+      );
+      if (updateResults.some((result) => !result.ok)) {
+        throw new Error("Video đã lưu nhưng chưa đồng bộ được vào bản nháp");
+      }
+      setItems((prev) =>
+        prev.map((item) =>
+          videoPreview.batchIds.includes(item.id)
+            ? {
+                ...item,
+                media_url: persisted.data.url,
+                media_note: "🎬 Video master 9:16 do Havi dựng — đã được chị duyệt",
+              }
+            : item,
+        ),
+      );
+      discardVideoPreview();
+      addToast({
+        type: "success",
+        icon: "✨",
+        title: "Đã dùng video này cho ba kênh",
+        description: "Một video master đã được gắn cho TikTok, Reels và YouTube Shorts.",
+      });
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Chưa lưu được video",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại.",
+      });
+    } finally {
+      setBusyIds([]);
+    }
+  }
+
+  async function regenerateVideoWithOtherVoice() {
+    if (!videoPreview) return;
+    const itemId = videoPreview.itemId;
+    const nextVoice: VideoVoiceChoice =
+      (videoVoices[itemId] || "vi-VN-HoaiMyNeural") === "vi-VN-HoaiMyNeural"
+        ? "vi-VN-NamMinhNeural"
+        : "vi-VN-HoaiMyNeural";
+    setVideoVoices((prev) => ({ ...prev, [itemId]: nextVoice }));
+    discardVideoPreview();
+    await handleGenerateAiCapCutVideo(itemId, nextVoice);
+  }
+
   async function handleUploadRealVideoForItem(itemId: string, file: File) {
     const toastId = addToast({
       type: "loading",
@@ -789,38 +853,38 @@ export function ContentCreationScreen() {
     });
 
     try {
-      const uploadRes = await uploadRenderedVideoBlob(itemId, file);
+      const uploadRes = await uploadMedia(file);
       removeToast(toastId);
       if (uploadRes.ok) {
-        const previewUrl = URL.createObjectURL(file);
-        const isVideoItem = videoGroup.some((v) => v.id === itemId);
-        const targetIds = isVideoItem ? videoGroup.map((v) => v.id) : [itemId];
+        const sourceItem = videoGroup.find((video) => video.id === itemId);
+        const targetIds = sourceItem
+          ? videoGroup.filter((video) => video.job_id === sourceItem.job_id).map((video) => video.id)
+          : [itemId];
+        const updateResults = await Promise.all(
+          targetIds.map((targetId) => updateItemMedia(targetId, uploadRes.data.url)),
+        );
+        if (updateResults.some((result) => !result.ok)) {
+          throw new Error("Clip đã tải lên nhưng chưa đồng bộ được vào bản nháp");
+        }
 
         setItems((prev) =>
           prev.map((i) =>
             targetIds.includes(i.id)
               ? {
                   ...i,
-                  media_url: previewUrl,
-                  media_note: `🎬 Video thật của tiệm (${file.name})`,
+                  media_url: uploadRes.data.url,
+                  media_note: `🎬 Video thật của tiệm (${file.name}) · ${describeClip(uploadRes.data)}`,
                 }
               : i,
           ),
         );
 
-        if (isVideoItem) {
-          const otherVideoIds = videoGroup.map((v) => v.id).filter((id) => id !== itemId);
-          for (const otherId of otherVideoIds) {
-            uploadRenderedVideoBlob(otherId, file).catch(() => {});
-          }
-        }
-
         addToast({
           type: "success",
           icon: "🎬",
           title: "Đã gắn & đồng bộ video thật!",
-          description: isVideoItem && videoGroup.length > 1
-            ? `Video thật đã được tự động gắn cho toàn bộ ${videoGroup.length} kênh video ngắn (TikTok, Reels, Shorts)!`
+          description: sourceItem && targetIds.length > 1
+            ? `Video thật đã được dùng làm một video master cho ${targetIds.length} kênh.`
             : "Video thật của bạn đã sẵn sàng để phát hành lên kênh.",
         });
       } else {
@@ -838,6 +902,53 @@ export function ContentCreationScreen() {
         description: "Có lỗi khi tải video lên máy chủ, vui lòng thử lại.",
       });
     }
+  }
+
+  async function handleUploadMediaForItem(itemId: string, file: File) {
+    if (file.type.startsWith("image/")) {
+      const uploadRes = await uploadMedia(file);
+      if (!uploadRes.ok) {
+        addToast({ type: "error", title: "Không thể tải ảnh", description: uploadRes.message });
+        return;
+      }
+
+      const sourceItem = videoGroup.find((video) => video.id === itemId);
+      const targetIds = sourceItem
+        ? videoGroup.filter((video) => video.job_id === sourceItem.job_id).map((video) => video.id)
+        : [itemId];
+      const updateResults = await Promise.all(
+        targetIds.map((targetId) => updateItemMedia(targetId, uploadRes.data.url)),
+      );
+      if (updateResults.some((result) => !result.ok)) {
+        addToast({
+          type: "error",
+          title: "Ảnh đã tải nhưng chưa đồng bộ",
+          description: "Vui lòng thử lại.",
+        });
+        return;
+      }
+
+      setLastUploadedPhoto(uploadRes.data.url);
+      setItems((prev) => prev.map((i) =>
+        targetIds.includes(i.id)
+          ? {
+              ...i,
+              media_url: uploadRes.data.url,
+              media_note: `📸 Ảnh chụp tiệm thật (${file.name})`,
+            }
+          : i,
+      ));
+
+      addToast({
+        type: "success",
+        icon: "🖼️",
+        title: "Đã lưu ảnh thật của tiệm!",
+        description: "Bấm nút '🪄 Tạo Video CapCut (9:16)' để dựng video từ chính ảnh này.",
+      });
+      return;
+    }
+
+    return handleUploadRealVideoForItem(itemId, file);
   }
 
   async function handleAiGenerateImage(itemId: string) {
@@ -970,18 +1081,52 @@ export function ContentCreationScreen() {
     (i) => !postGroup.includes(i) && !videoGroup.includes(i),
   );
 
-  const readyVideosCount = videoGroup.filter(
-    (i) =>
-      i.media_url &&
-      (i.media_url.startsWith("blob:") ||
-        i.media_url.endsWith(".mp4") ||
-        i.media_url.endsWith(".mov") ||
-        i.media_url.endsWith(".webm") ||
-        i.media_url.includes("video")),
+  const videoBatches = Object.values(
+    videoGroup.reduce<Record<string, ContentItem[]>>((groups, item) => {
+      const key = item.job_id || item.id;
+      groups[key] = [...(groups[key] || []), item];
+      return groups;
+    }, {}),
+  );
+
+  const readyVideosCount = videoBatches.filter((batch) =>
+    batch.some((item) => isPublishableVideoUrl(item.media_url)),
   ).length;
 
-  const totalReadyCount = postGroup.length + readyVideosCount;
-  const pendingVideosCount = videoGroup.length - readyVideosCount;
+  const pendingVideosCount = videoBatches.length - readyVideosCount;
+  const scopedItemCount = contentTrack === "video" ? videoGroup.length : postGroup.length;
+  const activeItemsCount =
+    activeTab === "all"
+      ? items.length
+      : activeTab === "video"
+        ? videoGroup.length
+        : postGroup.length;
+
+  useEffect(() => {
+    if (
+      !autoGenerateVideoRef.current ||
+      contentTrack !== "video" ||
+      !videoBatches.length ||
+      generatingVideoId ||
+      videoPreview
+    ) {
+      return;
+    }
+    const batch = videoBatches.find(
+      (candidate) => !candidate.some((item) => isPublishableVideoUrl(item.media_url)),
+    );
+    if (!batch?.[0]) return;
+    autoGenerateVideoRef.current = false;
+    const timer = window.setTimeout(() => {
+      void handleGenerateAiCapCutVideo(batch[0].id);
+    }, 0);
+    // Handler intentionally runs only for the freshly-created job signalled by
+    // autoGenerateVideoRef; existing drafts never render automatically on load.
+    return () => window.clearTimeout(timer);
+    // `items` is the source of truth for videoBatches; the handler is gated by
+    // autoGenerateVideoRef so existing drafts never render on page load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentTrack, items, generatingVideoId, videoPreview]);
 
   const renderDraftCard = (item: ContentItem) => {
     const busy = busyIds.includes(item.id);
@@ -1044,14 +1189,7 @@ export function ContentCreationScreen() {
             {isVideoChannel ? (
               <div style={{ marginBottom: "12px" }}>
                 {(() => {
-                  const hasRealVideo = Boolean(
-                    item.media_url &&
-                      (item.media_url.startsWith("blob:") ||
-                        item.media_url.endsWith(".mp4") ||
-                        item.media_url.endsWith(".mov") ||
-                        item.media_url.endsWith(".webm") ||
-                        item.media_url.includes("video")),
-                  );
+                  const hasRealVideo = isPublishableVideoUrl(item.media_url);
 
                   if (hasRealVideo) {
                     return (
@@ -1116,7 +1254,7 @@ export function ContentCreationScreen() {
                               🎯 Câu Mở Đầu 3 Giây Giữ Chân (Hook)
                             </div>
                             <div className={`${styles.scriptSectionContent} ${styles.scriptHookHighlight}`}>
-                              "{hookDisplay}"
+                              &quot;{hookDisplay}&quot;
                             </div>
                           </div>
 
@@ -1125,7 +1263,7 @@ export function ContentCreationScreen() {
                               💬 Lời Thoại Gợi Ý (Đọc ngắn gọn 20s)
                             </div>
                             <div className={styles.scriptSectionContent}>
-                              "{item.text.length > 180 ? item.text.slice(0, 175) + "..." : item.text}"
+                              &quot;{item.text.length > 180 ? item.text.slice(0, 175) + "..." : item.text}&quot;
                             </div>
                           </div>
                         </>
@@ -1144,6 +1282,56 @@ export function ContentCreationScreen() {
                         </div>
                       )}
 
+                      {/* Tùy chọn Phong cách Video & Giọng đọc AI */}
+                      <div className={styles.stylePresetSection}>
+                        <div className={styles.stylePresetLabel}>
+                          <span>🎨 Phong Cách Chữ Nổi &amp; Nhạc Nền:</span>
+                        </div>
+                        <div className={styles.presetChipsList}>
+                          <button
+                            type="button"
+                            className={`${styles.presetChip} ${(videoStyles[item.id] || "capcut_pop") === "capcut_pop" ? styles.presetChipActive : ""}`}
+                            onClick={() => setVideoStyles((prev) => ({ ...prev, [item.id]: "capcut_pop" }))}
+                          >
+                            🌟 CapCut Kinetic (Chữ Vàng 3D)
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.presetChip} ${videoStyles[item.id] === "authentic_story" ? styles.presetChipActive : ""}`}
+                            onClick={() => setVideoStyles((prev) => ({ ...prev, [item.id]: "authentic_story" }))}
+                          >
+                            🎬 Tâm Sự Chân Thật (Chữ Trắng)
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.presetChip} ${videoStyles[item.id] === "flash_sale" ? styles.presetChipActive : ""}`}
+                            onClick={() => setVideoStyles((prev) => ({ ...prev, [item.id]: "flash_sale" }))}
+                          >
+                            🔥 Ưu Đãi Giờ Vàng (Chữ Đỏ/Cam)
+                          </button>
+                        </div>
+
+                        <div className={styles.stylePresetLabel}>
+                          <span>🎙️ Giọng Đọc AI Tiếng Việt (0 VNĐ):</span>
+                        </div>
+                        <div className={styles.voiceChipsList}>
+                          <button
+                            type="button"
+                            className={`${styles.voiceChip} ${(videoVoices[item.id] || "vi-VN-HoaiMyNeural") === "vi-VN-HoaiMyNeural" ? styles.voiceChipActive : ""}`}
+                            onClick={() => setVideoVoices((prev) => ({ ...prev, [item.id]: "vi-VN-HoaiMyNeural" }))}
+                          >
+                            👩 Hoài My (Nữ - Truyền Cảm)
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.voiceChip} ${videoVoices[item.id] === "vi-VN-NamMinhNeural" ? styles.voiceChipActive : ""}`}
+                            onClick={() => setVideoVoices((prev) => ({ ...prev, [item.id]: "vi-VN-NamMinhNeural" }))}
+                          >
+                            👨 Nam Minh (Nam - Ấm Áp/Chững Chạc)
+                          </button>
+                        </div>
+                      </div>
+
                       <div className={styles.scriptActions}>
                         {currentMode === "talking" ? (
                           <button
@@ -1158,18 +1346,18 @@ export function ContentCreationScreen() {
                         <input
                           type="file"
                           id={`upload-real-video-${item.id}`}
-                          accept="video/mp4,video/quicktime,video/webm"
+                          accept="image/*,video/mp4,video/quicktime,video/webm"
                           style={{ display: "none" }}
                           onChange={(e) => {
                             const f = e.target.files?.[0];
-                            if (f) handleUploadRealVideoForItem(item.id, f);
+                            if (f) handleUploadMediaForItem(item.id, f);
                           }}
                         />
                         <label
                           htmlFor={`upload-real-video-${item.id}`}
                           className={styles.uploadRealVideoBtn}
                         >
-                          📤 {currentMode === "broll" ? "Tải Clip 10s Vừa Quay Lên" : "Tải Video Vừa Quay Lên"}
+                          📤 {currentMode === "broll" ? "Tải Ảnh / Clip 10s Tiệm Lên" : "Tải Ảnh / Clip Tiệm Lên"}
                         </label>
 
                         <button
@@ -1322,6 +1510,150 @@ export function ContentCreationScreen() {
     );
   };
 
+  const renderVideoMasterCard = (batch: ContentItem[]) => {
+    const primary = batch.find((item) => item.channel === "tiktok") || batch[0];
+    if (!primary) return null;
+    const readyItem = batch.find((item) => isPublishableVideoUrl(item.media_url));
+    const readyUrl = readyItem?.media_url;
+    const busy = batch.some((item) => busyIds.includes(item.id));
+    const selectedStyle = videoStyles[primary.id] || "capcut_pop";
+    const selectedVoice = videoVoices[primary.id] || "vi-VN-HoaiMyNeural";
+
+    return (
+      <article key={primary.job_id || primary.id} className={styles.videoMasterCard}>
+        <div className={styles.videoMasterHeader}>
+          <div>
+            <span className={styles.videoMasterEyebrow}>MỘT VIDEO MASTER · 9:16</span>
+            <h3>Video ngắn sẵn sàng cho ba kênh</h3>
+            <p>Một lần dựng, một lần duyệt — Havi tự chuẩn bị phiên bản phân phối phù hợp.</p>
+          </div>
+          <div className={styles.videoDestinationBadges} aria-label="Kênh nhận video">
+            <span>🎵 TikTok</span>
+            <span>🎬 Reels</span>
+            <span>▶️ Shorts</span>
+          </div>
+        </div>
+
+        <div className={styles.videoMasterBody}>
+          <div className={styles.videoMasterPreview}>
+            {readyUrl ? (
+              <>
+                <span className={styles.videoReadyBadge}>✓ Video đã sẵn sàng — xem thử</span>
+                <video src={readyUrl} controls playsInline aria-label="Xem thử video master 9:16" />
+              </>
+            ) : (
+              <div className={styles.videoPendingPreview}>
+                <span>✨</span>
+                <strong>Havi sẽ tự dựng video cho chị</strong>
+                <p>Ảnh, hook, giọng đọc, subtitle và nhạc nền sẽ được ghép thành một bản xem thử 1080 × 1920.</p>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.videoMasterControls}>
+            <div className={styles.videoMasterStatus}>
+              <strong>{readyUrl ? "Video hoàn chỉnh đã sẵn sàng" : "Kịch bản đã sẵn sàng để AI dựng"}</strong>
+              <p>{primary.text}</p>
+            </div>
+
+            <div className={styles.stylePresetLabel}>Phong cách video</div>
+            <div className={styles.presetChipsList}>
+              {([
+                ["capcut_pop", "🌟 CapCut Kinetic"],
+                ["authentic_story", "🎬 Chân thật"],
+                ["flash_sale", "🔥 Flash Sale"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`${styles.presetChip} ${selectedStyle === value ? styles.presetChipActive : ""}`}
+                  onClick={() => setVideoStyles((prev) => ({ ...prev, [primary.id]: value }))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.stylePresetLabel}>Giọng đọc AI</div>
+            <div className={styles.voiceChipsList}>
+              <button
+                type="button"
+                className={`${styles.voiceChip} ${selectedVoice === "vi-VN-HoaiMyNeural" ? styles.voiceChipActive : ""}`}
+                onClick={() => setVideoVoices((prev) => ({ ...prev, [primary.id]: "vi-VN-HoaiMyNeural" }))}
+              >
+                👩 Hoài My
+              </button>
+              <button
+                type="button"
+                className={`${styles.voiceChip} ${selectedVoice === "vi-VN-NamMinhNeural" ? styles.voiceChipActive : ""}`}
+                onClick={() => setVideoVoices((prev) => ({ ...prev, [primary.id]: "vi-VN-NamMinhNeural" }))}
+              >
+                👨 Nam Minh
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className={styles.videoPrimaryAction}
+              disabled={generatingVideoId === primary.id}
+              onClick={() => handleGenerateAiCapCutVideo(primary.id)}
+            >
+              {generatingVideoId === primary.id
+                ? "⏳ Havi đang dựng bản xem thử…"
+                : readyUrl
+                  ? "🪄 Làm lại video AI"
+                  : "🪄 Tạo video AI — xem thử trước"}
+            </button>
+
+            <input
+              type="file"
+              id={`upload-video-master-${primary.id}`}
+              accept="video/mp4,video/quicktime,video/webm"
+              hidden
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) handleUploadRealVideoForItem(primary.id, file);
+              }}
+            />
+            <label htmlFor={`upload-video-master-${primary.id}`} className={styles.videoOwnClipLink}>
+              Muốn dùng clip tự quay? Tải clip của chị lên
+            </label>
+
+            <details className={styles.channelCaptions}>
+              <summary>Xem nội dung riêng cho từng kênh</summary>
+              {batch.map((item) => (
+                <div key={item.id}>
+                  <strong>{channelLabels[item.channel as keyof typeof channelLabels] ?? item.channel}</strong>
+                  <p>{item.text}</p>
+                </div>
+              ))}
+            </details>
+          </div>
+        </div>
+
+        <div className={styles.videoDeliveryTruth}>
+          <span>🎵 TikTok: gửi vào Hộp thư TikTok, chị mở app và bấm Đăng.</span>
+          <span>🎬 Reels · ▶️ Shorts: Havi xuất bản trực tiếp khi kênh đã kết nối.</span>
+        </div>
+
+        <div className={styles.videoMasterActions}>
+          {!readyUrl ? (
+            <p>Video chưa có file hoàn chỉnh nên Havi chưa cho phép duyệt hoặc đăng.</p>
+          ) : (
+            <>
+              <Button variant="outline" disabled={busy} onClick={() => onApproveVideosGroup(false, batch)}>
+                📅 Hẹn giờ 20:00
+              </Button>
+              <Button variant="primary" disabled={busy} onClick={() => onApproveVideosGroup(true, batch)}>
+                Gửi video tới 3 kênh
+              </Button>
+            </>
+          )}
+        </div>
+      </article>
+    );
+  };
+
   return (
     <>
       <header className={styles.header}>
@@ -1343,14 +1675,92 @@ export function ContentCreationScreen() {
 
       <QuotaBanner reloadKey={quotaKey} />
 
-      {/* BƯỚC 1: CHỌN CHIẾN DỊCH TĂNG TRƯỞNG */}
-      <section className={styles.playbookSection} aria-label="Chọn chiến dịch">
+      {/* BƯỚC 1: CHỌN RÕ LOẠI NỘI DUNG */}
+      <section className={styles.contentTrackSection} aria-labelledby="content-track-title">
         <div className={styles.stepTitle}>
           <span className={styles.stepNumber}>1</span>
-          <span>Chọn Mục Tiêu Chiến Dịch Tăng Trưởng</span>
+          <span id="content-track-title">Chị muốn tạo gì hôm nay?</span>
+        </div>
+        <div className={styles.contentTrackGrid} role="tablist" aria-label="Loại nội dung muốn tạo">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={contentTrack === "posts"}
+            className={`${styles.contentTrackCard} ${contentTrack === "posts" ? styles.contentTrackCardActive : ""}`}
+            onClick={() => selectContentTrack("posts")}
+          >
+            <span className={styles.contentTrackIcon}>📰</span>
+            <span>
+              <strong>Bài viết &amp; Local SEO</strong>
+              <small>AI viết bài Facebook và Google Maps, chị duyệt rồi đăng hoặc hẹn giờ.</small>
+            </span>
+            <span className={styles.contentTrackCheck}>{contentTrack === "posts" ? "✓ Đang chọn" : "Chọn"}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={contentTrack === "video"}
+            className={`${styles.contentTrackCard} ${contentTrack === "video" ? styles.contentTrackCardActive : ""}`}
+            onClick={() => selectContentTrack("video")}
+          >
+            <span className={styles.contentTrackIcon}>🎬</span>
+            <span>
+              <strong>Video ngắn TikTok, Reels, Shorts</strong>
+              <small>AI tự tạo một video 9:16 hoàn chỉnh; chị xem thử, duyệt rồi gửi lên ba kênh.</small>
+            </span>
+            <span className={styles.contentTrackCheck}>{contentTrack === "video" ? "✓ Đang chọn" : "Chọn"}</span>
+          </button>
+        </div>
+
+        {contentTrack === "video" ? (
+          <div className={styles.videoSourcePanel} aria-label="Nguồn ý tưởng video">
+            <div className={styles.videoSourceHeader}>
+              <strong>Ý tưởng video đến từ đâu?</strong>
+              <span>Chọn một cách để Havi dẫn đúng flow, không cần quyết định mọi thứ cùng lúc.</span>
+            </div>
+            <div className={styles.videoSourceGrid}>
+              <Link className={`${styles.videoSourceCard} ${styles.videoSourceTrend}`} href="/app/video-studio">
+                <span>🔥</span>
+                <strong>AI Studio quét trend</strong>
+                <small>Tìm chủ đề đang nóng và lấy hook phù hợp với tiệm.</small>
+                <b>Mở AI Trend Studio →</b>
+              </Link>
+              <button
+                type="button"
+                className={`${styles.videoSourceCard} ${videoIdeaSource === "own" ? styles.videoSourceCardActive : ""}`}
+                onClick={() => setVideoIdeaSource("own")}
+              >
+                <span>✍️</span>
+                <strong>Ý tưởng của tôi</strong>
+                <small>Nói hoặc gõ vài dòng, Havi biến thành kịch bản video.</small>
+                <b>{videoIdeaSource === "own" ? "✓ Đang chọn" : "Chọn cách này"}</b>
+              </button>
+              <button
+                type="button"
+                className={`${styles.videoSourceCard} ${videoIdeaSource === "upload" ? styles.videoSourceCardActive : ""}`}
+                onClick={() => {
+                  setVideoIdeaSource("upload");
+                  fileInputRef.current?.click();
+                }}
+              >
+                <span>📹</span>
+                <strong>Tôi đã có clip</strong>
+                <small>Tải clip lên để Havi viết hook và chuẩn bị bản đăng đa kênh.</small>
+                <b>{videoIdeaSource === "upload" ? "✓ Đang chọn" : "Chọn clip"}</b>
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      {/* BƯỚC 2: CHỌN CHIẾN DỊCH TĂNG TRƯỞNG */}
+      <section className={styles.playbookSection} aria-label="Chọn chiến dịch">
+        <div className={styles.stepTitle}>
+          <span className={styles.stepNumber}>2</span>
+          <span>Chọn Mục Tiêu {contentTrack === "video" ? "Video" : "Bài Viết"}</span>
         </div>
         <div className={styles.playbookGrid}>
-          {CAMPAIGN_PLAYBOOKS.map((playbook) => {
+          {CAMPAIGN_PLAYBOOKS.filter((playbook) => playbook.tracks.includes(contentTrack)).map((playbook) => {
             const isActive = selectedPlaybook === playbook.id;
             return (
               <button
@@ -1380,14 +1790,18 @@ export function ContentCreationScreen() {
         </div>
       </section>
 
-      {/* BƯỚC 2: NẠP Ý TƯỞNG NHANH */}
+      {/* BƯỚC 3: NẠP Ý TƯỞNG NHANH */}
       <section className={styles.dropZone} aria-label="Nạp liệu mới">
         <div className={styles.stepTitle} style={{ justifyContent: "center", marginBottom: "16px" }}>
-          <span className={styles.stepNumber}>2</span>
-          <span>Nạp Ý Tưởng 1-Chạm (Voice, Ảnh Thật Hoặc Vài Dòng)</span>
+          <span className={styles.stepNumber}>3</span>
+          <span>{contentTrack === "video" ? "Đưa Liệu Cho Video" : "Nạp Ý Tưởng 1-Chạm"}</span>
         </div>
 
-        <p className={styles.dropTitle}>Chụp ảnh, quay video hoặc gõ vài dòng — Nhân viên AI viết bài ngay</p>
+        <p className={styles.dropTitle}>
+          {contentTrack === "video"
+            ? "Thêm ảnh, ghi âm hoặc gõ ý tưởng — Havi tự dựng video hoàn chỉnh cho TikTok, Reels và Shorts"
+            : "Chụp ảnh hoặc gõ vài dòng — Havi chỉ viết bài Facebook và Google Maps"}
+        </p>
         <div className={styles.dropActions}>
           <input
             ref={fileInputRef}
@@ -1412,7 +1826,7 @@ export function ContentCreationScreen() {
             disabled={uploading}
             onClick={() => cameraInputRef.current?.click()}
           >
-            📸 Chụp ảnh / Video
+            {contentTrack === "video" ? "📹 Quay clip / Chụp ảnh" : "📸 Chụp ảnh thật"}
           </Button>
           <Button
             variant="outline"
@@ -1427,7 +1841,11 @@ export function ContentCreationScreen() {
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? "Đang tải lên…" : "+ Thư viện ảnh / clip"}
+            {uploading
+              ? "Đang tải lên…"
+              : contentTrack === "video"
+                ? "+ Tải clip / ảnh có sẵn"
+                : "+ Chọn ảnh từ thư viện"}
           </Button>
           <Button variant="outline" onClick={() => setNoteOpen((v) => !v)}>
             ✍️ Gõ ghi chú nhanh
@@ -1437,7 +1855,7 @@ export function ContentCreationScreen() {
         {noteOpen ? (
           <div className={styles.noteBox}>
             <label className={styles.noteLabel} htmlFor="raw-note">
-              Chị muốn Havi kể chuyện gì?
+              {contentTrack === "video" ? "Video này muốn nói điều gì?" : "Chị muốn Havi kể chuyện gì?"}
             </label>
             <Textarea
               id="raw-note"
@@ -1456,7 +1874,7 @@ export function ContentCreationScreen() {
         <div className={styles.presetSection}>
           <div className={styles.presetHeader}>
             <span>⚡</span>
-            <span>Ý tưởng bài viết 1-chạm (Bấm để điền nhanh):</span>
+            <span>{contentTrack === "video" ? "Gợi ý chủ đề video 1-chạm:" : "Ý tưởng bài viết 1-chạm:"}</span>
           </div>
           <div className={styles.presetGrid}>
             {[
@@ -1507,29 +1925,32 @@ export function ContentCreationScreen() {
           </div>
         </div>
 
-        {/* Lead Conversion Booster Box */}
-        <div className={styles.conversionBooster}>
-          <div className={styles.conversionBoosterLeft}>
-            <span className={styles.conversionBoosterIcon}>🤖</span>
-            <div>
-              <div className={styles.conversionBoosterTitle}>
-                Tự Động Chốt Lead &amp; Trả Lời Tin Nhắn 24/7 (AI Lead Agent)
-              </div>
-              <div className={styles.conversionBoosterDesc}>
-                Tự động gắn mã ưu đãi và kích hoạt AI tiếp đón khách khi có người bình luận hoặc nhắn tin.
+        {/* Lead conversion belongs to the post flow; showing it while scripting a
+            video adds an unrelated decision before the user has even made a clip. */}
+        {contentTrack === "posts" ? (
+          <div className={styles.conversionBooster}>
+            <div className={styles.conversionBoosterLeft}>
+              <span className={styles.conversionBoosterIcon}>🤖</span>
+              <div>
+                <div className={styles.conversionBoosterTitle}>
+                  Tự Động Chốt Lead &amp; Trả Lời Tin Nhắn 24/7 (AI Lead Agent)
+                </div>
+                <div className={styles.conversionBoosterDesc}>
+                  Tự động gắn mã ưu đãi và kích hoạt AI tiếp đón khách khi có người bình luận hoặc nhắn tin.
+                </div>
               </div>
             </div>
+            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700, color: "#15803D" }}>
+              <input
+                type="checkbox"
+                checked={leadConversionEnabled}
+                onChange={(e) => setLeadConversionEnabled(e.target.checked)}
+                style={{ width: "16px", height: "16px", accentColor: "#16A34A" }}
+              />
+              <span>Đang kích hoạt</span>
+            </label>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 700, color: "#15803D" }}>
-            <input
-              type="checkbox"
-              checked={leadConversionEnabled}
-              onChange={(e) => setLeadConversionEnabled(e.target.checked)}
-              style={{ width: "16px", height: "16px", accentColor: "#16A34A" }}
-            />
-            <span>Đang kích hoạt</span>
-          </label>
-        </div>
+        ) : null}
       </section>
 
       {uploads.length ? (
@@ -1646,40 +2067,45 @@ export function ContentCreationScreen() {
         </section>
       ) : null}
 
-      <section className={styles.modeToggle} aria-label="Chế độ đăng bài">
-        <div className={styles.modeButtons} role="group">
-          <button
-            type="button"
-            className={`${styles.modeButton} ${
-              publishMode === "review_first" ? styles.modeButtonActive : ""
-            }`}
-            aria-pressed={publishMode === "review_first"}
-            onClick={() => setPublishMode("review_first")}
-          >
-            Duyệt trước khi đăng
-          </button>
-          <button
-            type="button"
-            className={`${styles.modeButton} ${
-              publishMode === "full_auto" ? styles.modeButtonActive : ""
-            }`}
-            aria-pressed={publishMode === "full_auto"}
-            onClick={() => setPublishMode("full_auto")}
-          >
-            Tự động đăng
-          </button>
-        </div>
-        {publishMode === "full_auto" ? (
-          <p className={styles.modeWarning}>
-            Chế độ này đang khoá trong bản pilot — mọi bài vẫn sẽ chờ chị duyệt
-            trước khi lên mạng.
-          </p>
-        ) : (
-          <p className={styles.modeHint}>
-            Mặc định của Havi — không có bài nào lên mạng khi chị chưa duyệt.
-          </p>
-        )}
-      </section>
+      {contentTrack === "posts" ? (
+        <section className={styles.modeToggle} aria-label="Chế độ đăng bài">
+          <div className={styles.modeButtons} role="group">
+            <button
+              type="button"
+              className={`${styles.modeButton} ${publishMode === "review_first" ? styles.modeButtonActive : ""}`}
+              aria-pressed={publishMode === "review_first"}
+              onClick={() => setPublishMode("review_first")}
+            >
+              Duyệt trước khi đăng
+            </button>
+            <button
+              type="button"
+              className={`${styles.modeButton} ${publishMode === "full_auto" ? styles.modeButtonActive : ""}`}
+              aria-pressed={publishMode === "full_auto"}
+              onClick={() => setPublishMode("full_auto")}
+            >
+              Tự động đăng
+            </button>
+          </div>
+          {publishMode === "full_auto" ? (
+            <p className={styles.modeWarning}>
+              Chế độ này đang khoá trong bản pilot — mọi bài vẫn sẽ chờ chị duyệt trước khi lên mạng.
+            </p>
+          ) : (
+            <p className={styles.modeHint}>
+              Mặc định của Havi — không có bài nào lên mạng khi chị chưa duyệt.
+            </p>
+          )}
+        </section>
+      ) : (
+        <section className={styles.videoReviewPromise} aria-label="Quy trình duyệt video">
+          <span>🛡️</span>
+          <div>
+            <strong>Video luôn chờ chị xem lại trước khi đăng</strong>
+            <p>Havi tự dựng một video 1080 × 1920 để chị xem và nghe thử. Chỉ khi chị chọn dùng bản đó, video mới được lưu và mở nút gửi lên ba kênh.</p>
+          </div>
+        </section>
+      )}
 
       <div className={styles.generateRow}>
         <Button
@@ -1688,7 +2114,11 @@ export function ContentCreationScreen() {
           onClick={generate}
           disabled={(!chips.length && !note.trim()) || uploading || generating}
         >
-          {generating ? "⏳ Havi đang sáng tạo nội dung…" : "⚡ Tạo Ngay Bài Viết Đa Kênh & Kịch Bản Video 30s"}
+          {generating
+            ? "⏳ Havi đang sáng tạo nội dung…"
+            : contentTrack === "video"
+              ? "🪄 AI Tạo Video 9:16 Cho Tôi"
+              : "⚡ Tạo Bài Viết Facebook & Google Maps"}
         </Button>
       </div>
 
@@ -1717,20 +2147,26 @@ export function ContentCreationScreen() {
       ) : null}
       {poll.error ? <ErrorState title={poll.error} /> : null}
 
-      {/* BƯỚC 3: VISUAL MULTI-CHANNEL COMMAND CENTER */}
+      {/* BƯỚC 4: DUYỆT ĐẦU RA ĐÚNG LOẠI NỘI DUNG ĐÃ CHỌN */}
       <section className={styles.draftsSection} aria-label="Bản nháp đã sẵn sàng">
         <div className={styles.draftsHeader}>
           <div>
             <div className={styles.stepTitle} style={{ marginBottom: "4px" }}>
-              <span className={styles.stepNumber}>3</span>
-              <span>Visual Multi-Channel Command Center</span>
+              <span className={styles.stepNumber}>4</span>
+              <span>Hoàn thiện &amp; duyệt nội dung</span>
             </div>
             <h2 className={styles.draftsTitle}>
-              {items.length} bản nháp trong kho
+              {contentTrack === "video"
+                ? `${videoBatches.length} video master đang hoàn thiện`
+                : `${postGroup.length} bản nháp bài viết`}
             </h2>
-            {items.length > 0 ? (
+            {scopedItemCount > 0 ? (
               <p style={{ fontSize: "13px", color: "#64748B", marginTop: "3px" }}>
-                🟢 {postGroup.length} Bài Viết &amp; Local SEO (Sẵn sàng) • 🎬 {videoGroup.length} Video Ngắn 9:16 {pendingVideosCount > 0 ? `(${pendingVideosCount} kịch bản chờ clip)` : "(Đã có clip)"}
+                {contentTrack === "video"
+                  ? readyVideosCount > 0
+                    ? `🟢 ${readyVideosCount} video AI đã dựng sẵn — xem thử và duyệt`
+                    : `✨ ${pendingVideosCount} kịch bản sẵn sàng — Havi sẽ tự dựng video`
+                  : `🟢 ${postGroup.length} bài viết Facebook & Local SEO sẵn sàng`}
               </p>
             ) : null}
           </div>
@@ -1740,7 +2176,7 @@ export function ContentCreationScreen() {
               variant="outline"
               style={{ color: "#DC2626", borderColor: "#FCA5A5", background: "#FEF2F2" }}
               onClick={onDismissAll}
-              disabled={!items.length || busyIds.length > 0}
+              disabled={scopedItemCount === 0 || busyIds.length > 0}
             >
               🗑️ Xoá tất cả
             </Button>
@@ -1749,24 +2185,26 @@ export function ContentCreationScreen() {
               variant="outline"
               style={{ color: "#4F46E5", borderColor: "#C7D2FE", background: "#EEF2FF" }}
               onClick={onSmartScheduleAll}
-              disabled={!items.length || busyIds.length > 0}
+              disabled={(contentTrack === "video" ? readyVideosCount === 0 : postGroup.length === 0) || busyIds.length > 0}
             >
-              📅 Hẹn Giờ Vàng (11h30 &amp; 20h00)
+              {contentTrack === "video" ? "📅 Hẹn video lúc 20:00" : "📅 Hẹn bài lúc 11:30"}
             </Button>
             <Button
               type="button"
               variant="primary"
               onClick={onApproveAll}
-              disabled={!items.length || busyIds.length > 0}
+              disabled={(contentTrack === "video" ? readyVideosCount === 0 : postGroup.length === 0) || busyIds.length > 0}
             >
-              🚀 Duyệt &amp; Đăng Ngay {totalReadyCount < items.length ? `(${totalReadyCount} Kênh Sẵn Sàng)` : "Tất Cả"}
+              {contentTrack === "video"
+                ? `🎬 Gửi ${readyVideosCount} video sẵn sàng tới 3 kênh`
+                : `🚀 Đăng ${postGroup.length} bài viết sẵn sàng`}
             </Button>
           </div>
         </div>
 
         {/* Segmented Channel Tabs */}
         {items.length > 0 ? (
-          <div className={styles.channelTabs} role="tablist">
+          <div className={styles.channelTabs} role="tablist" aria-label="Lọc bản nháp theo loại nội dung">
             <button
               type="button"
               role="tab"
@@ -1802,10 +2240,18 @@ export function ContentCreationScreen() {
 
         {loading ? (
           <LoadingState title="Đang tải bản nháp…" />
-        ) : items.length === 0 ? (
+        ) : activeItemsCount === 0 ? (
           <EmptyState
-            title="Chưa có bản nháp nào chờ duyệt"
-            body="Nạp vài tấm ảnh hoặc gõ vài dòng, Havi sẽ viết bài cho chị."
+            title={
+              contentTrack === "video"
+                ? "Chưa có kịch bản video nào chờ chị hoàn thiện"
+                : "Chưa có bản nháp nào chờ duyệt"
+            }
+            body={
+              contentTrack === "video"
+                ? "Chọn trend hoặc gõ một ý tưởng; Havi sẽ tạo hook, dựng video AI và mở bản xem thử trước khi gửi lên ba kênh."
+                : "Nạp vài tấm ảnh hoặc gõ vài dòng, Havi sẽ viết bài cho chị."
+            }
           />
         ) : (
           <div>
@@ -1855,46 +2301,23 @@ export function ContentCreationScreen() {
                   <div className={styles.groupHeaderTitleBox}>
                     <span style={{ fontSize: "20px" }}>🎬</span>
                     <span style={{ fontSize: "16px", fontWeight: 800, color: "#581C87" }}>
-                      Nhóm 2: Video Ngắn Dọc 9:16 (TikTok, YouTube Shorts, Reels)
+                      Video Ngắn 9:16 → TikTok, Reels và YouTube Shorts
                     </span>
                     {readyVideosCount > 0 ? (
-                      <span className={styles.statusPillReady}>🟢 {readyVideosCount}/{videoGroup.length} Clip Sẵn Sàng</span>
+                      <span className={styles.statusPillReady}>🟢 {readyVideosCount}/{videoBatches.length} Video Sẵn Sàng</span>
                     ) : (
-                      <span className={styles.statusPillPending}>🎬 Kịch Bản 30s Chờ Quay</span>
+                      <span className={styles.statusPillPending}>✨ AI Sẵn Sàng Dựng Video</span>
                     )}
                     <span className={styles.groupBadgeVideo}>
-                      {videoGroup.length} Kênh Video
+                      {videoBatches.length} Video Master
                     </span>
                   </div>
-                  <div className={styles.groupHeaderActions}>
-                    {readyVideosCount > 0 ? (
-                      <>
-                        <button
-                          type="button"
-                          className={styles.btnGroupScheduleSubtle}
-                          onClick={() => onApproveVideosGroup(false)}
-                          disabled={busyIds.length > 0}
-                        >
-                          📅 Hẹn Giờ Tối (20:00)
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnGroupPublishVideos}
-                          onClick={() => onApproveVideosGroup(true)}
-                          disabled={busyIds.length > 0}
-                        >
-                          🎬 Xuất Bản Video ({readyVideosCount} clip)
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: "12px", color: "#7E22CE", fontWeight: 600 }}>
-                        💡 Nhìn kịch bản quay 15-30s bên dưới rồi tải clip lên nhé
-                      </span>
-                    )}
-                  </div>
+                  <span style={{ fontSize: "12px", color: "#7E22CE", fontWeight: 600 }}>
+                    💡 Havi dựng mặc định; clip tự quay là lựa chọn phụ
+                  </span>
                 </div>
-                <div className={styles.draftsGrid}>
-                  {videoGroup.map(renderDraftCard)}
+                <div className={styles.videoMasterList}>
+                  {videoBatches.map(renderVideoMasterCard)}
                 </div>
               </div>
             ) : null}
@@ -1936,6 +2359,31 @@ export function ContentCreationScreen() {
         />
       ) : null}
 
+      {videoPreview ? (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Xem thử video AI">
+          <div className={styles.videoPreviewModalCard}>
+            <div className={styles.videoPreviewModalHeader}>
+              <div>
+                <span>BẢN XEM THỬ · 1080 × 1920</span>
+                <h3>Xem và nghe trước khi dùng video này</h3>
+              </div>
+              <button type="button" onClick={discardVideoPreview} aria-label="Đóng bản xem thử">×</button>
+            </div>
+            <video src={videoPreview.url} controls autoPlay playsInline aria-label="Video AI đang xem thử" />
+            <p>Video chưa được lưu hoặc gửi đi. Chị có thể đổi giọng, làm lại hoặc dùng bản này cho cả ba kênh.</p>
+            <div className={styles.videoPreviewModalActions}>
+              <Button variant="outline" onClick={discardVideoPreview}>Bỏ bản này</Button>
+              <Button variant="outline" onClick={regenerateVideoWithOtherVoice}>
+                🎙️ Làm lại giọng khác
+              </Button>
+              <Button variant="primary" onClick={persistVideoPreview} disabled={busyIds.length > 0}>
+                {busyIds.length > 0 ? "Đang lưu…" : "✓ Dùng video này cho 3 kênh"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Modal thông báo sau khi phát lệnh đăng hoặc lên lịch */}
       {publishedModal ? (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
@@ -1954,6 +2402,14 @@ export function ContentCreationScreen() {
               >
                 Đóng
               </Button>
+              {publishedModal.showTikTokLink ? (
+                <Button
+                  variant="outline"
+                  onClick={() => window.open("https://www.tiktok.com/", "_blank", "noopener,noreferrer")}
+                >
+                  Mở TikTok để bấm Đăng ↗
+                </Button>
+              ) : null}
               <Button
                 variant="primary"
                 onClick={() => {

@@ -4,6 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { writeTokens } from "@/lib/auth/token-store";
 import { ContentCreationScreen } from "./content-creation-screen";
 
+vi.mock("./kinetic-video-generator", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./kinetic-video-generator")>();
+  return {
+    ...actual,
+    generateKineticShortVideo: vi.fn(async () => "blob:generated-video"),
+  };
+});
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -143,6 +151,12 @@ async function chonClip() {
   await user.upload(input, file);
 }
 
+async function chonFlowVideo() {
+  const user = userEvent.setup();
+  const trackTabs = screen.getByRole("tablist", { name: /loại nội dung muốn tạo/i });
+  await user.click(within(trackTabs).getByRole("tab", { name: /video ngắn/i }));
+}
+
 /** Asset video như backend trả về sau khi probe xong ở lượt `complete`. */
 function videoAsset(overrides: Record<string, unknown> = {}) {
   return {
@@ -188,7 +202,7 @@ describe("ContentCreationScreen", () => {
     expect(
       await screen.findByText(/chưa có bản nháp nào chờ duyệt/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/0 bản nháp trong kho/i)).toBeInTheDocument();
+    expect(screen.getByText(/0 bản nháp bài viết/i)).toBeInTheDocument();
   });
 
   it("hiện bản nháp thật lấy từ API", async () => {
@@ -384,7 +398,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
+    await user.click(screen.getByRole("button", { name: /tạo bài viết facebook/i }));
 
     await waitFor(() => {
       const jobCall = fetchSpy.mock.calls.find(([input]) => {
@@ -394,6 +408,44 @@ describe("ContentCreationScreen", () => {
       expect(jobCall).toBeDefined();
       const req = jobCall![0] as Request;
       expect(req.headers.get("Idempotency-Key")).toBeTruthy();
+      return expect(req.clone().json()).resolves.toMatchObject({
+        target_channels: ["facebook_page", "google_business"],
+      });
+    });
+  });
+
+  it("chọn Video ngắn thì hiện AI Studio và chỉ yêu cầu backend sinh ba kênh video", async () => {
+    const fetchSpy = mockApi();
+    render(<ContentCreationScreen />);
+    await screen.findByText(/chưa có bản nháp nào/i);
+
+    await chonFlowVideo();
+
+    const aiStudioLink = screen.getByRole("link", { name: /ai studio quét trend/i });
+    expect(aiStudioLink).toHaveAttribute("href", "/app/video-studio");
+    expect(screen.queryByLabelText("Chế độ đăng bài")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Tự Động Chốt Lead & Trả Lời Tin Nhắn 24/7 (AI Lead Agent)"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/video luôn chờ chị xem lại/i)).toBeInTheDocument();
+    expect(screen.getByText(/chưa có kịch bản video nào/i)).toBeInTheDocument();
+    expect(screen.getByText(/chọn trend hoặc gõ một ý tưởng/i)).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByRole("textbox", { name: /video này muốn nói điều gì/i }),
+      "Khoe kết quả học viên sau khóa học AI",
+    );
+    await user.click(screen.getByRole("button", { name: /ai tạo video 9:16 cho tôi/i }));
+
+    await waitFor(async () => {
+      const jobCall = fetchSpy.mock.calls.find(([input]) => {
+        const req = input instanceof Request ? input : null;
+        return req?.url.includes("/content/jobs") && req.method === "POST";
+      });
+      expect(jobCall).toBeDefined();
+      const body = await (jobCall![0] as Request).clone().json();
+      expect(body.target_channels).toEqual(["tiktok", "youtube", "reels"]);
     });
   });
 
@@ -405,7 +457,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
+    await user.click(screen.getByRole("button", { name: /tạo bài viết facebook/i }));
     expect((await screen.findAllByText(/havi đang viết bài/i)).length).toBeGreaterThanOrEqual(1);
   });
 
@@ -417,7 +469,7 @@ describe("ContentCreationScreen", () => {
     await screen.findByRole("button", { name: /bỏ goi-dau.jpg/i });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /tạo ngay/i }));
+    await user.click(screen.getByRole("button", { name: /tạo bài viết facebook/i }));
 
     expect(
       await screen.findByText(/havi chưa viết được lần này/i),
@@ -491,9 +543,9 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /duyệt & đăng ngay/i }));
+    await user.click(screen.getByRole("button", { name: /đăng 2 bài viết sẵn sàng/i }));
 
-    expect(await screen.findByText(/đã phát lệnh đăng/i)).toBeInTheDocument();
+    expect((await screen.findAllByText(/đã phát lệnh đăng/i)).length).toBeGreaterThan(0);
   });
 
   it("full_auto vẫn cảnh báo là đang khoá trong pilot", async () => {
@@ -531,7 +583,7 @@ describe("ContentCreationScreen", () => {
     expect(screen.getByText(/🪄 đã tút nét hd/i)).toBeInTheDocument();
   });
 
-  it("phân chia rõ ràng 2 nhóm: Bài viết & SEO và Video ngắn dọc 9:16", async () => {
+  it("gộp ba draft TikTok, Reels, Shorts thành một video master 9:16", async () => {
     mockApi({
       list: () =>
         jsonResponse({
@@ -550,21 +602,26 @@ describe("ContentCreationScreen", () => {
     render(<ContentCreationScreen />);
     await screen.findByText("Nội dung post-fb");
 
+    const draftTabs = screen.getByRole("tablist", { name: /lọc bản nháp/i });
+    await userEvent.setup().click(within(draftTabs).getByRole("tab", { name: /tất cả kênh/i }));
+
     // Kiểm tra tiêu đề 2 nhóm
     expect(
       screen.getByText(/Nhóm 1: Bài Viết & Local SEO/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Nhóm 2: Video Ngắn Dọc 9:16/i),
+      screen.getByText(/Video Ngắn 9:16 → TikTok, Reels và YouTube Shorts/i),
     ).toBeInTheDocument();
 
-    // Nút Trang cá nhân chỉ có ở Facebook Post và Reels
-    const shareBtns = screen.getAllByRole("button", { name: /trang cá nhân/i });
-    expect(shareBtns.length).toBe(2); // 1 cho FB Page, 1 cho FB Reels
+    expect(screen.getAllByText(/một video master/i)).toHaveLength(1);
+    expect(screen.getByText(/tiktok: gửi vào hộp thư tiktok/i)).toBeInTheDocument();
 
-    // Kịch bản quay 30s người thật việc thật hiển thị ở 3 kênh video
-    const uploadVideoLabels = screen.getAllByText(/tải video vừa quay lên/i);
-    expect(uploadVideoLabels.length).toBe(3); // tiktok, youtube, reels
+    // Reels không còn là một card video riêng có hành động Facebook riêng.
+    const shareBtns = screen.getAllByRole("button", { name: /trang cá nhân/i });
+    expect(shareBtns.length).toBe(1);
+
+    // Clip tự quay chỉ còn là lựa chọn phụ duy nhất của video master.
+    expect(screen.getAllByText(/muốn dùng clip tự quay/i)).toHaveLength(1);
   });
 
   it("bấm chọn Campaign Playbook thì tự động điền kịch bản chiến lược vào ô ghi chú", async () => {
@@ -597,13 +654,14 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung post-fb");
 
     const user = userEvent.setup();
-    const videoTab = screen.getByRole("tab", { name: /video ngắn/i });
+    const draftTabs = screen.getByRole("tablist", { name: /lọc bản nháp/i });
+    const videoTab = within(draftTabs).getByRole("tab", { name: /video ngắn/i });
     await user.click(videoTab);
 
-    expect(screen.getByText("Nội dung vid-tt")).toBeInTheDocument();
+    expect(screen.getAllByText("Nội dung vid-tt").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Nội dung post-fb")).not.toBeInTheDocument();
 
-    const postsTab = screen.getByRole("tab", { name: /bài viết/i });
+    const postsTab = within(draftTabs).getByRole("tab", { name: /bài viết/i });
     await user.click(postsTab);
 
     expect(screen.getByText("Nội dung post-fb")).toBeInTheDocument();
@@ -629,15 +687,15 @@ describe("ContentCreationScreen", () => {
     await screen.findByText("Nội dung c1");
 
     const user = userEvent.setup();
-    const goldHourBtn = screen.getByRole("button", { name: /hẹn giờ vàng/i });
+    const goldHourBtn = screen.getByRole("button", { name: /hẹn bài lúc 11:30/i });
     await user.click(goldHourBtn);
 
     expect(
-      await screen.findByText(/đã lên lịch khung giờ vàng/i),
+      await screen.findByText(/đã lên lịch đăng bài viết/i),
     ).toBeInTheDocument();
   });
 
-  it("thẻ kịch bản video cho phép chuyển đổi giữa 2 chế độ quay (Đọc kịch bản vs Quay thao tác 10s)", async () => {
+  it("video master đặt AI dựng video làm hành động mặc định", async () => {
     mockApi({
       list: () =>
         jsonResponse({
@@ -648,17 +706,88 @@ describe("ContentCreationScreen", () => {
         }),
     });
     render(<ContentCreationScreen />);
-    await screen.findByText(/kịch bản video 9:16/i);
+    await chonFlowVideo();
+    await screen.findByText(/video ngắn sẵn sàng cho ba kênh/i);
 
     const user = userEvent.setup();
-    expect(screen.getByText(/cách 1: đọc kịch bản/i)).toBeInTheDocument();
-    expect(screen.getByText(/cách 2: quay thao tác 10s/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /bật máy nhắc chữ/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /tạo video capcut/i })).toBeInTheDocument();
+    const aiButton = screen.getByRole("button", { name: /tạo video ai — xem thử trước/i });
+    expect(aiButton).toBeInTheDocument();
+    expect(screen.getByText(/muốn dùng clip tự quay/i)).toBeInTheDocument();
 
-    // Bấm sang chế độ Quay thao tác 10s B-Roll
-    await user.click(screen.getByText(/cách 2: quay thao tác 10s/i));
-    expect(screen.getByText(/hướng dẫn quay 10s không cần lộ mặt/i)).toBeInTheDocument();
+    await user.click(aiButton);
+    expect(await screen.findByRole("dialog", { name: /xem thử video ai/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /dùng video này cho 3 kênh/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /làm lại giọng khác/i })).toBeInTheDocument();
+  });
+
+  it("lưu clip tự quay từ video master và đồng bộ URL vào bản nháp", async () => {
+    const fetchSpy = mockApi({
+      list: () =>
+        jsonResponse({
+          items: [{ ...pendingItem("vid-upload", "tiktok"), text: "Video công nghệ" }],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+      complete: () =>
+        jsonResponse({
+          id: "asset-video-1",
+          url: "https://storage.local/w1/asset-video-1.mp4",
+          type: "video",
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await chonFlowVideo();
+    await screen.findByText(/video ngắn sẵn sàng cho ba kênh/i);
+
+    const input = document.querySelector("#upload-video-master-vid-upload") as HTMLInputElement;
+    await userEvent.setup().upload(
+      input,
+      new File(["video"], "phong-ky-thuat.mp4", { type: "video/mp4" }),
+    );
+
+    await screen.findByText(/đã gắn & đồng bộ video thật/i);
+    const patchRequest = fetchSpy.mock.calls.find(([request]) =>
+      request instanceof Request && request.method === "PATCH",
+    )?.[0];
+    expect(patchRequest).toBeInstanceOf(Request);
+    expect(await (patchRequest as Request).clone().text()).toContain(
+      "https://storage.local/w1/asset-video-1.mp4",
+    );
+    expect(
+      fetchSpy.mock.calls.some(([request]) =>
+        String(request instanceof Request ? request.url : request).includes(
+          "upload-rendered-video",
+        ),
+      ),
+    ).toBe(false);
+  });
+
+  it("thẻ kịch bản video hiển thị 3 Style Presets và 2 Giọng đọc AI để chủ tiệm tuỳ chỉnh", async () => {
+    mockApi({
+      list: () =>
+        jsonResponse({
+          items: [{ ...pendingItem("vid-1"), channel: "tiktok", text: "Bí quyết tự học công nghệ thực chiến" }],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+    });
+    render(<ContentCreationScreen />);
+    await chonFlowVideo();
+    await screen.findByText(/video ngắn sẵn sàng cho ba kênh/i);
+
+    const user = userEvent.setup();
+    expect(screen.getByRole("button", { name: /capcut kinetic/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /chân thật/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /🔥 flash sale/i })).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: /hoài my/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /nam minh/i })).toBeInTheDocument();
+
+    // Chọn phong cách Tâm Sự Chân Thật và giọng Nam Minh
+    await user.click(screen.getByRole("button", { name: /chân thật/i }));
+    await user.click(screen.getByRole("button", { name: /nam minh/i }));
   });
 });
 

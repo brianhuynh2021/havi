@@ -7,6 +7,11 @@
  * - Nhạc nền Web Audio Synth sôi động + Thanh tiến trình thời lượng
  */
 
+import { readTokens } from "@/lib/auth/token-store";
+
+export type VideoStylePreset = "capcut_pop" | "authentic_story" | "flash_sale";
+export type VideoVoiceChoice = "vi-VN-HoaiMyNeural" | "vi-VN-NamMinhNeural";
+
 export interface KineticVideoOptions {
   text: string;
   channel: string;
@@ -15,6 +20,8 @@ export interface KineticVideoOptions {
   brandName?: string;
   hotline?: string;
   secondaryImages?: string[];
+  stylePreset?: VideoStylePreset;
+  voiceChoice?: VideoVoiceChoice;
 }
 
 export async function generateKineticShortVideo(
@@ -26,65 +33,106 @@ export async function generateKineticShortVideo(
 
   const rawText = options.text || "";
 
-  // 1. Phân tích ngữ nghĩa & Tách 3 câu ngắn gọn, cô đọng nhất
+  // 1. Phân tích ngữ nghĩa động từ đúng bài viết của người dùng
   const rawSentences = rawText
-    .split(/[.\n!?]/)
+    .split(/[\n.!?]+/)
     .map((s) => s.replace(/^[•*"-]\s*/, "").trim())
-    .filter((s) => s.length >= 4);
+    .filter((s) => s.length >= 5 && !s.startsWith("#"));
 
-  let hookLine = "BÍ QUYẾT TỰ HỌC AI AGENT CHO NGƯỜI MỚI";
-  let valueLine = "Nắm chắc quy trình 3 bước làm chủ công nghệ thực chiến";
-  let ctaLine = "Ghé trung tâm xem demo & nhận tư vấn 1:1 miễn phí!";
+  let hookLine = rawText.slice(0, 60);
+  let valueLine = rawText.slice(60, 140) || rawText.slice(0, 60);
+  let ctaLine = "Nhắn tin hoặc ghé tiệm ngay hôm nay để nhận tư vấn!";
 
   if (rawSentences.length >= 1) {
     hookLine = rawSentences[0].toUpperCase();
-    if (hookLine.length > 60) hookLine = hookLine.slice(0, 57) + "...";
+    if (hookLine.length > 65) hookLine = hookLine.slice(0, 62) + "...";
   }
   if (rawSentences.length >= 2) {
     valueLine = rawSentences[1];
-    if (valueLine.length > 70) valueLine = valueLine.slice(0, 67) + "...";
+    if (valueLine.length > 75) valueLine = valueLine.slice(0, 72) + "...";
   }
   if (rawSentences.length >= 3) {
-    ctaLine = rawSentences[rawSentences.length - 1];
-    if (ctaLine.length > 65) ctaLine = ctaLine.slice(0, 62) + "...";
+    const last = rawSentences[rawSentences.length - 1];
+    if (last.length > 8) {
+      ctaLine = last;
+      if (ctaLine.length > 70) ctaLine = ctaLine.slice(0, 67) + "...";
+    }
   }
 
-  // 2. Tạo Canvas dọc chuẩn 9:16 (540 x 960 px)
+  // 2. Render bản cuối 1080 × 1920. Toàn bộ layout bên dưới vẫn dùng hệ
+  // tọa độ logic 540 × 960 rồi scale 2x để giữ đúng tỷ lệ, font và animation.
   const width = 540;
   const height = 960;
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = width * 2;
+  canvas.height = height * 2;
   const ctx = canvas.getContext("2d");
 
   if (!ctx || !canvas.captureStream || typeof MediaRecorder === "undefined") {
     return "/test_tiktok.mp4";
   }
+  ctx.scale(2, 2);
 
-  // 3. Tải 3 hình ảnh chất lượng cao để làm 3 phân cảnh B-Roll
-  const imageSources = [
-    options.imageUrl || "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80",
-    (options.secondaryImages && options.secondaryImages[0]) ||
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80",
-    (options.secondaryImages && options.secondaryImages[1]) ||
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80",
-  ];
+  // 3. Tải hình ảnh thật của tiệm hoặc thư viện hình ảnh thực tế chuẩn ngành nghề
+  const userImg = options.imageUrl || "";
+  let imageSources: string[] = [];
 
-  const loadedImages: HTMLImageElement[] = [];
-  for (let i = 0; i < 3; i++) {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    await new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-      img.src = imageSources[i];
-    });
-    loadedImages.push(img);
+  if (userImg) {
+    imageSources = [
+      userImg,
+      (options.secondaryImages && options.secondaryImages[0]) || userImg,
+      (options.secondaryImages && options.secondaryImages[1]) || (options.secondaryImages && options.secondaryImages[0]) || userImg,
+    ];
+  } else {
+    // Tự động nhận diện ngành nghề để lấy bộ ảnh thực tế độ phân giải cao 9:16
+    const lower = (rawText + " " + (options.brandName || "")).toLowerCase();
+    if (lower.includes("spa") || lower.includes("dưỡng sinh") || lower.includes("massage") || lower.includes("da") || lower.includes("chăm sóc")) {
+      imageSources = ["/images/spa_photo_hq.jpg", "/ai-samples/facial_care.jpg", "/ai-samples/herbal_wash.jpg"];
+    } else if (lower.includes("cà phê") || lower.includes("cafe") || lower.includes("trà") || lower.includes("quán") || lower.includes("ẩm thực")) {
+      imageSources = ["/images/cafe_photo_hq.jpg", "/images/cafe_photo.jpg", "/images/cafe_photo_hq.jpg"];
+    } else if (lower.includes("bất động sản") || lower.includes("nhà") || lower.includes("đất") || lower.includes("căn hộ")) {
+      imageSources = ["/images/bds_photo_hq.jpg", "/images/bds_photo.jpg", "/images/bds_photo_hq.jpg"];
+    } else {
+      // Mặc định: Ngành Công nghệ / Laptop / Điện tử / Kỹ thuật Nhật Minh
+      imageSources = ["/images/hero_ai_studio_hq.jpg", "/images/hero_photo.jpg", "/images/hero_ai_studio_hq.jpg"];
+    }
   }
 
-  // 4. Khởi tạo âm thanh nhạc nền Lo-Fi Piano du dương, rõ ràng chuẩn Studio
+  const loadedImages: HTMLImageElement[] = [];
+  for (const src of imageSources) {
+    if (!src) continue;
+    try {
+      const img = new Image();
+      if (!src.startsWith("blob:") && !src.startsWith("data:")) {
+        img.crossOrigin = "anonymous";
+      }
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          loadedImages.push(img);
+          resolve();
+        };
+        img.onerror = () => {
+          // Thử lại không có crossOrigin nếu gặp sự cố CORS
+          const retryImg = new Image();
+          retryImg.onload = () => {
+            loadedImages.push(retryImg);
+            resolve();
+          };
+          retryImg.onerror = () => resolve();
+          retryImg.src = src;
+        };
+        img.src = src;
+      });
+    } catch {
+      // fallback
+    }
+  }
+
+  // 4. Khởi tạo âm thanh: Giọng đọc AI Tiếng Việt (Edge-TTS 0đ) + Nhạc nền Lo-Fi Piano du dương
   let audioStreamTrack: MediaStreamTrack | null = null;
   let audioCtx: AudioContext | null = null;
+  let voiceBuffer: AudioBuffer | null = null;
+
   try {
     const AudioContextClass =
       window.AudioContext ||
@@ -97,13 +145,54 @@ export async function generateKineticShortVideo(
 
       const dest = audioCtx.createMediaStreamDestination();
 
-      // Bộ lọc âm ấm áp (Lowpass 1200Hz - giữ lại sự trong trẻo của tiếng piano mà không bị chói)
+      // 4.1 Tải giọng đọc AI Tiếng Việt từ /voice/tts
+      try {
+        const tokens = readTokens();
+        const apiBase =
+          process.env.NEXT_PUBLIC_API_BASE_URL ??
+          (typeof window !== "undefined" && window.location.port !== "3000"
+            ? window.location.origin
+            : "http://localhost:8000");
+        const ttsText = `${hookLine}. ${valueLine}. ${ctaLine}`;
+        const ttsRes = await fetch(`${apiBase}/voice/tts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(tokens?.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {}),
+            ...(tokens?.activeWorkspaceId ? { "X-Workspace-Id": tokens.activeWorkspaceId } : {}),
+          },
+          body: JSON.stringify({
+            text: ttsText,
+            voice: options.voiceChoice || "vi-VN-HoaiMyNeural",
+            rate: "+10%",
+          }),
+        });
+        if (ttsRes.ok) {
+          const arrayBuf = await ttsRes.arrayBuffer();
+          voiceBuffer = await audioCtx.decodeAudioData(arrayBuf);
+        }
+      } catch {
+        // Fallback âm thanh nhẹ nhàng nếu offline / test environment
+      }
+
+      // Nếu có giọng đọc AI, lồng vào stream âm thanh
+      if (voiceBuffer) {
+        const voiceSource = audioCtx.createBufferSource();
+        voiceSource.buffer = voiceBuffer;
+        const voiceGain = audioCtx.createGain();
+        voiceGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+        voiceSource.connect(voiceGain);
+        voiceGain.connect(dest);
+        voiceSource.start(audioCtx.currentTime + 0.3); // Bắt đầu đọc sau 0.3s
+      }
+
+      // 4.2 Nhạc nền Lo-Fi Piano bắt tai (hạ âm lượng nếu có giọng đọc AI để giọng luôn trong trẻo)
       const filter = audioCtx.createBiquadFilter();
       filter.type = "lowpass";
       filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
 
       const masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(0.35, audioCtx.currentTime); // Âm lượng rõ ràng, bắt tai
+      masterGain.gain.setValueAtTime(voiceBuffer ? 0.15 : 0.35, audioCtx.currentTime);
       filter.connect(masterGain);
       masterGain.connect(dest);
 
@@ -119,21 +208,21 @@ export async function generateKineticShortVideo(
         293.66, // D4
       ];
       const noteInterval = 0.5; // Mỗi nốt 0.5 giây
+      const actualVoiceSec = voiceBuffer ? voiceBuffer.duration : 9;
+      const totalNotesNeeded = Math.ceil((actualVoiceSec + 3) / noteInterval);
 
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < totalNotesNeeded; i++) {
         const noteFreq = notes[i % notes.length];
         const noteTime = audioCtx.currentTime + i * noteInterval;
 
         const osc = audioCtx.createOscillator();
         const noteGain = audioCtx.createGain();
 
-        // Sử dụng sóng Sine kết hợp hài âm Piano
         osc.type = i % 2 === 0 ? "sine" : "triangle";
         osc.frequency.setValueAtTime(noteFreq, noteTime);
 
-        // Envelope phím piano gảy: Bật nhanh 0.02s và ngân vang tự nhiên
         noteGain.gain.setValueAtTime(0.001, noteTime);
-        noteGain.gain.linearRampToValueAtTime(0.4, noteTime + 0.03);
+        noteGain.gain.linearRampToValueAtTime(0.3, noteTime + 0.03);
         noteGain.gain.exponentialRampToValueAtTime(0.001, noteTime + noteInterval);
 
         osc.connect(noteGain);
@@ -153,7 +242,9 @@ export async function generateKineticShortVideo(
   }
 
   const fps = 30;
-  const durationSec = 9; // 9 giây (Scene 1: 0-3s, Scene 2: 3-6s, Scene 3: 6-9s)
+  // Tự động co giãn thời lượng video khớp 100% với giọng đọc AI thực tế (+1.5s outro để nhạc du dương)
+  const voiceDuration = voiceBuffer ? voiceBuffer.duration : 0;
+  const durationSec = voiceDuration > 0 ? Math.max(Math.ceil(voiceDuration + 1.5), 10) : 10;
   const totalFrames = fps * durationSec;
 
   const canvasStream = canvas.captureStream(fps);
@@ -163,27 +254,50 @@ export async function generateKineticShortVideo(
     combinedStream.addTrack(audioStreamTrack);
   }
 
-  let mimeType = "video/webm";
-  if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
-    mimeType = "video/mp4;codecs=avc1";
-  } else if (MediaRecorder.isTypeSupported("video/mp4")) {
-    mimeType = "video/mp4";
-  } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) {
-    mimeType = "video/webm;codecs=vp9";
-  } else if (MediaRecorder.isTypeSupported("video/webm")) {
-    mimeType = "video/webm";
+  // Tìm mimeType mà trình duyệt thực tế hỗ trợ (đặc biệt Safari Mac hỗ trợ video/mp4, Chrome hỗ trợ video/webm)
+  const preferredMimeTypes = [
+    "video/mp4;codecs=avc1,mp4a.40.2",
+    "video/mp4;codecs=avc1",
+    "video/mp4",
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm;codecs=h264,opus",
+    "video/webm",
+  ];
+
+  let selectedMime = "";
+  if (typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function") {
+    for (const type of preferredMimeTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        selectedMime = type;
+        break;
+      }
+    }
   }
 
-  return new Promise<string>((resolve) => {
+  return new Promise<string>((resolve, reject) => {
     let recorder: MediaRecorder;
+    const actualMime = selectedMime;
+
     try {
-      recorder = new MediaRecorder(combinedStream, {
-        mimeType: mimeType,
-        videoBitsPerSecond: 3800000,
-      });
+      if (selectedMime) {
+        recorder = new MediaRecorder(combinedStream, { mimeType: selectedMime });
+      } else {
+        recorder = new MediaRecorder(combinedStream);
+      }
     } catch {
-      resolve("/test_tiktok.mp4");
-      return;
+      try {
+        // Fallback: Thử với canvasStream thuần nếu combined audio stream bị Safari từ chối
+        if (selectedMime) {
+          recorder = new MediaRecorder(canvasStream, { mimeType: selectedMime });
+        } else {
+          recorder = new MediaRecorder(canvasStream);
+        }
+      } catch (err) {
+        console.error("Không thể khởi tạo MediaRecorder:", err);
+        reject(new Error("Trình duyệt không hỗ trợ quay màn hình video trực tiếp."));
+        return;
+      }
     }
 
     const chunks: Blob[] = [];
@@ -198,11 +312,12 @@ export async function generateKineticShortVideo(
         audioCtx.close().catch(() => {});
       }
       if (chunks.length > 0) {
-        const blob = new Blob(chunks, { type: mimeType });
+        const finalBlobType = actualMime || chunks[0].type || "video/mp4";
+        const blob = new Blob(chunks, { type: finalBlobType });
         const videoUrl = URL.createObjectURL(blob);
         resolve(videoUrl);
       } else {
-        resolve("/test_tiktok.mp4");
+        reject(new Error("Không thể trích xuất dữ liệu video."));
       }
     };
 
@@ -231,15 +346,22 @@ export async function generateKineticShortVideo(
       const currentSec = frame / fps;
       const progress = frame / totalFrames;
 
-      // Xác định Scene hiện tại (0: Hook 0-3s, 1: Value 3-6s, 2: CTA 6-9s)
+      // Xác định Scene hiện tại dựa trên durationSec thực tế
       let sceneIdx = 0;
-      let sceneProgress = currentSec / 3;
-      if (currentSec >= 6) {
-        sceneIdx = 2;
-        sceneProgress = (currentSec - 6) / 3;
-      } else if (currentSec >= 3) {
+      let sceneProgress = 0;
+      const s1Duration = Math.min(3.5, durationSec * 0.28);
+      const s3Duration = Math.min(3.5, durationSec * 0.28);
+      const s2Duration = Math.max(durationSec - s1Duration - s3Duration, 3);
+
+      if (currentSec < s1Duration) {
+        sceneIdx = 0;
+        sceneProgress = currentSec / s1Duration;
+      } else if (currentSec < s1Duration + s2Duration) {
         sceneIdx = 1;
-        sceneProgress = (currentSec - 3) / 3;
+        sceneProgress = (currentSec - s1Duration) / s2Duration;
+      } else {
+        sceneIdx = 2;
+        sceneProgress = (currentSec - s1Duration - s2Duration) / s3Duration;
       }
 
       const currentBgImg = loadedImages[sceneIdx] || loadedImages[0];
@@ -267,10 +389,34 @@ export async function generateKineticShortVideo(
         }
         ctx.drawImage(currentBgImg, -drawW / 2, -drawH / 2, drawW, drawH);
       } else {
+        // Nền Motion Graphics Studio cao cấp (gradient đa tầng + quả cầu ánh sáng chuyển động)
+        const isFlash = options.stylePreset === "flash_sale";
+        const isStory = options.stylePreset === "authentic_story";
+
         const grad = ctx.createLinearGradient(-width / 2, -height / 2, width / 2, height / 2);
-        grad.addColorStop(0, "#0f172a");
-        grad.addColorStop(1, "#1e1b4b");
+        if (isFlash) {
+          grad.addColorStop(0, "#450a0a");
+          grad.addColorStop(0.5, "#1c1917");
+          grad.addColorStop(1, "#7f1d1d");
+        } else if (isStory) {
+          grad.addColorStop(0, "#09090b");
+          grad.addColorStop(0.5, "#18181b");
+          grad.addColorStop(1, "#27272a");
+        } else {
+          grad.addColorStop(0, "#0f172a");
+          grad.addColorStop(0.5, "#1e1b4b");
+          grad.addColorStop(1, "#31104b");
+        }
         ctx.fillStyle = grad;
+        ctx.fillRect(-width / 2, -height / 2, width, height);
+
+        // Vòng sáng hào quang chuyển động
+        const orb1X = Math.sin(frame * 0.05) * 120;
+        const orb1Y = Math.cos(frame * 0.04) * 160 - 50;
+        const orbGrad = ctx.createRadialGradient(orb1X, orb1Y, 10, orb1X, orb1Y, 260);
+        orbGrad.addColorStop(0, isFlash ? "rgba(239, 68, 68, 0.45)" : isStory ? "rgba(161, 161, 170, 0.25)" : "rgba(245, 158, 11, 0.35)");
+        orbGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = orbGrad;
         ctx.fillRect(-width / 2, -height / 2, width, height);
       }
       ctx.restore();
@@ -310,16 +456,17 @@ export async function generateKineticShortVideo(
       ctx.textAlign = "center";
       ctx.fillText(channelLabel, 111, 58);
 
-      // Badge góc phải: Nhãn thương hiệu
+      // Badge góc phải: Nhãn thương hiệu động
+      const shortBrand = brand.length > 16 ? brand.slice(0, 14) + "..." : brand;
       ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
       ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      roundRect(ctx, width - 150, 35, 126, 36, 18);
+      roundRect(ctx, width - 170, 35, 146, 36, 18);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = "#FDE047";
-      ctx.font = "bold 12px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-      ctx.fillText("⚡ NHẬT MINH", width - 87, 58);
+      ctx.font = "bold 11px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+      ctx.fillText(`⚡ ${shortBrand}`, width - 97, 58);
       ctx.restore();
 
       // ========================================================
@@ -330,13 +477,11 @@ export async function generateKineticShortVideo(
       ctx.save();
       if (sceneIdx === 0) {
         // SCENE 1: HOOK 3 GIÂY ĐẦU (Chữ Vàng Neon viền đen 3D)
-        // Tag nhỏ
         ctx.fillStyle = "#F59E0B";
         ctx.font = "900 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("⚡ 3-SECOND VIRAL HOOK", width / 2, subY);
 
-        // Chữ phụ đề to nổi bật phong cách TikTok
         drawStrokeText(
           ctx,
           hookLine,
@@ -344,16 +489,15 @@ export async function generateKineticShortVideo(
           subY + 45,
           width - 50,
           36,
-          "#FDE047",
+          options.stylePreset === "flash_sale" ? "#FCA5A5" : options.stylePreset === "authentic_story" ? "#FFFFFF" : "#FDE047",
           "#000000",
-          "900 25px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+          "900 24px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
           3,
         );
 
-        // Tag phụ
         ctx.fillStyle = "#38BDF8";
-        ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-        ctx.fillText("✨ Cầm tay chỉ việc 1:1 • Thực hành thực tế", width / 2, subY + 160);
+        ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+        ctx.fillText(`✨ ${brand} • Chia sẻ thực chiến`, width / 2, subY + 160);
       } else if (sceneIdx === 1) {
         // SCENE 2: GIẢI PHÁP / BÍ QUYẾT (Chữ Xanh Cyan nổi bật)
         ctx.fillStyle = "#38BDF8";
@@ -368,15 +512,15 @@ export async function generateKineticShortVideo(
           subY + 45,
           width - 50,
           34,
-          "#FFFFFF",
+          options.stylePreset === "flash_sale" ? "#FEE2E2" : "#FFFFFF",
           "#000000",
-          "800 23px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+          "800 22px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
           3,
         );
 
         ctx.fillStyle = "#FBBF24";
-        ctx.font = "bold 14px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-        ctx.fillText("🎯 Giải pháp độc quyền • Tối ưu chuyển đổi", width / 2, subY + 160);
+        ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+        ctx.fillText(options.mediaNote ? `📍 ${options.mediaNote.slice(0, 40)}` : "🎯 Quy trình chuẩn • Trải nghiệm thực tế", width / 2, subY + 160);
       } else {
         // SCENE 3: CTA CHỐT LEAD (Nút Xanh Emerald kêu gọi hành động)
         ctx.fillStyle = "#10B981";
@@ -393,7 +537,7 @@ export async function generateKineticShortVideo(
           32,
           "#FFFFFF",
           "#000000",
-          "800 22px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+          "800 21px -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
           3,
         );
 
@@ -402,46 +546,34 @@ export async function generateKineticShortVideo(
         ctx.save();
         ctx.translate(width / 2, subY + 145);
         ctx.scale(pulse, pulse);
-        ctx.fillStyle = "#10B981";
-        ctx.shadowColor = "rgba(16, 185, 129, 0.8)";
+        ctx.fillStyle = options.stylePreset === "flash_sale" ? "#EF4444" : "#10B981";
+        ctx.shadowColor = options.stylePreset === "flash_sale" ? "rgba(239, 68, 68, 0.8)" : "rgba(16, 185, 129, 0.8)";
         ctx.shadowBlur = 16;
-        roundRect(ctx, -125, -20, 250, 40, 20);
+        roundRect(ctx, -135, -20, 270, 40, 20);
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.fillStyle = "#FFFFFF";
-        ctx.font = "900 14px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
-        ctx.fillText("👉 NHẮN TIN / GỌI NGAY", 0, 5);
+        ctx.font = "900 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
+        ctx.fillText("👉 NHẮN TIN / LIÊN HỆ NGAY", 0, 5);
         ctx.restore();
       }
       ctx.restore();
 
       // ========================================================
-      // 5. SOUNDWAVE & FOOTER BRANDING (DƯỚI CÙNG)
+      // 5. FOOTER BRANDING CARD (DƯỚI CÙNG)
       // ========================================================
       ctx.save();
-      const waveY = height - 100;
-      const numBars = 22;
-      const barW = 5;
-      const barGap = 6;
-      const totalWaveW = numBars * (barW + barGap);
-      const waveStartX = (width - totalWaveW) / 2;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.70)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+      roundRect(ctx, 30, height - 75, width - 60, 42, 21);
+      ctx.fill();
+      ctx.stroke();
 
-      for (let i = 0; i < numBars; i++) {
-        const barH = 10 + Math.sin(frame * 0.35 + i * 0.6) * 18 + Math.sin(i * 1.5) * 6;
-        ctx.fillStyle =
-          sceneIdx === 0 ? "#F59E0B" : sceneIdx === 1 ? "#38BDF8" : "#10B981";
-        roundRect(ctx, waveStartX + i * (barW + barGap), waveY - barH / 2, barW, barH, 2.5);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Hotline & Thương hiệu
-      ctx.save();
-      ctx.fillStyle = "#F8FAFC";
+      ctx.fillStyle = "#FFFFFF";
       ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, Roboto, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(`${brand} • 📞 ${hotline}`, width / 2, height - 55);
+      ctx.fillText(`📍 ${brand} • 📞 ${hotline}`, width / 2, height - 49);
       ctx.restore();
 
       // ========================================================

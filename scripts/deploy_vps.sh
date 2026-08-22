@@ -63,7 +63,8 @@ HAVI_VIETQR_ACCOUNT_NO=0987654321
 HAVI_VIETQR_ACCOUNT_NAME=TRUNG TAM CONG NGHE NHAT MINH
 
 # URLs
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Để trống khi Nginx proxy API cùng domain; đặt URL tuyệt đối nếu API tách domain.
+NEXT_PUBLIC_API_BASE_URL=
 EOF
     echo "✅ Đã tạo file .env.production với các khoá bảo mật mã hoá ngẫu nhiên."
 fi

@@ -5,8 +5,8 @@ from typing import Any
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
-from api.deps import DbSessionDep, WorkspaceDep
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from api.deps import DbSessionDep, WorkspaceDep
 from application.services.trend_scout_service import TrendScoutService
 from domain.models.trend_scout import (
     HookStyle,

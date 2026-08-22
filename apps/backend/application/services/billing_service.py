@@ -42,6 +42,14 @@ class InvoiceNotFound(Exception):
     pass
 
 
+class UnderpaidInvoiceError(Exception):
+    """Số tiền chuyển khoản không đủ để thanh toán hoá đơn."""
+
+
+class InvoiceInvalidStatusError(Exception):
+    """Trạng thái hoá đơn không hợp lệ để thanh toán."""
+
+
 class BillingService:
     def __init__(
         self,
@@ -77,11 +85,11 @@ class BillingService:
     async def change_plan(
         self, *, workspace_id: UUID, target: Plan, now: datetime | None = None
     ) -> tuple[subscription.SubscriptionState, Invoice]:
-        """Đổi gói và phát hành hoá đơn `PENDING`.
+        """Yêu cầu đổi gói và phát hành hoá đơn `PENDING`.
 
         Ném `PlanChangeNotAllowed` khi đổi sang gói đang dùng hoặc quay về trial.
-        Hoá đơn ở `PENDING` chứ không `PAID`: chưa nhận được tiền thì không được
-        ghi là đã trả.
+        Hoá đơn ở `PENDING` chứ không `PAID`: chỉ tạo hoá đơn để thanh toán qua VietQR/PayOS.
+        Gói chỉ được nâng cấp và kích hoạt khi webhook thanh toán xác thực thành công.
         """
         now = now or datetime.now(UTC)
         workspace = await self._workspaces.get_by_id(workspace_id)
@@ -92,8 +100,6 @@ class BillingService:
         subscription.check_plan_change(current=current, target=target)
 
         amount = subscription.price_for(target)
-        paid_until = now + timedelta(days=BILLING_PERIOD_DAYS)
-        await self._billing.set_plan(workspace, plan=target, paid_until=paid_until)
         invoice = await self._billing.create_invoice(
             workspace_id=workspace_id,
             plan=target,
@@ -102,25 +108,23 @@ class BillingService:
             status=InvoiceStatus.PENDING,
         )
 
-        # Đổi gói là thay đổi có hệ quả tiền bạc — phải trả lời được về sau "ai
-        # đổi sang gói nào, lúc nào", giống mọi hành vi nhạy cảm khác trong hệ
-        # thống (auto-reply, publish).
+        # Ghi nhận yêu cầu đổi gói vào audit log
         await self._events.record(
             EventLogEntry(
                 workspace_id=workspace_id,
-                job_kind="billing.plan_changed",
+                job_kind="billing.plan_change_requested",
                 input_summary=f"{current.value} -> {target.value}",
                 output_summary=(
                     f"invoice:{invoice.id} amount_vnd:{amount} "
-                    f"status:{invoice.status.value} paid_until:{paid_until.isoformat()}"
+                    f"status:{invoice.status.value}"
                 ),
             )
         )
 
         state = subscription.state_for(
-            plan=target,
+            plan=workspace.plan,
             trial_ends_at=_as_utc(workspace.trial_ends_at),
-            paid_until=paid_until,
+            paid_until=_as_utc(workspace.paid_until),
             now=now,
         )
         return state, invoice
@@ -191,6 +195,36 @@ class BillingService:
         if invoice.status == InvoiceStatus.PAID:
             logger.info("Hoá đơn %s đã ở trạng thái PAID (idempotent)", invoice_id)
             return invoice
+
+        if invoice.status != InvoiceStatus.PENDING:
+            logger.warning(
+                "Hoá đơn %s có trạng thái %s không thể thanh toán",
+                invoice_id,
+                invoice.status,
+            )
+            raise InvoiceInvalidStatusError(
+                f"Hoá đơn {invoice_id} đang ở trạng thái {invoice.status.value}"
+            )
+
+        # Đối chiếu số tiền nghiêm ngặt (Zero Trust)
+        if amount_paid_vnd < invoice.amount_vnd:
+            logger.warning(
+                "Thanh toán thiếu tiền cho hoá đơn %s: nhận %sđ, cần %sđ",
+                invoice_id,
+                amount_paid_vnd,
+                invoice.amount_vnd,
+            )
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=invoice.workspace_id,
+                    job_kind="billing.underpaid_alert",
+                    input_summary=f"VietQR {gateway_reference}: nhận {amount_paid_vnd:,}đ / cần {invoice.amount_vnd:,}đ",
+                    output_summary=f"invoice:{invoice.id} status:{invoice.status.value} REJECTED_UNDERPAID",
+                )
+            )
+            raise UnderpaidInvoiceError(
+                f"Thanh toán {amount_paid_vnd:,}đ không đủ cho hoá đơn {invoice.amount_vnd:,}đ"
+            )
 
         workspace = await self._workspaces.get_by_id(invoice.workspace_id)
         if workspace is None:
