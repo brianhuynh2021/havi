@@ -1,19 +1,14 @@
 /**
- * Nội dung Landing Page Havi - Phiên bản CRO & Tăng trưởng Thương mại.
- *
- * 4 Trụ cột siêu năng lực tạo doanh thu:
- * 1. Facebook & Instagram Post (Tự động hóa lịch đăng)
- * 2. TikTok / Reels / YouTube Shorts Video Studio (Hook 3s giật tít)
- * 3. Google Business Profile & Google Maps SEO (Kéo khách quanh khu vực)
- * 4. 24/7 Lead Care & Unified Inbox (Trực page, báo giá, xin SĐT trong 5s)
+ * Nội dung landing theo năng lực đã có bằng chứng trong sản phẩm.
+ * Kênh chưa được duyệt hoặc tính năng roadmap phải được ghi rõ là Beta/roadmap.
  */
 
 export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
-  { v: "4 Kênh Tăng Trưởng", l: "Facebook · Maps SEO · TikTok · Shorts", icon: "🌐" },
-  { v: "Chỉ từ 6k/ngày", l: "Rẻ hơn 1 ly trà sữa mỗi tuần", icon: "💰" },
-  { v: "Phản hồi < 5s", l: "Trực Inbox 24/7 không bỏ sót khách", icon: "⚡" },
+  { v: "Facebook Beta", l: "Xuất bản qua API khi đủ quyền Meta", icon: "🌐" },
+  { v: "7 ngày", l: "Dùng thử có hạn mức, không cần thẻ", icon: "💳" },
+  { v: "Duyệt trước", l: "Người dùng kiểm soát nội dung phát hành", icon: "✓" },
 ];
 
 
@@ -21,10 +16,10 @@ export const heroStats = [
 
 /** Các kênh siêu năng lực hỗ trợ. */
 export const heroChannels = [
-  { n: "Facebook Fanpage", b: "f", c: "#1877F2" },
-  { n: "Google Maps SEO", b: "📍", c: "#16A34A" },
-  { n: "TikTok Video", b: "🎵", c: "#FE2C55" },
-  { n: "YouTube Shorts", b: "▶", c: "#FF0000" },
+  { n: "Facebook Beta", b: "f", c: "#1877F2" },
+  { n: "Bản nháp nội dung", b: "✍", c: "#16A34A" },
+  { n: "Kịch bản video", b: "🎬", c: "#FE2C55" },
+  { n: "Inbox & CRM", b: "💬", c: "#FF0000" },
 ];
 
 export const steps: Step[] = [
@@ -35,18 +30,18 @@ export const steps: Step[] = [
   },
   {
     n: "2",
-    title: "Havi tự làm bài & Video đa kênh",
-    desc: "Tự sinh bài viết Facebook, tối ưu Google Maps SEO, kịch bản Video TikTok & YouTube Shorts 9:16 có Hook 3s và câu trả lời Inbox.",
+    title: "Havi tạo bản nháp và kịch bản",
+    desc: "AI gợi ý bài Facebook, kịch bản video 9:16 và câu trả lời để bạn kiểm tra trước.",
   },
   {
     n: "3",
-    title: "Duyệt 1-Chạm an tâm 100%",
+    title: "Kiểm tra và duyệt",
     desc: "Bài chỉ đăng khi bạn bấm duyệt. Bạn nắm toàn quyền kiểm soát thông điệp và uy tín tiệm.",
   },
   {
     n: "4",
-    title: "Tự động chốt đơn & Bắt SĐT 24/7",
-    desc: "Khách nhắn tin lúc nửa đêm, Havi tự động đối chiếu bảng giá tiệm, tư vấn và xin số điện thoại về app.",
+    title: "Theo dõi inbox và kết quả",
+    desc: "Havi lưu inquiry nhận được, gợi ý phản hồi và chỉ tự gửi FAQ đã được duyệt trước.",
   },
 ];
 
@@ -86,12 +81,12 @@ export const industryScenarios: IndustryScenario[] = [
       },
       maps: {
         title: "Bài đăng & Tối ưu Google Maps SEO",
-        badge: "Google Business Top 3",
+        badge: "Google Business — Bản nháp",
         content: "📍 Viện Chăm Sóc Da & Trị Mụn Uy Tín Khu Vực — Giảm ngay 20% cho khách hàng tìm thấy và đặt lịch trực tiếp qua Google Maps tuần này!",
       },
       inbox: {
-        title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
-        badge: "Auto Lead Care",
+        title: "Mẫu FAQ chờ xác minh",
+        badge: "Minh hoạ Inbox",
         customerMsg: "Liệu trình vi kim bên mình giá bao nhiêu vậy shop? Trị thâm tốt không?",
         haviReply: "Dạ em chào chị! Gói vi kim tảo biển bên em trọn gói 450k đang được tặng kèm 1 chai serum phục hồi B5 trị giá 250k trong tuần này ạ. Chị cho em xin Tên & SĐT để chuyên viên xếp lịch soi da và giữ suất ưu đãi cho chị nhé!",
         capturedPhone: "0912.345.678 (Khách cần trị mụn thâm)",
@@ -118,12 +113,12 @@ export const industryScenarios: IndustryScenario[] = [
       },
       maps: {
         title: "Tối ưu Google Business Địa phương",
-        badge: "Google Business Top 3",
+        badge: "Google Business — Bản nháp",
         content: "📍 Văn Phòng Ký Gửi Nhà Đất & Định Giá BĐS Uy Tín — Hỗ trợ pháp lý, kiểm tra quy hoạch và tư vấn vay ngân hàng miễn phí 100%.",
       },
       inbox: {
-        title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
-        badge: "Auto Lead Care",
+        title: "Mẫu FAQ chờ xác minh",
+        badge: "Minh hoạ Inbox",
         customerMsg: "Căn nhà Quận 7 này còn không em? Có hỗ trợ vay ngân hàng không?",
         haviReply: "Dạ căn này chính chủ gửi em bán độc quyền, hiện vẫn còn ạ! Nhà sổ hồng riêng nên ngân hàng hỗ trợ vay tối đa 70% lãi suất ưu đãi. Anh/chị cho em xin SĐT và thời gian tiện nhất để em dẫn anh/chị xem nhà thực tế nhé!",
         capturedPhone: "0988.765.432 (Khách xem nhà Q7 cuối tuần)",
@@ -150,12 +145,12 @@ export const industryScenarios: IndustryScenario[] = [
       },
       maps: {
         title: "Bài đăng Google Maps & Menu",
-        badge: "Google Business Top 3",
+        badge: "Google Business — Bản nháp",
         content: "📍 Quán Cà Phê & Bánh Ngọt Check-in Đẹp Nhất Khu Vực — Không gian máy lạnh thoáng mát, wifi tốc độ cao, chỗ đậu xe máy ô tô rộng rãi.",
       },
       inbox: {
-        title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
-        badge: "Auto Lead Care",
+        title: "Mẫu FAQ chờ xác minh",
+        badge: "Minh hoạ Inbox",
         customerMsg: "Quán có nhận đặt bàn tiệc sinh nhật 12 người tối nay không bạn?",
         haviReply: "Dạ quán em còn khu vực bàn dài view kính tầng 2 cực đẹp cho nhóm 12 người tối nay ạ! Em hỗ trợ giữ bàn và trang trí sẵn cho mình nhé, anh/chị cho em xin Tên & SĐT để nhân viên chuẩn bị chu đáo nha!",
         capturedPhone: "0903.112.233 (Đặt bàn sinh nhật 12 người)",
@@ -182,12 +177,12 @@ export const industryScenarios: IndustryScenario[] = [
       },
       maps: {
         title: "Google Business & Đào tạo Nghề",
-        badge: "Google Business Top 3",
+        badge: "Google Business — Bản nháp",
         content: "📍 Học Viện Đào Tạo Nghề & Kỹ Năng Thực Chiến: Cơ sở đào tạo kỹ thuật số hàng đầu. Giảng viên tận tâm, cam kết đầu ra có sản phẩm chạy thật.",
       },
       inbox: {
-        title: "Trực Inbox 24/7 & Bắt Số Điện Thoại",
-        badge: "Auto Lead Care",
+        title: "Mẫu FAQ chờ xác minh",
+        badge: "Minh hoạ Inbox",
         customerMsg: "Khóa Lập trình Web cho người mới bắt đầu học phí thế nào và học mấy tháng ạ?",
         haviReply: "Dạ chào bạn! Khóa Lập trình Web Khởi động kéo dài 3 tháng, đào tạo 1 kèm 1 trên dự án thật. Bạn cho mình xin SĐT hoặc Zalo để thầy giáo tư vấn chi tiết lộ trình và ưu đãi học phí tháng này nhé!",
         capturedPhone: "0971.888.999 (Học viên tìm hiểu khóa Web)",
@@ -203,55 +198,12 @@ export const principles = [
     desc: "Không bao giờ tự ý đăng bài khi bạn chưa xem qua. Bạn nắm trọn 100% quyền kiểm soát nội dung và hình ảnh của tiệm.",
   },
   {
-    title: "Tuyệt đối an toàn cho Fanpage",
-    desc: "Nói không với tool lậu hay spam vi phạm chính sách. Giữ Fanpage và các kênh mạng xã hội của tiệm luôn an toàn, uy tín và bền vững.",
+    title: "API chính thức, trạng thái trung thực",
+    desc: "Không dùng tool lậu hoặc báo thành công khi nền tảng chưa xác nhận. Quyền truy cập vẫn phụ thuộc chính sách của từng nền tảng.",
   },
   {
     title: "Văn phong thuần Việt, chốt đơn khéo",
     desc: "Hiểu đúng cách xưng hô anh/chị gần gũi, giọng điệu tự nhiên như người thật, tư vấn duyên dáng và khéo léo xin số điện thoại khách hàng.",
-  },
-];
-
-export interface Testimonial {
-  name: string;
-  role: string;
-  avatar: string;
-  rating: number;
-  quote: string;
-  highlight: string;
-  badge: string;
-}
-
-export const testimonials: Testimonial[] = [
-  {
-    name: "Chị Mai Lan",
-    role: "Chủ Viện Chăm Sóc Da & Spa Lan Anh (Hà Nội)",
-    avatar: "🧖‍♀️",
-    rating: 5,
-    quote:
-      "Trước đây ngày nào mình cũng đau đầu nghĩ xem hôm nay đăng gì lên Fanpage và TikTok. Từ khi dùng Havi, sáng chụp 1 tấm ảnh liệu trình khách làm xong là chiều có ngay bài viết chỉn chu và kịch bản video 9:16 có hook 3s. Thích nhất là bài viết không bao giờ tự đăng khi mình chưa bấm duyệt!",
-    highlight: "Tiết kiệm 2 giờ làm bài mỗi ngày, bài viết chuẩn ngành Spa",
-    badge: "Spa & Thẩm Mỹ",
-  },
-  {
-    name: "Anh Quốc Hoàng",
-    role: "Chủ Chuỗi Cà Phê & Trà Sữa The Hill (TP.HCM)",
-    avatar: "☕",
-    rating: 5,
-    quote:
-      "Tiệm mình tiết kiệm được hơn 4 triệu mỗi tháng tiền thuê người làm marketing part-time. Havi trực inbox nửa đêm trả lời giá và xin số điện thoại cực khéo, sáng ra mở app đã thấy có SĐT khách để nhân viên gọi chốt bàn.",
-    highlight: "Tiết kiệm 4.2 triệu/tháng, bắt khách lúc nửa đêm cực đỉnh",
-    badge: "F&B & Quán Cafe",
-  },
-  {
-    name: "Anh Tuấn Anh",
-    role: "Giám Đốc Học Viện Đào Tạo Nghề & Kỹ Năng (Đà Nẵng)",
-    avatar: "🏠",
-    rating: 5,
-    quote:
-      "Tính năng Hot Lead Radar báo về Telegram dưới 3 giây siêu tiện lợi. Khách vừa để lại SĐT trên Fanpage là điện thoại mình rung chuông liền, bấm nút Gọi hoặc mở Zalo 1-chạm chốt lịch hẹn tư vấn chỉ trong tích tắc!",
-    highlight: "Chuông báo Telegram < 3s, chốt lịch hẹn tăng gấp đôi",
-    badge: "BĐS & Đào Tạo",
   },
 ];
 
@@ -264,7 +216,7 @@ export const faqs: FAQItem[] = [
   {
     question: "Tôi không rành máy tính hay công nghệ thì có dùng được Havi không?",
     answer:
-      "Hoàn toàn dễ dàng! Havi được thiết kế trực quan đơn giản như dùng Zalo. Bạn chỉ cần chụp 1 tấm ảnh tiệm hoặc giữ nút micro nói 10 giây giọng nói đời thường, AI của Havi sẽ tự động phân tích và sáng tạo toàn bộ bài đăng Facebook, kịch bản Video TikTok và bài Google Maps hoàn chỉnh.",
+      "Havi hướng tới thao tác đơn giản trên điện thoại. Bạn có thể nạp tư liệu để nhận bản nháp bài viết và kịch bản; hãy luôn kiểm tra thông tin trước khi duyệt.",
   },
   {
     question: "Havi có tự động đăng bài lên mạng xã hội của tôi không?",
@@ -274,12 +226,12 @@ export const faqs: FAQItem[] = [
   {
     question: "Có cần nhập thẻ tín dụng hay thẻ Visa để dùng thử 7 ngày không?",
     answer:
-      "Hoàn toàn KHÔNG. Bạn được kích hoạt ngay gói dùng thử 7 ngày đầy đủ tính năng tạo bài, video và trực inbox mà không cần khai báo bất kỳ thông tin thẻ ngân hàng nào. Hết 7 ngày bạn tự nguyện nâng cấp nếu thấy hiệu quả.",
+      "Không. Workspace mới có 7 ngày dùng thử với hạn mức token. Sau đó bạn có thể chủ động tạo checkout VietQR nếu muốn nâng cấp.",
   },
   {
     question: "Tính năng Hot Lead Radar và chuông báo Telegram hoạt động thế nào?",
     answer:
-      "Ngay khi có khách hàng để lại số điện thoại trên Fanpage hoặc TikTok, hệ thống Havi sẽ tự động bóc tách số và bắn chuông thông báo về Telegram của chủ tiệm trong vòng 3 giây. Kèm theo đó là 2 nút bấm tiện lợi: [📞 Gọi điện ngay] và [💬 Nhắn Zalo] để bạn chốt đơn chớp nhoáng.",
+      "Khi Havi nhận được inquiry chứa số điện thoại từ một nguồn được hỗ trợ, hệ thống có thể lưu lead và gửi cảnh báo Telegram nếu workspace đã cấu hình notifier. Thời gian nhận phụ thuộc webhook và nhà cung cấp.",
   },
   {
     question: "Tôi có được đội ngũ kỹ sư Havi hỗ trợ cài đặt ban đầu không?",
@@ -287,4 +239,3 @@ export const faqs: FAQItem[] = [
       "Có! Đội ngũ Havi và Founder luôn đồng hành hỗ trợ 1 kèm 1 qua Hotline & Zalo: 0984 883 750. Chúng tôi hỗ trợ bạn nối Fanpage, cài đặt thông điệp tiệm và hướng dẫn vận hành trọn đời.",
   },
 ];
-

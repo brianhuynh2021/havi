@@ -63,10 +63,11 @@ export function ReportsScreen() {
     return [
       { label: t("dashboard.publishedPosts", "Bài đã đăng"), value: String(reportsData.summary.published_posts) },
       { label: t("dashboard.leadsCaptured", "Lead đã ghi nhận"), value: String(reportsData.summary.new_leads) },
-      { label: t({ vi: "Lead đã chốt (POS)", en: "Won Leads (POS)" }), value: String(reportsData.summary.won_leads) },
+      { label: t({ vi: "Lead đã xác nhận", en: "Verified Leads" }), value: String(reportsData.summary.won_leads) },
       { label: t({ vi: "Tỷ lệ chốt", en: "Win Rate" }), value: percent(reportsData.summary.lead_won_rate) },
-      { label: t({ vi: "Doanh thu POS", en: "POS Revenue" }), value: formatVnd(reportsData.summary.total_revenue_vnd || 0) },
+      { label: t({ vi: "Doanh thu xác thực (VietQR/POS)", en: "Verified Revenue" }), value: formatVnd(reportsData.summary.total_revenue_vnd || 0) },
     ];
+
   }
 
   const maxPosts = Math.max(

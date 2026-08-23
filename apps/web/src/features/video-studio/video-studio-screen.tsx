@@ -37,7 +37,7 @@ export function VideoStudioScreen() {
 
 
   const handleApplyTrend = async (trend: TrendingTopic) => {
-    setTitle(`${trend.keyword} - TikTok Shorts`);
+    setTitle(`${trend.keyword} - Facebook Reels`);
     setHookCaption(trend.sample_hook);
     setAspectRatio("9:16");
     setDuration(15);
@@ -215,7 +215,7 @@ export function VideoStudioScreen() {
         <div className={styles.headerInfo}>
           <h1>🎬 Studio Video Tự Động</h1>
           <p>
-            Tự động tối ưu video dọc 9:16 (TikTok, Reels, Shorts), tự chèn phụ đề chữ chạy nổi bật và chỉnh âm thanh to rõ, trong trẻo.
+            Kiểm tra video dọc 9:16 và tạo yêu cầu xử lý thử nghiệm. Tính năng dựng, phụ đề và xuất bản đa kênh vẫn ở trạng thái Beta.
           </p>
         </div>
       </header>
@@ -234,7 +234,7 @@ export function VideoStudioScreen() {
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-              Tự động quét & tối ưu cho TikTok / YouTube Shorts
+              Tự động quét & tối ưu cho Facebook Reels
             </span>
             <button
               type="button"
@@ -254,7 +254,7 @@ export function VideoStudioScreen() {
               }}
               disabled={isRefreshingTrends}
               onClick={handleRefreshTrends}
-              title="Quét lại các xu hướng mới nhất từ TikTok và YouTube"
+              title="Quét lại các xu hướng mới nhất cho Reels"
             >
               <span
                 style={{
@@ -322,9 +322,9 @@ export function VideoStudioScreen() {
                 <label>Tỉ lệ khung hình</label>
                 <div className={styles.ratioGrid}>
                   {[
-                    { value: "9:16", icon: "📱", label: "9:16 Dọc", sub: "Reels / TikTok / Shorts" },
-                    { value: "1:1", icon: "⏹️", label: "1:1 Vuông", sub: "Instagram & FB Feed" },
-                    { value: "16:9", icon: "🖥️", label: "16:9 Ngang", sub: "YouTube Chuẩn" },
+                    { value: "9:16", icon: "📱", label: "9:16 Dọc", sub: "Facebook Reels" },
+                    { value: "1:1", icon: "⏹️", label: "1:1 Vuông", sub: "Facebook Feed" },
+                    { value: "16:9", icon: "🖥️", label: "16:9 Ngang", sub: "Facebook Video Ngang" },
                   ].map((r) => (
                     <button
                       key={r.value}
@@ -345,7 +345,7 @@ export function VideoStudioScreen() {
                 <div className={styles.pillGroup}>
                   {[
                     { val: 15, label: "15s (Story / Hook)" },
-                    { val: 30, label: "30s (TikTok Chuẩn)" },
+                    { val: 30, label: "30s (Reels Chuẩn)" },
                     { val: 60, label: "60s (Chuyên Sâu)" },
                   ].map((d) => (
                     <button

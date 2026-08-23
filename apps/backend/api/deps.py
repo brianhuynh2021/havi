@@ -29,12 +29,14 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.crm_nudge_repository import CrmNudgeRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.goal_repository import GoalRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
+from adapters.persistence.roadmap_repository import RoadmapRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.video_render_repository import VideoRenderRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
@@ -51,13 +53,16 @@ from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
 from application.services.crm_nudge_service import CrmNudgeService
+from application.services.goal_service import GoalService
 from application.services.inbox_service import InboxService
 from application.services.job_queue import CeleryJobQueue, JobQueue
 from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
+from application.services.roadmap_service import RoadmapService
 from application.services.sales_service import SalesService
 from application.services.video_render_service import VideoRenderService
+
 from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
@@ -132,15 +137,15 @@ BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
 
 
 def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxService:
-    fb_publisher: ReplyPublisherPort = (
-        FakeReplyPublisher(Platform.FACEBOOK)
-        if settings.env == "local"
-        else FacebookReplyAdapter(ConnectionRepository(session))
-    )
-    reply_publishers = {
-        Platform.FACEBOOK: fb_publisher,
-        Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
-    }
+    if settings.is_local:
+        reply_publishers: dict[Platform, ReplyPublisherPort] = {
+            Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
+            Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
+        }
+    else:
+        reply_publishers = {
+            Platform.FACEBOOK: FacebookReplyAdapter(ConnectionRepository(session)),
+        }
     return InboxService(
         inbox=InboxRepository(session),
         profiles=BrandProfileRepository(session),
@@ -316,6 +321,8 @@ def get_publish_service(session: DbSessionDep) -> PublishService:
         connections=ConnectionRepository(session),
         publishes=PublishRepository(session),
         events=EventLogRepository(session),
+        media=MediaRepository(session),
+        storage=_object_storage(),
         alerts=_alert_sink(),
         publishers=build_publishers(),
     )
@@ -364,7 +371,26 @@ def get_voice_service(session: DbSessionDep, settings: SettingsDep) -> VoiceServ
 VoiceServiceDep = Annotated[VoiceService, Depends(get_voice_service)]
 
 
+def get_goal_service(session: DbSessionDep) -> GoalService:
+    return GoalService(goal_repo=GoalRepository(session))
+
+
+GoalServiceDep = Annotated[GoalService, Depends(get_goal_service)]
+
+
+def get_roadmap_service(session: DbSessionDep) -> RoadmapService:
+    return RoadmapService(
+        roadmap_repo=RoadmapRepository(session),
+        goal_repo=GoalRepository(session),
+        event_repo=EventLogRepository(session),
+    )
+
+
+RoadmapServiceDep = Annotated[RoadmapService, Depends(get_roadmap_service)]
+
+
 class AuthContext:
+
     """Thông tin giải mã từ JWT."""
 
     def __init__(self, user_id: UUID, active_workspace_id: UUID | None) -> None:

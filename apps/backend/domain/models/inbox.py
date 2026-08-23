@@ -31,6 +31,8 @@ class InboxItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     #: ID sự kiện do nền tảng cấp. NULL cho item tạo tay/seed — Postgres coi mỗi
     #: NULL là khác nhau nên unique constraint không chặn các item đó.
     external_message_id: Mapped[str | None] = mapped_column(default=None)
+    #: ID người gửi trên nền tảng (PSID với Facebook Messenger) để gửi trả lời trực tiếp.
+    recipient_id: Mapped[str | None] = mapped_column(default=None)
     platform: Mapped[Platform] = mapped_column(Enum(Platform, native_enum=False))
     type: Mapped[InboxItemType] = mapped_column(
         Enum(InboxItemType, native_enum=False), default=InboxItemType.MESSAGE

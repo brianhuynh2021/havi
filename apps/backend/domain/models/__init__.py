@@ -10,10 +10,12 @@ from domain.models.base import Base
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
 from domain.models.crm_nudge import CrmNudge
+from domain.models.goal import Goal
 from domain.models.inbox import InboxItem
 from domain.models.lead import Lead
 from domain.models.media import MediaAsset
 from domain.models.publish import PublishJob
+from domain.models.roadmap import EvidenceLog, Roadmap, RoadmapReview, RoadmapTask
 from domain.models.user import OtpChallenge, RefreshSession, User
 from domain.models.video_render import VideoRenderJob
 from domain.models.workspace import (
@@ -43,4 +45,10 @@ __all__ = [
     "Lead",
     "CrmNudge",
     "Invoice",
+    "Goal",
+    "Roadmap",
+    "RoadmapTask",
+    "EvidenceLog",
+    "RoadmapReview",
 ]
+

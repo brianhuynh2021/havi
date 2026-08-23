@@ -6,7 +6,8 @@ kênh. Thêm Zalo/Google sau chỉ là thêm một lớp cài đặt port này.
 Điểm quan trọng nhất của port này là **phân loại lỗi**. Adapter không quyết định
 retry hay không — nó chỉ nói lỗi thuộc loại nào, và worker dựa vào đó để xử:
 
-- `TEMPORARY` (429, 5xx, timeout) → thử lại với backoff
+- `TEMPORARY` (429, 5xx trước khi nền tảng chấp nhận) → thử lại với backoff
+- `AMBIGUOUS_OUTCOME` (timeout sau khi gửi request) → dừng để đối soát, không retry
 - `AUTH_PERMISSION` (token hết hạn, mất quyền) → KHÔNG retry, bắt chủ tiệm nối
   lại kênh. Retry ở đây chỉ đập vào API và vẫn hỏng.
 - `VALIDATION_PERMANENT` (nội dung bị từ chối, ảnh sai định dạng) → KHÔNG retry,
@@ -62,9 +63,15 @@ class PublishError(Exception):
 
 
 class TemporaryPublishError(PublishError):
-    """Lỗi thoáng qua — rate limit, 5xx, timeout. Thử lại được."""
+    """Lỗi thoáng qua đã biết là an toàn để thử lại."""
 
     kind = PublishFailureKind.TEMPORARY
+
+
+class AmbiguousPublishError(PublishError):
+    """Không biết nền tảng đã tạo bài hay chưa; phải đối soát trước khi retry."""
+
+    kind = PublishFailureKind.AMBIGUOUS_OUTCOME
 
 
 class AuthPermissionError(PublishError):

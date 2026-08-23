@@ -582,6 +582,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/voice/tts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Speech Audio
+         * @description Tạo file âm thanh giọng đọc tiếng Việt siêu tự nhiên 0 VNĐ bằng Edge-TTS.
+         */
+        post: operations["generate_speech_audio_voice_tts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/jobs": {
         parameters: {
             query?: never;
@@ -778,9 +798,29 @@ export interface paths {
         put?: never;
         /**
          * Generate Item Video
-         * @description Tự động dựng video ngắn 9:16 có chuyển động và phụ đề động cho bài viết.
+         * @description Tự động dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg.
          */
         post: operations["generate_item_video_content__content_id__generate_video_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/{content_id}/upload-rendered-video": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Rendered Video
+         * @description Lưu file video 9:16 vừa render từ Client Canvas lên hệ thống lưu trữ của Havi.
+         */
+        post: operations["upload_rendered_video_content__content_id__upload_rendered_video_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1887,6 +1927,8 @@ export interface components {
         ContentJobCreate: {
             /** Raw Inputs */
             raw_inputs: components["schemas"]["RawInput"][];
+            /** Target Channels */
+            target_channels?: components["schemas"]["Channel"][] | null;
         };
         /**
          * ContentJobStatus
@@ -2141,6 +2183,10 @@ export interface components {
             content: string;
             /** Author Name */
             author_name: string;
+            /** Recipient Id */
+            recipient_id?: string | null;
+            /** External Message Id */
+            external_message_id?: string | null;
             /** Sentiment */
             sentiment?: string | null;
             /** Ai Suggested Reply */
@@ -2156,7 +2202,7 @@ export interface components {
          * InboxItemStatus
          * @enum {string}
          */
-        InboxItemStatus: "new" | "drafted" | "sent" | "dismissed";
+        InboxItemStatus: "new" | "drafted" | "sent" | "failed" | "dismissed";
         /**
          * InboxItemType
          * @enum {string}
@@ -2224,6 +2270,11 @@ export interface components {
             suggested_reply?: string | null;
             /** Notes */
             notes?: string | null;
+            /**
+             * Revenue Vnd
+             * @default 0
+             */
+            revenue_vnd: number;
             /** Content Item Id */
             content_item_id?: string | null;
             /**
@@ -3050,6 +3101,29 @@ export interface components {
          * @enum {string}
          */
         VideoRenderStatus: "queued" | "rendering" | "completed" | "failed" | "cancelled";
+        /**
+         * VoiceTTSRequest
+         * @description Payload yêu cầu tạo file âm thanh giọng đọc tiếng Việt từ văn bản.
+         */
+        VoiceTTSRequest: {
+            /**
+             * Text
+             * @description Văn bản tiếng Việt cần chuyển thành giọng đọc
+             */
+            text: string;
+            /**
+             * Voice
+             * @description Giọng đọc AI (vi-VN-HoaiMyNeural hoặc vi-VN-NamMinhNeural)
+             * @default vi-VN-HoaiMyNeural
+             */
+            voice: string;
+            /**
+             * Rate
+             * @description Tốc độ đọc (+0%, +10%, -10%...)
+             * @default +0%
+             */
+            rate: string;
+        };
         /**
          * VoiceToContentResponse
          * @description Kết quả quy trình 1-chạm tạo bài từ giọng nói.
@@ -4237,6 +4311,39 @@ export interface operations {
             };
         };
     };
+    generate_speech_audio_voice_tts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceTTSRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_content_job_content_jobs_post: {
         parameters: {
             query?: never;
@@ -4573,6 +4680,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GenerateVideoResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_rendered_video_content__content_id__upload_rendered_video_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

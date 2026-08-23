@@ -1,15 +1,8 @@
-"""Use case cho /billing — xem gói hiện tại, đổi gói, tra hoá đơn.
+"""Use case cho /billing — gói hiện tại, checkout VietQR và hoá đơn.
 
-**Chưa có cổng thanh toán.** Đổi gói ở đây phát hành một hoá đơn `PENDING` và
-chuyển gói ngay; không có đồng nào được thu. Đó là một quyết định có ý thức, chứ
-không phải nửa vời bị bỏ quên: hạ tầng VNPay/Momo cần merchant ID thật mới viết
-và verify được, và một adapter không chạy được với endpoint thật là adapter không
-kiểm chứng được — đúng sai lầm `GoogleBusinessPublisher` đã mắc một lần
-(ROADMAP §13.2 gap E).
-
-Hệ quả phải nói thẳng: cho tới khi có cổng thanh toán, `POST /billing/plan` là
-đường nâng gói **không mất tiền**. Vì thế nó bị khoá ngoài `HAVI_ENV=local` y như
-mọi fake mode khác, và mỗi lượt đổi gói ghi một event `billing.plan_changed`.
+`POST /billing/plan` chỉ là tiện ích local. Ở production, gói chỉ được kích hoạt
+sau webhook PayOS/VietQR có chữ ký hợp lệ, số tiền/tiền tệ khớp chính xác và mã
+giao dịch duy nhất; việc cập nhật invoice/workspace chạy dưới row lock.
 """
 
 import logging
@@ -43,11 +36,15 @@ class InvoiceNotFound(Exception):
 
 
 class UnderpaidInvoiceError(Exception):
-    """Số tiền chuyển khoản không đủ để thanh toán hoá đơn."""
+    """Số tiền hoặc tiền tệ không khớp chính xác với hoá đơn."""
 
 
 class InvoiceInvalidStatusError(Exception):
     """Trạng thái hoá đơn không hợp lệ để thanh toán."""
+
+
+class DuplicatePaymentReferenceError(Exception):
+    """Mã giao dịch cổng thanh toán đã được dùng cho hoá đơn khác."""
 
 
 class BillingService:
@@ -183,11 +180,12 @@ class BillingService:
         invoice_id: UUID,
         gateway_reference: str,
         amount_paid_vnd: int,
+        currency: str = "VND",
         now: datetime | None = None,
     ) -> Invoice:
         """Xử lý webhook thanh toán thành công: nâng gói, kích hoạt 30 ngày, đổi status sang PAID."""
         now = now or datetime.now(UTC)
-        invoice = await self._billing.get_invoice(invoice_id)
+        invoice = await self._billing.get_invoice(invoice_id, for_update=True)
         if invoice is None:
             raise InvoiceNotFound(f"Invoice {invoice_id} not found")
 
@@ -206,27 +204,47 @@ class BillingService:
                 f"Hoá đơn {invoice_id} đang ở trạng thái {invoice.status.value}"
             )
 
-        # Đối chiếu số tiền nghiêm ngặt (Zero Trust)
-        if amount_paid_vnd < invoice.amount_vnd:
+        normalized_reference = gateway_reference.strip()
+        if not normalized_reference:
+            raise InvoiceInvalidStatusError("Giao dịch thiếu mã tham chiếu duy nhất")
+
+        existing_reference = await self._billing.get_by_gateway_reference(
+            normalized_reference
+        )
+        if existing_reference is not None and existing_reference.id != invoice.id:
+            raise DuplicatePaymentReferenceError(
+                "Mã giao dịch đã được dùng cho một hoá đơn khác"
+            )
+
+        # Đối chiếu chính xác số tiền và VND. Không chấp nhận cả thiếu lẫn thừa:
+        # một webhook bị gắn nhầm invoice vẫn có thể có số tiền lớn hơn.
+        if currency.upper() != "VND" or amount_paid_vnd != invoice.amount_vnd:
             logger.warning(
-                "Thanh toán thiếu tiền cho hoá đơn %s: nhận %sđ, cần %sđ",
+                "Thanh toán không khớp hoá đơn %s: nhận %s %s, cần %s VND",
                 invoice_id,
                 amount_paid_vnd,
+                currency,
                 invoice.amount_vnd,
             )
             await self._events.record(
                 EventLogEntry(
                     workspace_id=invoice.workspace_id,
-                    job_kind="billing.underpaid_alert",
-                    input_summary=f"VietQR {gateway_reference}: nhận {amount_paid_vnd:,}đ / cần {invoice.amount_vnd:,}đ",
-                    output_summary=f"invoice:{invoice.id} status:{invoice.status.value} REJECTED_UNDERPAID",
+                    job_kind="billing.payment_mismatch_alert",
+                    input_summary=(
+                        f"gateway_ref:{normalized_reference} amount:{amount_paid_vnd} "
+                        f"currency:{currency.upper()} expected:{invoice.amount_vnd} VND"
+                    ),
+                    output_summary=(
+                        f"invoice:{invoice.id} status:{invoice.status.value} "
+                        "REJECTED_MISMATCH"
+                    ),
                 )
             )
             raise UnderpaidInvoiceError(
-                f"Thanh toán {amount_paid_vnd:,}đ không đủ cho hoá đơn {invoice.amount_vnd:,}đ"
+                "Số tiền hoặc tiền tệ không khớp chính xác với hoá đơn"
             )
 
-        workspace = await self._workspaces.get_by_id(invoice.workspace_id)
+        workspace = await self._workspaces.get_by_id_for_update(invoice.workspace_id)
         if workspace is None:
             raise WorkspaceNotFound()
 
@@ -236,14 +254,14 @@ class BillingService:
 
         await self._billing.set_plan(workspace, plan=invoice.plan, paid_until=new_paid_until)
         updated_invoice = await self._billing.mark_invoice_paid(
-            invoice, gateway_reference=gateway_reference
+            invoice, gateway_reference=normalized_reference
         )
 
         await self._events.record(
             EventLogEntry(
                 workspace_id=workspace.id,
                 job_kind="billing.payment_received",
-                input_summary=f"VietQR {gateway_reference}: nhận {amount_paid_vnd:,}đ",
+                input_summary=f"gateway_ref:{normalized_reference} amount:{amount_paid_vnd} VND",
                 output_summary=(
                     f"invoice:{invoice.id} plan:{invoice.plan.value} "
                     f"paid_until:{new_paid_until.isoformat()}"

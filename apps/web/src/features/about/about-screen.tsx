@@ -100,7 +100,7 @@ export function AboutScreen() {
         <div className={styles.valuesGrid}>
           <div className={styles.valueCard}>
             <div className={styles.valueIcon}>🛡️</div>
-            <h3 className={styles.valueTitle}>An Tâm &amp; Kiểm Soát 100%</h3>
+            <h3 className={styles.valueTitle}>An Tâm &amp; Có Quyền Kiểm Soát</h3>
             <p className={styles.valueDesc}>
               Nguyên tắc &ldquo;Bạn duyệt trước, luôn luôn&rdquo;. Havi không bao giờ tự ý đăng bài khi chưa có sự đồng ý của bạn, bảo vệ trọn vẹn uy tín thương hiệu của tiệm.
             </p>
@@ -110,7 +110,7 @@ export function AboutScreen() {
             <div className={styles.valueIcon}>⚡</div>
             <h3 className={styles.valueTitle}>Chuẩn Kỹ Thuật Đỉnh Cao</h3>
             <p className={styles.valueDesc}>
-              Xây dựng trên nền tảng Clean Architecture, mã hóa bảo mật chuẩn ngân hàng (Argon2id, AES-128) và tối ưu độ trễ siêu tốc dưới 5 giây.
+              Xây dựng theo Clean Architecture, mật khẩu Argon2id, token được mã hoá và các luồng quan trọng có kiểm thử tự động bảo vệ.
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export function AboutScreen() {
             <div className={styles.valueIcon}>💎</div>
             <h3 className={styles.valueTitle}>Sự Tử Tế &amp; Phụng Sự</h3>
             <p className={styles.valueDesc}>
-              Minh bạch 100% về giá (chỉ từ 6.000 đ/ngày, rẻ hơn 1 ly trà sữa), không phụ phí ẩn, không spam công cụ lậu và luôn đồng hành cùng khách hàng.
+              Công bố đúng giá theo tháng, dùng API chính thức và ghi rõ tính năng nào đang ở Beta hoặc vẫn thuộc roadmap.
             </p>
           </div>
         </div>

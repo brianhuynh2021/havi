@@ -26,7 +26,11 @@ from core.alerts import Alert, AlertSink
 from core.enums import Channel, ConnectionStatus, Platform, PublishFailureKind, PublishStatus
 from domain.models.audit import EventLog
 from domain.models.workspace import Workspace
-from domain.ports.publisher import PublishRequest, TemporaryPublishError
+from domain.ports.publisher import (
+    AmbiguousPublishError,
+    PublishRequest,
+    TemporaryPublishError,
+)
 
 pytestmark = pytest.mark.anyio
 
@@ -37,6 +41,12 @@ class RecordingAlerts(AlertSink):
 
     async def send(self, alert: Alert) -> None:
         self.sent.append(alert)
+
+
+class AmbiguousPublisher(FakePublisher):
+    async def publish(self, request: PublishRequest, *, access_token: str):
+        self.calls.append(request)
+        raise AmbiguousPublishError(self.channel, "Facebook timeout sau khi gửi")
 
 
 async def _workspace(session: AsyncSession) -> Workspace:
@@ -536,6 +546,26 @@ class TestPublishServiceEndToEnd:
         assert event.provider == "facebook"
         assert event.error is None
         assert jobs[0].external_post_id in event.output_summary
+
+    async def test_timeout_facebook_dung_o_doi_soat_va_khong_tu_dang_lai(
+        self, db_session: AsyncSession
+    ):
+        publisher = AmbiguousPublisher()
+        ws, _ = await self._ready(db_session, at=_at(20))
+        service = await self._service(db_session, publisher)
+
+        await service.dispatch_due(now=_at(21))
+        await service.run_due(now=_at(21))
+        jobs = await PublishRepository(db_session).list_for_workspace(workspace_id=ws.id)
+
+        assert jobs[0].status is PublishStatus.PENDING_RECONCILIATION
+        assert jobs[0].failure_kind is PublishFailureKind.AMBIGUOUS_OUTCOME
+        assert jobs[0].next_attempt_at is None
+        assert len(publisher.calls) == 1
+
+        # Scheduler chỉ claim `pending`, nên lượt sau không gọi Graph lần hai.
+        await service.run_due(now=_at(22))
+        assert len(publisher.calls) == 1
 
     async def test_video_chua_co_file_thi_worker_chan_khong_dung_clip_mau(
         self, db_session: AsyncSession

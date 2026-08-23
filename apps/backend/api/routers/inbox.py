@@ -14,6 +14,7 @@ from api.deps import AuthDep, InboxServiceDep, WorkspaceDep, get_ai_lead_agent_s
 from application.services.inbox_service import InboxItemNotFound
 from core.enums import InboxItemStatus, LeadSource, Platform
 from core.schemas import InboxItem, InboxReplyRequest, Page
+from domain.ports.reply_publisher import ReplyError
 
 router = APIRouter(prefix="/inbox", tags=["inbox"])
 
@@ -57,6 +58,11 @@ async def send_reply(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Không tìm thấy tin nhắn/bình luận này",
+        ) from exc
+    except ReplyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Không thể gửi tin nhắn qua nền tảng: {exc}",
         ) from exc
 
 
@@ -116,4 +122,3 @@ async def analyze_and_care_lead(
         suggested_reply=analysis.suggested_reply,
         lead_id=lead.id,
     )
-

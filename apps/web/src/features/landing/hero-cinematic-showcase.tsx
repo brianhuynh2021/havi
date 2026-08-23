@@ -78,10 +78,10 @@ export function HeroCinematicShowcase({
               type="button"
               className={`${styles.stepPill} ${activeStep === 2 ? styles.stepPillActive : ""}`}
               onClick={() => setActiveStep(2)}
-              aria-label="Bước 3: Theo dõi 24/7"
+              aria-label="Bước 3: Theo dõi kết quả"
             >
               <span className={styles.stepNum}>3</span>
-              <span>{lang === "VN" ? "Theo dõi 24/7" : "24/7 Lead Care"}</span>
+              <span>{lang === "VN" ? "Theo dõi kết quả" : "Track results"}</span>
             </button>
           </div>
 
@@ -101,7 +101,7 @@ export function HeroCinematicShowcase({
         {/* Industry Selector Pills Bar */}
         <div className={styles.showcaseIndustryBar}>
           <span className={styles.industryBarLabel}>
-            {lang === "VN" ? "Chọn mô hình tiệm:" : "Select your business:"}
+            {lang === "VN" ? "Bản nháp minh hoạ — cần thay bằng dữ liệu thật:" : "Illustrative drafts — replace with verified facts:"}
           </span>
           <div className={styles.industryPillsList}>
             {industryScenarios.map((sc, idx) => (
@@ -143,7 +143,8 @@ export function HeroCinematicShowcase({
                 {/* Right: AI OCR & Feature Extraction */}
                 <div className={styles.scanAnalysisBox}>
                   <div className={styles.scanAnalysisHeader}>
-                    <span className={styles.aiTagBadge}>✨ HAVI VISION AI 2.0</span>
+                    <span className={styles.aiTagBadge}>✨ HAVI VISION AI</span>
+
                     <span className={styles.scanSpeed}>0.34s</span>
                   </div>
                   <h4 className={styles.scanAnalysisTitle}>
@@ -223,8 +224,8 @@ export function HeroCinematicShowcase({
                       {currentScenario.tabs.maps.content}
                     </p>
                     <div className={styles.channelMeta}>
-                      <span>⭐ 4.9/5 Đánh giá</span>
-                      <span>📞 Nút gọi trực tiếp</span>
+                      <span>🧪 Bản nháp minh hoạ</span>
+                      <span>📍 Google Business: roadmap</span>
                     </div>
                   </div>
                 </div>
@@ -232,7 +233,7 @@ export function HeroCinematicShowcase({
             </div>
           )}
 
-          {/* STEP 3: Telegram Hot Lead Radar Alert (< 3s) */}
+          {/* STEP 3: Telegram alert illustration; no latency guarantee. */}
           {activeStep === 2 && (
             <div className={styles.stepContentSlide} data-testid="step-content-2">
               <div className={styles.telegramRadarStage}>
@@ -243,10 +244,10 @@ export function HeroCinematicShowcase({
                       <span className={styles.tgIcon}>✈️</span>
                       <div>
                         <div className={styles.tgBotName}>Havi Hot Lead Radar Bot</div>
-                        <div className={styles.tgSub}>Thông báo tức thì • Vừa xong</div>
+                        <div className={styles.tgSub}>Minh hoạ cảnh báo từ webhook</div>
                       </div>
                     </div>
-                    <span className={styles.tgTimeBadge}>3s trước</span>
+                    <span className={styles.tgTimeBadge}>Demo</span>
                   </div>
 
                   {/* Telegram Message Body */}

@@ -11,6 +11,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useSession } from "./session";
+import { readTokens, writeTokens } from "./token-store";
+
 
 type Props = {
   /** "app" cần đã đăng nhập + đã onboarding; "onboarding" cần đã đăng nhập;
@@ -37,6 +39,11 @@ export function RouteGuard({ require, children }: Props) {
     }
 
     if (require === "app" && needsOnboarding) {
+      const current = readTokens();
+      if (current?.activeWorkspaceId) {
+        writeTokens({ ...current, needsOnboarding: false });
+        return;
+      }
       router.replace("/onboarding");
     }
   }, [status, needsOnboarding, require, router]);
@@ -45,14 +52,16 @@ export function RouteGuard({ require, children }: Props) {
     return null;
   }
 
+  const hasWorkspace = typeof window !== "undefined" && Boolean(readTokens()?.activeWorkspaceId);
   const redirecting =
     require === "guest"
       ? status === "authenticated"
-      : status === "guest" || (require === "app" && needsOnboarding);
+      : status === "guest" || (require === "app" && needsOnboarding && !hasWorkspace);
 
   if (redirecting) {
     return null;
   }
 
   return <>{children}</>;
+
 }

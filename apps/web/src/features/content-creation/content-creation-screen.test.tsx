@@ -634,8 +634,9 @@ describe("ContentCreationScreen", () => {
     await user.click(flashSaleBtn);
 
     const textarea = screen.getByPlaceholderText(/tuần này giảm 20%/i) as HTMLTextAreaElement;
-    expect(textarea.value).toContain("Ưu đãi giờ vàng");
+    expect(textarea.value).toContain("CTA cuối bài: mời khách nhắn tin");
   });
+
 
   it("chuyển Tab Video và Bài viết lọc danh sách trực quan", async () => {
     mockApi({

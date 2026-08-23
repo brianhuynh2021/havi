@@ -13,8 +13,7 @@ from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.lead_repository import LeadRepository
-from adapters.publishers.fake_reply import FakeReplyPublisher
-from core.enums import InboxItemStatus, LeadSource, Platform
+from core.enums import InboxItemStatus, InboxItemType, LeadSource, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
 from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
@@ -64,10 +63,12 @@ class InboxService:
         self._inbox = inbox
         self._profiles = profiles
         self._events = events
-        self._reply_publishers = reply_publishers or {
-            Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
-            Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),
-        }
+        # Publisher giả phải được lắp ghép rõ ràng ở composition root cho local.
+        # Service không được tự rơi về fake vì điều đó biến cấu hình thiếu ở
+        # production thành một lần gửi "thành công" không hề xảy ra ngoài đời.
+        self._reply_publishers = (
+            reply_publishers if reply_publishers is not None else {}
+        )
         self._telegram = telegram
         self._leads = leads
 
@@ -95,6 +96,7 @@ class InboxService:
         platform: Platform,
         author_name: str,
         content: str,
+        item_type: InboxItemType = InboxItemType.MESSAGE,
         external_message_id: str | None = None,
         recipient_id: str | None = None,
     ) -> InboxItem:
@@ -119,29 +121,36 @@ class InboxService:
 
         if matched_answer:
             # FAQ khớp tuyệt đối -> gửi qua reply publisher port (Nguyên tắc #1)
-            publisher = self._reply_publishers.get(platform) or FakeReplyPublisher(platform)
             reply_res = None
+            auto_status = InboxItemStatus.SENT
             try:
+                publisher = self._reply_publishers.get(platform)
+                if publisher is None:
+                    raise ReplyError(platform, "Chưa cấu hình kênh gửi phản hồi")
                 reply_res = await publisher.send_reply(
                     ReplyRequest(
                         workspace_id=workspace_id,
                         platform=platform,
                         text=matched_answer,
+                        item_type=item_type,
                         recipient_id=recipient_id,
                         external_message_id=external_message_id,
                     )
                 )
             except ReplyError as exc:
                 logger.warning("Không thể tự động gửi trả lời: %s", exc)
+                auto_status = InboxItemStatus.FAILED
 
             item = await self._inbox.create(
                 workspace_id=workspace_id,
                 platform=platform,
                 content=content,
                 author_name=author_name,
+                type=item_type,
                 ai_suggested_reply=matched_answer,
-                status=InboxItemStatus.SENT,
+                status=auto_status,
                 external_message_id=external_message_id,
+                recipient_id=recipient_id,
             )
             # Tự động gửi cho khách là hành vi nhạy cảm nhất trong hệ thống —
             # phải để lại dấu vết để về sau trả lời được "vì sao khách nhận câu
@@ -152,7 +161,7 @@ class InboxService:
                     job_kind="inbox.faq_auto_reply",
                     input_summary=f"{platform.value}: tin nhắn khớp FAQ đã duyệt",
                     output_summary=(
-                        f"reply_id:{reply_res.external_reply_id if reply_res else 'none'} | {matched_answer[:200]}"
+                        f"status:{auto_status.value} reply_id:{reply_res.external_reply_id if reply_res else 'none'} | {matched_answer[:200]}"
                     ),
                 )
             )
@@ -198,9 +207,11 @@ class InboxService:
             platform=platform,
             content=content,
             author_name=author_name,
+            type=item_type,
             ai_suggested_reply=suggested_reply,
             status=InboxItemStatus.DRAFTED,
             external_message_id=external_message_id,
+            recipient_id=recipient_id,
         )
 
     async def send_reply(
@@ -214,19 +225,36 @@ class InboxService:
         if item is None:
             raise InboxItemNotFound()
 
-        publisher = self._reply_publishers.get(item.platform) or FakeReplyPublisher(item.platform)
-        reply_res = None
         try:
+            publisher = self._reply_publishers.get(item.platform)
+            if publisher is None:
+                raise ReplyError(item.platform, "Chưa cấu hình kênh gửi phản hồi")
             reply_res = await publisher.send_reply(
                 ReplyRequest(
                     workspace_id=workspace_id,
                     platform=item.platform,
                     text=text,
+                    item_type=item.type,
+                    recipient_id=item.recipient_id,
                     external_message_id=item.external_message_id,
                 )
             )
         except ReplyError as exc:
             logger.warning("Không thể gửi tin nhắn thật qua API nền tảng: %s", exc)
+            await self._inbox.update_status(
+                item,
+                status=InboxItemStatus.FAILED,
+                reply_text=text,
+            )
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace_id,
+                    job_kind="inbox.reply_failed",
+                    input_summary=f"{item.platform.value}: lỗi gửi phản hồi cho {item.author_name}",
+                    output_summary=f"error:{str(exc)[:200]}",
+                )
+            )
+            raise
 
         updated = await self._inbox.update_status(
             item,

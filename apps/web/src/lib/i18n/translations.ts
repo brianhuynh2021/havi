@@ -5,15 +5,20 @@ export type TranslationKey = keyof typeof translations.VN;
 export const translations = {
   VN: {
     // Navigation / Shell
-    "nav.dashboard": "Tổng quan",
-    "nav.content": "Tạo nội dung",
+    "nav.today": "Hôm nay",
+    "nav.dashboard": "Hôm nay",
+    "nav.content": "Studio Sáng tạo",
     "nav.videoStudio": "Studio Video",
-    "nav.calendar": "Lịch đăng",
+    "nav.calendar": "Lịch & Kế hoạch",
     "nav.inbox": "Hộp thư & Khách hàng",
     "nav.leads": "Khách tiềm năng",
-    "nav.reports": "Báo cáo",
+    "nav.reports": "Báo cáo & Doanh thu",
+    "nav.roadmap": "Lộ trình & Báo cáo",
+    "nav.evidence": "Bằng chứng & Kết quả",
+    "nav.coach": "Havi đồng hành",
     "nav.billing": "Gói cước",
     "nav.settings": "Cài đặt",
+
     "shell.assistant": "Trợ lý Havi",
     "shell.workspace": "Không gian làm việc",
     "shell.signOut": "Đăng xuất",
@@ -85,7 +90,7 @@ export const translations = {
 
     // Leads & Care Loop
     "leads.title": "Khách Tiềm Năng & Hộp Thư",
-    "leads.subtitle": "Tự động phản hồi FAQ và quản lý khách hàng từ Facebook, Google Maps SEO, TikTok, YouTube Shorts",
+    "leads.subtitle": "Theo dõi inbox Facebook và quản lý lead theo dữ liệu workspace",
     "leads.faqTab": "Tự động trả lời (FAQ Loop)",
     "leads.crmTab": "Danh sách khách hàng (CRM)",
     "leads.autoReplyEnabled": "Bật tự động phản hồi AI",
@@ -135,15 +140,20 @@ export const translations = {
   },
   EN: {
     // Navigation / Shell
-    "nav.dashboard": "Dashboard",
-    "nav.content": "Content Studio",
+    "nav.today": "Today",
+    "nav.dashboard": "Today",
+    "nav.content": "Creative Studio",
     "nav.videoStudio": "Video Studio",
-    "nav.calendar": "Calendar",
+    "nav.calendar": "Calendar & Plans",
     "nav.inbox": "Inbox & Customers",
-    "nav.leads": "Leads",
-    "nav.reports": "Reports",
+    "nav.leads": "Leads & CRM",
+    "nav.reports": "Reports & Revenue",
+    "nav.roadmap": "Roadmap & Reports",
+    "nav.evidence": "Evidence & Outcomes",
+    "nav.coach": "Havi Coach",
     "nav.billing": "Billing & Plans",
     "nav.settings": "Settings",
+
     "shell.assistant": "Havi Assistant",
     "shell.workspace": "Workspace",
     "shell.signOut": "Sign Out",
@@ -215,7 +225,7 @@ export const translations = {
 
     // Leads & Care Loop
     "leads.title": "Leads & Customer Care",
-    "leads.subtitle": "Auto-reply FAQ & manage leads from Facebook, Google Maps SEO, TikTok, YouTube Shorts",
+    "leads.subtitle": "Track Facebook inbox items and manage workspace lead data",
     "leads.faqTab": "FAQ Auto-reply Loop",
     "leads.crmTab": "Lead Contacts (CRM)",
     "leads.autoReplyEnabled": "Enable AI Auto-reply",

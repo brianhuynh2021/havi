@@ -231,8 +231,8 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
         <p className={styles.subtitle}>
           {activeTab === "inbox"
             ? t({
-                vi: "Tự động phản hồi FAQ và trực tin nhắn 24/7 từ Facebook, Google Maps SEO, TikTok, YouTube",
-                en: "Auto-reply FAQ and 24/7 inbox care across Facebook, Google Maps SEO, TikTok, YouTube",
+                vi: "Theo dõi inbox Facebook; chỉ FAQ đã duyệt mới có thể được phản hồi tự động",
+                en: "Track Facebook inbox items; only approved FAQs may be auto-replied",
               })
             : t({
                 vi: "Quản lý danh sách khách hàng tự động trích xuất và gửi ưu đãi kích hoạt khách cũ",
@@ -401,12 +401,12 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
                     vi: "Hot Lead Radar — Chuông báo SĐT về Telegram",
                     en: "Hot Lead Radar — Instant Telegram Alert",
                   })}
-                  <span className={styles.radarTag}>{t({ vi: "< 3 giây", en: "< 3s" })}</span>
+                  <span className={styles.radarTag}>{t({ vi: "Theo webhook", en: "Webhook-based" })}</span>
                 </h3>
                 <p className={styles.radarDesc}>
                   {t({
-                    vi: "Tự động báo chuông điện thoại của bạn ngay khi có khách để lại số điện thoại trên Fanpage hoặc TikTok.",
-                    en: "Instantly alert your phone via Telegram whenever a customer leaves their phone number.",
+                    vi: "Gửi cảnh báo Telegram khi Havi nhận được inquiry có SĐT từ nguồn đã hỗ trợ và notifier đã được cấu hình.",
+                    en: "Send a Telegram alert when Havi receives an inquiry with a phone number from a supported source and notifier.",
                   })}
                 </p>
               </div>

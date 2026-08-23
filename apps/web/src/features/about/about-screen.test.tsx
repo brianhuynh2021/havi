@@ -21,7 +21,7 @@ describe("AboutScreen", () => {
 
   it("hiển thị 3 giá trị cốt lõi và câu trích dẫn của đội ngũ sáng lập", () => {
     renderAbout();
-    expect(screen.getByText(/an tâm & kiểm soát 100%/i)).toBeInTheDocument();
+    expect(screen.getByText(/an tâm & có quyền kiểm soát/i)).toBeInTheDocument();
     expect(screen.getByText(/chuẩn kỹ thuật đỉnh cao/i)).toBeInTheDocument();
     expect(screen.getByText(/sự tử tế & phụng sự/i)).toBeInTheDocument();
     expect(screen.getByText(/công nghệ chỉ thực sự có giá trị/i)).toBeInTheDocument();

@@ -40,7 +40,7 @@ export const industryOptions: IndustryOption[] = [
     value: "education",
     label: "Giáo dục, Ngoại ngữ & Đào tạo nghề",
     icon: "🎓",
-    desc: "Tuyển sinh khóa mới, khoe dự án học viên thực chiến & giải đáp học phí 24/7",
+    desc: "Tuyển sinh khóa mới, giới thiệu dự án học viên và chuẩn bị FAQ học phí đã duyệt",
   },
   {
     value: "local_service",
@@ -104,7 +104,7 @@ export function getIndustrySamplePreview(
       };
     case "real_estate":
       return {
-        text: `${name} gửi đến quý nhà đầu tư quỹ căn vị trí đắc địa, pháp lý minh bạch sổ đỏ trao tay! Nhắn tin nhận bảng giá & xem nhà 24/7...`,
+        text: `${name} giới thiệu quỹ căn theo thông tin chủ nhà cung cấp. Nhắn tin để nhân viên xác minh bảng giá, pháp lý và lịch xem nhà.`,
         hashtags: [tag, "#BatDongSan", "#NhaDatChinhChu"],
       };
     case "local_service":

@@ -1,7 +1,13 @@
+from unittest.mock import AsyncMock
+from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
 
-from core.enums import LeadStage
+from application.services.inbox_service import InboxService
+from core.enums import InboxItemStatus, LeadStage, Platform
+from domain.models.inbox import InboxItem
+from domain.ports.reply_publisher import ReplyError
 
 
 async def _onboard(client: AsyncClient, email: str) -> dict:
@@ -110,3 +116,77 @@ async def test_leads_crud_flow(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["stage"] == "qualified"
     assert resp.json()["notes"] == "Khách thích hẹn 15:00 thứ Bảy"
+
+
+@pytest.mark.asyncio
+async def test_inbox_reply_error_handling(client: AsyncClient, monkeypatch):
+    from adapters.publishers.fake_reply import FakeReplyPublisher
+    from domain.ports.reply_publisher import ReplyError
+
+    auth_headers = await _onboard(client, "mai.failtest@havi.vn")
+
+    sim_resp = await client.post(
+        "/webhooks/dev/simulate",
+        json={"content": "Tư vấn giá liệu trình", "author_name": "Khách Test Lỗi"},
+        headers=auth_headers,
+    )
+    assert sim_resp.status_code == 200
+    item_id = sim_resp.json()["id"]
+
+    async def mock_fail_send(*args, **kwargs):
+        raise ReplyError(Platform.FACEBOOK, "Facebook Graph API token expired (code 190)")
+
+    monkeypatch.setattr(FakeReplyPublisher, "send_reply", mock_fail_send)
+
+    reply_resp = await client.post(
+        f"/inbox/{item_id}/reply",
+        json={"text": "Dạ tiệm xin chào bạn ạ!"},
+        headers=auth_headers,
+    )
+    assert reply_resp.status_code == 502
+    assert "Facebook Graph API token expired" in reply_resp.json()["detail"]
+
+    # Verify status in database is now 'failed' (Zero False Success)
+    inbox_list = await client.get("/inbox", headers=auth_headers)
+    assert inbox_list.status_code == 200
+    items = inbox_list.json()["items"]
+    target_item = next(it for it in items if it["id"] == item_id)
+    assert target_item["status"] == "failed"
+
+
+@pytest.mark.asyncio
+async def test_inbox_never_falls_back_to_fake_publisher():
+    """Thiếu adapter thật phải thất bại rõ ràng, không được giả lập SENT."""
+    workspace_id = uuid4()
+    item = InboxItem(
+        id=uuid4(),
+        workspace_id=workspace_id,
+        platform=Platform.ZALO_OA,
+        content="Cho mình xin bảng giá",
+        author_name="Khách Zalo",
+        status=InboxItemStatus.DRAFTED,
+    )
+    inbox = AsyncMock()
+    inbox.get.return_value = item
+    inbox.update_status.return_value = item
+    events = AsyncMock()
+    service = InboxService(
+        inbox=inbox,
+        profiles=AsyncMock(),
+        events=events,
+        reply_publishers={},
+    )
+
+    with pytest.raises(ReplyError, match="Chưa cấu hình kênh"):
+        await service.send_reply(
+            workspace_id=workspace_id,
+            item_id=item.id,
+            text="Dạ đây là bảng giá ạ",
+        )
+
+    inbox.update_status.assert_awaited_once_with(
+        item,
+        status=InboxItemStatus.FAILED,
+        reply_text="Dạ đây là bảng giá ạ",
+    )
+    events.record.assert_awaited_once()

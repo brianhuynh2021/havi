@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index
+from sqlalchemy import Enum, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -58,7 +58,12 @@ class Invoice(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     """
 
     __tablename__ = "invoices"
-    __table_args__ = (Index("ix_invoices_workspace_issued", "workspace_id", "issued_at"),)
+    __table_args__ = (
+        Index("ix_invoices_workspace_issued", "workspace_id", "issued_at"),
+        UniqueConstraint(
+            "gateway_reference", name="uq_invoices_gateway_reference"
+        ),
+    )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
@@ -69,8 +74,7 @@ class Invoice(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         Enum(InvoiceStatus, native_enum=False), default=InvoiceStatus.PENDING
     )
     issued_at: Mapped[datetime]
-    #: Mã tham chiếu bên cổng thanh toán. NULL khi chưa nối cổng nào — hôm nay
-    #: luôn NULL, vì chưa có VNPay/Momo.
+    #: Mã tham chiếu duy nhất từ cổng thanh toán; NULL khi chưa thanh toán.
     gateway_reference: Mapped[str | None] = mapped_column(default=None)
 
 

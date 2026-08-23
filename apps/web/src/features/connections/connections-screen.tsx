@@ -15,9 +15,8 @@ export function ConnectionsScreen() {
         </div>
         <h1 className={styles.title}>Kênh truyền thông đã kết nối</h1>
         <p className={styles.subtitle}>
-          Havi liên kết trực tiếp qua API chính thức của các nền tảng (Facebook,
-          Google Maps SEO, TikTok, YouTube Shorts...). Khi kênh hết hạn hoặc mất quyền, bạn có thể
-          nối lại tại đây để hệ thống tiếp tục đăng bài và nhận tin nhắn tự động.
+          Kết nối Facebook Fanpage và Reels qua Meta Graph API chính thức.
+          Toàn bộ bài viết, kịch bản video và trả lời tin nhắn Messenger sẽ hoạt động tự động.
         </p>
       </header>
       <ConnectionList returnTo="settings" />

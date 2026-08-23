@@ -8,7 +8,10 @@
 
 ## Executive Summary
 
-Havi is positioned as an **"AI Marketing Employee"** that sells **outcomes and operational peace of mind**, not complex self-service prompt tools. While early utility focuses on freeing shop owners from 2–3 hours of daily manual posting and messaging fatigue, the long-term enterprise value stems from **closed-loop lead generation, 24/7 instant conversion, automated customer re-activation (CRM Nudge), and local SEO dominance**.
+Havi is positioned as a **Local Customer-to-Visit OS & Continuous Digital Presence Backbone** that sells **outcomes, peace of mind, and continuous brand vitality**, not complex self-service prompt tools. While early utility frees business owners and HR teams from 2–3 hours of daily manual posting and messaging fatigue, the core enterprise value stems from:
+1. **Continuous Brand Vitality & Credibility:** Keeping social channels active and professionally maintained every single day without hiring expensive marketing staff.
+2. **Universal Applicability Across Segments:** Serving Local Training Centers (Customer Zero: **Nhật Minh**), Corporate HR/Recruitment Fanpages, Resorts & Hospitality, Clinics, and Professional Service SMBs.
+3. **Closed-Loop Conversion & Revenue Ledger:** Transforming social interactions into verified appointments, in-person visits, candidate submissions, and attributed revenue.
 
 This document outlines the **5 strategic evolution phases** to scale Havi from local dogfooding at **Trung Tâm Công Nghệ Nhật Minh** to a globally scalable SaaS platform.
 
@@ -21,93 +24,98 @@ This document outlines the **5 strategic evolution phases** to scale Havi from l
 │                        HAVI 5-PHASE COMMERCIAL SCALE MATRIX                            │
 ├───────────────────┬───────────────────┬───────────────────┬───────────────────┬────────┤
 │ PHASE 1 (Month 1) │ PHASE 2 (Month 2) │ PHASE 3 (Month 3) │ PHASE 4 (Month 4) │ PHASE 5│
-│ Cash-Flow Core    │ Local SEO & Video │ Retention & Nudge │ Autonomous Copilot│ Global │
-│ 100% Reliable Ops │ Kéo khách 0 đồng  │ Kéo khách cũ (CRM)│ AI Trend Scout    │ Scale  │
+│ Facebook Beta Core│ YouTube Shorts    │ Google Business   │ TikTok Growth     │ In-App │
+│ Hoàn Thiện Meta   │ Video Bằng Chứng  │ Maps Local SEO    │ Video & Lead Ingest│ Ads OS │
+│ Kiếm Tiền & Gọi Vốn│ 0 đồng           │ Chặn nhu cầu cao  │ Mở rộng tệp trẻ   │ 1-Click│
 └───────────────────┴───────────────────┴───────────────────┴───────────────────┴────────┘
 ```
 
 ---
 
-## Phase 1: The Cash-Flow Core Engine (Month 1)
+## Phase 1: Facebook Beta Mastery & Monetization Core (Month 1)
 
 ### 1. Objective
-Establish an unbreakable, deterministic closed-loop workflow that operates locally with 100% test coverage and generates early cash flow from pilot customers.
+Hoàn thiện 100% vòng lặp chuyển đổi trên hệ sinh thái Meta (Facebook Fanpage, Reels, Messenger), đóng toàn bộ 7 lỗi P0, đạt chuẩn 100% test tự động để **đưa ra ngoài kiếm tiền thực tế từ đối tác hoặc gọi vốn (Fundraising)** dựa trên số liệu tăng trưởng và chuyển đổi thật.
 
 ### 2. Core Capabilities
-* **30-Second Mobile Ingest:** Single photo or voice note input transformed into channel-native posts (Facebook, Instagram, Google Maps, TikTok hook scripts).
-* **Live Meta Outbound Reply Dispatch:** Real-time Messenger reply delivery via official Meta Graph API (`POST /v19.0/me/messages`), verified by `ReplyPublisherPort`.
-* **Instant VietQR Activation:** Automated PayOS / SePay webhook integration granting instant plan upgrades and invoice generation upon payment scan.
-* **Customer Zero Dogfooding:** Daily live operations for **Trung Tâm Công Nghệ Nhật Minh** (tech training, programming courses, student project showcases).
+* **Hoàn Thiện 100% Facebook Fanpage & Reels:** Đăng bài tự động, video Reels 9:16 có hook 3s, lưu `external_post_id`, chống đăng trùng khi timeout mạng (`PENDING_RECONCILIATION`).
+* **Live Meta Outbound Reply Dispatch:** Gửi tin nhắn Messenger thật qua Meta Graph API (`POST /v21.0/me/messages`), lưu PSID `recipient_id`, cấp quyền `pages_messaging`, chuyển `SENT` chỉ khi có `external_reply_id`.
+* **Lead Care & Chuỗi Nhắc Lịch 3 Chạm:** AI tự động bóc SĐT từ inbox $\rightarrow$ báo Telegram tức thì $\rightarrow$ xác nhận lịch Open Class $\rightarrow$ tự động gửi tin nhắn nhắc lịch (ngay khi đặt, trước 24h, trước 3h) để triệt tiêu no-show.
+* **Xác Minh Khách Đến & Doanh Thu Thật:** Nhân viên/giảng viên bấm Check-in 1-chạm trên mobile $\rightarrow$ Học viên chuyển khoản học phí VietQR $\rightarrow$ Khép kín dòng tiền.
+* **Bảo Mật Tiền Tệ PayOS/VietQR:** Chống replay attack, khóa hàng transaction (`with_for_update`), xác thực chữ ký HMAC-SHA256 chuẩn PayOS.
+* **Customer Zero Dogfooding:** Vận hành thực chiến 30 ngày tại **Trung Tâm Công Nghệ Nhật Minh**.
 
-### 3. Economics & Target KPIs
-* **Pricing Tiers:** Khởi Nghiệp (299,000 VND/mo) | Chuyên Nghiệp (599,000 VND/mo).
-* **Target:** 10–20 active paying workspaces.
-* **Target MRR:** 5,000,000 – 10,000,000 VND.
-* **North Star Metric:** 100% customer inquiry response rate with latency < 10 seconds.
+### 3. Economics & Target KPIs (Mục tiêu thương mại & Gọi vốn)
+* **Pricing Tiers:** Khởi Nghiệp (299,000 VND/tháng) | Chuyên Nghiệp (599,000 VND/tháng).
+* **Mục tiêu Customer Zero & Design Partners:**
+  * $\ge 30$ lead đủ điều kiện từ bài đăng Facebook organic.
+  * $\ge 10$ học viên đến trải nghiệm thực tế (Verified Visits).
+  * $\ge 3$ học viên đóng học phí với 100% attribution rõ nguồn.
+  * 5–10 Design Partners trả phí thử nghiệm có Founder giám sát 1-1.
+  * 0 false publish/reply/payment successes.
+* **North Star Metric:** **Số lượt khách đến đã xác minh mỗi tuần trên mỗi doanh nghiệp hoạt động (Verified Visits / active business / week)**.
 
 ---
 
-## Phase 2: Local Dominance & AI Video Studio (Months 2–3)
+## Phase 2: YouTube Shorts & Video Evidence Studio (Month 2)
 
 ### 1. Objective
-Drive tangible, organic customer acquisition (0 VND ad spend) for local service businesses via Google Maps Local SEO and short-form video algorithms.
+Mở rộng kênh video bằng chứng sang **YouTube Shorts & YouTube Video**, khai thác thuật toán đề xuất video của Google để kéo học viên/khách hàng có nhu cầu học nghề và kỹ thuật.
 
 ### 2. Core Capabilities
-* **AI Video Studio 2.0:**
-  * Transform static shop photos into vertical 9:16 video clips with automated Vietnamese voiceover, kinetic subtitles, and trend-aligned audio.
-  * Embed 3-second pattern-interrupt hooks to maximize retention on TikTok, Reels, and YouTube Shorts.
-* **Google Maps Local SEO Ranker:**
-  * Automated scheduled geotagged updates to Google Business Profile.
-  * Keyword-enriched AI review responses (e.g., *"Cảm ơn bạn đã tin tưởng khóa học Lập trình Web tại Nhật Minh Cầu Giấy..."*) boosting local search rankings into the Top 3 Map Pack.
-* **Smart Lead Extraction & High-Intent Triage:**
-  * Real-time extraction of customer phone numbers, names, and booking intents.
-  * Instant Telegram push notification with 1-tap click-to-call action.
+* **YouTube Shorts Publisher:** Đăng tải tự động video ngắn thực hành lab/lớp học lên kênh YouTube của cơ sở.
+* **Gắn CTA Chuyển Đổi:** Tự động đính kèm liên kết đăng ký Open Class và hotline trong phần mô tả và bình luận ghim.
+* **Video Studio Hỗ Trợ:** Hỗ trợ cắt clip, kiểm tra tỷ lệ khung hình 9:16 và safe zone trước khi xuất bản.
 
 ### 3. Economics & Target KPIs
-* **Target:** 50–100 active paying workspaces.
-* **Target MRR:** 25,000,000 – 50,000,000 VND.
-* **Customer ROI:** Measurable 3x increase in inbound inquiries and Google Maps profile actions.
+* **Target:** 30–50 active paying workspaces.
+* **Target MRR:** 15,000,000 – 30,000,000 VND.
 
 ---
 
-## Phase 3: Customer Retention & CRM Nudge Loop (Months 4–5)
+## Phase 3: Google Business Profile & Local Maps SEO (Month 3)
 
 ### 1. Objective
-Transform Havi from an acquisition tool into a **high-retention revenue engine** by automatically re-engaging past customers without paid ads.
+Chặn trọn vẹn tệp khách hàng có ý định tìm kiếm cao (High-Intent Search) tại địa phương qua Google Maps SEO và Google Business Profile.
 
 ### 2. Core Capabilities
-* **Automated Smart CRM Nudge:**
-  * Lifecycle segmentation (New Inquiries, Inactive 30+ Days, Completed Courses/Services).
-  * Auto-drafted personalized re-engagement offers (e.g., *"Tròn 1 tháng hoàn thành khóa Cơ bản, Havi gửi tặng ưu đãi 15% khóa Chuyên sâu..."*) requiring only a 1-tap owner approval.
-* **Closed-Loop POS Sales Attribution:**
-  * Ingest POS sales receipts via webhook to accurately report which marketing post drove revenue.
-* **Brand Knowledge Base v2 (The Retention Moat):**
-  * Proprietary storage of the shop's pricing matrix, consultation rules, and historical customer interactions.
-  * High switching costs create near-zero churn.
+* **Google Business Profile Event/Offer Posts:** Tự động lên lịch đăng các sự kiện Open Lab và ưu đãi học phí lên Google Maps.
+* **Local SEO Ranker & Review Responder:** Tự động gợi ý phản hồi đánh giá chuẩn từ khóa địa phương để tăng thứ hạng tìm kiếm tự nhiên.
+* **Theo dõi tín hiệu chuyển đổi:** Đo lường lượt gọi điện, yêu cầu chỉ đường và truy cập trang đặt lịch từ Maps.
 
 ### 3. Economics & Target KPIs
-* **Target:** 200–300 active paying workspaces.
-* **Target MRR:** 100,000,000 – 150,000,000 VND.
-* **North Star Metric:** Monthly Churn Rate < 3%.
+* **Target:** 100–150 active paying workspaces.
+* **Target MRR:** 50,000,000 – 80,000,000 VND.
 
 ---
 
-## Phase 4: Autonomous Marketing Radar & Ads Copilot (Months 6–8)
+## Phase 4: TikTok Organic Growth & Lead Ingest (Month 4)
 
 ### 1. Objective
-Elevate Havi into an **Autonomous AI Chief Marketing Officer (CMO)** that proactively identifies viral trends and executes micro-budget ad campaigns.
+Khai thác kênh TikTok để tiếp cận tệp học viên trẻ, học sinh, sinh viên và người muốn học nghề qua các video thực hành ngắn.
 
 ### 2. Core Capabilities
-* **AI Trend Scout (Industry Trend Radar):**
-  * Real-time monitoring of viral social trends across Vietnam by vertical.
-  * Proactive notifications: *"Trending topic detected in your industry. Havi has drafted 1 video script and 1 post—would you like to publish?"*
-* **Meta Ads Lite (1-Tap Ad Booster):**
-  * Automatically detects high-performing organic posts.
-  * 1-tap budget boosting (50k–100k VND/day) to targeted local radiuses without opening Meta Ads Manager.
+* **TikTok Direct Post:** Tự động đăng video lên kênh TikTok của cơ sở sau khi duyệt.
+* **TikTok Lead Webhook:** Tiếp nhận thông tin học viên quan tâm từ Instant Form và tin nhắn TikTok về Havi CRM.
+
+---
+
+## Phase 5: "🚀 Đẩy Khách Đến" (1-Click In-App Ad Booster) & Scale (Month 5+)
+
+### 1. Objective
+Sau khi cỗ máy chuyển đổi tự nhiên (Organic) trên 4 kênh đã hoàn toàn trơn tru và chứng minh hiệu quả tiền thật, mở cổng **chạy quảng cáo trực tiếp trong app Havi** để nhân rộng quy mô khách đến theo nhu cầu.
+
+### 2. Core Capabilities
+* **"🚀 Đẩy Khách Đến" (1-Click Local Ad Booster):**
+  * 5 câu hỏi trong 30 giây: Mục tiêu $\rightarrow$ Đối tượng $\rightarrow$ Bán kính địa phương (3–10km) $\rightarrow$ Ngân sách tối đa $\rightarrow$ Điểm đến (Messenger/Form).
+  * Gọi trực tiếp Meta Marketing API (`POST /campaigns`, `/adsets`, `/ads`) và TikTok Spark Ads API.
+* **Mô Hình Zero-Reseller An Toàn:**
+  * Trừ tiền trực tiếp từ Ad Account của chủ tiệm (thẻ Visa/Mastercard). Havi không cầm tiền quảng cáo, không gánh rủi ro thuế/pháp lý.
+* **Multi-Branch & Chuỗi Cơ Sở:** Hỗ trợ chuyển đổi chi nhánh (Branch Switcher) và quản trị nhiều Fanpage cho chuỗi 2–5 cơ sở.
 
 ### 3. Economics & Target KPIs
-* **Target:** 500–1,000 active paying workspaces.
-* **Target MRR:** 300,000,000 – 500,000,000 VND.
+* **Target:** 300–500 active paying workspaces.
+* **Target MRR:** 150,000,000 – 300,000,000 VND.
 
 ---
 

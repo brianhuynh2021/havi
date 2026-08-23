@@ -68,6 +68,14 @@ function mockDashboard({
           paid_until: null,
         });
       }
+      if (url.pathname.includes("/leads")) {
+        return jsonResponse({
+          items: [],
+          total: 0,
+          limit: 50,
+          offset: 0,
+        });
+      }
       return jsonResponse(summary, summaryStatus);
     });
 }
@@ -96,7 +104,7 @@ describe("DashboardScreen", () => {
 
     render(<DashboardScreen />);
 
-    expect(await screen.findByText("4")).toBeInTheDocument();
+    expect((await screen.findAllByText("4"))[0]).toBeInTheDocument();
     expect(screen.getByText("bài chờ duyệt")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("bài đã lên lịch")).toBeInTheDocument();
@@ -161,7 +169,7 @@ describe("DashboardScreen", () => {
     expect(screen.queryByText(/auth_permission/i)).not.toBeInTheDocument();
   });
 
-  it("hiển thị thẻ đối soát ROI và tiết kiệm chi phí marketing cho tiệm", async () => {
+  it("hiển thị thẻ bằng chứng giá trị hiện có trên workspace", async () => {
     mockDashboard({
       summary: {
         drafts: 0,
@@ -174,9 +182,9 @@ describe("DashboardScreen", () => {
 
     render(<DashboardScreen />);
 
-    expect(await screen.findByText(/Hiệu Quả Đầu Tư Của Tiệm/i)).toBeInTheDocument();
-    expect(screen.getByText(/TIẾT KIỆM GẤP 14 LẦN/i)).toBeInTheDocument();
-    expect(screen.getByText("+4.201.000 đ")).toBeInTheDocument();
+    expect(await screen.findByText(/Bằng Chứng Giá Trị Hiện Có/i)).toBeInTheDocument();
+    expect(screen.getByText(/DỮ LIỆU WORKSPACE/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bài đã xuất bản/i)).toBeInTheDocument();
   });
 
   it("activity feed lỗi riêng thì tổng quan vẫn hiển thị", async () => {
@@ -193,7 +201,8 @@ describe("DashboardScreen", () => {
 
     render(<DashboardScreen />);
 
-    expect(await screen.findByText("2")).toBeInTheDocument();
+    expect((await screen.findAllByText("2"))[0]).toBeInTheDocument();
+    expect(screen.getByText("bài chờ duyệt")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(/hoạt động gần đây/i);
   });
 
@@ -208,7 +217,7 @@ describe("DashboardScreen", () => {
     expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
   });
 
-  it("hiển thị nút mic ghi âm nói để tạo bài và thẻ nhiệm vụ nhận thêm ngày dùng thử", async () => {
+  it("hiển thị nút mic ghi âm nói để tạo bài và hướng dẫn khởi động nhanh", async () => {
     mockDashboard({
       summary: {
         drafts: 0,
@@ -222,7 +231,9 @@ describe("DashboardScreen", () => {
     render(<DashboardScreen />);
 
     expect(await screen.findByRole("link", { name: /nói để tạo bài/i })).toBeInTheDocument();
-    expect(screen.getByText(/Nhiệm Vụ Kích Hoạt Tiệm/i)).toBeInTheDocument();
-    expect(screen.getByText("+2 Ngày")).toBeInTheDocument();
+    expect(screen.getByText(/Khởi động nhanh: 3 bước để có khách đầu tiên/i)).toBeInTheDocument();
+    expect(screen.getByText(/Kết nối Fanpage \/ Kênh mạng xã hội/i)).toBeInTheDocument();
   });
 });
+
+

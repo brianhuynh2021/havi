@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from core.enums import Platform
+from core.enums import InboxItemType, Platform
 
 
 @dataclass
@@ -13,6 +13,7 @@ class ReplyRequest:
     workspace_id: UUID
     platform: Platform
     text: str
+    item_type: InboxItemType = InboxItemType.MESSAGE
     recipient_id: str | None = None
     external_message_id: str | None = None
 

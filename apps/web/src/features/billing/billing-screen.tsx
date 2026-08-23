@@ -37,12 +37,12 @@ const PLAN_DETAILS: Record<
     dailyNote: "Miễn phí 100% · Không cần thẻ",
     badge: null,
     badgeTone: null,
-    desc: "Dùng thử trọn vẹn sức mạnh nhân viên AI — Trải nghiệm trước an tâm tuyệt đối.",
+    desc: "Dùng thử vòng tạo nội dung, duyệt và theo dõi hoạt động trước khi thanh toán.",
     features: [
-      "Trải nghiệm 7 ngày không giới hạn tính năng",
-      "Kết nối 1 Fanpage Facebook an toàn",
-      "Tự động tạo bài viết & Lên lịch đăng giờ vàng",
-      "Hỗ trợ kỹ thuật & Hướng dẫn sử dụng 24/7",
+      "7 ngày dùng thử từ lúc tạo workspace",
+      "100.000 token AI mỗi tháng",
+      "Duyệt nội dung trước khi lên lịch",
+      "Kết nối Facebook phụ thuộc quyền Meta được cấp",
     ],
   },
   tiem_nho: {
@@ -52,13 +52,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~6.000 đ/ngày",
     badge: "TIẾT KIỆM NHẤT",
     badgeTone: "popular",
-    desc: "Tối ưu tự động hóa nội dung & trực fanpage 24/7 cho cửa hàng đơn lẻ.",
+    desc: "Gói trả phí cơ bản; giới hạn hiện được backend thực thi theo token AI.",
     features: [
-      "1 Fanpage Facebook kết nối chính thức",
-      "30 bài viết chuẩn ngành/tháng từ ảnh tiệm",
-      "AI Trực Inbox & Trả lời Bảng giá/FAQ 24/7",
-      "Tự động trích xuất SĐT khách về CRM",
-      "Báo cáo tương tác & Lịch sử đăng bài",
+      "500.000 token AI mỗi tháng",
+      "Tạo, duyệt và lên lịch nội dung",
+      "Inbox và CRM theo dữ liệu workspace",
+      "Facebook Beta qua API chính thức khi đủ quyền",
+      "Không bao gồm cam kết số bài, lead hoặc doanh thu",
     ],
   },
   toan_dien: {
@@ -66,15 +66,15 @@ const PLAN_DETAILS: Record<
     price: "369.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~12.000 đ/ngày",
-    badge: "BÁN CHẠY NHẤT ★",
+    badge: "HẠN MỨC AI CAO HƠN",
     badgeTone: "featured",
-    desc: "Giải pháp đa kênh tăng trưởng toàn diện cho chủ tiệm & chuyên viên (Spa, Môi giới BĐS, F&B, Đào tạo nghề).",
+    desc: "Hạn mức AI lớn hơn; quyền kênh vẫn phụ thuộc phê duyệt của từng nền tảng.",
     features: [
-      "Đa kênh: Facebook + Google Maps + TikTok Shorts",
-      "90 bài viết/tháng + Video Studio (Hook giữ chân 3s)",
-      "AI Lead Agent: Tự động trích xuất SĐT/Tên khách hàng",
-      "Smart CRM Nudge: Tự động kéo khách cũ quay lại tiệm",
-      "Báo cáo doanh thu & Đối soát chuyển đổi POS",
+      "2.000.000 token AI mỗi tháng",
+      "Tạo, duyệt, lịch đăng, inbox và CRM",
+      "Video Studio ở trạng thái Beta",
+      "Google, YouTube và TikTok chưa được bán như auto-publish công khai",
+      "Doanh thu chỉ hiển thị khi có webhook POS thật",
     ],
   },
   doanh_nghiep: {
@@ -84,13 +84,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~26.000 đ/ngày",
     badge: "QUY MÔ CHUỖI 👑",
     badgeTone: "enterprise",
-    desc: "Quản lý tập trung 2–5 chi nhánh / Fanpage cho hệ thống chuỗi và Agency truyền thông.",
+    desc: "Hạn mức AI cao nhất hiện tại; multi-branch vẫn thuộc roadmap, chưa phải entitlement đã giao.",
     features: [
-      "Quản lý tối đa 5 Chi nhánh / Fanpage",
-      "Không giới hạn bài viết AI & kịch bản Video",
-      "Phân quyền tài khoản: Chủ tiệm, Quản lý, Nhân viên tư vấn",
-      "Đối soát POS KiotViet / Sapo tự động",
-      "Kỹ sư Havi hỗ trợ VIP 1-1 riêng biệt",
+      "5.000.000 token AI mỗi tháng",
+      "Các năng lực nền tảng hiện có của workspace",
+      "Không quảng cáo multi-branch trước khi backend thực thi",
+      "Không quảng cáo tích hợp POS cụ thể khi chưa được xác minh",
+      "Liên hệ founder để xác nhận phạm vi pilot trước khi trả phí",
     ],
   },
 };
@@ -260,10 +260,10 @@ export function BillingScreen() {
 
         <div className={styles.quotaBarContainer}>
           <div className={styles.quotaLabels}>
-            <span>Hạn mức nội dung tháng này:</span>
+            <span>Hạn mức token AI tháng này:</span>
             <span className={styles.quotaValue}>
               {sub.token_quota_used.toLocaleString("vi-VN")} /{" "}
-              {sub.token_quota_limit.toLocaleString("vi-VN")} Lượt ({quotaPercent}%)
+              {sub.token_quota_limit.toLocaleString("vi-VN")} token ({quotaPercent}%)
             </span>
           </div>
           <div className={styles.progressBarBg}>
@@ -411,7 +411,7 @@ export function BillingScreen() {
                   Quét mã VietQR để nâng cấp {PLAN_DETAILS[checkoutData.plan]?.title}
                 </h3>
                 <p style={{ fontSize: 13.5, color: "#64748b" }}>
-                  Mở ứng dụng Ngân hàng (VCB, MB, Techcombank, VPBank…) quét mã QR 24/7 — Hệ thống tự động kích hoạt sau 3 giây.
+                  Mở ứng dụng ngân hàng và quét mã QR. Gói chỉ được kích hoạt sau khi Havi nhận và xác minh webhook thanh toán.
                 </p>
 
                 <div className={styles.qrBox}>
@@ -486,7 +486,7 @@ export function BillingScreen() {
                     disabled={upgrading}
                     onClick={handleManualConfirm}
                   >
-                    {upgrading ? "Đang kích hoạt…" : "Xác nhận đã chuyển khoản"}
+                    {upgrading ? "Đang kiểm tra…" : "Kiểm tra trạng thái"}
                   </Button>
                 </div>
               </>

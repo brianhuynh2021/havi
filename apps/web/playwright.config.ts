@@ -21,6 +21,10 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
     timezoneId: "Asia/Ho_Chi_Minh",
+    // Page routes mock every backend dependency. A registered PWA service
+    // worker can bypass Playwright routing and make a visual test depend on a
+    // real localhost API, so block it in this deterministic harness.
+    serviceWorkers: "block",
   },
   projects: [
     {
@@ -37,6 +41,7 @@ export default defineConfig({
     : {
         command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
         url: baseURL,
+        env: { NEXT_PUBLIC_API_BASE_URL: baseURL },
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

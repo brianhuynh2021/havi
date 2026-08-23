@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.enums import InboxItemStatus, Platform
+from core.enums import InboxItemStatus, InboxItemType, Platform
 from domain.models.inbox import InboxItem
 
 
@@ -59,19 +59,22 @@ class InboxRepository:
         platform: Platform,
         content: str,
         author_name: str,
-        type: str = "message",
+        type: InboxItemType = InboxItemType.MESSAGE,
         ai_suggested_reply: str | None = None,
         status: InboxItemStatus = InboxItemStatus.NEW,
         external_message_id: str | None = None,
+        recipient_id: str | None = None,
     ) -> InboxItem:
         item = InboxItem(
             workspace_id=workspace_id,
             platform=platform,
             content=content,
             author_name=author_name,
+            type=type,
             ai_suggested_reply=ai_suggested_reply,
             status=status,
             external_message_id=external_message_id,
+            recipient_id=recipient_id,
         )
         self._session.add(item)
         await self._session.flush()

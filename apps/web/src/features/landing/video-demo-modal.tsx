@@ -26,23 +26,23 @@ const CHAPTERS: Chapter[] = [
     timeSec: 0,
     timeLabel: "00:00 - 00:18",
     title: "1. Chụp ảnh tiệm thật & Quét nhận diện AI",
-    desc: "Chủ tiệm chụp ảnh cơ sở thật hoặc ghi âm 15s giọng nói. Havi phân tích dịch vụ, bảng giá và đối tượng khách mục tiêu chỉ trong 0.3 giây.",
+    desc: "Chủ tiệm nạp tư liệu cơ sở thật và thông tin đã kiểm chứng để Havi dùng làm ngữ cảnh tạo bản nháp.",
     channel: "📸 HAVI VISION AI",
   },
   {
     id: 2,
     timeSec: 18,
     timeLabel: "00:18 - 00:40",
-    title: "2. Sinh bài viết Facebook & Kịch bản TikTok Hook 3s",
-    desc: "Tự động tạo nội dung đa kênh: Facebook có hình và giờ vàng, kịch bản Video TikTok 9:16 có câu giật tít 3s giữ chân người xem.",
-    channel: "⚡ MULTI-CHANNEL ENGINE",
+    title: "2. Sinh bản nháp Facebook & kịch bản video 9:16",
+    desc: "AI tạo bản nháp để người dùng kiểm tra. Facebook Beta có thể xuất bản qua API khi đủ quyền; các kênh khác chưa được mô tả như auto-publish.",
+    channel: "⚡ DRAFT ENGINE",
   },
   {
     id: 3,
     timeSec: 40,
     timeLabel: "00:40 - 01:00",
-    title: "3. Khách nhắn lúc 23:15: Rung chuông Telegram < 3s",
-    desc: "Khách hỏi giá ban đêm, AI tự đối chiếu bảng giá tiệm, khéo léo chốt lịch lấy SĐT và bắn chuông ngay về Telegram để chủ tiệm gọi lại.",
+    title: "3. Theo dõi inquiry và cảnh báo Telegram",
+    desc: "Khi webhook hỗ trợ chuyển inquiry có SĐT vào Havi, notifier đã cấu hình có thể cảnh báo chủ cơ sở; độ trễ phụ thuộc nhà cung cấp.",
     channel: "🔔 TELEGRAM RADAR",
   },
 ];
@@ -233,10 +233,10 @@ export function VideoDemoModal({
                   </div>
                 </div>
                 <div className={styles.sceneMetaCard}>
-                  <div className={styles.sceneTagGreen}>✓ Bắt Lead 24/7</div>
-                  <h4 className={styles.sceneCardHeading}>Không để rơi mất khách nửa đêm</h4>
+                  <div className={styles.sceneTagGreen}>✓ Minh hoạ chăm sóc lead</div>
+                  <h4 className={styles.sceneCardHeading}>Theo dõi inquiry trong một hộp thư</h4>
                   <p className={styles.sceneCardDesc}>
-                    Khách nhắn tin lúc 23:15, Havi tự trả lời đối soát bảng giá và bắn SĐT về điện thoại chủ tiệm ngay tức thì.
+                    Đây là kịch bản minh hoạ. Chỉ FAQ đã duyệt mới được tự phản hồi; các trường hợp khác chờ người dùng duyệt và gửi.
                   </p>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export function VideoDemoModal({
         {/* Modal Bottom CTA Footer */}
         <div className={styles.videoModalFooter}>
           <div className={styles.videoModalFooterLeft}>
-            ⭐️ <strong>Cam kết 100% an toàn:</strong> Bạn luôn là người duyệt cuối cùng trước khi đăng.
+            ⭐️ <strong>Nguyên tắc kiểm soát:</strong> Bạn là người duyệt cuối cùng trước khi đăng.
           </div>
           <div className={styles.videoModalFooterRight}>
             <Link

@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, toStoredTokens } from "@/features/auth/auth.api";
+import { createGoal, generateRoadmap } from "@/features/roadmap/roadmap.api";
 import type { StoredTokens } from "@/lib/auth/token-store";
 import type { IndustryOption } from "./onboarding.fixture";
 
@@ -129,10 +130,55 @@ export async function initializeBusinessTruthPack(
       },
     });
 
+    // Tự động khởi tạo Mục Tiêu & Lộ Trình mẫu để khi bước vào app có ngay việc làm
+    try {
+      const goalTitles: Record<string, { title: string; evidence: string }> = {
+        spa: {
+          title: `Thu hút 20 khách hàng trải nghiệm dịch vụ mới tại ${shopName} trong 30 ngày`,
+          evidence: "Có 20 khách hàng để lại số điện thoại hoặc đặt lịch trải nghiệm",
+        },
+        restaurant: {
+          title: `Tăng 30% khách hàng ghé quán & đặt bàn tại ${shopName}`,
+          evidence: "Ghi nhận 30 lượt khách đặt bàn hoặc check-in tại quán",
+        },
+        retail: {
+          title: `Thu hút 20 khách hàng mua sắm & để lại thông tin tại ${shopName}`,
+          evidence: "Có 20 đơn hàng mới hoặc khách hàng mới để lại thông tin",
+        },
+        clinic: {
+          title: `Thu hút 15 bệnh nhân đặt hẹn khám tư vấn tại ${shopName}`,
+          evidence: "Có 15 lượt bệnh nhân đặt lịch khám tư vấn",
+        },
+        education: {
+          title: `Tuyển sinh 20 học viên khóa học mới tại ${shopName} trong 30 ngày`,
+          evidence: "Có 20 học viên đăng ký hoặc chuyển khoản cọc VietQR",
+        },
+        other: {
+          title: `Thu hút 20 khách hàng tiềm năng đầu tiên tại ${shopName} trong 30 ngày`,
+          evidence: "Có 20 khách hàng liên hệ tư vấn hoặc để lại số điện thoại",
+        },
+      };
+
+      const selectedGoal = industry ? (goalTitles[industry] ?? goalTitles.other) : goalTitles.other;
+      const goalRes = await createGoal({
+        title: selectedGoal.title,
+        category: "acquire_customers",
+        evidence_definition: selectedGoal.evidence,
+        weekly_capacity_hours: 10,
+      });
+
+      if (goalRes.ok) {
+        await generateRoadmap(goalRes.data.id);
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
     return { ok: true };
   } catch {
     // Non-blocking fallback
     return { ok: true };
   }
 }
+
 

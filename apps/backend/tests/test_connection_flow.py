@@ -623,13 +623,15 @@ class TestErrorClassification:
                 access_token=PAGE_TOKEN,
             )
 
-    async def test_timeout_la_loi_tam(self, monkeypatch):
+    async def test_timeout_cho_doi_soat_khong_retry(self, monkeypatch):
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.TimeoutException("hết giờ", request=request)
 
         publisher = _publisher(monkeypatch, handler)
 
-        with pytest.raises(TemporaryPublishError):
+        from domain.ports.publisher import AmbiguousPublishError
+
+        with pytest.raises(AmbiguousPublishError):
             await publisher.publish(
                 PublishRequest(text="x", external_account_id="page-1"),
                 access_token=PAGE_TOKEN,

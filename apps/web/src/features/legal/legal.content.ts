@@ -32,8 +32,8 @@ export const termsSections: Section[] = [
   {
     heading: "1. Havi là gì",
     paragraphs: [
-      "Havi là nền tảng trợ lý AI Marketing đa kênh giúp hộ kinh doanh, chủ tiệm Spa, Salon, F&B, BĐS và doanh nghiệp vừa và nhỏ tự động hóa sáng tạo nội dung, kịch bản video ngắn và trực chat bắt lead 24/7.",
-      "Bạn chỉ cần nạp ảnh hoặc ghi âm giọng nói, Havi viết bài và kịch bản cho từng kênh (Facebook, TikTok 9:16, Google Maps, YouTube Shorts), và bạn luôn là người duyệt trước khi bài được xuất bản.",
+      "Havi là nền tảng trợ lý AI giúp doanh nghiệp nhỏ tạo bản nháp nội dung, duyệt lịch đăng và theo dõi inbox/lead trong một workspace.",
+      "Bạn có thể nạp tư liệu để Havi gợi ý bài viết và kịch bản. Khả năng xuất bản phụ thuộc vào từng kênh được hỗ trợ và quyền API được nền tảng cấp.",
     ],
   },
   {
@@ -41,7 +41,7 @@ export const termsSections: Section[] = [
     paragraphs: [
       "Bạn cần email và mật khẩu để tạo tài khoản. Bạn chịu trách nhiệm giữ bí mật mật khẩu và mọi hoạt động diễn ra dưới tài khoản của mình.",
       "Bạn phải đủ 18 tuổi và có quyền đại diện cho cơ sở kinh doanh mà bạn đăng ký.",
-      "Havi cung cấp 7 ngày dùng thử miễn phí đầy đủ tính năng. Sau thời gian dùng thử, bạn có thể chọn nâng cấp Gói Khởi Nghiệp (189.000 đ/tháng) hoặc Gói Chuyên Nghiệp (369.000 đ/tháng) thanh toán tự động qua mã VietQR chuyển khoản ngân hàng. Bạn có quyền hủy gia hạn bất kỳ lúc nào.",
+      "Havi cung cấp 7 ngày dùng thử có hạn mức. Sau thời gian dùng thử, bạn có thể chủ động tạo checkout VietQR cho gói tháng; gói chỉ kích hoạt sau khi webhook thanh toán được xác minh.",
     ],
   },
   {
@@ -63,16 +63,16 @@ export const termsSections: Section[] = [
   {
     heading: "5. Kết nối với nền tảng khác",
     paragraphs: [
-      "Havi chỉ kết nối với Facebook, Google Business, TikTok, YouTube qua API chính thức của họ. Chúng tôi không thu thập dữ liệu bằng cách crawl, và không dùng công cụ tự động vi phạm điều khoản của các nền tảng đó.",
+      "Khi một kênh được hỗ trợ, Havi chỉ kết nối qua API chính thức của nền tảng đó. Chúng tôi không crawl dữ liệu và không dùng công cụ tự động vi phạm điều khoản nền tảng.",
       "Khi bạn nối một kênh, bạn cũng chịu ràng buộc bởi điều khoản của nền tảng đó. Nếu bên thứ ba thay đổi chính sách hoặc khoá quyền truy cập, tính năng liên quan có thể ngưng hoạt động ngoài tầm kiểm soát của Havi.",
     ],
   },
   {
     heading: "6. Giới hạn trách nhiệm và Chính sách thanh toán",
     paragraphs: [
-      "Havi cung cấp 7 ngày dùng thử miễn phí đầy đủ tính năng để bạn trải nghiệm thực tế trước khi quyết định nâng cấp. Do chi phí hạ tầng điện toán và mô hình AI phát sinh ngay khi xử lý, mọi gói dịch vụ (gói theo tháng hoặc gói theo năm) sau khi kích hoạt thành công sẽ không áp dụng hoàn tiền hoặc hoàn tiền theo tỷ lệ thời gian chưa sử dụng.",
-      "Đối với gói năm, bạn được hưởng mức giá chiết khấu ưu đãi thanh toán một lần và có quyền sử dụng trọn vẹn trong suốt 365 ngày kể từ ngày kích hoạt.",
-      "Bạn có toàn quyền không gia hạn tiếp hoặc chuyển đổi gói cho các chu kỳ tiếp theo mà không bị ràng buộc hay bị trừ tiền tự động.",
+      "Havi cung cấp 7 ngày dùng thử có hạn mức để bạn đánh giá quy trình trước khi quyết định nâng cấp. Điều kiện hoàn tiền áp dụng theo chính sách được công bố tại thời điểm thanh toán.",
+      "Ứng dụng hiện cung cấp checkout theo chu kỳ tháng; không hiển thị gói năm khi backend chưa hỗ trợ quyền lợi tương ứng.",
+      "Checkout VietQR không tự trừ tiền cho chu kỳ tiếp theo. Bạn chủ động quyết định có tạo giao dịch mới hay không.",
       "Havi không chịu trách nhiệm cho thiệt hại phát sinh từ nội dung bạn đã duyệt và đăng, từ việc nền tảng bên thứ ba ngưng dịch vụ, hoặc từ việc bạn mất quyền truy cập tài khoản do lộ mật khẩu.",
     ],
   },
@@ -115,7 +115,7 @@ export const privacySections: Section[] = [
     heading: "3. Dữ liệu đi tới đâu",
     paragraphs: [
       "Để sinh bản nháp, Havi gửi thông tin tiệm và dữ liệu thô bạn nạp tới nhà cung cấp mô hình AI: ưu tiên Google Gemini, và Anthropic hoặc OpenAI khi Gemini gặp sự cố. Các nhà cung cấp này xử lý dữ liệu theo điều khoản bảo mật dành cho khách hàng doanh nghiệp của họ.",
-      "Khi bạn duyệt một bài, nội dung đó được gửi tới nền tảng bạn đã nối (Facebook, Google Maps, TikTok, YouTube) qua API chính thức.",
+      "Khi bạn duyệt và lên lịch một bài cho kênh đang được hỗ trợ, nội dung có thể được gửi qua API chính thức sau các bước kiểm tra trạng thái và quyền truy cập.",
       "Ngoài hai trường hợp trên, chúng tôi chỉ chia sẻ dữ liệu khi có yêu cầu hợp pháp từ cơ quan nhà nước có thẩm quyền.",
     ],
   },

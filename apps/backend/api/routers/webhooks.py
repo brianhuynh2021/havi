@@ -25,7 +25,7 @@ from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
 from api.deps import InboxServiceDep, SalesServiceDep, SettingsDep, WorkspaceDep
-from core.enums import Platform
+from core.enums import InboxItemType, Platform
 from core.events import EventLogEntry
 from core.schemas import HaviModel
 from domain.policies.sales_attribution import PosOrder
@@ -120,6 +120,7 @@ async def receive_meta_webhook(
             platform=Platform.FACEBOOK,
             author_name=event.author_name,
             content=event.text,
+            item_type=event.item_type,
             external_message_id=event.message_id,
             recipient_id=event.sender_id,
         )
@@ -171,7 +172,14 @@ async def simulate_inbound(
 class _Inquiry:
     """Một sự kiện đã bóc tách, chuẩn hoá khỏi khác biệt giữa các loại webhook."""
 
-    __slots__ = ("page_id", "message_id", "author_name", "text", "sender_id")
+    __slots__ = (
+        "page_id",
+        "message_id",
+        "author_name",
+        "text",
+        "sender_id",
+        "item_type",
+    )
 
     def __init__(
         self,
@@ -181,12 +189,14 @@ class _Inquiry:
         author_name: str,
         text: str,
         sender_id: str | None = None,
+        item_type: InboxItemType = InboxItemType.MESSAGE,
     ):
         self.page_id = page_id
         self.message_id = message_id
         self.author_name = author_name
         self.text = text
         self.sender_id = sender_id
+        self.item_type = item_type
 
 
 def _iter_inquiries(payload: dict):
@@ -237,6 +247,7 @@ def _iter_inquiries(payload: dict):
                 author_name=author,
                 text=text,
                 sender_id=str(from_id) if from_id else None,
+                item_type=InboxItemType.COMMENT,
             )
 
 

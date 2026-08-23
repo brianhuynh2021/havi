@@ -252,8 +252,8 @@ export function CalendarScreen() {
         </div>
         <p className={styles.subtitle}>
           {t({
-            vi: "Bài đã duyệt tự động xếp vào khung giờ vàng (08:00, 12:00, 20:00 ICT) và xuất bản đa kênh Facebook, TikTok, YouTube.",
-            en: "Approved posts auto-scheduled to golden hours (Asia/Ho_Chi_Minh) across Facebook, TikTok, and YouTube.",
+            vi: "Bài đã duyệt được xếp theo thời gian bạn chọn. Chỉ kênh đang được backend hỗ trợ và đã cấp quyền mới có thể xuất bản.",
+            en: "Approved posts follow the time you choose. Only backend-supported channels with valid permissions can publish.",
           })}
         </p>
 

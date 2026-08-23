@@ -7,18 +7,15 @@ export type NavItem = {
   count?: number;
 };
 
-// `count` là số việc "chờ chị" trên mỗi tab. Bỏ trống cho tới khi có nguồn thật
-// từ dashboard summary: số fixture cứng (3 và 2) từng chạy thẳng trong app thật,
-// nên chủ tiệm thấy huy hiệu "3 việc cần làm" ở tab Lịch đăng kể cả khi lịch
-// trống — đúng loại số giả mà §4 tuần 8 đã dọn khỏi Dashboard và Báo cáo.
+// Havi 3.0 Unified Execution Spaces (Tối giản chuẩn mực 5 không gian)
 export const navItems: NavItem[] = [
-  { key: "nav.dashboard", label: "Tổng quan", href: "/app" },
-  { key: "nav.content", label: "Tạo nội dung", href: "/app/content" },
-  { key: "nav.videoStudio", label: "Studio Video", href: "/app/video-studio" },
-  { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar" },
+  { key: "nav.today", label: "Hôm nay", href: "/app" },
+  { key: "nav.content", label: "Studio Sáng tạo", href: "/app/content" },
+  { key: "nav.calendar", label: "Lịch & Kế hoạch", href: "/app/calendar" },
   { key: "nav.inbox", label: "Hộp thư & Khách hàng", href: "/app/inbox" },
-  { key: "nav.reports", label: "Báo cáo", href: "/app/reports" },
-  { key: "nav.billing", label: "Gói cước", href: "/app/billing" },
+  { key: "nav.roadmap", label: "Lộ trình & Báo cáo", href: "/app/roadmap" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings" },
 ];
+
+
 

@@ -21,14 +21,17 @@ from api.routers import (
     billing,
     brand_profile,
     calendar,
+    campaigns,
     connections,
     content,
     crm_nudge,
+    goals,
     health,
     inbox,
     leads,
     media,
     payment_webhook,
+    roadmaps,
     trends,
     video_render,
     voice,
@@ -59,6 +62,9 @@ ROUTERS = (
     health.router,
     auth.router,
     workspaces.router,
+    goals.router,
+    roadmaps.router,
+    campaigns.router,
     brand_profile.router,
     media.router,
     trends.router,
@@ -75,6 +81,8 @@ ROUTERS = (
     webhooks.router,
     payment_webhook.router,
 )
+
+
 
 
 def create_app() -> FastAPI:

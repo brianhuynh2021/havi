@@ -195,8 +195,8 @@ export function ContentCreationScreen() {
       icon: "🚀",
       tag: "Doanh Thu Đột Phá",
       title: "Flash Sale & Kéo Khách Gấp",
-      desc: "Ưu đãi giờ vàng, tặng voucher trải nghiệm cho 20 khách đầu tiên nhắn tin/đặt lịch hôm nay.",
-      text: "Ưu đãi giờ vàng đặc biệt cuối tuần: Tặng Voucher 20% hoặc quà tặng trải nghiệm cho 20 khách hàng đầu tiên nhắn tin/đặt lịch hôm nay.",
+      desc: "Thêm CTA hoặc ưu đãi chỉ khi cơ sở đã xác nhận giá trị, thời hạn và số lượng thật.",
+      text: "CTA cuối bài: mời khách nhắn tin để nhân viên xác nhận thông tin, lịch trống và ưu đãi thực tế đang áp dụng.",
     },
     {
       id: "viral_trend",
@@ -1870,6 +1870,73 @@ export function ContentCreationScreen() {
           </div>
         ) : null}
 
+        {/* Offer Sellability Diagnostic (Bộ Chẩn Đoán Khả Năng Bán & Cảnh Báo Chuyển Đổi) */}
+        {(() => {
+          const combinedText = [note, ...chips.map((c) => c.label)].join(" ");
+          const hasMedia = chips.some((c) => c.kind === "photo") || uploads.some((u) => u.status === "complete");
+          if (!combinedText.trim() && !hasMedia) return null;
+
+          const content = combinedText.toLowerCase();
+          const hasOffer = /(ưu đãi|giảm|tặng|học thử|miễn phí|voucher|khóa học|combo|quà|suất|chỉ còn|%|đóng học phí|bảo dưỡng|sửa chữa)/i.test(content);
+          const hasUrgency = /(tuần này|hôm nay|chỉ còn|duy nhất|hạn chót|ngày|suất|sớm nhất|hạn|48h|24h)/i.test(content);
+          const hasPrice = /(\d+\s*(k|tr|đ|đồng|triệu|nghìn|vnđ|%)|miễn phí|0đ)/i.test(content);
+          const hasCta = /(inbox|nhắn|nhắn tin|đặt lịch|gọi|liên hệ|hotline|sđt|đăng ký|ghé|bình luận|comment)/i.test(content);
+          const hasProof = hasMedia;
+
+          let score = 0;
+          if (hasOffer) score += 25;
+          if (hasProof) score += 25;
+          if (hasUrgency) score += 20;
+          if (hasPrice) score += 15;
+          if (hasCta) score += 15;
+
+          const scoreClass = score >= 80 ? styles.scoreHigh : score >= 50 ? styles.scoreMedium : styles.scoreLow;
+          const adviceClass = score >= 80 ? styles.sellabilityAdvicePass : styles.sellabilityAdvice;
+          const adviceText = score >= 80
+            ? "✨ Bản nháp có đủ các thành phần CTA đang được kiểm tra; điểm này không dự đoán số khách hay doanh thu."
+            : score >= 50
+              ? "💡 Có thể bổ sung bằng chứng thật hoặc CTA rõ hơn. Chỉ dùng giới hạn số suất nếu đó là thông tin có thật."
+              : "⚠️ Bản nháp đang thiếu đề nghị hoặc lời kêu gọi hành động rõ ràng; hãy kiểm tra lại trước khi duyệt.";
+
+          const criteria = [
+            { id: "offer", label: "🎯 Đề nghị / Ưu đãi rõ ràng", pass: hasOffer },
+            { id: "proof", label: "📸 Bằng chứng ảnh/clip thật", pass: hasProof },
+            { id: "urgency", label: "⏱️ Tính cấp bách / Giới hạn", pass: hasUrgency },
+            { id: "price", label: "💰 Định khung giá / Giá trị", pass: hasPrice },
+            { id: "cta", label: "🚀 Lời kêu gọi chốt lịch (CTA)", pass: hasCta },
+          ];
+
+          return (
+            <div className={styles.sellabilityCard} aria-label="Chẩn đoán khả năng bán">
+              <div className={styles.sellabilityHeader}>
+                <div className={styles.sellabilityTitleWrapper}>
+                  <span>🔍</span>
+                  <h3 className={styles.sellabilityTitle}>Chẩn Đoán Khả Năng Bán Của Chiến Dịch</h3>
+                </div>
+                <div className={`${styles.sellabilityScoreBadge} ${scoreClass}`}>
+                  ⚡ Điểm Chuyển Đổi: {score}/100
+                </div>
+              </div>
+
+              <div className={styles.criteriaGrid}>
+                {criteria.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`${styles.criterionItem} ${c.pass ? styles.criterionItemPass : ""}`}
+                  >
+                    <span>{c.pass ? "✓" : "○"}</span>
+                    <span>{c.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className={adviceClass}>
+                {adviceText}
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Preset chips */}
         <div className={styles.presetSection}>
           <div className={styles.presetHeader}>
@@ -1896,7 +1963,7 @@ export function ContentCreationScreen() {
               {
                 icon: "💻",
                 title: "Đào tạo Tech / Kỹ năng số",
-                text: "Khai giảng khóa học Kỹ thuật số thực chiến 1 kèm 1: Học trên dự án thật, cam kết hỗ trợ việc làm sau khóa học.",
+                text: "Khai giảng khóa học Kỹ thuật số thực hành: mô tả rõ nội dung, thời lượng và hình thức hỗ trợ sau khóa học theo chính sách thật của cơ sở.",
               },
               {
                 icon: "🛍️",
@@ -1933,10 +2000,10 @@ export function ContentCreationScreen() {
               <span className={styles.conversionBoosterIcon}>🤖</span>
               <div>
                 <div className={styles.conversionBoosterTitle}>
-                  Tự Động Chốt Lead &amp; Trả Lời Tin Nhắn 24/7 (AI Lead Agent)
+                  Gợi Ý Chăm Sóc Lead &amp; Trả Lời FAQ Đã Duyệt (AI Lead Agent Beta)
                 </div>
                 <div className={styles.conversionBoosterDesc}>
-                  Tự động gắn mã ưu đãi và kích hoạt AI tiếp đón khách khi có người bình luận hoặc nhắn tin.
+                  Gợi ý CTA và phản hồi theo FAQ đã được chủ cơ sở phê duyệt trước.
                 </div>
               </div>
             </div>

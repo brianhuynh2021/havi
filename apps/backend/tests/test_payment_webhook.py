@@ -138,6 +138,7 @@ async def test_payos_webhook_success(monkeypatch):
             invoice_id=inv_id,
             gateway_reference="payos_FT260817001",
             amount_paid_vnd=299000,
+            currency="VND",
         )
 
 
@@ -180,6 +181,7 @@ async def test_vietqr_webhook_success(monkeypatch):
             invoice_id=inv_id,
             gateway_reference="vietqr_MB_TX_9876",
             amount_paid_vnd=599000,
+            currency="VND",
         )
 
 
@@ -233,4 +235,69 @@ async def test_payos_webhook_underpaid_rejected(monkeypatch):
         res = await client.post("/webhooks/payos", json=payload)
         assert res.status_code == 200
         assert res.json()["error"] == 1
-        assert "không đủ" in res.json()["message"]
+        assert "không" in res.json()["message"]
+
+
+async def test_payos_webhook_rejects_missing_transaction_reference():
+    app = create_app()
+
+    from api import deps
+
+    app.dependency_overrides[deps.get_settings] = lambda: Settings(
+        payos_checksum_key=""
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/webhooks/payos",
+            json={
+                "code": "00",
+                "data": {
+                    "amount": 299000,
+                    "description": f"HAVI {uuid4()}",
+                    "orderCode": 123456,
+                },
+            },
+        )
+
+    assert res.status_code == 400
+    assert "unique transaction reference" in res.json()["detail"]
+
+
+async def test_vietqr_webhook_internal_error_is_not_reported_as_success():
+    app = create_app()
+    inv_id = uuid4()
+    mock_invoice = Invoice(
+        id=inv_id,
+        workspace_id=uuid4(),
+        plan=Plan.TIEM_NHO,
+        amount_vnd=299000,
+        status=InvoiceStatus.PENDING,
+        issued_at=datetime.now(UTC),
+    )
+    mock_billing = MagicMock()
+    mock_billing.get_invoice_by_code = AsyncMock(return_value=mock_invoice)
+    mock_billing.process_payment_success = AsyncMock(
+        side_effect=RuntimeError("database unavailable")
+    )
+
+    from api import deps
+
+    app.dependency_overrides[deps.get_settings] = lambda: Settings(
+        payment_webhook_secret=""
+    )
+    app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/webhooks/vietqr",
+            json={
+                "content": f"HAVI {inv_id}",
+                "transferAmount": 299000,
+                "referenceCode": "TX-FAIL-1",
+            },
+        )
+
+    assert res.status_code == 500
+    assert res.json()["detail"] == "Payment webhook processing failed"

@@ -8,6 +8,7 @@ const APP_ORIGIN = new URL(
 const API_PATH_PREFIXES = [
   "/analytics",
   "/auth",
+  "/billing",
   "/brand-profile",
   "/calendar",
   "/connections",
@@ -48,7 +49,8 @@ function json(route: Route, body: unknown, status = 200) {
     status,
     contentType: "application/json",
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": APP_ORIGIN,
+      "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Headers": "authorization,content-type",
       "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
     },
@@ -97,7 +99,8 @@ async function mockApi(page: Page) {
       return route.fulfill({
         status: 204,
         headers: {
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin": APP_ORIGIN,
+          "Access-Control-Allow-Credentials": "true",
           "Access-Control-Allow-Headers": "authorization,content-type",
           "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
         },
@@ -123,7 +126,22 @@ async function mockApi(page: Page) {
     }
     if (path === "/workspaces") return json(route, [workspace]);
     if (path === "/workspaces/w1") return json(route, workspace);
+    if (path.endsWith("/video/render-jobs")) {
+      return json(route, { items: [], total: 0, limit: 20, offset: 0 });
+    }
+    if (path.endsWith("/trends/hot")) return json(route, []);
     if (path === "/connections") return json(route, [connection]);
+    if (path === "/billing/subscription") {
+      return json(route, {
+        workspace_id: "w1",
+        plan: "trial",
+        status: "trialing",
+        current_period_end: "2026-08-18T00:00:00Z",
+        token_quota_used: 12000,
+        token_quota_limit: 100000,
+      });
+    }
+    if (path === "/billing/invoices") return json(route, []);
     if (path === "/brand-profile") {
       return json(route, {
         workspace_id: "w1",
@@ -379,6 +397,23 @@ async function expectReady(page: Page, route: VisualRoute) {
   if ("auth" in route && route.auth) {
     await expect(page).not.toHaveURL(/\/login$/);
   }
+  if (route.name === "landing") {
+    await expect(page.getByText(/chưa công bố testimonial, ROI/i)).toBeAttached();
+    await expect(page.getByText(/Trực Inbox 24\/7/i)).toHaveCount(0);
+  }
+  if (route.name === "billing") {
+    await expect(
+      page.getByText(/Không bao gồm cam kết số bài, lead hoặc doanh thu/i),
+    ).toBeAttached();
+    await expect(page.getByText(/Dùng thử trọn vẹn sức mạnh/i)).toHaveCount(0);
+  }
+  if (route.name === "video-studio") {
+    await expect(
+      page.getByText(/xuất bản đa kênh vẫn ở trạng thái Beta/i),
+    ).toBeAttached();
+    await expect(page.getByText(/Tự động tối ưu video dọc/i)).toHaveCount(0);
+    await expect(page.getByRole("alert")).toHaveCount(0);
+  }
 }
 
 // Đường dẫn tiếng Anh chuẩn (Gate J) và tiêu đề đúng như app render. Bảng này
@@ -386,16 +421,23 @@ async function expectReady(page: Page, route: VisualRoute) {
 // chuyển sang `/app/...`, nên mọi route có auth đều 404 và cả suite đỏ — một
 // suite đỏ toàn bộ thì không ai đọc nữa, và nó thôi bắt được hồi quy thật.
 const publicRoutes = [
-  { name: "landing", path: "/about", heading: /Havi/i, auth: false },
+  {
+    name: "landing",
+    path: "/",
+    heading: /Từ tư liệu thật đến bài Facebook đã duyệt/i,
+    auth: false,
+  },
   { name: "login", path: "/login", heading: /Đăng nhập Havi/i, auth: false },
 ] as const;
 
 const authenticatedRoutes = [
   { name: "dashboard", path: "/app", heading: /Tổng quan/i, auth: true },
-  { name: "content", path: "/app/content", heading: "Tạo nội dung", auth: true },
+  { name: "content", path: "/app/content", heading: /Chiến Dịch Tăng Trưởng/i, auth: true },
   { name: "calendar", path: "/app/calendar", heading: /Lịch [Đđ]ăng/i, auth: true },
   { name: "reports", path: "/app/reports", heading: /Báo [Cc]áo/i, auth: true },
   { name: "settings", path: "/app/settings", heading: /Cài [Đđ]ặt/i, auth: true },
+  { name: "billing", path: "/app/billing", heading: /Gói Cước/i, auth: true },
+  { name: "video-studio", path: "/app/video-studio", heading: /Studio Video/i, auth: true },
   // `/app/leads` render đúng `LeadsScreen` này nên không thêm route riêng —
   // baseline thứ hai của cùng một màn chỉ tốn thời gian chạy.
   { name: "inbox", path: "/app/inbox", heading: /Hộp [Tt]hư/i, auth: true },

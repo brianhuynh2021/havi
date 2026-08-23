@@ -174,10 +174,9 @@ describe("OnboardingScreen", () => {
 
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: /bỏ qua/i }));
-    await user.click(screen.getByRole("button", { name: /bắt đầu/i }));
-    await user.click(await screen.findByRole("button", { name: /vào app/i }));
 
-    expect(replace).toHaveBeenCalledWith("/app");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/app"), { timeout: 2000 });
+
   });
 
   it("hiển thị badge đề xuất pilot và cập nhật trạng thái chọn aria-pressed", async () => {

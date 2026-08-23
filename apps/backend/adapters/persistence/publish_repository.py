@@ -183,6 +183,21 @@ class PublishRepository:
         await self._session.flush()
         return job
 
+    async def mark_pending_reconciliation(
+        self, job: PublishJob, *, detail: str
+    ) -> PublishJob:
+        """Dừng retry khi kết quả bên ngoài không xác định.
+
+        Cùng job không được quay lại `pending` trước khi có bằng chứng bài chưa
+        được tạo; unique key trong DB không bảo vệ khỏi việc retry chính job đó.
+        """
+        job.status = PublishStatus.PENDING_RECONCILIATION
+        job.failure_kind = PublishFailureKind.AMBIGUOUS_OUTCOME
+        job.failure_detail = detail[:1000]
+        job.next_attempt_at = None
+        await self._session.flush()
+        return job
+
     async def list_for_workspace(
         self, *, workspace_id: UUID, status: PublishStatus | None = None
     ) -> list[PublishJob]:

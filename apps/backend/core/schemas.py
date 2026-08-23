@@ -440,6 +440,8 @@ class InboxItem(HaviModel):
     type: InboxItemType
     content: str
     author_name: str
+    recipient_id: str | None = None
+    external_message_id: str | None = None
     sentiment: str | None = None
     ai_suggested_reply: str | None = None
     status: InboxItemStatus
@@ -466,6 +468,7 @@ class Lead(HaviModel):
     message: str | None = None
     suggested_reply: str | None = None
     notes: str | None = None
+    revenue_vnd: int = 0
     content_item_id: UUID | None = None
     created_at: datetime
 

@@ -35,6 +35,13 @@
   --color-paper: var(--color-surface);
   --color-surface-dark: #090d16;
   --color-surface-darker: #05070c;
+
+  /* Universal Semantic Tokens */
+  --bg-surface: #ffffff;
+  --bg-canvas: #f8fafc;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
 }
 
 /* Tech + Business Dark Mode Overrides */
@@ -53,6 +60,12 @@
   --color-border-glow: rgba(56, 139, 253, 0.3);
   --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 14px 40px 0 rgba(0, 102, 255, 0.25);
+
+  --bg-surface: #131a29;
+  --bg-canvas: #090d16;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
 }
 
 

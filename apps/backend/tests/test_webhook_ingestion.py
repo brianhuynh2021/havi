@@ -15,6 +15,7 @@ from httpx import AsyncClient
 
 from api.routers.webhooks import _iter_inquiries, _signature_matches
 from core.config import get_settings
+from core.enums import InboxItemType
 
 APP_SECRET = "test-app-secret"
 VERIFY_TOKEN = "test-verify-token"
@@ -90,6 +91,7 @@ class TestPayloadParsing:
         assert events[0].page_id == PAGE_ID
         assert events[0].message_id == "m1"
         assert events[0].text == "Giá bao nhiêu"
+        assert events[0].item_type == InboxItemType.MESSAGE
 
     def test_extracts_feed_comment(self):
         payload = {
@@ -115,6 +117,7 @@ class TestPayloadParsing:
         assert len(events) == 1
         assert events[0].message_id == "c1"
         assert events[0].author_name == "Chị Lan"
+        assert events[0].item_type == InboxItemType.COMMENT
 
     def test_skips_echo_of_page_own_message(self):
         payload = _message_payload(mid="m1", text="Cảm ơn chị")

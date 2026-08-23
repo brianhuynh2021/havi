@@ -36,6 +36,23 @@ const EMPTY_FORM: FormState = {
   bannedClaimsText: "",
 };
 
+function getBannedClaimsPlaceholder(industry?: string): string {
+  const ind = (industry || "").toLowerCase();
+  if (ind.includes("education") || ind.includes("giáo dục") || ind.includes("đào tạo")) {
+    return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết học xong lương nghìn đô\nbao đậu chứng chỉ 100% không cần học";
+  }
+  if (ind.includes("restaurant") || ind.includes("fnb") || ind.includes("ăn uống") || ind.includes("cà phê")) {
+    return "Mỗi dòng một câu cấm kỵ, ví dụ:\nquán ăn ngon số 1 Việt Nam\nchữa dứt điểm mọi cơn đói";
+  }
+  if (ind.includes("clinic") || ind.includes("y tế") || ind.includes("phòng khám") || ind.includes("nha khoa")) {
+    return "Mỗi dòng một câu cấm kỵ, ví dụ:\nchữa khỏi dứt điểm 100%\nkhông bao giờ tái phát";
+  }
+  if (ind.includes("spa") || ind.includes("beauty") || ind.includes("làm đẹp") || ind.includes("salon")) {
+    return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo trị mụn dứt điểm 100%";
+  }
+  return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết hiệu quả 100% sau 1 ngày\nđảm bảo hoàn tiền vô điều kiện trọn đời";
+}
+
 function toFormState(data: SettingsData): FormState {
   return {
     workspaceId: data.workspace.id,
@@ -236,7 +253,7 @@ export function SettingsScreen() {
             <Textarea
               value={form.bannedClaimsText}
               disabled={loading || saving}
-              placeholder={"Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo tăng doanh thu 100%"}
+              placeholder={getBannedClaimsPlaceholder(form.industry)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -304,7 +321,7 @@ export function SettingsScreen() {
             <div className={styles.dangerSubInfo}>
               <div className={styles.dangerTitle}>Xoá tiệm trên Havi</div>
               <div className={styles.dangerText}>
-                Xoá toàn bộ bài nháp, ngắt kết nối các kênh và xoá cài đặt của tiệm này trên Havi (Fanpage và kênh mạng xã hội thật của bạn vẫn an toàn 100%).
+                Xoá toàn bộ bài nháp, ngắt kết nối các kênh và xoá cài đặt của tiệm này trên Havi. Thao tác không xoá Fanpage hoặc tài khoản mạng xã hội tại nền tảng bên ngoài.
               </div>
             </div>
             <button

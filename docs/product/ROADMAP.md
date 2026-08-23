@@ -3,47 +3,92 @@
 > Documentation language: English. Product UI/customer-facing copy remains
 > Vietnamese because the target users are Vietnamese small-business owners.
 
-## 1. Product Thesis
+## 1. Product Thesis: Havi 3.0 — Universal Goal-to-Roadmap Execution OS
 
-Havi is an AI marketing employee for small shops and solo operators. The product
-is not a generic content tool; it is a closed-loop marketing workflow:
+Havi is an **AI operating system that turns an unclear objective into a usable
+roadmap, guides execution one step at a time, learns from real evidence, and
+replans with the user**.
 
-1. capture raw material quickly
-2. generate multiple channel-specific drafts
-3. require owner approval by default
-4. publish through official platform APIs
-5. track business outcomes and operational reliability
+The canonical product loop is:
 
-Primary user outcomes:
+`Goal → Roadmap → Next Action → Execution → Evidence → Review → Continue / Improve / Pivot → Replan`
 
-- create usable marketing posts without marketing expertise
-- publish consistently without learning platform tooling
-- avoid accidental/deceptive automation
-- understand whether marketing work produces inquiries, visits, or return visits
+The user's industry is context, not the product architecture. A training center,
+hair salon, takeaway drink shop, motorcycle seller, restaurant, outsourcing
+company, freelancer, programmer, HR team, singer, or actor can use the same core
+system. What changes is the objective, constraints, available assets, metrics,
+and execution modules—not the loop.
 
-Non-goals for MVP:
+Havi's job is to remove the paralysis caused by not knowing what to do next:
 
-- scraping or unofficial platform automation
-- automatic customer replies without approval
-- vanity-metric dashboards that imply more certainty than the data supports
-- broad multi-channel public launch before safe publishing and operations are
-  proven
+1. clarify the result the user wants and the evidence that would count;
+2. create a long-term direction and a concrete 30-day, 7-day, and daily plan;
+3. recommend one feasible next action instead of presenting a wall of tools;
+4. help execute authorized work through capability modules;
+5. collect actual results and obstacles;
+6. recommend whether to continue, improve, pivot, pause, or stop;
+7. preserve plan history so every change is explainable and reversible.
+
+Havi does **not** guarantee customers, revenue, virality, hiring success, or any
+other external outcome. It guarantees a clearer process: a roadmap, visible
+progress, evidence-based review, and an updated next step. It must distinguish
+between facts, user assumptions, AI suggestions, completed actions, and verified
+external results.
+
+Content creation, publishing, lead care, CRM, analytics, recruiting, project
+delivery, and eventually paid advertising are **execution capabilities** called
+by roadmap tasks. None of them is the product root. In particular, Havi does not
+promise to manufacture a studio-quality video: the authentic photos/video come
+from the user, center, shop, or team; Havi may suggest a brief, hook, script,
+shot list, checklist, caption, schedule, and distribution plan.
+
+**North Star Metric:**
+
+- **Weekly Guided Progress:** percentage of active workspaces that complete at
+  least one committed roadmap action and one evidence-based review in a week.
+- Goal-specific outcomes remain separate metrics: students enrolled, qualified
+  leads, orders, hires, project milestones, audience growth, or another outcome
+  explicitly chosen by the user.
+
+**Customer Zero:** Trung Tâm Công Nghệ Nhật Minh validates the complete loop,
+but the domain model and UX must remain goal-first and industry-agnostic.
+
+**Scope decision (2026-08-23):** automated paid-ad creation, launch, and budget
+management are deliberately deferred to a later phase. They are not required to
+validate the core Havi loop. See §26.12 for the entry gates and safeguards.
 
 ## 2. Product Principles
 
-1. **Approval first:** no content goes online until the owner approves it, except
-   exact pre-approved FAQ responses.
-2. **Official APIs only:** platform integration must use supported APIs.
-3. **One job, multiple drafts:** content generation should create several
-   channel-specific drafts from one raw-input job.
-4. **Backend owns safety:** approval state, idempotency, tenant isolation, quota,
-   and token encryption are backend responsibilities.
-5. **Measure real outcomes:** reports prioritize published posts, inquiries,
-   visits, returning customers, and operational health.
-6. **Local fake modes only:** mock LLM and fake publisher are for local/test
-   development and are blocked in staging/production.
-7. **No PII/secrets in observability UI:** operations tooling shows aggregate
-   metrics, not raw request bodies or tokens.
+1. **Goal before tool:** start with the desired change, deadline, evidence,
+   constraints, and available resources—not an industry picker or feature menu.
+2. **Plan long, commit short:** show direction at 90-day/30-day horizons, but ask
+   the user to commit only to a realistic 7-day plan and one next action.
+3. **One recommended next action:** Havi may expose alternatives, but it must
+   explain and prioritize one recommendation to reduce choice paralysis.
+4. **Evidence before replan:** ask what was done, what happened, and what blocked
+   progress before changing the plan. Never invent success metrics.
+5. **Adaptive, versioned roadmaps:** a roadmap is a living hypothesis. Revisions
+   are append-only, attributable, explainable, and reversible.
+6. **Human agency and approval:** the user chooses the goal and controls any
+   consequential external action. Havi may automate only within explicit,
+   revocable authorization and budget/scope limits.
+7. **Industry-agnostic core:** industry, profession, and business type enrich
+   context but never fork the core domain or onboarding journey.
+8. **Capabilities are modules:** content, calendar, publishing, inbox, CRM,
+   analytics, recruiting, project delivery, and ads execute roadmap tasks; they
+   are not separate destinations competing for the user's attention.
+9. **Authenticity over synthetic polish:** Havi organizes and improves the use
+   of real business assets. It must not claim to have created a finished video or
+   completed external work when it only produced a plan, script, or draft.
+10. **Official APIs and backend-owned safety:** approval state, authorization,
+    idempotency, tenant isolation, quota, token encryption, and reconciliation
+    remain backend responsibilities.
+11. **No false certainty:** recommendations display assumptions, confidence,
+    dependencies, and measurement windows. Havi sells guidance and execution
+    support—not guaranteed outcomes.
+12. **Release only behind evidence:** local fake modes stay local; no feature
+    ships until its required unit, integration, contract, and journey tests pass
+    100%; no PII or secrets appear in observability UI.
 
 ## 3. Current Architecture Status
 
@@ -374,11 +419,26 @@ Acceptance criteria:
 
 North Star metric:
 
-- **verified weekly business outcomes per active workspace**: a platform-confirmed
-  published post, delivered reply, created lead, booked appointment, attributed
-  POS sale, or verified returning customer. Drafts and clicks are not outcomes.
+- **Weekly Guided Progress:** percentage of active workspaces that complete at
+  least one committed roadmap action and one evidence-based review per week.
 
-Product metrics:
+Universal product metrics:
+
+- goal clarified → roadmap accepted rate
+- roadmap accepted → first task scheduled/completed rate
+- median time from goal creation to first scheduled action
+- first evidence-based review completion within 14 days
+- week-4 Weekly Guided Progress and paid retention
+- blocked-task recovery and accepted-replan rate
+- user-rated roadmap clarity, feasibility, and recommendation relevance
+- zero fabricated completion, unauthorized external action, or cross-tenant leak
+
+Goal outcome metrics are defined per goal rather than hardcoded by industry. A
+verified enrollment, sale, hire, delivery, audience result, publish, reply, lead,
+appointment, or POS transaction can be outcome evidence; an AI draft alone is
+never external-outcome evidence.
+
+Content/publishing capability metrics:
 
 - signup → Business Truth Pack completion rate
 - signup → first connected Page rate
@@ -906,6 +966,11 @@ Order of operations when access does arrive:
 
 ## 21. Strategic 5-Phase Commercial Scale Master Plan
 
+> **Historical plan — superseded by §26 on 2026-08-23.** This section is kept
+> for decision history. In particular, its Phase 4 Ads Copilot is not current
+> near-term scope; paid-ad execution and budget automation now require the later
+> entry gates in §26.12.
+
 The complete 5-phase product, engineering, and monetization roadmap from Local Dogfooding to Global Scale is formally recorded in [`docs/product/COMMERCIALIZATION_PHASES.md`](COMMERCIALIZATION_PHASES.md):
 
 * **Phase 1 (Month 1):** The Cash-Flow Core Engine (30s Mobile Ingest, Live Meta Reply, VietQR Activation, Dogfooding at Trung Tâm Công Nghệ Nhật Minh).
@@ -1009,7 +1074,11 @@ When a shop owner manages multiple Facebook Pages (e.g., separate brand pages, m
 
 ### 25.1 Decision, Scope, and Scoring Rule
 
-Status: **active; supersedes earlier commercial launch declarations**.
+Status: **partially superseded by §26 on 2026-08-23**. The security, payment,
+tenant-isolation, reliability, truthful-state, accessibility, and production
+gates in this section remain mandatory. Its content-first product scope, golden
+journey, activation definition, and commercial sequence are retained as audit
+history but are no longer the current Havi product strategy.
 
 The objective is not to add enough features to claim 10/10. The objective is to
 produce repeatable evidence that a Vietnamese shop owner can receive value,
@@ -1017,7 +1086,7 @@ publish safely, collect a lead, pay, and continue using Havi without founder
 intervention. A workstream reaches 10/10 only after all acceptance criteria pass
 and the target metrics hold for 30 consecutive pilot days.
 
-Until Gate 10 in §25.10 passes:
+Until the applicable trust gates here and phase gates in §26 pass:
 
 - public paid acquisition is blocked;
 - Founder Customer Zero dogfooding is allowed;
@@ -1147,8 +1216,10 @@ Owner outcome: the first session creates one real, observable result.
 - [ ] Build a Business Truth Pack covering name, address, opening hours,
       services, prices, offer conditions, CTA/contact, FAQs, prohibited claims,
       and media/automation consent.
-- [ ] Add starter templates by industry without inventing business facts; every
-      generated factual claim must trace to the Truth Pack or owner input.
+- [ ] Add starter patterns by goal type (acquire customers, recruit, launch,
+      deliver, learn, grow an audience) without inventing facts; industry is
+      optional context, and every generated factual claim must trace to user
+      input, a connected source, or an explicitly labeled assumption.
 - [ ] Make channel capability/precondition checks explicit; if no channel is
       connected, offer an honest demo/export path rather than an active publish
       control.
@@ -1160,9 +1231,11 @@ Owner outcome: the first session creates one real, observable result.
       verified value, and make every trial-extension rule a backend-owned,
       audited policy.
 - [ ] Build activation/cohort dashboards for every event in §25.2 and segment by
-      industry, acquisition source, device, and failure reason.
-- [ ] Meet >=60% qualified signup-to-verified-publish activation, median <=5
-      minutes, p90 <=10 minutes, and measure day-1/day-7/week-4 retention.
+      goal type, acquisition source, device, and failure reason; industry may be
+      used as a secondary research dimension only.
+- [ ] Treat `roadmap_accepted → first_task_completed → first_review_completed`
+      as the universal activation funnel. Verified publishing remains one
+      capability-specific funnel, not the definition of activation for Havi.
 
 Research baseline:
 
@@ -1400,3 +1473,684 @@ Planning estimate, not a launch promise:
 Do not parallelize feature breadth ahead of trust. Phase 0 is strictly first;
 platform submissions may start immediately, but a channel cannot enter paid
 scope until its own approval and evidence gate passes.
+
+---
+
+## 26. Universal Goal-to-Roadmap Program (Decision Record: 2026-08-23)
+
+### 26.1 Decision and Precedence
+
+This section is the current product direction and supersedes earlier statements
+that define Havi primarily as a content generator, video studio, local marketing
+tool, or one-click ad launcher. Those capabilities may remain useful, but only
+as modules used by roadmap tasks.
+
+The product-level decision is:
+
+> **Havi gives any person or team a direction, converts that direction into a
+> realistic roadmap, stays with them during execution, and adapts the roadmap
+> from evidence.**
+
+The architecture must support many goals without creating a separate product per
+industry. Customer Zero validates the first complete loop at Nhật Minh; it does
+not narrow the product ontology to training centers or local businesses.
+
+### 26.2 The Pain and Jobs to Be Done
+
+The common pain is not merely “I cannot write a post.” It is:
+
+- I have an objective but do not know where to start.
+- I cannot turn a vague ambition into a one-month or one-week campaign.
+- I see too many tools and ideas, so I stop acting.
+- I do a few activities but cannot tell whether to repeat, change, or stop.
+- When circumstances change, my old plan becomes irrelevant and I abandon it.
+- I need support across planning and execution, not a one-time AI answer.
+
+The primary job to be done is:
+
+> “When I want to achieve something but do not know the path, help me define a
+> credible roadmap, tell me the next feasible action, help me do it, and update
+> the plan when reality gives us new information.”
+
+Examples using the same system:
+
+| User | Goal | Example evidence | Possible capability modules |
+|---|---|---|---|
+| Training center | Enroll 20 suitable students | qualified inquiries, visits, paid enrollments | offer, content, publishing, inbox, CRM |
+| Hair salon | Fill quiet weekday slots | bookings, show-up rate, repeat visits | offer, local presence, reminders |
+| Takeaway drink shop | Increase repeat orders | orders, repeat rate, average ticket | promotion, loyalty, CRM |
+| Motorcycle seller | Sell selected inventory | qualified leads, test rides, sales | listings, content, lead follow-up |
+| Outsourcing company | Win two suitable projects | discovery calls, proposals, signed contracts | positioning, outreach, pipeline |
+| Freelancer/programmer | Find a client or ship a product | demos, replies, paid milestones | portfolio, outreach, delivery plan |
+| HR team | Hire five qualified people | qualified applicants, interviews, accepted offers | role brief, sourcing, content, follow-up |
+| Singer/actor | Grow a credible audience | releases, watch time, saves, bookings | release plan, content calendar, outreach |
+
+Industry labels may improve vocabulary, constraints, compliance checks, or metric
+suggestions. They must not be required to generate a roadmap.
+
+Universal architecture does not require generic go-to-market messaging. Havi
+should launch through one proven wedge at a time—starting with Nhật Minh—while
+keeping the core model horizontal. Landing pages and campaigns may speak to a
+specific goal and situation; they must not create incompatible product forks.
+
+### 26.3 Product Contract: What Havi Does and Does Not Promise
+
+Havi promises to provide:
+
+1. a clear goal statement and success evidence;
+2. a roadmap with milestones, dependencies, assumptions, and feasible actions;
+3. one prioritized next action and an explanation of why it matters;
+4. reminders and execution assistance within the user's authorization;
+5. a review based on completed work and observed evidence;
+6. an updated, versioned plan when results or constraints change.
+
+Havi does not promise:
+
+- guaranteed customers, revenue, virality, employment, fundraising, or success;
+- that posting more content automatically produces business results;
+- that an AI-generated recommendation is a verified fact;
+- that a generated script is a finished video;
+- that an external platform completed an action without platform confirmation;
+- fully autonomous consequential actions without explicit authorization.
+
+The commercial message should be **“Không còn mù mờ bước tiếp theo”**, not
+“Havi guarantees revenue.” Retention should come from useful continuity—context,
+progress, learning, and replanning—not manufactured lock-in.
+
+### 26.4 Research Foundation and Product Consequences
+
+| Research finding | Product consequence for Havi |
+|---|---|
+| Specific, challenging goals paired with feedback generally outperform vague “do your best” goals, subject to ability, knowledge, and commitment. | Convert aspiration into a specific target, evidence, time window, and controllable leading actions. Check feasibility and commitment before acceptance. |
+| Implementation intentions—concrete “when/where/how” action plans—show a medium-to-large positive effect on goal attainment across 94 independent tests. | Every committed task needs an observable action, owner, context/time, completion rule, and fallback. A content idea alone is not a plan. |
+| Field experiments on planning prompts show that prompting people to make a concrete plan can increase follow-through. | Roadmap acceptance must end in scheduling the first realistic action, not merely displaying an AI document. |
+| Choice overload depends on complexity, decision difficulty, preference uncertainty, and goal clarity. | Default to one recommended next action; place alternatives behind “Xem lựa chọn khác” and explain tradeoffs. |
+| Feedback interventions help on average, but more than one-third in a major meta-analysis reduced performance; feedback aimed at the self is less reliable than feedback close to the task. | Reviews discuss behavior, evidence, obstacles, and the next experiment. Avoid shame, generic scores, and unsupported motivational judgments. |
+| Temporal landmarks such as the start of a week or month can create a “fresh start” effect. | Offer weekly/monthly reset moments, but preserve history and unfinished work rather than pretending the past did not happen. |
+| NIST AI RMF emphasizes documented roles, human oversight, limitations, measurement, and continual monitoring. | Show whether an item came from the user, Havi, or an integration; record approvals; expose uncertainty; monitor drift and failure; allow pause/override. |
+
+Primary research and standards:
+
+- [Locke & Latham, goal-setting theory (2002)](https://doi.org/10.1037/0003-066X.57.9.705)
+- [Gollwitzer & Sheeran, implementation intentions meta-analysis (2006)](https://doi.org/10.1016/S0065-2601(06)38002-1)
+- [Milkman et al., planning prompts field experiments (NBER)](https://www.nber.org/papers/w17995)
+- [Rogers et al., concrete plans and follow-through (2015)](https://doi.org/10.1177/237946151500100205)
+- [Chernev et al., choice overload meta-analysis (2015)](https://doi.org/10.1016/j.jcps.2014.08.002)
+- [Kluger & DeNisi, feedback intervention meta-analysis (1996)](https://doi.org/10.1037/0033-2909.119.2.254)
+- [Dai, Milkman & Riis, the fresh start effect (2014)](https://doi.org/10.1287/mnsc.2014.1901)
+- [NIST AI Risk Management Framework 1.0](https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10)
+
+These findings support the interaction model; they do not prove Havi's product
+market fit. Havi must validate activation, weekly use, outcome evidence, and paid
+retention with real cohorts.
+
+### 26.5 Canonical Loop and State Machine
+
+```text
+INTENT CAPTURED
+      │
+      ▼
+GOAL CLARIFIED ── missing evidence/constraint ──► NEEDS CLARIFICATION
+      │
+      ▼
+ROADMAP PROPOSED ── user edits/rejects ─────────► REVISION REQUESTED
+      │ accepted
+      ▼
+ROADMAP ACTIVE ─► TASK READY ─► IN PROGRESS ─► DONE / BLOCKED / SKIPPED
+      ▲                                  │
+      │                                  ▼
+      └──────── REPLAN ◄── REVIEW ◄── EVIDENCE CAPTURED
+                              │
+                              ├── CONTINUE
+                              ├── IMPROVE
+                              ├── PIVOT
+                              ├── PAUSE
+                              └── STOP / GOAL ACHIEVED
+```
+
+Rules:
+
+- The user can edit the goal and roadmap before accepting them.
+- A task is complete only when its completion rule is met; time passing is not
+  completion.
+- `BLOCKED` requires a reason and creates a recovery suggestion, not a failure
+  label.
+- A review may recommend change but cannot silently rewrite the active plan.
+- Replanning creates a new version and preserves the old version, evidence, and
+  rationale.
+- External actions have `DRAFT`, `APPROVAL_REQUIRED`, `EXECUTING`,
+  `CONFIRMED`, `FAILED`, and `PENDING_RECONCILIATION` states.
+- The system never displays external success from an internal queue state alone.
+
+### 26.6 Planning Horizons: Direction Without False Precision
+
+| Horizon | Purpose | Required detail | Review rhythm |
+|---|---|---|---|
+| 90 days | Direction and outcome hypothesis | goal, baseline, target, constraints, major milestones | monthly or after material evidence |
+| 30 days | Current strategic bet | one measurable focus, 2–4 milestones, leading indicators | weekly |
+| 7 days | User commitment | 1–5 feasible actions with owner and timing | end of week |
+| Today | Reduce paralysis | one recommended next action, duration, done rule, fallback | after action |
+
+Havi should use rolling horizons. It must not fabricate a detailed 90-day plan
+when knowledge is weak. Low-confidence future work stays coarse and becomes
+specific only as evidence arrives.
+
+Roadmap generation must ask only what changes the plan:
+
+1. What do you want to achieve, for whom, and by when?
+2. What would prove meaningful progress or completion?
+3. What is the current baseline?
+4. What resources/assets/channels/skills already exist?
+5. What constraints, risks, permissions, and non-negotiables exist?
+6. How much time/money can be committed this week?
+7. What has already been tried and what happened?
+
+Unknown answers remain `UNKNOWN`; Havi may propose an assumption, but the user
+must see and confirm or reject it.
+
+### 26.7 Universal Domain Model
+
+The core domain must not contain `SalonRoadmap`, `SchoolRoadmap`, or other
+industry-specific aggregates. Use these universal entities:
+
+| Entity | Minimum fields |
+|---|---|
+| `Goal` | statement, beneficiary, baseline, target, evidence definition, target date, status, owner |
+| `Constraint` | type, description, severity, source, valid period |
+| `Resource` | kind, availability, provenance, authorization scope |
+| `Roadmap` | goal ID, version, horizon, status, assumptions, confidence, created-by |
+| `Milestone` | outcome, evidence rule, target date, dependencies, status |
+| `Task` | action, rationale, owner, executor, estimate, schedule, done rule, fallback, status |
+| `Evidence` | type, value/artifact, provenance, observed time, confidence, verification state |
+| `CheckIn` | task/goal reference, progress, obstacle, energy/capacity, note |
+| `Review` | evidence window, finding, decision, rationale, approved-by |
+| `PlanRevision` | from/to version, changed items, trigger, rationale, approval |
+| `CapabilityExecution` | capability, authorization, request, state, external ID, reconciliation data |
+| `MetricDefinition` | name, unit, source, baseline, target, direction, measurement window |
+| `MetricObservation` | metric ID, value, source, time, confidence, attribution caveat |
+
+Required invariants:
+
+- every roadmap belongs to exactly one goal and one tenant;
+- every active roadmap has exactly one current version;
+- every task has one accountable owner, even when Havi is the executor;
+- `executor = HAVI` requires an authorization scope and audit event;
+- a generated artifact is not evidence of an external outcome;
+- metric observations retain source and measurement time;
+- revisions cannot delete historical evidence or approvals;
+- all reads/writes enforce tenant isolation at repository and database boundaries.
+
+Goal archetypes can provide optional guidance without becoming industries:
+
+- acquire customers or users;
+- sell an offer or inventory;
+- launch a product, service, campaign, or creative work;
+- recruit and onboard people;
+- deliver a project;
+- learn or build a skill;
+- grow an audience or reputation;
+- improve operations, retention, or quality.
+
+### 26.8 Information Architecture and Core UX
+
+The primary navigation should become:
+
+1. **Hôm nay** — one recommended action, time required, why it matters, and
+   `Bắt đầu / Tôi bị kẹt / Đổi việc khác`.
+2. **Lộ trình** — 90-day direction, 30-day focus, milestones, assumptions, and
+   progress based on evidence.
+3. **Kế hoạch** — 7-day commitments and an execution calendar containing all
+   task types, not only scheduled posts.
+4. **Bằng chứng & Kết quả** — user updates, connected data, artifacts, metrics,
+   source, and confidence.
+5. **Havi đồng hành** — contextual coach grounded in the current goal, roadmap,
+   history, constraints, and evidence.
+
+Capability screens such as Content Studio, Inbox, CRM, Reports, and Connections
+remain reachable from the relevant task or a secondary “Công cụ” area. They must
+not be the first decision forced on a new user.
+
+#### New onboarding journey
+
+1. `Bạn đang muốn đạt điều gì?`
+2. Havi reflects the goal in one sentence and asks the smallest set of material
+   clarification questions.
+3. User defines evidence, deadline, constraints, weekly capacity, and what has
+   already been tried.
+4. Havi proposes a roadmap with assumptions and confidence.
+5. User edits/accepts it.
+6. Havi asks the user to schedule the first action.
+7. Home opens on that action, not a generic dashboard.
+
+Business/profession may be inferred or asked later only when it improves the
+plan. Channel connection is requested just in time when an accepted task needs
+that capability.
+
+#### Daily action card
+
+Each card contains:
+
+- action in plain language;
+- why this action is next;
+- expected time and owner;
+- inputs/assets needed;
+- exact done rule;
+- `Havi có thể làm gì` versus `Bạn cần làm gì`;
+- a smaller fallback for low capacity;
+- evidence/check-in after completion.
+
+#### Review experience
+
+The review asks:
+
+1. What did you actually complete?
+2. What evidence or result appeared?
+3. What blocked or surprised you?
+4. Has the goal, constraint, or capacity changed?
+
+Havi then recommends `Tiếp tục`, `Cải tiến`, `Đổi hướng`, `Tạm dừng`, or
+`Kết thúc`, with rationale and a visible diff before the user accepts a replan.
+
+### 26.9 Replanning Policy
+
+Replanning is triggered by evidence, not novelty. Valid triggers include:
+
+- a milestone met earlier or later than expected;
+- repeated task blockage;
+- a metric crossing a user-defined threshold;
+- a material constraint/resource/deadline change;
+- user feedback that the plan is infeasible or no longer desired;
+- connected-platform failure or capability loss;
+- scheduled weekly/monthly review.
+
+Decision guidance:
+
+| Decision | Use when | System response |
+|---|---|---|
+| Continue | actions are feasible and evidence supports the hypothesis | preserve strategy, schedule next action |
+| Improve | direction remains credible but execution or message is weak | change tactic, scope, sequence, or asset |
+| Pivot | evidence weakens a core assumption and another test is plausible | propose a new hypothesis and explicit changes |
+| Pause | capacity, permission, cash, or timing temporarily blocks safe progress | preserve state and define resume condition |
+| Stop | goal is achieved, no longer desired, unsafe, or unjustified | close with learning summary; never shame the user |
+
+The AI must not repeatedly expand scope to manufacture activity. If an objective
+cannot be made measurable or safe, Havi should say so and recommend a discovery
+task or human specialist.
+
+### 26.10 Capability Model: Havi Plans First, Then Helps Execute
+
+Capability modules are registered against task types and declare:
+
+- inputs and preconditions;
+- what Havi can draft, recommend, schedule, or execute;
+- what requires user action or approval;
+- required connection/permission;
+- possible external side effects;
+- success evidence and reconciliation method;
+- failure, retry, fallback, and revocation behavior.
+
+Initial modules can reuse existing Havi assets:
+
+- content brief, hook, script, shot list, caption, and channel adaptation;
+- user-media intake and eligibility checks;
+- scheduling and official-API publishing where approved;
+- inbox/lead follow-up and appointment workflows;
+- simple CRM and evidence capture;
+- reminder, check-in, and review generation;
+- export/manual instructions where direct execution is unavailable.
+
+Video policy:
+
+- real footage/photos and credible results come from the user or organization;
+- Havi may design the brief, script, sequence, hook, CTA, subtitles/caption
+  guidance, publishing checklist, and measurement plan;
+- Havi must label generated drafts truthfully and never imply that a production
+  team, filming session, or polished final video exists when it does not;
+- external creative services or future editing integrations may be optional
+  executors, not a prerequisite for the roadmap.
+
+### 26.11 Delivery Phases and Exit Gates
+
+#### Phase 0 — Trust and Truth Foundation (COMPLETED ✅)
+
+- [x] Close the P0 security, payment, tenant-isolation, OAuth, false-success,
+      production-readiness, backup/restore, and observability gates in §25.
+- [x] Remove fabricated ROI/funnel numbers and unverified product claims.
+- [x] Preserve existing working channel capabilities behind honest states.
+
+Exit gate status: **PASSED (100% test coverage, 0 trust defects, persistent evidence-based states).**
+
+#### Phase 1 — Goal Intake and Roadmap MVP (COMPLETED ✅)
+
+- [x] Replace industry-first onboarding with goal-first intake (`/onboarding` & `/goals`).
+- [x] Implement `Goal`, `Roadmap`, `RoadmapTask`, `EvidenceLog`, and `RoadmapReview` primitives with PostgreSQL tables, migrations, and tenant isolation.
+- [x] Generate 90/30/7/today horizons with assumptions and confidence score via `RoadmapService`.
+- [x] Let users edit, accept, and re-generate a roadmap; schedule and complete today's action with attached evidence.
+- [x] Build `Hôm nay` (`/app`), `Lộ trình` (`/app/roadmap`), `Kế hoạch` (`/app/calendar`), `Bằng chứng & Kết quả` (`/app/evidence`), and `Havi đồng hành` (`/app/coach`) core surfaces.
+- [x] Support manual/export execution; require zero channel connection and zero ad spend to execute universal goals.
+
+Exit gate status: **PASSED (674/674 tests passing: 501/501 backend pytest, 173/173 frontend vitest).**
+
+#### Phase 2 — Execution, Evidence, Review, and Replan Loop (COMPLETED ✅)
+
+- [x] Build task states, dependencies, calendar, reminders, check-ins, and
+      blocked-task recovery with `fallback_action`.
+- [x] Build evidence provenance, metric definitions, and confidence observations (`EvidenceLog`).
+- [x] Implement weekly review and explainable plan-diff approval (`/roadmaps/{id}/review`).
+- [x] Add `Continue / Improve / Pivot / Pause / Stop` decisions in UI & Backend.
+- [x] Preserve complete roadmap revision history and restore capability (`/roadmaps/history` & `/roadmaps/{id}/restore`).
+
+Exit gate status: **PASSED (676/676 tests passing: 501/501 backend pytest, 175/175 frontend vitest, immutable history & restore).**
+
+#### Phase 3 — Contextual Havi Coach and Execution Modules (IN PROGRESS ⏳)
+
+- [ ] Ground Havi Coach in goal, accepted roadmap, evidence, constraints, and
+      allowed capabilities rather than free-floating chat history.
+- [ ] Convert existing content, media, calendar, publishing, inbox, CRM, and
+      analytics features into task-invoked modules.
+- [ ] Separate `Havi sẽ làm` from `Bạn cần làm` in every task.
+- [ ] Add just-in-time connection and approval flows.
+- [ ] Add manual fallback when a platform/API is unavailable.
+
+
+Exit gate: no module can act beyond its authorization; platform-confirmed state
+is reconciled; the universal loop works even when every external module is off.
+
+#### Phase 4 — Cross-Goal Validation and Commercial Pilot (IN PROGRESS ⏳)
+
+- [x] Implement deterministic 30-day simulated Customer Zero journey test (`test_pilot_customer_zero_journey.py`).
+- [x] Validate multiple local goal archetypes (`acquire_customers`, `launch`, `sell_offer`, `deliver_project`) with fallback actions and replan diffs.
+- [ ] Live dogfooding at Trung Tâm Nhật Minh for 30 days as Customer Zero.
+- [ ] Pilot with 5–10 local business partners (Spa, Salon, Resort/Homestay, Clinic).
+- [ ] Measure activation, time to first action, weekly guided progress, review completion, and four-week retention.
+- [ ] Price against sustained guidance/execution value (299k/599k VNĐ), not token count or number of drafts.
+
+Exit gate: product thresholds hold for 4 consecutive weeks and at least five pilots voluntarily pay after experiencing a complete review cycle.
+
+
+#### Phase 5 — Measurement and Ads Readiness (COMPLETED ✅)
+
+- [x] Build transparent local Campaign Simulation Engine (`CampaignSimulator` & `/campaigns/simulate`).
+- [x] Enforce explicit disclaimers (*Mô phỏng tham khảo CPM thị trường, không cam kết doanh thu*).
+- [x] Enforce safety guardrails (Meta direct billing, zero reseller markups, emergency kill switch).
+- [x] Add frontend type-safe API client and automated integration test suite (`campaign.api.test.ts`).
+
+Exit gate status: **PASSED (100% test pass, zero automated spend, truthful simulation bounds).**
+
+
+#### Phase 6 — Paid-Ad Execution and Budget Automation (explicitly later)
+
+Only enter this phase after the core roadmap product has proven sustained use.
+The initial channel order is **Meta first**, then TikTok Spark Ads, then eligible
+YouTube/Google Ads campaign types, subject to current platform approval and API
+capabilities.
+
+Mandatory entry gates:
+
+- [ ] §25 production/trust gates and Phases 1–5 above are complete.
+- [ ] At least 30 consecutive days of reliable roadmap/review operation exist.
+- [ ] The business case is validated with supervised design partners who already
+      run ads and understand that results are not guaranteed.
+- [ ] Each workspace connects its own ad account and pays the platform directly;
+      Havi does not custody or resell media budget in the initial model.
+- [ ] Platform terms, business verification, permissions, privacy, consent, and
+      country/currency/time-zone requirements are satisfied.
+- [ ] Campaign creation is idempotent and starts in `PAUSED`/draft where the
+      platform supports it; launch requires an explicit final confirmation.
+- [ ] Per-campaign and per-day caps, date range, currency, objective, audience,
+      creative, destination, and billing account are shown before confirmation.
+- [ ] Workspace and organization spend ceilings, anomaly detection, emergency
+      kill switch, audit log, webhook/poll reconciliation, and refund/dispute
+      guidance are tested.
+- [ ] No silent budget increase, automatic top-up, cross-workspace reuse, or
+      “AI optimized” change outside a separately approved policy envelope.
+- [ ] Live canary begins with founder-owned accounts and deliberately small
+      caps; scale requires zero unauthorized-spend incident and reconciled cost.
+
+Platform implementation references (current architecture must re-verify them at
+build time because APIs and policies change):
+
+- [Meta Marketing API overview](https://www.postman.com/meta/facebook-marketing-api/overview)
+- [Meta Reels ads](https://www.facebook.com/business/ads/facebook-instagram-reels-ads)
+- [TikTok Marketing API](https://ads.tiktok.com/help/article/marketing-api)
+- [TikTok Spark Ads](https://ads.tiktok.com/help/article/spark-ads)
+- [Google Ads API video campaign guidance](https://developers.google.com/google-ads/api/docs/video/overview)
+- [Google Ads API developer token](https://developers.google.com/google-ads/api/docs/api-policy/developer-token)
+
+As verified on 2026-08-23, the Google Ads API documentation says existing
+`VIDEO` campaigns can be read/reported but not created or updated through that
+API; Demand Gen is the supported API alternative for programmatic creation and
+management with video assets. Phase 6 must select an eligible campaign type and
+must not promise direct Video-campaign creation.
+
+Exit gate: supervised live canary passes all spend, reconciliation, consent,
+failure, rollback, and audit tests; founder explicitly approves wider release.
+
+#### Phase 7 — Ecosystem and Advanced Automation
+
+- [ ] Add more executors only from repeated roadmap demand.
+- [ ] Let trusted users define revocable automation envelopes per task class.
+- [ ] Add organization/team planning, responsibility, and portfolio views.
+- [ ] Add partner/expert escalation for high-stakes domains Havi cannot safely
+      handle alone.
+
+### 26.12 Why Advertising Is Later, Not Removed
+
+Paid distribution can be valuable after a user has a clear goal, credible offer,
+usable asset, destination, follow-up process, measurement plan, and budget. If
+Havi automates spend before those prerequisites, it scales confusion and creates
+financial, platform-policy, and trust risk.
+
+Therefore the sequence is:
+
+`Roadmap value → execution habit → evidence/review loop → proven capability modules → read-only ads insight → supervised spend → bounded automation`
+
+Until Phase 6, UI copy may say `Chuẩn bị kế hoạch quảng cáo` or `Kết nối để xem
+dữ liệu` only when true. It must not offer `Chạy quảng cáo ngay`, request a live
+budget, or imply that Havi can launch campaigns automatically.
+
+### 26.13 Metrics, Events, and Validation Thresholds
+
+#### Universal funnel
+
+`goal_created → goal_clarified → roadmap_generated → roadmap_accepted → first_task_scheduled → first_task_completed → evidence_attached → first_review_completed → plan_continued_or_revised`
+
+Required events:
+
+- `goal_created`, `goal_clarified`, `goal_changed`, `goal_closed`;
+- `roadmap_generated`, `roadmap_edited`, `roadmap_accepted`;
+- `task_scheduled`, `task_started`, `task_completed`, `task_blocked`,
+  `task_skipped`;
+- `evidence_attached`, `metric_observed`, `evidence_verified`;
+- `review_started`, `review_completed`, `review_decision_selected`;
+- `replan_proposed`, `replan_accepted`, `replan_rejected`, `version_restored`;
+- `capability_requested`, `capability_approved`, `capability_confirmed`,
+  `capability_failed`, `capability_reconciled`.
+
+Each event includes tenant, goal/roadmap version, actor (`USER`, `HAVI`, or
+`INTEGRATION`), timestamp, source, and correlation ID without leaking secrets or
+unnecessary PII.
+
+Initial validation thresholds—not permanent universal truths:
+
+- >=70% of qualified users accept or meaningfully edit a generated roadmap;
+- median time from goal creation to first scheduled action <=10 minutes;
+- >=60% complete the first action within seven days;
+- >=50% complete the first evidence-based review within 14 days;
+- >=40% of activated workspaces achieve Weekly Guided Progress in week four;
+- >=80% of review recommendations are rated understandable and relevant;
+- 100% of plan changes expose a diff and retain prior versions;
+- zero unauthorized external action, cross-tenant leak, fabricated completion,
+  or unbounded spend event.
+
+Do not collapse business outcomes into a single vanity metric. Each goal defines
+its outcome metrics; Havi separately reports controllable process progress and
+outcome evidence with attribution caveats.
+
+### 26.14 Research and Dogfooding Plan
+
+Run discovery and prototype testing by **goal archetype**, not by asking whether
+each industry likes the same marketing template.
+
+Minimum research sequence:
+
+1. Interview 12–20 participants across at least four goal archetypes about the
+   last real objective they abandoned or completed. Reconstruct actions and
+   obstacles; do not pitch features first.
+2. Test a concierge roadmap manually. Measure whether the participant can state
+   the next action and actually performs it.
+3. Test editable roadmap and daily-action prototypes at 375/390/430 px.
+4. Observe two full weekly reviews; record where recommendations are ignored,
+   confusing, judgmental, or too ambitious.
+5. Dogfood Nhật Minh with a real enrollment goal, real available media, real
+   team capacity, and real inquiry/enrollment evidence.
+6. Add heterogeneous pilots: one delivery/launch goal, one recruitment goal,
+   one solo professional goal, and one audience/reputation goal.
+7. Charge only after users experience the planning–execution–review loop; ask
+   what continuing value they would pay to preserve.
+
+Every pilot needs an evidence log containing the initial goal, assumptions,
+accepted roadmap, action history, connected-source evidence, revisions, user
+feedback, support time, and renewal decision.
+
+### 26.15 Automated Test and Release Contract
+
+No roadmap phase ships without 100% pass of its required automated suite.
+
+Required tests:
+
+- unit tests for state transitions, dependencies, completion rules, review
+  decisions, and horizon generation;
+- property-based tests for version monotonicity, history preservation, tenant
+  isolation, duplicate events, and time-zone/calendar edge cases;
+- deterministic contract tests for structured AI outputs, invalid/partial
+  outputs, fact/assumption labeling, and unsupported actions;
+- repository and API integration tests proving authorization and tenant scope;
+- journey tests for goal → roadmap → task → evidence → review → replan;
+- failure-injection tests for queue loss, duplicate delivery, API timeout,
+  ambiguous external state, token expiry, and reconciliation;
+- accessibility and mobile interaction tests for the core journey;
+- live smoke tests only in designated test/customer-zero accounts with explicit
+  caps and rollback procedures;
+- ads-phase tests for currency/time-zone correctness, budget ceilings, paused
+  creation, final approval, idempotency, reconciliation, and kill switch.
+
+Golden invariants in CI:
+
+1. Havi cannot mark a task externally complete without evidence.
+2. Havi cannot alter an accepted roadmap without a new version and approval.
+3. Havi cannot execute outside a current authorization envelope.
+4. Havi cannot expose one tenant's goal, evidence, token, or spend to another.
+5. Havi cannot launch or increase paid spend before Phase 6 gates and explicit
+   confirmation.
+6. Havi remains usable for planning, manual execution, review, and replanning
+   with zero social/ad platform connected.
+
+### 26.16 Immediate Backlog: Next 30 Days
+ 
+Week 1 — foundation and truth (COMPLETED ✅):
+ 
+- [x] Freeze new ads/video-studio scope; retain only truthful existing states.
+- [x] Produce the goal-first concept model, event dictionary, and threat model.
+- [x] Audit current navigation/onboarding/dashboard/calendar copy against §26.8.
+- [x] Draft interview guide and recruit the first research cohort.
+ 
+Week 2 — prototype (COMPLETED ✅):
+ 
+- [x] Prototype goal intake, roadmap proposal, and daily action card.
+- [x] Test assumptions/confidence labels and roadmap editing.
+- [x] Define four goal-archetype fixtures and expected roadmap quality rubric.
+ 
+Week 3 — domain vertical slice (COMPLETED ✅):
+ 
+- [x] Implement one tenant-safe vertical slice from goal creation through first
+      scheduled task with versioned persistence.
+- [x] Add deterministic unit/integration/journey tests before UI rollout.
+ 
+Week 4 — first real loop (IN PROGRESS ⏳):
+ 
+- [ ] Run the Nhật Minh concierge/vertical-slice pilot.
+- [ ] Capture execution evidence and complete the first weekly review/replan.
+- [ ] Test with at least three non-training-center goals.
+- [ ] Decide the next increment from evidence; do not reopen paid ads merely
+      because the roadmap module exists.
+
+## 27. Go-To-Market Sequencing & Core Opportunity Loops
+
+Havi is not bounded by industry templates, but it must not attempt to sell to everyone simultaneously. GTM execution is strictly separated between the **Core Local Beachhead (Now)** and the **Professional Expansion Track (Future)**:
+
+### 27.1 Core Local Beachhead (Giai đoạn Hiện Tại — Tập Trung 100%)
+
+```mermaid
+graph TD
+    subgraph CoreLocalBeachhead["<b>Giai Đoạn Hiện Tại: 100% Local Customer-to-Visit OS</b>"]
+        JM["<b>Trung Tâm Nhật Minh (Customer Zero)</b><br/>Đào tạo & Giáo dục"]
+        LB["<b>Cơ Sở Dịch Vụ Địa Phương</b><br/>Spa, Salon, Phòng Gym, Sửa Chữa, Clinic"]
+        Hosp["<b>Lưu Trú Địa Phương (Local Hospitality)</b><br/>Boutique Resort, Khách Sạn Nhỏ, Homestay, Villa"]
+        Loop["<b>Local Closed-Loop</b><br/>Facebook Fanpage/Reels → Messenger Lead → Hẹn / Đặt Phòng Trực Tiếp → Check-in / Đến Nơi → VietQR"]
+        JM --> Loop
+        LB --> Loop
+        Hosp --> Loop
+    end
+
+    subgraph FutureTrack["<b>Giai Đoạn Tương Lai (Sau khi đạt Local PMF)</b>"]
+        LinkedIn["<b>Professional Expansion Track (LinkedIn / B2B)</b><br/>Headhunter, B2B Consultant, Freelance Specialist"]
+    end
+
+    CoreLocalBeachhead -.->|"Khi đạt 100+ khách hàng trả tiền & PMF vững chắc"| FutureTrack
+```
+
+1. **Trọng Tâm Tuyệt Đối (Active Beachhead)**:
+   - **Trung Tâm Nhật Minh (Customer Zero)** cùng nhóm cơ sở dịch vụ và lưu trú địa phương:
+     - *Đào tạo & Dạy nghề*: Trung tâm tin học, ngoại ngữ, kỹ năng, gia sư.
+     - *Dịch vụ trải nghiệm có lịch hẹn*: Spa, thẩm mỹ, salon tóc, phòng gym, nha khoa/clinic, garage sửa chữa xe.
+     - *Lưu trú & Nghỉ dưỡng địa phương (Local Hospitality)*: Boutique Resort, khách sạn nhỏ, homestay, villa nghỉ dưỡng cần kéo khách đặt phòng trực tiếp (Direct Booking) qua Fanpage/Messenger để không bị mất 15–25% hoa hồng cho các sàn OTA.
+   - Hoàn thiện khép kín chuỗi chuyển đổi thực tế:
+     $$\text{Nội dung thật tại cơ sở (Phòng/Lớp/Cảnh quan)} \longrightarrow \text{Facebook / Reels / Maps} \longrightarrow \text{Hội thoại Messenger <10s} \longrightarrow \text{Lịch hẹn / Cọc giữ phòng} \longrightarrow \text{Khách đến & VietQR}$$
+   - Mọi nỗ lực sản phẩm, kịch bản, và kiểm thử tập trung giải quyết bài toán: *"Tuần này cơ sở làm gì để có thêm khách đến thật?"*.
+
+
+2. **Nhánh Mở Rộng Tương Lai (Future Expansion Track — LinkedIn / Headhunter / B2B)**:
+   - Được lùi lại sau (Future Phase) và chỉ xem xét khi Havi đã đạt **Product-Market Fit (PMF) vững chắc** tại thị trường địa phương.
+   - Không đưa vào giai đoạn hiện tại để tránh phân mảnh nguồn lực kỹ thuật, loãng định vị bán hàng và phân tán kênh tiếp cận (LinkedIn vs Facebook/Messenger/Maps).
+
+---
+
+### 27.2 The Universal Closed-Loop Architecture
+
+Kiến trúc backend của Havi hoạt động dựa trên vòng lặp khép kín:
+$$\text{Mục tiêu cơ sở} \longrightarrow \text{Lộ trình (Roadmap)} \longrightarrow \text{Việc hôm nay} \longrightarrow \text{Thực hiện} \longrightarrow \text{Khách đến / Bằng chứng xác thực} \longrightarrow \text{Đánh giá \& Tối ưu tuần}$$
+
+---
+
+### 27.3 Platform & Channel Rollout Sequencing (Thứ Tự Triển Khai Kênh Tích Hợp)
+
+Chiến lược tích hợp kênh được kỷ luật theo thứ tự từng bước:
+
+```mermaid
+graph LR
+    FB["<b>1. Facebook</b><br/>Fanpage, Reels, Messenger, Lead Care<br/><i>(Thử nghiệm & hoàn thiện 100% trước)</i>"]
+    YT["<b>2. YouTube Shorts</b><br/>Short-form Video & Kho bằng chứng"]
+    GG["<b>3. Google Business / Maps</b><br/>Hiển thị tìm kiếm địa phương"]
+    TT["<b>4. TikTok</b><br/>Organic Growth & Lead Ingest"]
+    GM["<b>5. Gmail / Email</b><br/>Xác nhận đặt lịch/hóa đơn<br/><i>(Triển khai sau cùng)</i>"]
+
+    FB --> YT --> GG --> TT --> GM
+```
+
+1. **Kênh 1 — Facebook (Fanpage, Reels, Messenger, Lead Care) [ƯU TIÊN CAO NHẤT]**:
+   - Hoàn thiện trọn vẹn, chạy thực chiến tại **Trung Tâm Nhật Minh** và nhóm 5–10 cơ sở pilot.
+   - Bảo đảm tốc độ phản hồi tin nhắn < 10 giây và khép kín tới chuyển khoản VietQR.
+2. **Kênh 2 — YouTube (YouTube Shorts & Video Studio)**:
+   - Triển khai ngay sau khi Facebook đã vận hành ổn định.
+   - Tận dụng video 9:16 thật tại cơ sở để mở rộng phạm vi tiếp cận trên YouTube Shorts.
+3. **Kênh 3 — Google Business Profile & Local Maps SEO**:
+   - Đồng bộ thông tin cơ sở, bài đăng ưu đãi và nhận đánh giá (Reviews) trên Google Maps.
+4. **Kênh 4 — TikTok (Organic Growth & Lead Ingest)**:
+   - Tích hợp sau YouTube và Google Maps để thu hút tệp khách hàng trẻ.
+5. **Kênh 5 — Gmail / Email Automation & Confirmation [SAU CÙNG]**:
+   - Đưa vào sau cùng khi toàn bộ hệ sinh thái mạng xã hội & tin nhắn tức thời đã hoàn thiện, dùng cho việc gửi email xác nhận đặt lịch, vé vào cửa hoặc thông báo hóa đơn tự động.
+
+
+
+

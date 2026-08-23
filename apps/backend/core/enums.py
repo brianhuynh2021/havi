@@ -95,6 +95,9 @@ class PublishStatus(StrEnum):
 
     PENDING = "pending"
     IN_FLIGHT = "in_flight"
+    # Nền tảng có thể đã nhận request nhưng Havi không nhận được response.
+    # Tuyệt đối không retry tự động vì có thể tạo bài trùng.
+    PENDING_RECONCILIATION = "pending_reconciliation"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     # Hết số lần thử hoặc lỗi không thể tự sửa. Không retry tự động nữa — chờ
@@ -106,6 +109,7 @@ class PublishFailureKind(StrEnum):
     """Phân loại lỗi publish để quyết định có retry hay không."""
 
     TEMPORARY = "temporary"
+    AMBIGUOUS_OUTCOME = "ambiguous_outcome"
     AUTH_PERMISSION = "auth_permission"
     VALIDATION_PERMANENT = "validation_permanent"
 
@@ -181,6 +185,7 @@ class InboxItemStatus(StrEnum):
     NEW = "new"
     DRAFTED = "drafted"
     SENT = "sent"
+    FAILED = "failed"
     #: Chủ tiệm bấm "Bỏ qua". Phải là trạng thái riêng chứ không dùng lại `SENT`:
     #: gộp hai thứ vào một thì báo cáo đếm tin đã bỏ qua thành tin đã trả lời, và
     #: không cách nào tách lại sau này.
@@ -270,3 +275,54 @@ class OAuthReturnTarget(StrEnum):
 
     ONBOARDING = "onboarding"
     SETTINGS = "settings"
+
+
+class GoalCategory(StrEnum):
+    """8 nhóm mục tiêu cơ bản theo Havi 3.0 (§26.7)."""
+
+    ACQUIRE_CUSTOMERS = "acquire_customers"
+    SELL_OFFER = "sell_offer"
+    LAUNCH = "launch"
+    RECRUIT = "recruit"
+    DELIVER_PROJECT = "deliver_project"
+    LEARN_SKILL = "learn_skill"
+    GROW_AUDIENCE = "grow_audience"
+    IMPROVE_OPERATIONS = "improve_operations"
+    OTHER = "other"
+
+
+class GoalStatus(StrEnum):
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    ABANDONED = "abandoned"
+
+
+class RoadmapStatus(StrEnum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+    SUPERSEDED = "superseded"
+
+
+class TaskOwnerType(StrEnum):
+    USER = "user"
+    HAVI = "havi"
+    COLLABORATIVE = "collaborative"
+
+
+class TaskStatus(StrEnum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    BLOCKED = "blocked"
+    SKIPPED = "skipped"
+
+
+class ReviewDecision(StrEnum):
+    CONTINUE = "continue"
+    IMPROVE = "improve"
+    PIVOT = "pivot"
+    PAUSE = "pause"
+    STOP = "stop"
+

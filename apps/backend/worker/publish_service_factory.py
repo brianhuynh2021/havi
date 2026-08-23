@@ -21,6 +21,7 @@ from adapters.publishers.google_business import GoogleBusinessPublisher
 from adapters.publishers.tiktok import TikTokPublisher
 from adapters.publishers.youtube import YouTubePublisher
 from adapters.publishers.zalo import ZaloPublisher
+from adapters.storage.object_storage import ObjectStorage
 from application.services.publish_service import PublishService
 from core.alerts import LoggingAlertSink
 from core.config import get_settings
@@ -59,6 +60,7 @@ def build_publishers() -> dict[Channel, PublisherPort]:
 @asynccontextmanager
 async def publish_service_scope() -> AsyncGenerator[PublishService]:
     """Một session cho cả lượt chạy: commit khi xong, rollback nếu ném lỗi."""
+    settings = get_settings()
     async with session_scope() as session:
         yield PublishService(
             content=ContentRepository(session),
@@ -66,6 +68,7 @@ async def publish_service_scope() -> AsyncGenerator[PublishService]:
             publishes=PublishRepository(session),
             events=EventLogRepository(session),
             media=MediaRepository(session),
+            storage=ObjectStorage(settings),
             alerts=LoggingAlertSink(),
             publishers=build_publishers(),
         )

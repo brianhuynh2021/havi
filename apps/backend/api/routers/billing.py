@@ -58,8 +58,11 @@ async def list_invoices(
 async def change_plan(
     workspace_id: WorkspaceDep,
     billing_service: BillingServiceDep,
+    settings: SettingsDep,
     body: ChangePlanRequest,
 ) -> Subscription:
+    if not settings.is_local:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     try:
         state, _ = await billing_service.change_plan(workspace_id=workspace_id, target=body.plan)
     except PlanChangeNotAllowed as exc:

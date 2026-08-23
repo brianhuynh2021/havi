@@ -23,6 +23,12 @@ class WorkspaceRepository:
         result = await self._session.execute(select(Workspace).where(Workspace.id == workspace_id))
         return result.scalar_one_or_none()
 
+    async def get_by_id_for_update(self, workspace_id: UUID) -> Workspace | None:
+        result = await self._session.execute(
+            select(Workspace).where(Workspace.id == workspace_id).with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     async def get(self, workspace_id: UUID) -> Workspace | None:
         return await self.get_by_id(workspace_id)
 

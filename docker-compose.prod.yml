@@ -1,15 +1,49 @@
 name: havi-prod
 
+x-backend-env: &backend-env
+  HAVI_ENV: production
+  HAVI_DEBUG: "false"
+  HAVI_USE_MOCK_LLM: "false"
+  HAVI_USE_FAKE_PUBLISHER: "false"
+  HAVI_DISABLE_RATE_LIMIT: "false"
+  HAVI_CORS_ORIGINS: ${HAVI_CORS_ORIGINS:?Vui lòng cung cấp HTTPS origin}
+  HAVI_WEB_BASE_URL: ${HAVI_WEB_BASE_URL:?Vui lòng cung cấp HTTPS web URL}
+  HAVI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-havi}
+  HAVI_REDIS_URL: redis://redis:6379/0
+  HAVI_JWT_SECRET: ${HAVI_JWT_SECRET:?Vui lòng cung cấp HAVI_JWT_SECRET}
+  HAVI_TOKEN_ENCRYPTION_KEY: ${HAVI_TOKEN_ENCRYPTION_KEY:?Vui lòng cung cấp HAVI_TOKEN_ENCRYPTION_KEY}
+  HAVI_EMAIL_PROVIDER: smtp
+  HAVI_EMAIL_FROM: ${HAVI_EMAIL_FROM:?Vui lòng cung cấp HAVI_EMAIL_FROM}
+  HAVI_SMTP_HOST: ${HAVI_SMTP_HOST:?Vui lòng cung cấp HAVI_SMTP_HOST}
+  HAVI_SMTP_PORT: ${HAVI_SMTP_PORT:-465}
+  HAVI_SMTP_USERNAME: ${HAVI_SMTP_USERNAME:?Vui lòng cung cấp HAVI_SMTP_USERNAME}
+  HAVI_SMTP_PASSWORD: ${HAVI_SMTP_PASSWORD:?Vui lòng cung cấp HAVI_SMTP_PASSWORD}
+  HAVI_MEDIA_BUCKET: havi-media
+  HAVI_MEDIA_ENDPOINT_URL: http://minio:9000
+  HAVI_MEDIA_EXTERNAL_ENDPOINT_URL: ${HAVI_MEDIA_EXTERNAL_ENDPOINT_URL:?Vui lòng cung cấp public media endpoint}
+  HAVI_MEDIA_PUBLIC_URL: ${HAVI_MEDIA_EXTERNAL_ENDPOINT_URL}/havi-media
+  HAVI_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER}
+  HAVI_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+  HAVI_GEMINI_API_KEY: ${HAVI_GEMINI_API_KEY:?Vui lòng cung cấp HAVI_GEMINI_API_KEY}
+  HAVI_FACEBOOK_CLIENT_ID: ${HAVI_FACEBOOK_CLIENT_ID:?Vui lòng cung cấp HAVI_FACEBOOK_CLIENT_ID}
+  HAVI_FACEBOOK_CLIENT_SECRET: ${HAVI_FACEBOOK_CLIENT_SECRET:?Vui lòng cung cấp HAVI_FACEBOOK_CLIENT_SECRET}
+  HAVI_FACEBOOK_REDIRECT_URI: ${HAVI_FACEBOOK_REDIRECT_URI:?Vui lòng cung cấp HAVI_FACEBOOK_REDIRECT_URI}
+  HAVI_META_WEBHOOK_VERIFY_TOKEN: ${HAVI_META_WEBHOOK_VERIFY_TOKEN:?Vui lòng cung cấp HAVI_META_WEBHOOK_VERIFY_TOKEN}
+  HAVI_PAYOS_CLIENT_ID: ${HAVI_PAYOS_CLIENT_ID:?Vui lòng cung cấp HAVI_PAYOS_CLIENT_ID}
+  HAVI_PAYOS_API_KEY: ${HAVI_PAYOS_API_KEY:?Vui lòng cung cấp HAVI_PAYOS_API_KEY}
+  HAVI_PAYOS_CHECKSUM_KEY: ${HAVI_PAYOS_CHECKSUM_KEY:?Vui lòng cung cấp HAVI_PAYOS_CHECKSUM_KEY}
+  HAVI_PAYMENT_WEBHOOK_SECRET: ${HAVI_PAYMENT_WEBHOOK_SECRET:?Vui lòng cung cấp HAVI_PAYMENT_WEBHOOK_SECRET}
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.15-alpine3.24
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Vui lòng cấu hình POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Vui lòng cấu hình POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-havi}
-    ports:
-      - "127.0.0.1:5432:5432"
+    expose:
+      - "5432"
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
     healthcheck:
@@ -19,10 +53,10 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.10-alpine3.21
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
+    expose:
+      - "6379"
     volumes:
       - redis-prod-data:/data
     healthcheck:
@@ -32,25 +66,25 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Vui lòng cấu hình MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Vui lòng cấu hình MINIO_ROOT_PASSWORD}
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
+    expose:
+      - "9000"
+      - "9001"
     volumes:
       - minio-prod-data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       minio:
         condition: service_healthy
@@ -58,9 +92,21 @@ services:
       /bin/sh -c "
       mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
       mc mb --ignore-existing local/havi-media;
-      printf '%s' '<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>POST</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSConfiguration>' | mc cors set local/havi-media -;
+      mc anonymous set none local/havi-media;
+      printf '%s' '<CORSConfiguration><CORSRule><AllowedOrigin>${HAVI_WEB_BASE_URL}</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>POST</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>content-type</AllowedHeader><AllowedHeader>x-amz-*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>' | mc cors set local/havi-media -;
       exit 0;
       "
+
+  migrate:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *backend-env
+    command: ["alembic", "upgrade", "head"]
 
   api:
     build:
@@ -68,41 +114,29 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
-    ports:
-      - "127.0.0.1:8000:8000"
+      minio-init:
+        condition: service_completed_successfully
+    expose:
+      - "8000"
     environment:
-      HAVI_ENV: production
-      HAVI_DEBUG: "false"
-      HAVI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-havi}
-      HAVI_REDIS_URL: redis://redis:6379/0
-      HAVI_JWT_SECRET: ${HAVI_JWT_SECRET:?Vui lòng cung cấp HAVI_JWT_SECRET}
-      HAVI_TOKEN_ENCRYPTION_KEY: ${HAVI_TOKEN_ENCRYPTION_KEY:?Vui lòng cung cấp HAVI_TOKEN_ENCRYPTION_KEY}
-      HAVI_PAYMENT_WEBHOOK_SECRET: ${HAVI_PAYMENT_WEBHOOK_SECRET:?Vui lòng cung cấp HAVI_PAYMENT_WEBHOOK_SECRET}
-      HAVI_PAYOS_CHECKSUM_KEY: ${HAVI_PAYOS_CHECKSUM_KEY:-}
-      HAVI_MEDIA_BUCKET: havi-media
-      HAVI_MEDIA_ENDPOINT_URL: http://minio:9000
-      HAVI_MEDIA_PUBLIC_URL: ${HAVI_MEDIA_PUBLIC_URL:-http://localhost:9000/havi-media}
-      HAVI_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER}
-      HAVI_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      HAVI_GEMINI_API_KEY: ${HAVI_GEMINI_API_KEY}
-      HAVI_FACEBOOK_CLIENT_ID: ${HAVI_FACEBOOK_CLIENT_ID:-}
-      HAVI_FACEBOOK_CLIENT_SECRET: ${HAVI_FACEBOOK_CLIENT_SECRET:-}
-      HAVI_FACEBOOK_REDIRECT_URI: ${HAVI_FACEBOOK_REDIRECT_URI:-}
+      <<: *backend-env
       HAVI_TIKTOK_CLIENT_KEY: ${HAVI_TIKTOK_CLIENT_KEY:-}
       HAVI_TIKTOK_CLIENT_SECRET: ${HAVI_TIKTOK_CLIENT_SECRET:-}
       HAVI_TIKTOK_REDIRECT_URI: ${HAVI_TIKTOK_REDIRECT_URI:-}
       HAVI_GOOGLE_CLIENT_ID: ${HAVI_GOOGLE_CLIENT_ID:-}
       HAVI_GOOGLE_CLIENT_SECRET: ${HAVI_GOOGLE_CLIENT_SECRET:-}
       HAVI_YOUTUBE_REDIRECT_URI: ${HAVI_YOUTUBE_REDIRECT_URI:-}
-    command: >
-      sh -c "
-      alembic upgrade head &&
-      uvicorn api.main:app --host 0.0.0.0 --port 8000
-      "
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   worker:
     build:
@@ -111,21 +145,12 @@ services:
     restart: unless-stopped
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      HAVI_ENV: production
-      HAVI_DEBUG: "false"
-      HAVI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-havi}
-      HAVI_REDIS_URL: redis://redis:6379/0
-      HAVI_JWT_SECRET: ${HAVI_JWT_SECRET}
-      HAVI_TOKEN_ENCRYPTION_KEY: ${HAVI_TOKEN_ENCRYPTION_KEY}
-      HAVI_MEDIA_BUCKET: havi-media
-      HAVI_MEDIA_ENDPOINT_URL: http://minio:9000
-      HAVI_MEDIA_ACCESS_KEY: ${MINIO_ROOT_USER}
-      HAVI_MEDIA_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      HAVI_GEMINI_API_KEY: ${HAVI_GEMINI_API_KEY}
+      minio-init:
+        condition: service_completed_successfully
+    environment: *backend-env
     command: ["celery", "-A", "worker.celery_app:celery_app", "worker", "-l", "info"]
 
   beat:
@@ -136,10 +161,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    environment:
-      HAVI_ENV: production
-      HAVI_DEBUG: "false"
-      HAVI_REDIS_URL: redis://redis:6379/0
+    environment: *backend-env
     command: ["celery", "-A", "worker.celery_app:celery_app", "beat", "-l", "info"]
 
   web:
@@ -151,16 +173,16 @@ services:
     restart: unless-stopped
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     environment:
       NODE_ENV: production
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.29.1-alpine
     restart: unless-stopped
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
       web:
         condition: service_started
     ports:

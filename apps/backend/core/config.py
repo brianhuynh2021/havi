@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -38,10 +39,14 @@ class Settings(BaseSettings):
     media_public_url: str = "http://localhost:9000/havi-media"
     # S3-compatible endpoint (MinIO ở local, S3/R2/Spaces ở production).
     media_endpoint_url: str = "http://localhost:9000"
+    # Endpoint mà trình duyệt và nền tảng ngoài Internet truy cập được. Server
+    # vẫn dùng `media_endpoint_url` nội bộ cho head/read/delete.
+    media_external_endpoint_url: str = "http://localhost:9000"
     media_access_key: str = "minioadmin"
     media_secret_key: str = "minioadmin"
     media_region: str = "us-east-1"
     media_upload_ttl_seconds: int = 900
+    media_download_ttl_seconds: int = 900
     # Chặn ở tầng storage bằng presigned POST condition, không chỉ tin client.
     media_max_upload_bytes: int = 25 * 1024 * 1024
 
@@ -216,10 +221,79 @@ class Settings(BaseSettings):
             raise ValueError("HAVI_EMAIL_PROVIDER=smtp cần HAVI_EMAIL_FROM và HAVI_SMTP_HOST.")
         return self
 
+    @model_validator(mode="after")
+    def _validate_production_trust_boundary(self) -> "Settings":
+        """Production refuses known defaults, private URLs, and missing providers."""
+        if self.env != "production":
+            return self
+
+        missing: list[str] = []
+        required = {
+            "HAVI_SMTP_USERNAME": self.smtp_username,
+            "HAVI_SMTP_PASSWORD": self.smtp_password,
+            "HAVI_GEMINI_API_KEY (or another real LLM key)": (
+                self.gemini_api_key or self.anthropic_api_key or self.openai_api_key
+            ),
+            "HAVI_FACEBOOK_CLIENT_ID": self.facebook_client_id,
+            "HAVI_FACEBOOK_CLIENT_SECRET": self.facebook_client_secret,
+            "HAVI_META_WEBHOOK_VERIFY_TOKEN": self.meta_webhook_verify_token,
+            "HAVI_PAYOS_CLIENT_ID": self.payos_client_id,
+            "HAVI_PAYOS_API_KEY": self.payos_api_key,
+            "HAVI_PAYOS_CHECKSUM_KEY": self.payos_checksum_key,
+        }
+        missing.extend(name for name, value in required.items() if not value)
+
+        unsafe = {
+            "HAVI_JWT_SECRET": self.jwt_secret == "change-me" or len(self.jwt_secret) < 32,
+            "HAVI_TOKEN_ENCRYPTION_KEY": self.token_encryption_key
+            == "DGS23enMkRy4RNlP8jhrCCOGqz4mVV76lvwWLjn9wq4=",
+            "HAVI_PAYMENT_WEBHOOK_SECRET": self.payment_webhook_secret
+            == "havi_payment_secret_2026"
+            or len(self.payment_webhook_secret) < 32,
+            "HAVI_MEDIA_ACCESS_KEY": self.media_access_key == "minioadmin",
+            "HAVI_MEDIA_SECRET_KEY": self.media_secret_key == "minioadmin",
+            "HAVI_DATABASE_URL": "havi:havi@" in self.database_url,
+        }
+        missing.extend(name for name, bad in unsafe.items() if bad)
+
+        https_urls = {
+            "HAVI_WEB_BASE_URL": self.web_base_url,
+            "HAVI_MEDIA_EXTERNAL_ENDPOINT_URL": self.media_external_endpoint_url,
+            "HAVI_FACEBOOK_REDIRECT_URI": self.facebook_redirect_uri,
+        }
+        missing.extend(
+            name
+            for name, value in https_urls.items()
+            if urlparse(value).scheme != "https" or not urlparse(value).netloc
+        )
+        if not self.cors_origins or any(
+            urlparse(origin).scheme != "https" for origin in self.cors_origins
+        ):
+            missing.append("HAVI_CORS_ORIGINS")
+
+        if missing:
+            raise ValueError(
+                "Production configuration thiếu hoặc không an toàn: "
+                + ", ".join(sorted(set(missing)))
+            )
+        return self
+
     @property
     def expose_debug_codes(self) -> bool:
         """Only local debug mode can reveal OTPs in API responses."""
         return self.env == "local" and self.debug
+
+    @property
+    def is_production(self) -> bool:
+        return self.env == "production"
+
+    @property
+    def is_staging(self) -> bool:
+        return self.env == "staging"
+
+    @property
+    def is_local(self) -> bool:
+        return self.env == "local"
 
 
 @lru_cache

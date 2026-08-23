@@ -48,10 +48,13 @@ class BillingRepository:
         await self._session.flush()
         return invoice
 
-    async def get_invoice(self, invoice_id: UUID) -> Invoice | None:
-        result = await self._session.execute(
-            select(Invoice).where(Invoice.id == invoice_id)
-        )
+    async def get_invoice(
+        self, invoice_id: UUID, *, for_update: bool = False
+    ) -> Invoice | None:
+        query = select(Invoice).where(Invoice.id == invoice_id)
+        if for_update:
+            query = query.with_for_update()
+        result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
     async def find_by_prefix(self, prefix: str) -> Invoice | None:
@@ -66,6 +69,12 @@ class BillingRepository:
             .order_by(Invoice.issued_at.desc())
         )
         return result.scalars().first()
+
+    async def get_by_gateway_reference(self, reference: str) -> Invoice | None:
+        result = await self._session.execute(
+            select(Invoice).where(Invoice.gateway_reference == reference)
+        )
+        return result.scalar_one_or_none()
 
     async def get_pending_invoice(
         self, *, workspace_id: UUID, plan: Plan

@@ -16,7 +16,7 @@ from typing import Any
 import httpx
 
 from adapters.persistence.connection_repository import ConnectionRepository
-from core.enums import Platform
+from core.enums import InboxItemType, Platform
 from domain.ports.reply_publisher import (
     ReplyError,
     ReplyPublisherPort,
@@ -58,15 +58,19 @@ class FacebookReplyAdapter(ReplyPublisherPort):
         access_token = self._connections.read_access_token(connection)
         page_id = connection.external_account_id or "me"
 
-        # Phân biệt Messenger (dùng PSID của người nhận) và Comment trên bài viết
-        if request.recipient_id:
+        # Loại inbox item là nguồn sự thật. Comment cũng có `from.id`, nhưng đó
+        # không có nghĩa Havi được phép đổi thành tin nhắn riêng tư Messenger.
+        if request.item_type == InboxItemType.MESSAGE and request.recipient_id:
             url = f"{GRAPH_BASE}/{page_id}/messages"
             payload: dict[str, Any] = {
                 "recipient": {"id": request.recipient_id},
                 "message": {"text": request.text},
                 "messaging_type": "RESPONSE",
             }
-        elif request.external_message_id and not request.external_message_id.startswith("m_") and not request.external_message_id.startswith("mid."):
+        elif (
+            request.item_type == InboxItemType.COMMENT
+            and request.external_message_id
+        ):
             # Bình luận bài viết Facebook feed: trả lời trực tiếp dưới comment
             url = f"{GRAPH_BASE}/{request.external_message_id}/comments"
             payload = {
@@ -75,7 +79,7 @@ class FacebookReplyAdapter(ReplyPublisherPort):
         else:
             raise ReplyError(
                 self.platform,
-                "Không có recipient_id (PSID) của khách hàng để gửi tin nhắn Messenger phản hồi.",
+                "Thiếu định danh hợp lệ để phản hồi đúng loại tin nhắn/bình luận.",
             )
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:

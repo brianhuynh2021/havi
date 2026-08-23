@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from adapters.publishers.facebook_reply import FacebookReplyAdapter
-from core.enums import ConnectionStatus, Platform
+from core.enums import ConnectionStatus, InboxItemType, Platform
 from domain.models.connection import PlatformConnection
 from domain.ports.reply_publisher import ReplyError, ReplyRequest
 
@@ -106,3 +106,40 @@ async def test_send_reply_meta_api_error(monkeypatch):
             )
         )
     assert "Meta Graph API error (190)" in str(exc.value)
+
+
+async def test_comment_reply_uses_comment_endpoint_even_when_author_id_exists(
+    monkeypatch,
+):
+    workspace_id = uuid4()
+    conn = PlatformConnection(
+        workspace_id=workspace_id,
+        platform=Platform.FACEBOOK,
+        external_account_id="page_123456",
+        status=ConnectionStatus.CONNECTED,
+        access_token_encrypted="encrypted",
+    )
+    adapter = FacebookReplyAdapter(_mock_connections(conn))
+
+    async def mock_post(self, url, json=None, headers=None):
+        assert url.endswith("/comment_789/comments")
+        assert json == {"message": "Dạ tiệm vẫn còn chỗ ạ"}
+        return httpx.Response(
+            200,
+            json={"id": "reply_comment_1"},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", mock_post)
+    result = await adapter.send_reply(
+        ReplyRequest(
+            workspace_id=workspace_id,
+            platform=Platform.FACEBOOK,
+            text="Dạ tiệm vẫn còn chỗ ạ",
+            item_type=InboxItemType.COMMENT,
+            recipient_id="comment_author_123",
+            external_message_id="comment_789",
+        )
+    )
+
+    assert result.external_reply_id == "reply_comment_1"

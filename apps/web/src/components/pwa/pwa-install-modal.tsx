@@ -177,7 +177,7 @@ export function PwaInstallModal() {
           </div>
           <div className={styles.benefitItem}>
             <span>🔔</span>
-            <span>{lang === "VN" ? "Nhận tin nhắn khách 24/7" : "24/7 Lead notifications"}</span>
+            <span>{lang === "VN" ? "Mở hộp thư nhanh hơn" : "Faster inbox access"}</span>
           </div>
           <div className={styles.benefitItem}>
             <span>📱</span>
@@ -407,8 +407,8 @@ export function PwaInstallModal() {
               </div>
               <p className={styles.bannerDesc}>
                 {lang === "VN"
-                  ? "Mở 1 chạm cực nhanh, trực inbox 24/7 và nhận thông báo khách đặt hẹn tức thì!"
-                  : "Instant 1-tap open, 24/7 lead inbox & appointment alerts on your phone!"}
+                  ? "Mở Havi 1 chạm từ màn hình chính và xem hộp thư thuận tiện hơn."
+                  : "Open Havi from your home screen and reach the inbox more easily."}
               </p>
             </div>
           </div>

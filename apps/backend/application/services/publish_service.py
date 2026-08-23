@@ -16,6 +16,7 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.publish_repository import PublishRepository
+from adapters.storage.object_storage import ObjectStorage
 from core.alerts import Alert, AlertSink, LoggingAlertSink
 from core.config import get_settings
 from core.enums import (
@@ -29,6 +30,7 @@ from core.events import EventLogEntry
 from core.token_crypto import TokenDecryptionFailed, encrypt_token
 from domain.models.publish import PublishJob
 from domain.ports.publisher import (
+    AmbiguousPublishError,
     AuthPermissionError,
     PublisherPort,
     PublishError,
@@ -104,6 +106,7 @@ class PublishService:
         publishes: PublishRepository,
         events: EventLogRepository,
         media: MediaRepository | None = None,
+        storage: ObjectStorage | None = None,
         media_public_url: str | None = None,
         alerts: AlertSink | None = None,
         publishers: dict[Channel, PublisherPort],
@@ -113,6 +116,7 @@ class PublishService:
         self._publishes = publishes
         self._events = events
         self._media = media
+        self._storage = storage
         self._media_public_url = media_public_url or get_settings().media_public_url
         self._alerts = alerts or LoggingAlertSink()
         self._publishers = publishers
@@ -245,7 +249,11 @@ class PublishService:
                             workspace_id=job.workspace_id, asset_id=UUID(str(asset_id_str))
                         )
                         if asset:
-                            url = f"{self._media_public_url.rstrip('/')}/{asset.object_key}"
+                            url = (
+                                self._storage.public_url(asset.object_key)
+                                if self._storage is not None
+                                else f"{self._media_public_url.rstrip('/')}/{asset.object_key}"
+                            )
                             media_urls.append(url)
 
         if job.channel in (Channel.YOUTUBE, Channel.TIKTOK, Channel.REELS):
@@ -272,6 +280,16 @@ class PublishService:
                 ),
                 access_token=access_token,
             )
+        except AmbiguousPublishError as exc:
+            pending = await self._publishes.mark_pending_reconciliation(
+                job, detail=exc.detail
+            )
+            await self._record_event(
+                pending,
+                output_summary=f"status={pending.status.value}",
+                error=exc.detail,
+            )
+            return pending
         except AuthPermissionError as exc:
             # Thử tự động refresh token nếu nền tảng là Google/YouTube và có refresh_token
             if platform in (Platform.YOUTUBE, Platform.GOOGLE_BUSINESS):

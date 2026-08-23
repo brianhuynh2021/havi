@@ -27,6 +27,7 @@ import httpx
 from core.config import Settings
 from core.enums import Channel
 from domain.ports.publisher import (
+    AmbiguousPublishError,
     AuthPermissionError,
     PublisherPort,
     PublishRequest,
@@ -168,7 +169,13 @@ class FacebookPublisher(PublisherPort):
                     raise self._classify_error(response)
             except Exception as exc:
                 if isinstance(
-                    exc, (AuthPermissionError, ValidationPublishError, TemporaryPublishError)
+                    exc,
+                    (
+                        AmbiguousPublishError,
+                        AuthPermissionError,
+                        ValidationPublishError,
+                        TemporaryPublishError,
+                    ),
                 ):
                     raise
                 logger.warning(
@@ -308,9 +315,9 @@ class FacebookPublisher(PublisherPort):
             response = await client.post(url, data={**payload, "access_token": access_token})
         except httpx.TimeoutException as exc:
             # Timeout KHÔNG chứng minh là chưa đăng — Facebook có thể đã nhận.
-            # Vẫn xếp temporary để retry, an toàn nhờ unique constraint
-            # `uq_publish_jobs_idempotency_key` phía Havi chặn job trùng.
-            raise TemporaryPublishError(
+            # Unique constraint chỉ chặn tạo job thứ hai, không chặn chính job
+            # gọi Graph API lần nữa. Vì vậy phải dừng ở reconciliation.
+            raise AmbiguousPublishError(
                 self.channel, f"Facebook không phản hồi sau {self._timeout}s"
             ) from exc
         except httpx.HTTPError as exc:

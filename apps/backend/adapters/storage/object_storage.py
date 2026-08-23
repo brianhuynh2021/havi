@@ -46,10 +46,18 @@ class ObjectStorage:
             # SigV4 + path-style: MinIO không hỗ trợ virtual-host style theo mặc định.
             config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
+        self._external_client = boto3.client(
+            "s3",
+            endpoint_url=settings.media_external_endpoint_url,
+            aws_access_key_id=settings.media_access_key,
+            aws_secret_access_key=settings.media_secret_key,
+            region_name=settings.media_region,
+            config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+        )
 
     def create_upload_ticket(self, *, object_key: str, content_type: str) -> UploadTicket:
         ttl = self._settings.media_upload_ttl_seconds
-        response = self._client.generate_presigned_post(
+        response = self._external_client.generate_presigned_post(
             Bucket=self._settings.media_bucket,
             Key=object_key,
             Fields={"Content-Type": content_type},
@@ -136,4 +144,10 @@ class ObjectStorage:
         await asyncio.to_thread(_delete)
 
     def public_url(self, object_key: str) -> str:
-        return f"{self._settings.media_public_url.rstrip('/')}/{object_key}"
+        if self._settings.is_local:
+            return f"{self._settings.media_public_url.rstrip('/')}/{object_key}"
+        return self._external_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self._settings.media_bucket, "Key": object_key},
+            ExpiresIn=self._settings.media_download_ttl_seconds,
+        )

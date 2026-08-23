@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { ConnectionList } from "@/features/connections/connection-list";
 import { useSession } from "@/lib/auth/session";
+import { readTokens, writeTokens } from "@/lib/auth/token-store";
+
 import {
   createWorkspace,
   fetchDefaultShopName,
@@ -49,12 +51,17 @@ export function OnboardingScreen() {
   const previewSample = getIndustrySamplePreview(industry, shopName);
 
   async function handleStartLearning() {
+    if (learning) return;
     setLearning(true);
     setProgressPercent(25);
     setCompletedStages([0]);
 
     // Kích hoạt Business Truth Pack: lưu Brand Voice & FAQ mẫu chuẩn ngành vào database
-    await initializeBusinessTruthPack(industry, shopName);
+    try {
+      await initializeBusinessTruthPack(industry, shopName);
+    } catch {
+      // Tiếp tục luồng ngay cả khi có cảnh báo mạng
+    }
 
     setProgressPercent(70);
     setCompletedStages([0, 1]);
@@ -62,11 +69,18 @@ export function OnboardingScreen() {
     setTimeout(() => {
       setProgressPercent(100);
       setCompletedStages([0, 1, 2]);
-    }, 150);
+      setTimeout(() => {
+        router.replace("/app");
+      }, 400);
+    }, 200);
   }
 
-  // Tên đã nhập lúc đăng ký thường chính là tên tiệm — điền sẵn để chủ tiệm
-  // không phải gõ lại. Vẫn sửa được: nhiều người đăng ký bằng tên riêng.
+  function handleStep2Proceed() {
+    setStep(3);
+    void handleStartLearning();
+  }
+
+
   useEffect(() => {
     let cancelled = false;
     fetchDefaultShopName().then((name) => {
@@ -76,6 +90,14 @@ export function OnboardingScreen() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (step === 3 && !learning) {
+      void handleStartLearning();
+    }
+  }, [step, learning]);
+
+
 
   /** Tạo tiệm thật ở cuối bước 1 — từ đây trở đi user đã có workspace, nên bước
    * 2 và 3 có hỏng thì cũng không kẹt: token mới đã hết `needs_onboarding`. */
@@ -99,8 +121,13 @@ export function OnboardingScreen() {
   }
 
   function goToApp() {
+    const current = readTokens();
+    if (current) {
+      writeTokens({ ...current, needsOnboarding: false });
+    }
     router.replace("/app");
   }
+
 
   return (
     <div className={styles.wizard}>
@@ -246,7 +273,7 @@ export function OnboardingScreen() {
           <>
             <h1 className={styles.title}>Kết nối kênh của bạn</h1>
             <p className={styles.subtitle}>
-              Kết nối Facebook, Google Maps SEO, TikTok, YouTube Shorts để Havi tự động đăng bài, tạo video ngắn và chăm sóc khách 24/7.
+              Kết nối Facebook bằng API chính thức để thử luồng tạo, duyệt và đăng bài. Các kênh khác vẫn đang ở roadmap/Beta.
             </p>
             <div className={styles.connectionListWrapper}>
               <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
@@ -254,18 +281,19 @@ export function OnboardingScreen() {
             <div className={styles.stepActions}>
               {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
                   tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}
-              <Button variant="outline" scale="large" onClick={() => setStep(3)}>
+              <Button variant="outline" scale="large" onClick={handleStep2Proceed}>
                 Bỏ qua
               </Button>
               <Button
                 variant="primary"
                 scale="large"
                 disabled={!connected}
-                onClick={() => setStep(3)}
+                onClick={handleStep2Proceed}
               >
                 {connected ? "Tiếp tục →" : "Tiếp tục"}
               </Button>
             </div>
+
           </>
         ) : (
           <>

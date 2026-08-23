@@ -13,25 +13,23 @@ function renderLanding() {
 }
 
 describe("LandingScreen", () => {
-  it("hiển thị đầy đủ 4 trụ cột tiếp thị đa kênh của Havi", () => {
+  it("phân biệt Facebook Beta và pilot dữ liệu thật", () => {
     renderLanding();
-    expect(screen.getAllByText(/facebook/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/tiktok/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/google maps/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/trực inbox/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/facebook beta/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/pilot/i).length).toBeGreaterThan(0);
   });
 
-  it("hiển thị bảng giá thương mại chính thức (Gói Khởi Nghiệp 189k & Gói Chuyên Nghiệp 369k)", () => {
+  it("không hiển thị bảng giá thu tiền khi đang trong giai đoạn pilot", () => {
     renderLanding();
-    expect(screen.getAllByText(/189.000 đ/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/369.000 đ/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/7 ngày/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/189.000 đ/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/369.000 đ/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/799.000 đ/i)).not.toBeInTheDocument();
   });
 
   it("nói rõ nguyên tắc an toàn duyệt-trước là giá trị cốt lõi", () => {
     renderLanding();
     expect(screen.getByText(/bạn duyệt trước, luôn luôn/i)).toBeInTheDocument();
-    expect(screen.getByText(/tuyệt đối an toàn cho fanpage/i)).toBeInTheDocument();
+    expect(screen.getByText(/api chính thức, trạng thái trung thực/i)).toBeInTheDocument();
   });
 
   it("cho phép tương tác đổi ngành trong Showcase 3D Demo trực tuyến", async () => {
@@ -66,7 +64,7 @@ describe("LandingScreen", () => {
 
   it("có anchor navigation tới các section chính", () => {
     const { container } = renderLanding();
-    for (const id of ["demo-studio", "bang-gia", "khach-hang", "faq"]) {
+    for (const id of ["demo-studio", "khach-hang", "nguyen-tac", "faq"]) {
       expect(container.querySelector(`#${id}`)).not.toBeNull();
       expect(
         container.querySelector(`a[href="#${id}"]`),
@@ -86,20 +84,20 @@ describe("LandingScreen", () => {
     expect(screen.getByText(/Gửi Yêu Cầu Tư Vấn Ngay/i)).toBeInTheDocument();
   });
 
-  it("hiển thị các đánh giá thực chiến từ chủ tiệm (Testimonials)", () => {
+  it("không dựng testimonial hoặc ROI khi pilot chưa có bằng chứng", () => {
     renderLanding();
-    expect(screen.getByText(/Chủ Tiệm Nói Gì Về Havi/i)).toBeInTheDocument();
-    expect(screen.getByText(/Chị Mai Lan/i)).toBeInTheDocument();
-    expect(screen.getByText(/Anh Quốc Hoàng/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pilot Đang Được Đo Bằng Dữ Liệu Thật/i)).toBeInTheDocument();
+    expect(screen.getByText(/chưa công bố testimonial, ROI/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Chị Mai Lan/i)).not.toBeInTheDocument();
   });
 
   it("cho phép tương tác đóng mở Accordion FAQ", async () => {
     renderLanding();
     const user = userEvent.setup();
 
-    expect(screen.getByText(/Câu Hỏi Thường Gặp/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Câu Hỏi Thường Gặp/i })).toBeInTheDocument();
     // Default open FAQ 0
-    expect(screen.getByText(/Hoàn toàn dễ dàng! Havi được thiết kế trực quan/i)).toBeInTheDocument();
+    expect(screen.getByText(/Havi hướng tới thao tác đơn giản trên điện thoại/i)).toBeInTheDocument();
 
     // Click FAQ 1: Havi có tự động đăng bài...
     const faqBtn = screen.getByRole("button", { name: /Havi có tự động đăng bài lên mạng xã hội/i });
@@ -122,8 +120,8 @@ describe("LandingScreen", () => {
     expect(step1El).toBeInTheDocument();
     expect(within(step1El).getByText(/TikTok Video 9:16/i)).toBeInTheDocument();
 
-    // Click step 3: Theo dõi 24/7
-    const step3Btn = screen.getByRole("button", { name: /Bước 3: Theo dõi 24\/7/i });
+    // Click step 3: Theo dõi kết quả
+    const step3Btn = screen.getByRole("button", { name: /Bước 3: Theo dõi kết quả/i });
     await user.click(step3Btn);
     const step2El = screen.getByTestId("step-content-2");
     expect(step2El).toBeInTheDocument();
@@ -147,4 +145,3 @@ describe("LandingScreen", () => {
     expect(screen.queryByRole("dialog", { name: /Video trình diễn thực chiến Havi 60 giây/i })).not.toBeInTheDocument();
   });
 });
-

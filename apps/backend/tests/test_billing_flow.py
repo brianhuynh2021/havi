@@ -1,5 +1,8 @@
 """Test Billing Service & API routes (/billing/subscription, /billing/invoices, /billing/plan)."""
 
+from datetime import UTC, datetime
+
+import pytest
 from httpx import AsyncClient
 
 from core.enums import Plan, SubscriptionStatus
@@ -125,3 +128,85 @@ async def test_billing_tenant_isolation(client: AsyncClient):
 
     res_b_inv = await client.get("/billing/invoices", headers=_headers(tokens_b))
     assert res_b_inv.json() == []
+
+
+async def _billing_service(db_session):
+    from adapters.persistence.billing_repository import BillingRepository
+    from adapters.persistence.event_log_repository import EventLogRepository
+    from adapters.persistence.workspace_repository import WorkspaceRepository
+    from application.services.billing_service import BillingService
+
+    return BillingService(
+        billing=BillingRepository(db_session),
+        workspaces=WorkspaceRepository(db_session),
+        events=EventLogRepository(db_session),
+    )
+
+
+async def test_payment_requires_exact_amount_and_vnd(client: AsyncClient, db_session):
+    from application.services.billing_service import UnderpaidInvoiceError
+
+    tokens = await _onboard(client, email="billing_exact_match@havi.vn")
+    await client.post(
+        "/billing/plan",
+        json={"plan": "tiem_nho"},
+        headers=_headers(tokens),
+    )
+    invoices = (await client.get("/billing/invoices", headers=_headers(tokens))).json()
+    invoice_id = invoices[0]["id"]
+    service = await _billing_service(db_session)
+
+    with pytest.raises(UnderpaidInvoiceError):
+        await service.process_payment_success(
+            invoice_id=invoice_id,
+            gateway_reference="payos_overpaid",
+            amount_paid_vnd=invoices[0]["amount_vnd"] + 1,
+        )
+    with pytest.raises(UnderpaidInvoiceError):
+        await service.process_payment_success(
+            invoice_id=invoice_id,
+            gateway_reference="payos_wrong_currency",
+            amount_paid_vnd=invoices[0]["amount_vnd"],
+            currency="USD",
+        )
+
+
+async def test_payment_replay_is_idempotent_and_reference_is_unique(
+    client: AsyncClient, db_session
+):
+    from application.services.billing_service import DuplicatePaymentReferenceError
+
+    tokens = await _onboard(client, email="billing_replay@havi.vn")
+    for _ in range(2):
+        await client.post(
+            "/billing/plan",
+            json={"plan": "tiem_nho"},
+            headers=_headers(tokens),
+        )
+    invoices = (await client.get("/billing/invoices", headers=_headers(tokens))).json()
+    first, second = invoices[0], invoices[1]
+    service = await _billing_service(db_session)
+    paid_at = datetime(2026, 8, 23, tzinfo=UTC)
+
+    paid = await service.process_payment_success(
+        invoice_id=first["id"],
+        gateway_reference="payos_unique_reference",
+        amount_paid_vnd=first["amount_vnd"],
+        now=paid_at,
+    )
+    first_paid_until = paid_at.replace()  # giữ mốc gọi để kiểm replay bên dưới
+    replayed = await service.process_payment_success(
+        invoice_id=first["id"],
+        gateway_reference="payos_unique_reference",
+        amount_paid_vnd=first["amount_vnd"],
+        now=paid_at,
+    )
+    assert replayed.id == paid.id
+
+    with pytest.raises(DuplicatePaymentReferenceError):
+        await service.process_payment_success(
+            invoice_id=second["id"],
+            gateway_reference="payos_unique_reference",
+            amount_paid_vnd=second["amount_vnd"],
+            now=first_paid_until,
+        )
