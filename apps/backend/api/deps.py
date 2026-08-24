@@ -62,7 +62,6 @@ from application.services.publish_service import PublishService
 from application.services.roadmap_service import RoadmapService
 from application.services.sales_service import SalesService
 from application.services.video_render_service import VideoRenderService
-
 from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
@@ -207,6 +206,9 @@ def _object_storage() -> ObjectStorage:
     (lru_cache sẽ vỡ); `get_settings()` đã lru_cache nên vẫn là cùng một instance.
     """
     return ObjectStorage(get_settings())
+
+
+ObjectStorageDep = Annotated[ObjectStorage, Depends(_object_storage)]
 
 
 @lru_cache
@@ -358,9 +360,7 @@ def get_voice_service(session: DbSessionDep, settings: SettingsDep) -> VoiceServ
     from application.services.voice_service import VoiceService
 
     transcriber = (
-        MockVoiceTranscriber()
-        if settings.use_mock_llm
-        else GeminiVoiceTranscriber(settings)
+        MockVoiceTranscriber() if settings.use_mock_llm else GeminiVoiceTranscriber(settings)
     )
     return VoiceService(
         transcriber=transcriber,
@@ -372,7 +372,10 @@ VoiceServiceDep = Annotated[VoiceService, Depends(get_voice_service)]
 
 
 def get_goal_service(session: DbSessionDep) -> GoalService:
-    return GoalService(goal_repo=GoalRepository(session))
+    return GoalService(
+        goal_repo=GoalRepository(session),
+        event_repo=EventLogRepository(session),
+    )
 
 
 GoalServiceDep = Annotated[GoalService, Depends(get_goal_service)]
@@ -390,7 +393,6 @@ RoadmapServiceDep = Annotated[RoadmapService, Depends(get_roadmap_service)]
 
 
 class AuthContext:
-
     """Thông tin giải mã từ JWT."""
 
     def __init__(self, user_id: UUID, active_workspace_id: UUID | None) -> None:
@@ -460,3 +462,67 @@ async def require_path_workspace_member(
 
 
 PathWorkspaceMemberDep = Annotated[UUID, Depends(require_path_workspace_member)]
+
+
+async def require_path_workspace_owner(
+    workspace_id: UUID, auth: AuthDep, session: DbSessionDep
+) -> UUID:
+    """Yêu cầu quyền OWNER cho các thao tác nhạy cảm: đổi publish_mode, quản trị thành viên."""
+    members = WorkspaceMemberRepository(session)
+    member = await members.get(workspace_id=workspace_id, user_id=auth.user_id)
+    from core.enums import WorkspaceRole
+
+    if member is None or member.role != WorkspaceRole.OWNER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Chỉ chủ sở hữu (Owner) mới có quyền thực hiện thao tác này",
+        )
+    return workspace_id
+
+
+PathWorkspaceOwnerDep = Annotated[UUID, Depends(require_path_workspace_owner)]
+
+
+async def require_active_subscription_workspace(
+    workspace_id: WorkspaceDep, session: DbSessionDep
+) -> UUID:
+    """Cưỡng chế subscription còn hiệu lực trước khi chạy các tác vụ tốn CPU/LLM cost (P0-3)."""
+    from datetime import UTC, datetime
+
+    from domain.policies import subscription
+
+    ws_repo = WorkspaceRepository(session)
+    ws = await ws_repo.get_by_id(workspace_id)
+    if ws is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy workspace",
+        )
+
+    now_dt = datetime.now(UTC)
+    trial_dt = (
+        ws.trial_ends_at.replace(tzinfo=UTC)
+        if ws.trial_ends_at and ws.trial_ends_at.tzinfo is None
+        else ws.trial_ends_at
+    )
+    paid_dt = (
+        ws.paid_until.replace(tzinfo=UTC)
+        if ws.paid_until and ws.paid_until.tzinfo is None
+        else ws.paid_until
+    )
+
+    sub_state = subscription.state_for(
+        plan=ws.plan,
+        trial_ends_at=trial_dt,
+        paid_until=paid_dt,
+        now=now_dt,
+    )
+    if not sub_state.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="Hạn dùng thử hoặc gói cước đã hết. Vui lòng nâng cấp gói cước để tiếp tục.",
+        )
+    return workspace_id
+
+
+ActiveWorkspaceDep = Annotated[UUID, Depends(require_active_subscription_workspace)]

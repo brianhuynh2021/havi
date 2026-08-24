@@ -103,11 +103,13 @@ def _join_raw_inputs(user_prompt: str) -> str:
     return joined
 
 
-def _generate_smart_draft(channel: str, kind: str, tiem: str, noi_dung: str, is_tech: bool) -> tuple[str, str]:
+def _generate_smart_draft(
+    channel: str, kind: str, tiem: str, noi_dung: str, is_tech: bool
+) -> tuple[str, str]:
     """Sinh nội dung chuyên sâu, văn phong công nghệ sắc bén, chuẩn mực cho từng kênh."""
     clean_content = noi_dung.rstrip(".")
     tiem_tag = tiem.replace(" ", "")
-    
+
     if channel == "facebook_page":
         text = (
             f"🚀 ĐỘT PHÁ NĂNG SUẤT CÙNG {tiem.upper()}!\n\n"
@@ -173,10 +175,25 @@ class MockProvider(LLMProviderPort):
 
     async def generate(self, request: LLMRequest) -> LLMResponse:
         tiem = _extract(r"^Tên tiệm:\s*(.+)$", request.user_prompt, _SHOP_FALLBACK)
-        noi_dung = _join_raw_inputs(request.user_prompt) or "khai giảng khóa học công nghệ mới và ưu đãi dịch vụ."
+        noi_dung = (
+            _join_raw_inputs(request.user_prompt)
+            or "khai giảng khóa học công nghệ mới và ưu đãi dịch vụ."
+        )
 
         combined_check = f"{tiem} {noi_dung} {request.user_prompt}".lower()
-        is_tech = any(k in combined_check for k in ["công nghệ", "tech", "ai", "agent", "lập trình", "đào tạo", "khóa học", "nhật minh"])
+        is_tech = any(
+            k in combined_check
+            for k in [
+                "công nghệ",
+                "tech",
+                "ai",
+                "agent",
+                "lập trình",
+                "đào tạo",
+                "khóa học",
+                "nhật minh",
+            ]
+        )
 
         target_channels = []
         for ch, name in [
@@ -202,12 +219,14 @@ class MockProvider(LLMProviderPort):
         drafts = []
         for ch, kind in target_channels:
             text, media_note = _generate_smart_draft(ch, kind, tiem, noi_dung, is_tech)
-            drafts.append({
-                "channel": ch,
-                "kind": kind,
-                "text": text,
-                "media_note": media_note,
-            })
+            drafts.append(
+                {
+                    "channel": ch,
+                    "kind": kind,
+                    "text": text,
+                    "media_note": media_note,
+                }
+            )
 
         output_json = json.dumps({"drafts": drafts}, ensure_ascii=False)
 

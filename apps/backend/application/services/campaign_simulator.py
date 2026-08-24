@@ -8,11 +8,17 @@ from pydantic import BaseModel, Field
 
 
 class CampaignSimulationInput(BaseModel):
-    objective: str = Field(default="messages", description="Mục tiêu chiến dịch: messages, reach, leads, store_visits")
+    objective: str = Field(
+        default="messages", description="Mục tiêu chiến dịch: messages, reach, leads, store_visits"
+    )
     radius_km: float = Field(default=5.0, ge=1.0, le=50.0, description="Bán kính địa phương (km)")
-    daily_budget_vnd: float = Field(default=100000.0, ge=50000.0, le=2000000.0, description="Ngân sách ngày (VNĐ)")
+    daily_budget_vnd: float = Field(
+        default=100000.0, ge=50000.0, le=2000000.0, description="Ngân sách ngày (VNĐ)"
+    )
     duration_days: int = Field(default=7, ge=1, le=30, description="Số ngày chạy chiến dịch")
-    target_audience: str = Field(default="Khách hàng địa phương quan tâm dịch vụ", description="Mô tả tệp khách hàng")
+    target_audience: str = Field(
+        default="Khách hàng địa phương quan tâm dịch vụ", description="Mô tả tệp khách hàng"
+    )
 
 
 class CampaignSimulationResult(BaseModel):

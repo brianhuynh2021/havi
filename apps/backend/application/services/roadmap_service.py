@@ -83,24 +83,34 @@ class RoadmapService:
 
         return roadmap, tasks
 
-    async def get_active_roadmap(self, *, workspace_id: UUID) -> tuple[Roadmap | None, list[RoadmapTask]]:
+    async def get_active_roadmap(
+        self, *, workspace_id: UUID
+    ) -> tuple[Roadmap | None, list[RoadmapTask]]:
         active_goal = await self._goals.get_active_goal(workspace_id=workspace_id)
         if not active_goal:
             return None, []
-        roadmap = await self._roadmaps.get_active_roadmap(workspace_id=workspace_id, goal_id=active_goal.id)
+        roadmap = await self._roadmaps.get_active_roadmap(
+            workspace_id=workspace_id, goal_id=active_goal.id
+        )
         if not roadmap:
             return None, []
-        tasks = await self._roadmaps.list_tasks_by_roadmap(workspace_id=workspace_id, roadmap_id=roadmap.id)
+        tasks = await self._roadmaps.list_tasks_by_roadmap(
+            workspace_id=workspace_id, roadmap_id=roadmap.id
+        )
         return roadmap, tasks
 
     async def get_today_action(self, *, workspace_id: UUID) -> RoadmapTask | None:
         active_goal = await self._goals.get_active_goal(workspace_id=workspace_id)
         if not active_goal:
             return None
-        roadmap = await self._roadmaps.get_active_roadmap(workspace_id=workspace_id, goal_id=active_goal.id)
+        roadmap = await self._roadmaps.get_active_roadmap(
+            workspace_id=workspace_id, goal_id=active_goal.id
+        )
         if not roadmap:
             return None
-        return await self._roadmaps.get_next_recommended_task(workspace_id=workspace_id, roadmap_id=roadmap.id)
+        return await self._roadmaps.get_next_recommended_task(
+            workspace_id=workspace_id, roadmap_id=roadmap.id
+        )
 
     async def complete_task_with_evidence(
         self,
@@ -181,6 +191,34 @@ class RoadmapService:
 
         return updated_task
 
+    async def reopen_task(
+        self,
+        *,
+        workspace_id: UUID,
+        task_id: UUID,
+    ) -> RoadmapTask:
+        task = await self._roadmaps.get_task_by_id(workspace_id=workspace_id, task_id=task_id)
+        if not task:
+            raise ValueError(f"Không tìm thấy nhiệm vụ {task_id}")
+
+        updated_task = await self._roadmaps.update_task(
+            task,
+            status=TaskStatus.PENDING.value,
+            completed_at=None,
+            evidence_notes=None,
+        )
+
+        await self._events.record(
+            EventLogEntry(
+                workspace_id=workspace_id,
+                job_kind="task.reopened",
+                input_summary=f"Task: {task.title}",
+                output_summary="Reopened to pending status",
+            )
+        )
+
+        return updated_task
+
     async def create_weekly_review(
         self,
         *,
@@ -192,7 +230,9 @@ class RoadmapService:
         decision: str = ReviewDecision.CONTINUE.value,
         replan_diff: dict | None = None,
     ) -> RoadmapReview:
-        roadmap = await self._roadmaps.get_roadmap_by_id(workspace_id=workspace_id, roadmap_id=roadmap_id)
+        roadmap = await self._roadmaps.get_roadmap_by_id(
+            workspace_id=workspace_id, roadmap_id=roadmap_id
+        )
         if not roadmap:
             raise ValueError("Không tìm thấy lộ trình")
 
@@ -219,7 +259,9 @@ class RoadmapService:
 
         return review
 
-    async def list_roadmap_history(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[Roadmap]:
+    async def list_roadmap_history(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[Roadmap]:
         return await self._roadmaps.list_roadmap_history(workspace_id=workspace_id, goal_id=goal_id)
 
     async def restore_roadmap_version(
@@ -228,15 +270,21 @@ class RoadmapService:
         workspace_id: UUID,
         roadmap_id: UUID,
     ) -> tuple[Roadmap, list[RoadmapTask]]:
-        target = await self._roadmaps.get_roadmap_by_id(workspace_id=workspace_id, roadmap_id=roadmap_id)
+        target = await self._roadmaps.get_roadmap_by_id(
+            workspace_id=workspace_id, roadmap_id=roadmap_id
+        )
         if not target:
             raise ValueError(f"Không tìm thấy phiên bản lộ trình {roadmap_id}")
 
-        history = await self._roadmaps.list_roadmap_history(workspace_id=workspace_id, goal_id=target.goal_id)
+        history = await self._roadmaps.list_roadmap_history(
+            workspace_id=workspace_id, goal_id=target.goal_id
+        )
         max_version = max((r.version for r in history), default=1)
 
         # Lưu trữ phiên bản đang active
-        await self._roadmaps.archive_existing_roadmaps(workspace_id=workspace_id, goal_id=target.goal_id)
+        await self._roadmaps.archive_existing_roadmaps(
+            workspace_id=workspace_id, goal_id=target.goal_id
+        )
 
         # Tạo phiên bản mới khôi phục từ target
         new_version = max_version + 1
@@ -253,7 +301,9 @@ class RoadmapService:
             status=RoadmapStatus.ACTIVE.value,
         )
 
-        old_tasks = await self._roadmaps.list_tasks_by_roadmap(workspace_id=workspace_id, roadmap_id=target.id)
+        old_tasks = await self._roadmaps.list_tasks_by_roadmap(
+            workspace_id=workspace_id, roadmap_id=target.id
+        )
         new_tasks: list[RoadmapTask] = []
         for idx, ot in enumerate(old_tasks):
             nt = await self._roadmaps.create_task(
@@ -284,12 +334,15 @@ class RoadmapService:
 
         return restored, new_tasks
 
-    async def list_evidence(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[EvidenceLog]:
+    async def list_evidence(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[EvidenceLog]:
         return await self._roadmaps.list_evidence(workspace_id=workspace_id, goal_id=goal_id)
 
-    async def list_reviews(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[RoadmapReview]:
+    async def list_reviews(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[RoadmapReview]:
         return await self._roadmaps.list_reviews(workspace_id=workspace_id, goal_id=goal_id)
-
 
     def _build_horizon_plan(self, goal: Goal) -> tuple[str, str, str, list[str], list[dict]]:
         category = goal.category
@@ -302,7 +355,7 @@ class RoadmapService:
             h7 = "Thiết lập thông điệp thu hút, triển khai 3 bài viết/video ngắn đầu tiên và trực tin nhắn phản hồi <10s."
             assumptions = [
                 "Khách hàng địa phương/du khách quan tâm đến chất lượng thật và ưu đãi trải nghiệm đầu tiên.",
-                "Tốc độ phản hồi < 10s giúp tăng tỷ lệ chốt hẹn/giữ phòng gấp 3 lần.",
+                "Tốc độ phản hồi nhanh < 10s giúp nắm bắt trọn vẹn sự chú ý của khách hàng ngay khi có nhu cầu.",
             ]
 
             task_templates = [
@@ -318,7 +371,7 @@ class RoadmapService:
                 },
                 {
                     "title": "Quay video 15s bằng điện thoại có máy nhắc chữ",
-                    "why_this_is_next": "Video ngắn 9:16 giữ chân người xem cao gấp 4 lần hình ảnh tĩnh.",
+                    "why_this_is_next": "Video ngắn 9:16 truyền tải trực quan và chân thực không gian, dịch vụ tại cơ sở.",
                     "done_rule": "Clip 15-30s rõ mặt, rõ âm thanh và có hook 3 giây đầu.",
                     "time_estimate_minutes": 20,
                     "owner_type": TaskOwnerType.USER.value,
@@ -450,4 +503,3 @@ class RoadmapService:
             ]
 
         return h90, h30, h7, assumptions, task_templates
-

@@ -352,7 +352,7 @@ export async function generateItemImage(
       params: { path: { content_id: itemId } },
       body: { style: style || "3d_studio" },
     });
-    if (error || !data) return { ok: false, message: "Chưa tạo được ảnh AI, thử lại giúp chị nhé." };
+    if (error || !data) return { ok: false, message: "Chưa chọn được ảnh minh họa, thử lại giúp mình nhé." };
     return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };

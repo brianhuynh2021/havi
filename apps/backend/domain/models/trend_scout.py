@@ -17,9 +17,9 @@ class TrendCategory(StrEnum):
 class HookStyle(StrEnum):
     WARNING_MISTAKE = "warning_mistake"  # Cảnh báo sai lầm
     REAL_COMPARISON = "real_comparison"  # So sánh thực tế
-    BEHIND_SCENES = "behind_scenes"     # Hậu trường 1 ngày
-    HERO_RESCUE = "hero_rescue"         # Cứu ca khó
-    CAREER_INCOME = "career_income"     # Cơ hội việc làm & thu nhập
+    BEHIND_SCENES = "behind_scenes"  # Hậu trường 1 ngày
+    HERO_RESCUE = "hero_rescue"  # Cứu ca khó
+    CAREER_INCOME = "career_income"  # Cơ hội việc làm & thu nhập
 
 
 @dataclass

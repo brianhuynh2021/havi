@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { LandingScreen } from "./landing-screen";
 import { LanguageProvider } from "@/lib/i18n/language-context";
+import { writeTokens, clearTokens } from "@/lib/auth/token-store";
 
 function renderLanding() {
   return render(
@@ -143,5 +144,27 @@ describe("LandingScreen", () => {
     await user.click(closeBtn);
 
     expect(screen.queryByRole("dialog", { name: /Video trình diễn thực chiến Havi 60 giây/i })).not.toBeInTheDocument();
+  });
+
+  it("khi người dùng đã đăng nhập thì hiện nút Vào ứng dụng và dẫn vào /app", () => {
+    writeTokens({
+      accessToken: "mock-valid-jwt",
+      refreshToken: "mock-refresh",
+      activeWorkspaceId: "ws-123",
+      needsOnboarding: false,
+    });
+
+    renderLanding();
+
+    const appLinks = screen.getAllByRole("link", { name: /vào ứng dụng/i });
+    expect(appLinks.length).toBeGreaterThan(0);
+    expect(appLinks[0]).toHaveAttribute("href", "/app");
+
+    expect(screen.getByRole("link", { name: /vào không gian làm việc của bạn/i })).toHaveAttribute(
+      "href",
+      "/app",
+    );
+
+    clearTokens();
   });
 });

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { readTokens, subscribeTokens } from "@/lib/auth/token-store";
 import {
   faqs,
   heroStats,
@@ -27,6 +28,12 @@ export function LandingScreen() {
     notes: "",
   });
   const { lang } = useLanguage();
+
+  const isLoggedIn = useSyncExternalStore(
+    subscribeTokens,
+    () => Boolean(readTokens()?.accessToken),
+    () => false,
+  );
 
   const handleB2BSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,12 +67,20 @@ export function LandingScreen() {
 
           <div className={styles.headerActions}>
             <LanguageSwitcher />
-            <Link href="/login" className={styles.loginBtn}>
-              {lang === "VN" ? "Đăng nhập" : "Login"}
-            </Link>
-            <Link href="/signup" className={styles.ctaButton}>
-              {lang === "VN" ? "Dùng thử 7 ngày" : "Get Started"}
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/app" className={styles.ctaButton}>
+                {lang === "VN" ? "Vào ứng dụng →" : "Go to App →"}
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className={styles.loginBtn}>
+                  {lang === "VN" ? "Đăng nhập" : "Login"}
+                </Link>
+                <Link href="/signup" className={styles.ctaButton}>
+                  {lang === "VN" ? "Dùng thử 7 ngày" : "Get Started"}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -100,12 +115,21 @@ export function LandingScreen() {
           </p>
 
           <div className={styles.heroActions}>
-            <Link href="/signup" className={styles.heroPrimaryBtn}>
-              Bắt đầu dùng thử 7 ngày miễn phí
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/app" className={styles.heroPrimaryBtn}>
+                {lang === "VN" ? "Vào không gian làm việc của bạn" : "Open Your Workspace"}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ) : (
+              <Link href="/signup" className={styles.heroPrimaryBtn}>
+                {lang === "VN" ? "Bắt đầu dùng thử 7 ngày miễn phí" : "Start 7-Day Free Trial"}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )}
             <button
               type="button"
               className={styles.heroSecondaryBtn}
@@ -342,8 +366,14 @@ export function LandingScreen() {
                 <li><Link href="/about">Về Havi</Link></li>
                 <li><Link href="/terms">Điều khoản sử dụng</Link></li>
                 <li><Link href="/privacy">Chính sách bảo mật</Link></li>
-                <li><Link href="/login">Đăng nhập</Link></li>
-                <li><Link href="/signup">Tạo tài khoản</Link></li>
+                {isLoggedIn ? (
+                  <li><Link href="/app" style={{ color: "#38bdf8", fontWeight: 700 }}>Vào ứng dụng →</Link></li>
+                ) : (
+                  <>
+                    <li><Link href="/login">Đăng nhập</Link></li>
+                    <li><Link href="/signup">Tạo tài khoản</Link></li>
+                  </>
+                )}
               </ul>
             </div>
 

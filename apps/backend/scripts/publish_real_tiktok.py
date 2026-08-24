@@ -1,5 +1,4 @@
-"""Script thực chiến: Xuất bản Video thật lên tài khoản TikTok đã kết nối.
-"""
+"""Script thực chiến: Xuất bản Video thật lên tài khoản TikTok đã kết nối."""
 
 import asyncio
 from datetime import UTC, datetime
@@ -30,7 +29,6 @@ async def publish_live_tiktok():
     print("=" * 60)
 
     async with AsyncSession(_engine) as session:
-
         conn_repo = ConnectionRepository(session)
         content_repo = ContentRepository(session)
         publish_repo = PublishRepository(session)
@@ -43,7 +41,9 @@ async def publish_live_tiktok():
             print("❌ Chưa tìm thấy kết nối TikTok trong workspace!")
             return
 
-        print(f"✅ Đã tìm thấy tài khoản TikTok kết nối: {conn.account_name} (ID: {conn.external_account_id})")
+        print(
+            f"✅ Đã tìm thấy tài khoản TikTok kết nối: {conn.account_name} (ID: {conn.external_account_id})"
+        )
 
         # 2. Tạo nội dung Video hoàn chỉnh
         title = "3 Bước Chăm Sóc Da Căng Bóng Tại Nhà ✨ Spa An Nhiên"

@@ -54,7 +54,6 @@ export interface IndustryScenario {
   tabs: {
     facebook: { title: string; content: string; badge: string };
     video: { title: string; hook: string; script: string; badge: string };
-    maps: { title: string; content: string; badge: string };
     inbox: { title?: string; customerMsg: string; haviReply: string; capturedPhone: string; badge: string };
   };
 }
@@ -78,11 +77,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Short-form Video 9:16",
         hook: "🚨 3 sai lầm rửa mặt khiến mụn ẩn cứ tái đi tái lại mà 90% chị em không ngờ tới...",
         script: "1. Dùng khăn bông ẩm lau mặt ➔ Ổ vi khuẩn sinh mụn.\n2. Bỏ qua bước cấp ẩm sau khi rửa ➔ Da tiết dầu nhiều hơn.\n3. Nặn mụn bằng tay không vô trùng ➔ Thâm sẹo vĩnh viễn.\n👉 Muốn da sạch mịn đón Tết? Bấm link bio đặt lịch soi da miễn phí hôm nay!",
-      },
-      maps: {
-        title: "Bài đăng & Tối ưu Google Maps SEO",
-        badge: "Google Business — Bản nháp",
-        content: "📍 Viện Chăm Sóc Da & Trị Mụn Uy Tín Khu Vực — Giảm ngay 20% cho khách hàng tìm thấy và đặt lịch trực tiếp qua Google Maps tuần này!",
       },
       inbox: {
         title: "Mẫu FAQ chờ xác minh",
@@ -111,11 +105,6 @@ export const industryScenarios: IndustryScenario[] = [
         hook: "🏡 Cầm 4 tỷ mua nhà Quận 7 liệu có căn nào đường ô tô đỗ cửa, đúc 3 tầng? Xem ngay căn này!",
         script: "Mặt tiền 5m cực thoáng, phòng khách rộng thênh thang, 4 phòng ngủ khép kín. Vị trí chỉ 5 phút ra Phú Mỹ Hưng. Sổ hồng trao tay, pháp lý sạch 100%. Anh/chị xem nhà liên hệ em ngay!",
       },
-      maps: {
-        title: "Tối ưu Google Business Địa phương",
-        badge: "Google Business — Bản nháp",
-        content: "📍 Văn Phòng Ký Gửi Nhà Đất & Định Giá BĐS Uy Tín — Hỗ trợ pháp lý, kiểm tra quy hoạch và tư vấn vay ngân hàng miễn phí 100%.",
-      },
       inbox: {
         title: "Mẫu FAQ chờ xác minh",
         badge: "Minh hoạ Inbox",
@@ -143,11 +132,6 @@ export const industryScenarios: IndustryScenario[] = [
         hook: "🤫 Tiết lộ quán cafe bí mật view ngắm hoàng hôn cực chill đồ uống chỉ từ 25k ít người biết...",
         script: "Không gian mở ngập tràn cây xanh, góc nào cũng có ảnh đẹp sống ảo. Đặc biệt món cafe muối kem béo ở đây uống 1 lần là ghiền. Tag ngay bạn thân vào set kèo đi thôi!",
       },
-      maps: {
-        title: "Bài đăng Google Maps & Menu",
-        badge: "Google Business — Bản nháp",
-        content: "📍 Quán Cà Phê & Bánh Ngọt Check-in Đẹp Nhất Khu Vực — Không gian máy lạnh thoáng mát, wifi tốc độ cao, chỗ đậu xe máy ô tô rộng rãi.",
-      },
       inbox: {
         title: "Mẫu FAQ chờ xác minh",
         badge: "Minh hoạ Inbox",
@@ -174,11 +158,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Short-form Video 9:16",
         hook: "💻 Đừng học lý thuyết suông nữa! Đây là cách học viên tự tay làm ra website bán hàng chỉ sau 2 tuần...",
         script: "1. Học thực hành 1 kèm 1 trên dự án thật.\n2. Tự tay làm web, gắn tính năng thanh toán online.\n3. Hỗ trợ việc làm ngay sau khi hoàn thành khóa học.\n👉 Đăng ký học thử 1 buổi miễn phí tại Học Viện ngay hôm nay!",
-      },
-      maps: {
-        title: "Google Business & Đào tạo Nghề",
-        badge: "Google Business — Bản nháp",
-        content: "📍 Học Viện Đào Tạo Nghề & Kỹ Năng Thực Chiến: Cơ sở đào tạo kỹ thuật số hàng đầu. Giảng viên tận tâm, cam kết đầu ra có sản phẩm chạy thật.",
       },
       inbox: {
         title: "Mẫu FAQ chờ xác minh",

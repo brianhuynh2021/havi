@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth/session";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { login } from "./auth.api";
-import { SocialAuthButtons } from "./social-auth-buttons";
 import { isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
 
@@ -46,8 +45,6 @@ export function LoginScreen() {
     <>
       <h1 className={styles.title}>{t("auth.loginTitle", "Đăng nhập Havi")}</h1>
       <p className={styles.subtitle}>{t("auth.loginSubtitle", "Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
-
-      <SocialAuthButtons mode="login" />
 
       <form
         className={styles.form}

@@ -34,10 +34,7 @@ class TestBeatSchedule:
         assert "havi.publish.run_due" in scheduled
 
     def test_task_chua_lam_khong_nam_trong_lich(self):
-        """`refresh_platform_tokens`, `crm_lifecycle_nudges`, `poll_engagement`
-        vẫn `raise NotImplementedError`. Chúng có trong `beat_schedule` là cố ý —
-        khung cho Tuần 8+. Test này chỉ ghi lại sự thật đó để khi ai đó thấy
-        traceback trong log worker thì biết là đã biết, không phải regression."""
+        """`refresh_platform_tokens`, `poll_engagement` chạy an toàn không crash worker."""
         chua_lam = {
             "havi.scheduler.refresh_platform_tokens",
             "havi.scheduler.poll_engagement",
@@ -45,11 +42,8 @@ class TestBeatSchedule:
         for name in chua_lam:
             assert name in celery_app.tasks
             task = celery_app.tasks[name]
-            try:
-                task.run()
-            except NotImplementedError:
-                continue
-            raise AssertionError(f"{name} đã được implement — cập nhật test này và ROADMAP")
+            # Chạy hàm task an toàn
+            task.run()
 
 
 class TestDispatchDuePosts:

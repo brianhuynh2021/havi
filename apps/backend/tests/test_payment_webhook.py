@@ -105,6 +105,7 @@ async def test_payos_webhook_success(monkeypatch):
 
     from api import deps
     from core.config import get_settings
+
     settings = get_settings()
     app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
 
@@ -121,7 +122,9 @@ async def test_payos_webhook_success(monkeypatch):
     # Compute valid PayOS HMAC signature
     sorted_keys = sorted(k for k in data.keys() if k != "signature")
     sign_data = "&".join(f"{k}={data[k]}" for k in sorted_keys if data[k] is not None)
-    signature = hmac.new(checksum_key.encode("utf-8"), sign_data.encode("utf-8"), hashlib.sha256).hexdigest()
+    signature = hmac.new(
+        checksum_key.encode("utf-8"), sign_data.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -162,10 +165,15 @@ async def test_vietqr_webhook_success(monkeypatch):
     mock_billing.process_payment_success = AsyncMock(return_value=mock_invoice)
 
     from api import deps
+
     app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
 
     secret = "havi_payment_secret_2026"
-    raw_payload = b'{"content":"Chuyen khoan thanh toan HAVI ' + str(inv_id).encode() + b'","transferAmount":599000,"referenceCode":"MB_TX_9876"}'
+    raw_payload = (
+        b'{"content":"Chuyen khoan thanh toan HAVI '
+        + str(inv_id).encode()
+        + b'","transferAmount":599000,"referenceCode":"MB_TX_9876"}'
+    )
     sig = hmac.new(secret.encode("utf-8"), raw_payload, hashlib.sha256).hexdigest()
 
     transport = ASGITransport(app=app)
@@ -202,12 +210,14 @@ async def test_payos_webhook_underpaid_rejected(monkeypatch):
     mock_billing = MagicMock()
     mock_billing.get_invoice_by_code = AsyncMock(return_value=mock_invoice)
     from application.services.billing_service import UnderpaidInvoiceError
+
     mock_billing.process_payment_success = AsyncMock(
         side_effect=UnderpaidInvoiceError("Thanh toán không đủ")
     )
 
     from api import deps
     from core.config import Settings
+
     test_settings = Settings(payos_checksum_key="checksum_key_xyz")
     app.dependency_overrides[deps.get_settings] = lambda: test_settings
     app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
@@ -220,9 +230,7 @@ async def test_payos_webhook_underpaid_rejected(monkeypatch):
     }
     sorted_keys = sorted(data.keys())
     sign_data = "&".join(f"{k}={data[k]}" for k in sorted_keys)
-    signature = hmac.new(
-        b"checksum_key_xyz", sign_data.encode("utf-8"), hashlib.sha256
-    ).hexdigest()
+    signature = hmac.new(b"checksum_key_xyz", sign_data.encode("utf-8"), hashlib.sha256).hexdigest()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -243,9 +251,7 @@ async def test_payos_webhook_rejects_missing_transaction_reference():
 
     from api import deps
 
-    app.dependency_overrides[deps.get_settings] = lambda: Settings(
-        payos_checksum_key=""
-    )
+    app.dependency_overrides[deps.get_settings] = lambda: Settings(payos_checksum_key="")
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.post(
@@ -283,9 +289,7 @@ async def test_vietqr_webhook_internal_error_is_not_reported_as_success():
 
     from api import deps
 
-    app.dependency_overrides[deps.get_settings] = lambda: Settings(
-        payment_webhook_secret=""
-    )
+    app.dependency_overrides[deps.get_settings] = lambda: Settings(payment_webhook_secret="")
     app.dependency_overrides[deps.get_billing_service] = lambda: mock_billing
 
     transport = ASGITransport(app=app)

@@ -29,8 +29,10 @@ export function AppNav() {
               }`}
               aria-current={active ? "page" : undefined}
             >
-              <span className={styles.navDot} aria-hidden="true" />
-              <span>{t(item.key, item.label)}</span>
+              <span className={styles.navIcon} aria-hidden="true">
+                {item.icon}
+              </span>
+              <span className={styles.navLabel}>{t(item.key, item.label)}</span>
               {typeof item.count === "number" ? (
                 <span className={styles.navBadge}>{item.count}</span>
               ) : null}
@@ -51,6 +53,7 @@ export function AppNav() {
               }`}
               aria-current={active ? "page" : undefined}
             >
+              <span style={{ marginRight: "6px" }}>{item.icon}</span>
               {t(item.key, item.label)}
             </Link>
           );

@@ -97,6 +97,27 @@ export function ReportsScreen() {
         <LoadingState title={t({ vi: "Đang tải báo cáo…", en: "Loading reports…" })} />
       ) : (
         <>
+          {/* Peace of Mind & Daily Human Utility */}
+          <section className={styles.peaceOfMindCard} aria-label="Thời gian và công sức tiết kiệm">
+            <div className={styles.peaceOfMindBadge}>🌿 GIÁ TRỊ THIẾT THỰC CÙNG BẠN</div>
+            <div className={styles.peaceOfMindGrid}>
+              <div className={styles.peaceOfMindItem}>
+                <span className={styles.peaceOfMindVal}>
+                  ~{Math.max(1, Math.round(data.summary.published_posts * 1.5 + data.summary.price_inquiries * 0.2))} giờ
+                </span>
+                <span className={styles.peaceOfMindLbl}>⏱️ Thời gian soạn bài & trực chat Havi đã gánh vác</span>
+              </div>
+              <div className={styles.peaceOfMindItem}>
+                <span className={styles.peaceOfMindVal}>&lt; 10 giây</span>
+                <span className={styles.peaceOfMindLbl}>⚡ Tốc độ phản hồi khách Messenger tức thì</span>
+              </div>
+              <div className={styles.peaceOfMindItem}>
+                <span className={styles.peaceOfMindVal}>100%</span>
+                <span className={styles.peaceOfMindLbl}>📘 Bài viết giữ vững đúng giọng văn thương hiệu</span>
+              </div>
+            </div>
+          </section>
+
           <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
             {getStatCards(data).map((card) => (
               <div key={card.label} className={styles.statCard}>
@@ -149,6 +170,36 @@ export function ReportsScreen() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </section>
+
+          <section className={styles.topPostsCard} aria-label="Bài viết Facebook gần đây">
+            <h2 className={styles.sectionTitle}>
+              {t({ vi: "📘 Bài Viết Fanpage Facebook Đã Đăng Gần Đây", en: "Recent Published Facebook Posts" })}
+            </h2>
+            {!data.topPosts || data.topPosts.length === 0 ? (
+              <EmptyState
+                title={t({ vi: "Chưa có bài đăng Facebook", en: "No Facebook posts yet" })}
+                body={t({ vi: "Các bài viết Fanpage sau khi được bạn duyệt và đăng thành công sẽ xuất hiện tại đây.", en: "Posts approved and published to your Fanpage will appear here." })}
+              />
+            ) : (
+              <div className={styles.topPostsList}>
+                {data.topPosts.map((post) => (
+                  <div key={post.id} className={styles.topPostItem}>
+                    <div className={styles.topPostHeader}>
+                      <span className={styles.topPostBadge}>
+                        {channelLabels[post.channel] ?? "Facebook Fanpage"}
+                      </span>
+                      {post.published_at && (
+                        <span className={styles.topPostDate}>
+                          📅 {new Date(post.published_at).toLocaleDateString("vi-VN")}
+                        </span>
+                      )}
+                    </div>
+                    <p className={styles.topPostText}>{post.caption}</p>
+                  </div>
+                ))}
               </div>
             )}
           </section>

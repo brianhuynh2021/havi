@@ -607,7 +607,7 @@ describe("ContentCreationScreen", () => {
 
     // Kiểm tra tiêu đề 2 nhóm
     expect(
-      screen.getByText(/Nhóm 1: Bài Viết & Local SEO/i),
+      screen.getByText(/Nhóm 1: Bài Viết Fanpage Facebook/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Video Ngắn 9:16 → TikTok, Reels và YouTube Shorts/i),

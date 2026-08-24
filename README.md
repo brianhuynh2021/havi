@@ -27,6 +27,7 @@ runtime boundary but live in one repository.
 
 | Path | Purpose |
 |---|---|
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | 🏛️ Master Architecture Blueprint & Mermaid Sequence Diagrams |
 | [`apps/web/`](apps/web/) | Next.js frontend |
 | [`apps/backend/`](apps/backend/) | FastAPI API, Celery worker, scheduler, and domain core |
 | [`prototypes/`](prototypes/) | High-fidelity `.dc.html` design prototypes plus `support.js` |

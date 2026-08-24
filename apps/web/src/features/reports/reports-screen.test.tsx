@@ -56,6 +56,26 @@ function mockReports() {
           ],
         });
       }
+      if (url.pathname.endsWith("/calendar") || url.pathname.includes("/calendar")) {
+        return jsonResponse({
+          start: "2026-08-01",
+          end: "2026-08-31",
+          days: [
+            {
+              date: "2026-08-20",
+              items: [
+                {
+                  id: "item-1",
+                  channel: "facebook_page",
+                  text: "Khai giảng khóa Lập trình Web Fullstack tại Trung Tâm Nhật Minh!",
+                  status: "published",
+                  scheduled_at: "2026-08-20T10:00:00Z",
+                },
+              ],
+            },
+          ],
+        });
+      }
       return jsonResponse([
         {
           channel: "facebook_page",
@@ -87,8 +107,9 @@ describe("ReportsScreen", () => {
     expect(await screen.findByText("5")).toBeInTheDocument();
     expect(screen.getByText("Bài đã đăng")).toBeInTheDocument();
     expect(screen.getByText("Khách tiềm năng")).toBeInTheDocument();
-    expect(screen.getByText("Facebook Page")).toBeInTheDocument();
-    expect(screen.getByText("100%")).toBeInTheDocument();
+    expect(screen.getAllByText("Facebook Page").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("100%").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Khai giảng khóa Lập trình Web/i)).toBeInTheDocument();
     await waitFor(() =>
       expect(asked).toEqual(
         expect.arrayContaining([

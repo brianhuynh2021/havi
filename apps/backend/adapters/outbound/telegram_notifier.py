@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 class TelegramNotifier(TelegramNotifierPort):
     def __init__(self, settings: Settings) -> None:
         self._bot_token = getattr(settings, "telegram_bot_token", None) or "MOCK_TELEGRAM_BOT_TOKEN"
-        self._default_chat_id = getattr(settings, "telegram_default_chat_id", None) or "demo_chat_id"
+        self._default_chat_id = (
+            getattr(settings, "telegram_default_chat_id", None) or "demo_chat_id"
+        )
 
     async def send_hot_lead_alert(
         self,
@@ -44,7 +46,11 @@ class TelegramNotifier(TelegramNotifierPort):
         )
 
         if not self._bot_token or self._bot_token.startswith("MOCK_"):
-            logger.info("Telegram Mock Dispatch: Gửi thông báo thành công tới chat_id=%s\n%s", target_chat, html_body)
+            logger.info(
+                "Telegram Mock Dispatch: Gửi thông báo thành công tới chat_id=%s\n%s",
+                target_chat,
+                html_body,
+            )
             return True
 
         url = f"https://api.telegram.org/bot{self._bot_token}/sendMessage"
@@ -60,7 +66,9 @@ class TelegramNotifier(TelegramNotifierPort):
                 res = await client.post(url, json=payload)
                 if res.status_code == 200:
                     return True
-                logger.error("Telegram API trả về lỗi: status=%s body=%s", res.status_code, res.text)
+                logger.error(
+                    "Telegram API trả về lỗi: status=%s body=%s", res.status_code, res.text
+                )
                 return False
         except Exception as exc:
             logger.error("Lỗi khi kết nối Telegram API: %s", exc)

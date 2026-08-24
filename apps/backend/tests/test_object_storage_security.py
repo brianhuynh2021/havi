@@ -15,7 +15,9 @@ def test_nonlocal_media_urls_are_short_lived_and_use_external_endpoint(monkeypat
         "https://media.havi.vn/havi-media/w1/a.jpg?X-Amz-Signature=signed"
     )
     clients = iter([internal, external])
-    monkeypatch.setattr("adapters.storage.object_storage.boto3.client", lambda *a, **k: next(clients))
+    monkeypatch.setattr(
+        "adapters.storage.object_storage.boto3.client", lambda *a, **k: next(clients)
+    )
 
     settings = Settings(
         env="staging",
@@ -30,9 +32,7 @@ def test_nonlocal_media_urls_are_short_lived_and_use_external_endpoint(monkeypat
     )
     storage = ObjectStorage(settings)
 
-    ticket = storage.create_upload_ticket(
-        object_key="w1/a.jpg", content_type="image/jpeg"
-    )
+    ticket = storage.create_upload_ticket(object_key="w1/a.jpg", content_type="image/jpeg")
     assert ticket.upload_url.startswith("https://media.havi.vn/")
     assert "X-Amz-Signature=" in storage.public_url("w1/a.jpg")
     external.generate_presigned_url.assert_called_once_with(

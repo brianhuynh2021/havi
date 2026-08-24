@@ -20,6 +20,7 @@ import logging
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from pydantic import Field
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
@@ -254,12 +255,14 @@ def _iter_inquiries(payload: dict):
 class PosOrderPayload(HaviModel):
     """Payload nhận đơn hàng / hóa đơn từ máy POS hoặc phần mềm bán hàng."""
 
-    order_id: str
-    customer_name: str = "Khách tại quầy"
+    order_id: str = Field(min_length=1, max_length=128, description="Mã đơn hàng POS")
+    customer_name: str = Field(default="Khách tại quầy", max_length=255)
     customer_phone: str | None = None
-    amount_vnd: int
-    source: str = "pos"
-    items: list[str] = []
+    amount_vnd: int = Field(
+        gt=0, le=1_000_000_000, description="Số tiền thanh toán phải > 0 VNĐ và <= 1 tỷ VNĐ"
+    )
+    source: str = Field(default="pos", max_length=64)
+    items: list[str] = Field(default_factory=list)
 
 
 class PosIngestResponse(HaviModel):
@@ -290,6 +293,13 @@ async def ingest_pos_webhook(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="workspace_id không hợp lệ.",
         ) from None
+
+    # Khóa chặt Tenant Isolation (P0 Fix): Không cho phép inject doanh thu chéo workspace
+    if ws_uuid != workspace_dep:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Không có quyền nạp đơn hàng vào workspace của tài khoản khác.",
+        )
 
     order = PosOrder(
         order_id=payload.order_id,

@@ -95,10 +95,14 @@ class GoogleBusinessOAuthClient(OAuthClientPort):
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 resp = await client.post(GOOGLE_TOKEN_URL, data=payload)
         except (httpx.TimeoutException, httpx.NetworkError) as exc:
-            raise OAuthTemporaryError(self.platform, f"Google Token API network failure: {exc}") from exc
+            raise OAuthTemporaryError(
+                self.platform, f"Google Token API network failure: {exc}"
+            ) from exc
 
         if resp.status_code in _TRANSIENT_STATUSES:
-            raise OAuthTemporaryError(self.platform, f"Google Token API transient error: HTTP {resp.status_code}")
+            raise OAuthTemporaryError(
+                self.platform, f"Google Token API transient error: HTTP {resp.status_code}"
+            )
 
         if resp.status_code >= 400:
             raise OAuthPermanentError(self.platform, f"Google Token API rejected code: {resp.text}")
@@ -106,7 +110,9 @@ class GoogleBusinessOAuthClient(OAuthClientPort):
         token_data = resp.json()
         access_token = token_data.get("access_token")
         if not access_token:
-            raise OAuthPermanentError(self.platform, f"Google response missing access_token: {token_data}")
+            raise OAuthPermanentError(
+                self.platform, f"Google response missing access_token: {token_data}"
+            )
 
         refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in", 3600)

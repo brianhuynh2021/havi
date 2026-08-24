@@ -6,6 +6,8 @@ Documentation in `docs/` is grouped by audience and purpose:
 - [`product/`](product/) — roadmap, product direction, and [COMMERCIALIZATION_PHASES.md](product/COMMERCIALIZATION_PHASES.md)
 - [`architecture/`](architecture/) — technical spec, repository strategy, and
   architecture decisions
+- [`operations/`](operations/) — dogfooding, external beta launch, Facebook App
+  Review, and [BETA_READINESS_REVIEW.md](operations/BETA_READINESS_REVIEW.md)
 - [`security/`](security/) — security review checklists and release gates
 - [`testing/`](testing/) — visual regression and accessibility baselines
 
@@ -18,6 +20,11 @@ modes.
 Preparing founder beta? Read
 [`security/SECURITY_REVIEW.md`](security/SECURITY_REVIEW.md) before inviting
 users.
+
+About to charge a real customer? Read
+[`operations/BETA_READINESS_REVIEW.md`](operations/BETA_READINESS_REVIEW.md)
+first. It records the verified state of the tree, the P0 defects that block
+payment, the test protocol, and the paid-beta gate.
 
 Canonical deployment architecture:
 [`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md).

@@ -21,7 +21,9 @@ def test_extract_vietnam_phone():
 
 
 def test_classify_lead_intent_price():
-    res = classify_lead_intent("Khóa học sửa chữa điện tử học phí bao nhiêu vậy shop?", author_name="Tuấn Anh")
+    res = classify_lead_intent(
+        "Khóa học sửa chữa điện tử học phí bao nhiêu vậy shop?", author_name="Tuấn Anh"
+    )
     assert res.intent == LeadIntentKind.PRICE_INQUIRY
     assert res.confidence >= 0.9
     assert "#hoi_hoc_phi" in res.suggested_tags
@@ -30,7 +32,9 @@ def test_classify_lead_intent_price():
 
 
 def test_classify_lead_intent_enrollment_with_phone():
-    res = classify_lead_intent("Mình muốn đăng ký học lớp cấp tốc, sđt 0912345678", author_name="Minh")
+    res = classify_lead_intent(
+        "Mình muốn đăng ký học lớp cấp tốc, sđt 0912345678", author_name="Minh"
+    )
     assert res.intent == LeadIntentKind.ENROLLMENT
     assert res.extracted_phone == "0912345678"
     assert "#co_so_dien_thoai" in res.suggested_tags
@@ -46,6 +50,7 @@ async def test_ai_lead_agent_service_provisions_warm_lead_on_phone():
 
         async def create(self, **kwargs):
             from domain.models.lead import Lead
+
             lead = Lead(id=uuid4(), **kwargs)
             self.created_leads.append(lead)
             return lead

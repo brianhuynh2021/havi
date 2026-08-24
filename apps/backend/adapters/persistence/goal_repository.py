@@ -70,11 +70,7 @@ class GoalRepository:
         return result.scalar_one_or_none()
 
     async def list_by_workspace(self, *, workspace_id: UUID) -> list[Goal]:
-        stmt = (
-            select(Goal)
-            .where(Goal.workspace_id == workspace_id)
-            .order_by(desc(Goal.created_at))
-        )
+        stmt = select(Goal).where(Goal.workspace_id == workspace_id).order_by(desc(Goal.created_at))
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 

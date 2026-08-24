@@ -25,6 +25,55 @@
   color: #312e81;
 }
 
+/* Peace of Mind & Human-Centric Relief */
+.peaceOfMindCard {
+  margin-top: 18px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdfa 100%);
+  border: 1.5px solid #bbf7d0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.peaceOfMindBadge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+  width: fit-content;
+  letter-spacing: 0.05em;
+}
+
+.peaceOfMindGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.peaceOfMindItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.peaceOfMindVal {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  color: #166534;
+}
+
+.peaceOfMindLbl {
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.4;
+}
+
 .insightLabel {
   color: #4338ca;
   font-size: 11px;
@@ -165,6 +214,69 @@
   color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.topPostsCard {
+  margin-top: 20px;
+  padding: 20px 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+.topPostsList {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.topPostItem {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.topPostItem:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.topPostHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topPostBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1877f2;
+  background: rgba(24, 119, 242, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.topPostDate {
+  font-size: 11.5px;
+  color: var(--color-muted);
+}
+
+.topPostText {
+  font-size: 13.5px;
+  color: var(--color-ink);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (max-width: 1080px) {

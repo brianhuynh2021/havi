@@ -22,16 +22,23 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          <Logo size={36} />
-          <div className={styles.brandText}>Havi</div>
+        <div className={styles.topSection}>
+          <div className={styles.brand}>
+            <Logo size={32} />
+            <div className={styles.brandText}>Havi</div>
+            <span className={styles.brandPill}>OS 3.0</span>
+          </div>
+
+          <div className={styles.workspaceSection}>
+            <WorkspaceName />
+          </div>
         </div>
 
-        <AppNav />
+        <div className={styles.navSection}>
+          <AppNav />
+        </div>
 
-        <section className={styles.workspaceCard}>
-          <p className={styles.workspaceLabel}>{t("shell.workspace", "Không gian làm việc")}</p>
-          <WorkspaceName />
+        <section className={styles.bottomCard}>
           <WorkspaceChannels />
           <SignOutButton />
         </section>

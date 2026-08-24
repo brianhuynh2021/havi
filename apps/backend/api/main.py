@@ -83,8 +83,6 @@ ROUTERS = (
 )
 
 
-
-
 def create_app() -> FastAPI:
     settings = get_settings()
 

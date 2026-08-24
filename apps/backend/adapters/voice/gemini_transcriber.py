@@ -85,7 +85,12 @@ class GeminiVoiceTranscriber(VoiceTranscriberPort):
             },
         }
 
-        candidate_models = [self._model, "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.6-flash"]
+        candidate_models = [
+            self._model,
+            "gemini-flash-lite-latest",
+            "gemini-flash-latest",
+            "gemini-3.6-flash",
+        ]
         # Loại bỏ trùng lặp giữ nguyên thứ tự
         seen = set()
         models_to_try = [m for m in candidate_models if m and not (m in seen or seen.add(m))]
@@ -107,17 +112,30 @@ class GeminiVoiceTranscriber(VoiceTranscriberPort):
                             detected_intent=parsed.get("detected_intent", "").strip(),
                         )
                     except Exception as exc:
-                        logger.warning("Không thể parse JSON từ Gemini transcribe response (%s): %s", model_name, exc)
+                        logger.warning(
+                            "Không thể parse JSON từ Gemini transcribe response (%s): %s",
+                            model_name,
+                            exc,
+                        )
                         return TranscribeResult(
                             text=raw_text.strip(),
                             summary="Ghi âm giọng nói",
                             detected_intent="general",
                         )
                 else:
-                    logger.warning("Gemini model %s trả về lỗi %s: %s, đang thử model tiếp theo...", model_name, response.status_code, response.text[:150])
+                    logger.warning(
+                        "Gemini model %s trả về lỗi %s: %s, đang thử model tiếp theo...",
+                        model_name,
+                        response.status_code,
+                        response.text[:150],
+                    )
                     last_error = f"Lỗi API Gemini ({response.status_code}): {response.text[:200]}"
             except httpx.TimeoutException:
-                logger.warning("Gemini model %s bị timeout sau %ss, thử model tiếp...", model_name, self._timeout)
+                logger.warning(
+                    "Gemini model %s bị timeout sau %ss, thử model tiếp...",
+                    model_name,
+                    self._timeout,
+                )
                 last_error = f"Nhận diện giọng nói timeout sau {self._timeout}s"
             except httpx.HTTPError as exc:
                 logger.warning("Gemini model %s lỗi kết nối: %s", model_name, exc)

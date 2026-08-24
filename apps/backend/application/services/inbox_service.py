@@ -66,9 +66,7 @@ class InboxService:
         # Publisher giả phải được lắp ghép rõ ràng ở composition root cho local.
         # Service không được tự rơi về fake vì điều đó biến cấu hình thiếu ở
         # production thành một lần gửi "thành công" không hề xảy ra ngoài đời.
-        self._reply_publishers = (
-            reply_publishers if reply_publishers is not None else {}
-        )
+        self._reply_publishers = reply_publishers if reply_publishers is not None else {}
         self._telegram = telegram
         self._leads = leads
 
@@ -177,7 +175,9 @@ class InboxService:
                         workspace_id=workspace_id,
                         name=author_name,
                         phone=phone_num,
-                        source=LeadSource.FANPAGE if platform == Platform.FACEBOOK else LeadSource.INBOX,
+                        source=LeadSource.FANPAGE
+                        if platform == Platform.FACEBOOK
+                        else LeadSource.INBOX,
                         message=content,
                     )
                 except Exception as exc:

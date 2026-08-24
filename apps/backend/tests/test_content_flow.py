@@ -654,4 +654,34 @@ async def test_upload_rendered_video_binary(
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
-    assert data["media_url"].startswith("file://")
+    assert "rendered_videos/" in data["media_url"]
+
+
+async def test_generate_item_video_processing_status(
+    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
+):
+    """Test gọi /generate-video khi render job mới được tạo (status=processing, media_url=None)."""
+    token_pair = await _onboard(client, email="c17_video_processing@havi.vn")
+    job = (
+        await client.post(
+            "/content/jobs",
+            json={"raw_inputs": [{"kind": "text", "text": "Khóa học AI thực chiến"}]},
+            headers=_headers(token_pair),
+        )
+    ).json()
+
+    engine = _engine(db_session, FakeProvider(response_text=GOOD_OUTPUT))
+    result = await engine.generate_drafts(
+        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
+    )
+    item_id = result.items[0].id
+
+    res = await client.post(
+        f"/content/{item_id}/generate-video",
+        json={"target_aspect_ratio": "9:16"},
+        headers=_headers(token_pair),
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()
+    assert data["status"] in ("processing", "completed")
+    assert data["target_aspect_ratio"] == "9:16"

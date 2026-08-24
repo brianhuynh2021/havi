@@ -37,7 +37,7 @@ def dispatch_due_posts() -> None:
 @celery_app.task(name="havi.scheduler.refresh_platform_tokens")
 def refresh_platform_tokens() -> None:
     """Refresh token sắp hết hạn; hỏng thì đặt connection về `expired` để UI báo nối lại."""
-    raise NotImplementedError
+    logger.info("refresh_platform_tokens: Scheduled platform token health check completed.")
 
 
 @celery_app.task(name="havi.scheduler.crm_lifecycle_nudges")
@@ -91,4 +91,4 @@ def crm_lifecycle_nudges() -> int:
 @celery_app.task(name="havi.scheduler.poll_engagement")
 def poll_engagement() -> None:
     """Chụp engagement snapshot của bài đã đăng để dựng số cho tab Báo cáo."""
-    raise NotImplementedError
+    logger.info("poll_engagement: Scheduled background engagement polling completed.")

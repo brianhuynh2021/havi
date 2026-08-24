@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
+from adapters.payment.payos_gateway import PaymentGatewayError
 from api.deps import BillingServiceDep, SettingsDep, WorkspaceDep
 from core.enums import Plan
 from core.schemas import ChangePlanRequest, Invoice, Subscription
@@ -110,6 +111,11 @@ async def create_checkout(
     except PlanChangeNotAllowed as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except PaymentGatewayError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
         ) from exc
 

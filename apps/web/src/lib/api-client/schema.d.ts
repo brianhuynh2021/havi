@@ -69,7 +69,7 @@ export interface paths {
         put?: never;
         /**
          * Social Login
-         * @description Đăng nhập 1-chạm qua Google hoặc Facebook.
+         * @description Vô hiệu hoá social login không xác thực chữ ký để bảo vệ chống chiếm đoạt tài khoản (P0 Account Takeover).
          */
         post: operations["social_login_auth_social_login_post"];
         delete?: never;
@@ -293,6 +293,266 @@ export interface paths {
         post?: never;
         /** Remove Member */
         delete: operations["remove_member_workspaces__workspace_id__members__user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Goals */
+        get: operations["list_goals_goals_get"];
+        put?: never;
+        /** Create Goal */
+        post: operations["create_goal_goals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goals/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Active Goal */
+        get: operations["get_active_goal_goals_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goals/{goal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Or Reset Goal */
+        delete: operations["delete_or_reset_goal_goals__goal_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Goal */
+        patch: operations["update_goal_goals__goal_id__patch"];
+        trace?: never;
+    };
+    "/roadmaps/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Roadmap */
+        post: operations["generate_roadmap_roadmaps_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Active Roadmap */
+        get: operations["get_active_roadmap_roadmaps_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Today Action */
+        get: operations["get_today_action_roadmaps_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/tasks/{task_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Task */
+        post: operations["complete_task_roadmaps_tasks__task_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/tasks/{task_id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Block Task */
+        post: operations["block_task_roadmaps_tasks__task_id__block_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/tasks/{task_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen Task */
+        post: operations["reopen_task_roadmaps_tasks__task_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/{roadmap_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Review */
+        post: operations["create_review_roadmaps__roadmap_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Roadmap History */
+        get: operations["list_roadmap_history_roadmaps_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/{roadmap_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Roadmap */
+        post: operations["restore_roadmap_roadmaps__roadmap_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Evidence */
+        get: operations["list_evidence_roadmaps_evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roadmaps/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reviews */
+        get: operations["list_reviews_roadmaps_reviews_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/campaigns/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulate Campaign
+         * @description Mô phỏng phạm vi tiếp cận và hội thoại ước tính trước khi tạo chiến dịch.
+         */
+        post: operations["simulate_campaign_campaigns_simulate_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -552,10 +812,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Transcribe Voice
+         * Transcribe Voice Note
          * @description Chuyển đổi file ghi âm giọng nói thành văn bản tiếng Việt chuẩn xác.
          */
-        post: operations["transcribe_voice_voice_transcribe_post"];
+        post: operations["transcribe_voice_note_voice_transcribe_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -798,7 +1058,7 @@ export interface paths {
         put?: never;
         /**
          * Generate Item Video
-         * @description Tự động dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg.
+         * @description Tự động tạo job dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg.
          */
         post: operations["generate_item_video_content__content_id__generate_video_post"];
         delete?: never;
@@ -818,7 +1078,7 @@ export interface paths {
         put?: never;
         /**
          * Upload Rendered Video
-         * @description Lưu file video 9:16 vừa render từ Client Canvas lên hệ thống lưu trữ của Havi.
+         * @description Lưu file video 9:16 vừa render từ Client Canvas lên Object Storage của Havi (MinIO/S3).
          */
         post: operations["upload_rendered_video_content__content_id__upload_rendered_video_post"];
         delete?: never;
@@ -1607,6 +1867,12 @@ export interface components {
             /** Lead Id */
             lead_id?: string | null;
         };
+        /** ActiveRoadmapResponse */
+        ActiveRoadmapResponse: {
+            roadmap: components["schemas"]["RoadmapResponse"];
+            /** Tasks */
+            tasks: components["schemas"]["TaskResponse"][];
+        };
         /**
          * AnalyticsSummary
          * @description Đo bằng khách hỏi giá / lead đã chốt / khách quay lại — không phải like/reach.
@@ -1665,6 +1931,20 @@ export interface components {
              * @default audio/webm
              */
             mime_type: string;
+        };
+        /** BlockTaskRequest */
+        BlockTaskRequest: {
+            /**
+             * Reason
+             * @description Lý do bị kẹt
+             */
+            reason: string;
+            /**
+             * Use Fallback
+             * @description Chuyển sang phương án dự phòng nhỏ hơn
+             * @default false
+             */
+            use_fallback: boolean;
         };
         /**
          * BrandProfile
@@ -1773,6 +2053,66 @@ export interface components {
             /** Days */
             days: components["schemas"]["CalendarDay"][];
         };
+        /** CampaignSimulationInput */
+        CampaignSimulationInput: {
+            /**
+             * Objective
+             * @description Mục tiêu chiến dịch: messages, reach, leads, store_visits
+             * @default messages
+             */
+            objective: string;
+            /**
+             * Radius Km
+             * @description Bán kính địa phương (km)
+             * @default 5
+             */
+            radius_km: number;
+            /**
+             * Daily Budget Vnd
+             * @description Ngân sách ngày (VNĐ)
+             * @default 100000
+             */
+            daily_budget_vnd: number;
+            /**
+             * Duration Days
+             * @description Số ngày chạy chiến dịch
+             * @default 7
+             */
+            duration_days: number;
+            /**
+             * Target Audience
+             * @description Mô tả tệp khách hàng
+             * @default Khách hàng địa phương quan tâm dịch vụ
+             */
+            target_audience: string;
+        };
+        /** CampaignSimulationResult */
+        CampaignSimulationResult: {
+            /** Objective */
+            objective: string;
+            /** Radius Km */
+            radius_km: number;
+            /** Daily Budget Vnd */
+            daily_budget_vnd: number;
+            /** Duration Days */
+            duration_days: number;
+            /** Total Budget Vnd */
+            total_budget_vnd: number;
+            /** Estimated Reach Min */
+            estimated_reach_min: number;
+            /** Estimated Reach Max */
+            estimated_reach_max: number;
+            /** Estimated Conversations Min */
+            estimated_conversations_min: number;
+            /** Estimated Conversations Max */
+            estimated_conversations_max: number;
+            /** Estimated Cpm Vnd */
+            estimated_cpm_vnd: number;
+            /** Disclaimer */
+            disclaimer: string;
+            /** Safety Guardrails */
+            safety_guardrails: string[];
+        };
         /** ChangePlanRequest */
         ChangePlanRequest: {
             plan: components["schemas"]["Plan"];
@@ -1810,6 +2150,30 @@ export interface components {
             account_name: string;
             /** Qr Code Url */
             qr_code_url: string;
+        };
+        /** CompleteTaskRequest */
+        CompleteTaskRequest: {
+            /**
+             * Evidence Text
+             * @description Nội dung kết quả / bằng chứng thực tế
+             */
+            evidence_text: string;
+            /**
+             * Evidence Type
+             * @description Loại bằng chứng (note, image, link, transfer, metric)
+             * @default note
+             */
+            evidence_type: string;
+            /**
+             * Value Number
+             * @description Số liệu đo lường cụ thể (nếu có)
+             */
+            value_number?: number | null;
+            /**
+             * Media Asset Id
+             * @description Ảnh hoặc video bằng chứng
+             */
+            media_asset_id?: string | null;
         };
         /**
          * ConnectionStatus
@@ -1940,6 +2304,47 @@ export interface components {
          * @enum {string}
          */
         ContentStatus: "draft" | "pending_approval" | "approved" | "scheduled" | "publishing" | "published" | "failed" | "dead_letter" | "dismissed";
+        /** CreateGoalRequest */
+        CreateGoalRequest: {
+            /**
+             * Title
+             * @description Tiêu đề mục tiêu
+             */
+            title: string;
+            /**
+             * @description Nhóm mục tiêu
+             * @default acquire_customers
+             */
+            category: components["schemas"]["GoalCategory"];
+            /**
+             * Evidence Definition
+             * @description Định nghĩa bằng chứng hoàn thành
+             */
+            evidence_definition: string;
+            /**
+             * Description
+             * @description Mô tả chi tiết
+             */
+            description?: string | null;
+            /**
+             * Target Deadline
+             * @description Hạn chót mục tiêu
+             */
+            target_deadline?: string | null;
+            /**
+             * Weekly Capacity Hours
+             * @description Số giờ cam kết/tuần
+             * @default 10
+             */
+            weekly_capacity_hours: number;
+            /**
+             * Constraints
+             * @description Ràng buộc hoặc tài nguyên
+             */
+            constraints?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** CreateVideoRenderJobRequest */
         CreateVideoRenderJobRequest: {
             /**
@@ -2087,6 +2492,43 @@ export interface components {
              */
             created_at: string;
         };
+        /** EvidenceResponse */
+        EvidenceResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /** Task Id */
+            task_id: string | null;
+            /** Source */
+            source: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Value Number */
+            value_number: number | null;
+            /** Value Text */
+            value_text: string;
+            /** Media Asset Id */
+            media_asset_id: string | null;
+            /** Confidence */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * FaqEntry
          * @description Chỉ câu chủ đã duyệt sẵn mới được trả lời tự động 24/7.
@@ -2120,6 +2562,15 @@ export interface components {
             /** Prompt Used */
             prompt_used: string;
         };
+        /** GenerateRoadmapRequest */
+        GenerateRoadmapRequest: {
+            /**
+             * Goal Id
+             * Format: uuid
+             * @description ID mục tiêu cần sinh lộ trình
+             */
+            goal_id: string;
+        };
         /** GenerateVideoRequest */
         GenerateVideoRequest: {
             /**
@@ -2134,7 +2585,7 @@ export interface components {
         /** GenerateVideoResponse */
         GenerateVideoResponse: {
             /** Media Url */
-            media_url: string;
+            media_url?: string | null;
             /**
              * Target Aspect Ratio
              * @default 9:16
@@ -2146,6 +2597,58 @@ export interface components {
              */
             status: string;
         };
+        /**
+         * GoalCategory
+         * @description 8 nhóm mục tiêu cơ bản theo Havi 3.0 (§26.7).
+         * @enum {string}
+         */
+        GoalCategory: "acquire_customers" | "sell_offer" | "launch" | "recruit" | "deliver_project" | "learn_skill" | "grow_audience" | "improve_operations" | "other";
+        /** GoalResponse */
+        GoalResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string | null;
+            /** Category */
+            category: string;
+            /** Evidence Definition */
+            evidence_definition: string;
+            /** Target Deadline */
+            target_deadline: string | null;
+            /** Weekly Capacity Hours */
+            weekly_capacity_hours: number;
+            /** Constraints */
+            constraints: {
+                [key: string]: unknown;
+            } | null;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * GoalStatus
+         * @enum {string}
+         */
+        GoalStatus: "active" | "paused" | "completed" | "abandoned";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2738,7 +3241,10 @@ export interface components {
          * @description Payload nhận đơn hàng / hóa đơn từ máy POS hoặc phần mềm bán hàng.
          */
         PosOrderPayload: {
-            /** Order Id */
+            /**
+             * Order Id
+             * @description Mã đơn hàng POS
+             */
             order_id: string;
             /**
              * Customer Name
@@ -2747,25 +3253,25 @@ export interface components {
             customer_name: string;
             /** Customer Phone */
             customer_phone?: string | null;
-            /** Amount Vnd */
+            /**
+             * Amount Vnd
+             * @description Số tiền thanh toán phải > 0 VNĐ và <= 1 tỷ VNĐ
+             */
             amount_vnd: number;
             /**
              * Source
              * @default pos
              */
             source: string;
-            /**
-             * Items
-             * @default []
-             */
-            items: string[];
+            /** Items */
+            items?: string[];
         };
         /**
          * PublishFailureKind
          * @description Phân loại lỗi publish để quyết định có retry hay không.
          * @enum {string}
          */
-        PublishFailureKind: "temporary" | "auth_permission" | "validation_permanent";
+        PublishFailureKind: "temporary" | "ambiguous_outcome" | "auth_permission" | "validation_permanent";
         /**
          * PublishJob
          * @description Một lượt đăng bài. Frontend đọc để hiện trạng thái và nút "Thử lại".
@@ -2823,7 +3329,7 @@ export interface components {
          *     và dead-letter mà content item không cần biết.
          * @enum {string}
          */
-        PublishStatus: "pending" | "in_flight" | "succeeded" | "failed" | "dead_letter";
+        PublishStatus: "pending" | "in_flight" | "pending_reconciliation" | "succeeded" | "failed" | "dead_letter";
         /** RawInput */
         RawInput: {
             kind: components["schemas"]["RawInputKind"];
@@ -2854,6 +3360,122 @@ export interface components {
             scheduled_at: string;
         };
         /**
+         * ReviewDecision
+         * @enum {string}
+         */
+        ReviewDecision: "continue" | "improve" | "pivot" | "pause" | "stop";
+        /** ReviewResponse */
+        ReviewResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /**
+             * Roadmap Id
+             * Format: uuid
+             */
+            roadmap_id: string;
+            /**
+             * Review Date
+             * Format: date-time
+             */
+            review_date: string;
+            /** Completed Summary */
+            completed_summary: string;
+            /** Evidence Summary */
+            evidence_summary: string;
+            /** Obstacles Summary */
+            obstacles_summary: string;
+            /** Decision */
+            decision: string;
+            /** Replan Diff */
+            replan_diff: {
+                [key: string]: unknown;
+            } | null;
+            /** User Accepted */
+            user_accepted: boolean;
+        };
+        /** ReviewRoadmapRequest */
+        ReviewRoadmapRequest: {
+            /**
+             * Completed Summary
+             * @description Tóm tắt những gì đã làm được
+             */
+            completed_summary: string;
+            /**
+             * Evidence Summary
+             * @description Tóm tắt kết quả / bằng chứng đạt được
+             */
+            evidence_summary: string;
+            /**
+             * Obstacles Summary
+             * @description Tóm tắt khó khăn / rào cản
+             */
+            obstacles_summary: string;
+            /**
+             * @description Quyết định tiếp theo
+             * @default continue
+             */
+            decision: components["schemas"]["ReviewDecision"];
+            /**
+             * Replan Diff
+             * @description Đề xuất điều chỉnh lộ trình
+             */
+            replan_diff?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** RoadmapResponse */
+        RoadmapResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /** Version */
+            version: number;
+            /** Title */
+            title: string;
+            /** Horizon 90D */
+            horizon_90d: string;
+            /** Horizon 30D */
+            horizon_30d: string;
+            /** Horizon 7D */
+            horizon_7d: string;
+            /** Assumptions */
+            assumptions: string[] | null;
+            /** Confidence Score */
+            confidence_score: number;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
          * SignUpRequest
          * @description Email + mật khẩu là kênh duy nhất để tạo tài khoản.
          *
@@ -2874,22 +3496,6 @@ export interface components {
             email: string;
             /** Password */
             password: string;
-        };
-        /** SocialLoginRequest */
-        SocialLoginRequest: {
-            /**
-             * Provider
-             * @example google
-             * @example facebook
-             */
-            provider: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Name */
-            name?: string | null;
         };
         /** Subscription */
         Subscription: {
@@ -2955,6 +3561,62 @@ export interface components {
             edit_plan: {
                 [key: string]: unknown;
             };
+        };
+        /** TaskResponse */
+        TaskResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /**
+             * Roadmap Id
+             * Format: uuid
+             */
+            roadmap_id: string;
+            /**
+             * Goal Id
+             * Format: uuid
+             */
+            goal_id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string | null;
+            /** Why This Is Next */
+            why_this_is_next: string;
+            /** Time Estimate Minutes */
+            time_estimate_minutes: number;
+            /** Owner Type */
+            owner_type: string;
+            /** Capability Module */
+            capability_module: string;
+            /** Inputs Needed */
+            inputs_needed: string | null;
+            /** Done Rule */
+            done_rule: string;
+            /** Fallback Action */
+            fallback_action: string | null;
+            /** Status */
+            status: string;
+            /** Scheduled Date */
+            scheduled_date: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Evidence Notes */
+            evidence_notes: string | null;
+            /** Order Index */
+            order_index: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** TimeseriesPoint */
         TimeseriesPoint: {
@@ -3033,6 +3695,24 @@ export interface components {
             suggested_angle: string;
             /** Suggested Hashtags */
             suggested_hashtags: string[];
+        };
+        /** UpdateGoalRequest */
+        UpdateGoalRequest: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            status?: components["schemas"]["GoalStatus"] | null;
+            /** Evidence Definition */
+            evidence_definition?: string | null;
+            /** Target Deadline */
+            target_deadline?: string | null;
+            /** Weekly Capacity Hours */
+            weekly_capacity_hours?: number | null;
+            /** Constraints */
+            constraints?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -3318,11 +3998,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SocialLoginRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -3331,15 +4007,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenPair"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3820,6 +4487,476 @@ export interface operations {
             };
         };
     };
+    list_goals_goals_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"][];
+                };
+            };
+        };
+    };
+    create_goal_goals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_active_goal_goals_active_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"] | null;
+                };
+            };
+        };
+    };
+    delete_or_reset_goal_goals__goal_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_goal_goals__goal_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                goal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGoalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_roadmap_roadmaps_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRoadmapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveRoadmapResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_active_roadmap_roadmaps_active_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveRoadmapResponse"] | null;
+                };
+            };
+        };
+    };
+    get_today_action_roadmaps_today_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"] | null;
+                };
+            };
+        };
+    };
+    complete_task_roadmaps_tasks__task_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_task_roadmaps_tasks__task_id__block_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BlockTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_task_roadmaps_tasks__task_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_review_roadmaps__roadmap_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roadmap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRoadmapRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_roadmap_history_roadmaps_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoadmapResponse"][];
+                };
+            };
+        };
+    };
+    restore_roadmap_roadmaps__roadmap_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roadmap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveRoadmapResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evidence_roadmaps_evidence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceResponse"][];
+                };
+            };
+        };
+    };
+    list_reviews_roadmaps_reviews_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"][];
+                };
+            };
+        };
+    };
+    simulate_campaign_campaigns_simulate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampaignSimulationInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CampaignSimulationResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_brand_profile_brand_profile_get: {
         parameters: {
             query?: never;
@@ -4245,7 +5382,7 @@ export interface operations {
             };
         };
     };
-    transcribe_voice_voice_transcribe_post: {
+    transcribe_voice_note_voice_transcribe_post: {
         parameters: {
             query?: never;
             header?: never;

@@ -6,7 +6,7 @@ from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
 from adapters.persistence.workspace_repository import WorkspaceRepository
-from api.deps import DbSessionDep, WorkspaceDep
+from api.deps import ActiveWorkspaceDep, DbSessionDep
 from application.services.trend_scout_service import TrendScoutService
 from domain.models.trend_scout import (
     HookStyle,
@@ -55,7 +55,7 @@ class SynthesizeTrendResponse(BaseModel):
     summary="Lấy danh sách các Hot Trends thời gian thực được AI đề xuất cho tiệm",
 )
 async def get_hot_trends(
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
 ) -> list[TrendingTopicResponse]:
     trends = await trend_scout_service.get_hot_trends(workspace_id)
     return [
@@ -81,7 +81,7 @@ async def get_hot_trends(
     summary="Quét và làm mới danh sách các Hot Trends mới nhất từ Radar AI",
 )
 async def refresh_hot_trends(
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
     session: DbSessionDep,
 ) -> list[TrendingTopicResponse]:
     ws_repo = WorkspaceRepository(session)
@@ -117,7 +117,7 @@ async def refresh_hot_trends(
     summary="Biến một trend thành kịch bản video ngắn và edit plan 9:16 hoàn chỉnh",
 )
 async def synthesize_trend(
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
     payload: SynthesizeTrendRequest,
 ) -> SynthesizeTrendResponse:
     brand_name = "Trung Tâm Công Nghệ Nhật Minh"

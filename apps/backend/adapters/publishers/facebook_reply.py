@@ -67,10 +67,7 @@ class FacebookReplyAdapter(ReplyPublisherPort):
                 "message": {"text": request.text},
                 "messaging_type": "RESPONSE",
             }
-        elif (
-            request.item_type == InboxItemType.COMMENT
-            and request.external_message_id
-        ):
+        elif request.item_type == InboxItemType.COMMENT and request.external_message_id:
             # Bình luận bài viết Facebook feed: trả lời trực tiếp dưới comment
             url = f"{GRAPH_BASE}/{request.external_message_id}/comments"
             payload = {

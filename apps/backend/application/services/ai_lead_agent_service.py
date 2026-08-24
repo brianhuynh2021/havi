@@ -35,7 +35,9 @@ class AILeadAgentService:
 
         stage = LeadStage.NEW
         if analysis.extracted_phone:
-            stage = LeadStage.QUALIFIED  # Có số điện thoại là Lead tiềm năng đã xác thực (QUALIFIED)
+            stage = (
+                LeadStage.QUALIFIED
+            )  # Có số điện thoại là Lead tiềm năng đã xác thực (QUALIFIED)
 
         # Ghi chú chi tiết từ phân tích AI
         notes = f"[AI Intent: {analysis.intent.value} (conf={analysis.confidence:.2f})] Tags: {', '.join(analysis.suggested_tags)}"

@@ -107,6 +107,7 @@ def build_user_prompt(
     raw_inputs: list[dict],
     media_descriptions: list[str],
     target_channels: list[Channel] | None = None,
+    few_shot_examples: list[str] | None = None,
 ) -> str:
     channels = target_channels if target_channels is not None else list(PILOT_CHANNELS)
     lines = [f"Tên tiệm: {workspace.name}", "", "Liệu thô chủ tiệm vừa nạp:"]
@@ -119,6 +120,14 @@ def build_user_prompt(
 
     if media_descriptions:
         lines += ["", "File đã nạp:"] + [f"- {d}" for d in media_descriptions]
+
+    if few_shot_examples:
+        lines += [
+            "",
+            "Ví dụ bài viết mẫu đúng phong cách cơ sở đã duyệt trước đây (tham khảo học hỏi giọng văn):",
+        ]
+        for idx, ex in enumerate(few_shot_examples[:2], 1):
+            lines.append(f'Mẫu {idx}: "{ex.strip()}"')
 
     lines += ["", "Viết nội dung cho các kênh sau:"]
     lines += [

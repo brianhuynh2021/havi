@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
+import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { useLanguage } from "@/lib/i18n/language-context";
 import {
   createWeeklyReview,
@@ -29,6 +30,21 @@ export function RoadmapScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const toastCounterRef = useRef(0);
+
+  const addToast = useCallback((toast: Omit<ToastItem, "id">) => {
+    toastCounterRef.current += 1;
+    const id = `toast-${toastCounterRef.current}`;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  }, []);
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   // Review Modal State
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -41,7 +57,7 @@ export function RoadmapScreen() {
   // History Drawer State
   const [showHistory, setShowHistory] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     const [goalRes, roadmapRes, historyRes] = await Promise.all([
@@ -64,7 +80,7 @@ export function RoadmapScreen() {
       setHistory(historyRes.data);
     }
     setLoading(false);
-  };
+  }, []);
 
   const handleResetGoal = async () => {
     if (!goal) return;
@@ -76,15 +92,16 @@ export function RoadmapScreen() {
     if (res.ok) {
       setGoal(null);
       setRoadmapData(null);
-      loadData();
+      addToast({ type: "info", title: "Đã đặt lại mục tiêu", description: "Bạn có thể thiết lập mục tiêu chiến lược mới." });
+      void loadData();
     } else {
-      alert(res.message);
+      addToast({ type: "error", title: "Lỗi đặt lại mục tiêu", description: res.message });
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    void loadData();
+  }, [loadData]);
 
   const handleGenerateRoadmap = async () => {
     if (!goal) return;
@@ -93,9 +110,10 @@ export function RoadmapScreen() {
     setIsGenerating(false);
     if (res.ok) {
       setRoadmapData(res.data);
+      addToast({ type: "success", title: "⚡ Đã tái tạo lộ trình!", description: "Lộ trình mới đã sẵn sàng cho cơ sở." });
       loadData();
     } else {
-      alert(res.message);
+      addToast({ type: "error", title: "Lỗi tạo lộ trình", description: res.message });
     }
   };
 
@@ -104,9 +122,10 @@ export function RoadmapScreen() {
     if (res.ok) {
       setRoadmapData(res.data);
       setShowHistory(false);
+      addToast({ type: "success", title: "Đã khôi phục phiên bản", description: "Lộ trình đã được khôi phục thành công." });
       loadData();
     } else {
-      alert(res.message);
+      addToast({ type: "error", title: "Lỗi khôi phục lộ trình", description: res.message });
     }
   };
 
@@ -126,9 +145,10 @@ export function RoadmapScreen() {
       setCompletedSummary("");
       setEvidenceSummary("");
       setObstaclesSummary("");
+      addToast({ type: "success", title: "✓ Đã ghi nhận tổng kết tuần", description: "Báo cáo chu kỳ đã được cập nhật thành công." });
       loadData();
     } else {
-      alert(res.message);
+      addToast({ type: "error", title: "Lỗi lưu tổng kết tuần", description: res.message });
     }
   };
 
@@ -413,7 +433,7 @@ export function RoadmapScreen() {
               <select
                 style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", fontSize: "14px" }}
                 value={decision}
-                onChange={(e) => setDecision(e.target.value as any)}
+                onChange={(e) => setDecision(e.target.value as "continue" | "improve" | "pivot" | "pause" | "stop")}
               >
                 <option value="continue">✅ Tiếp tục (Giữ nguyên chiến lược, tiếp tục làm nhiệm vụ)</option>
                 <option value="improve">⚡ Cải tiến (Điều chỉnh thông điệp/chiến thuật & sinh phiên bản mới)</option>
@@ -445,6 +465,8 @@ export function RoadmapScreen() {
           loadData();
         }}
       />
+
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

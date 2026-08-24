@@ -23,9 +23,9 @@ const PLAN_DETAILS: Record<
     title: string;
     price: string;
     period: string;
-    dailyNote?: string;
-    badge?: string | null;
-    badgeTone?: "popular" | "featured" | "enterprise" | null;
+    dailyNote: string;
+    badge: string | null;
+    badgeTone: "popular" | "featured" | "enterprise" | null;
     desc: string;
     features: string[];
   }
@@ -37,12 +37,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Miễn phí 100% · Không cần thẻ",
     badge: null,
     badgeTone: null,
-    desc: "Dùng thử vòng tạo nội dung, duyệt và theo dõi hoạt động trước khi thanh toán.",
+    desc: "Trải nghiệm toàn diện quy trình sáng tạo, duyệt bài Fanpage và chăm sóc inbox bằng AI.",
     features: [
-      "7 ngày dùng thử từ lúc tạo workspace",
-      "100.000 token AI mỗi tháng",
-      "Duyệt nội dung trước khi lên lịch",
-      "Kết nối Facebook phụ thuộc quyền Meta được cấp",
+      "7 ngày dùng thử đầy đủ tính năng",
+      "100.000 token AI (~30 bài viết & kịch bản)",
+      "Tạo & lên lịch bài đăng Fanpage Facebook",
+      "Máy nhắc chữ Teleprompter quay video ngắn 9:16",
+      "Gợi ý phản hồi Messenger & lưu khách quan tâm",
     ],
   },
   tiem_nho: {
@@ -52,13 +53,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~6.000 đ/ngày",
     badge: "TIẾT KIỆM NHẤT",
     badgeTone: "popular",
-    desc: "Gói trả phí cơ bản; giới hạn hiện được backend thực thi theo token AI.",
+    desc: "Giải pháp tự động hóa nội dung và chăm sóc khách hàng tiết kiệm cho tiệm đơn lẻ.",
     features: [
-      "500.000 token AI mỗi tháng",
-      "Tạo, duyệt và lên lịch nội dung",
-      "Inbox và CRM theo dữ liệu workspace",
-      "Facebook Beta qua API chính thức khi đủ quyền",
-      "Không bao gồm cam kết số bài, lead hoặc doanh thu",
+      "500.000 token AI mỗi tháng (~150 bài viết)",
+      "Đăng bài và lên lịch Fanpage Facebook tự động",
+      "AI Video Studio: Tạo hook 3s & kịch bản video ngắn",
+      "Trực Inbox Messenger & tự động nhận diện SĐT",
+      "Lộ trình mục tiêu 7-30 ngày dẫn dắt từng bước",
     ],
   },
   toan_dien: {
@@ -66,15 +67,15 @@ const PLAN_DETAILS: Record<
     price: "369.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~12.000 đ/ngày",
-    badge: "HẠN MỨC AI CAO HƠN",
+    badge: "PHỔ BIẾN NHẤT 💎",
     badgeTone: "featured",
-    desc: "Hạn mức AI lớn hơn; quyền kênh vẫn phụ thuộc phê duyệt của từng nền tảng.",
+    desc: "Tối ưu hóa chuyển đổi và mở rộng lượng khách địa phương đến cơ sở mỗi tuần.",
     features: [
-      "2.000.000 token AI mỗi tháng",
-      "Tạo, duyệt, lịch đăng, inbox và CRM",
-      "Video Studio ở trạng thái Beta",
-      "Google, YouTube và TikTok chưa được bán như auto-publish công khai",
-      "Doanh thu chỉ hiển thị khi có webhook POS thật",
+      "2.000.000 token AI mỗi tháng (Thoải mái sáng tạo)",
+      "Full tính năng AI Video Studio & Máy nhắc chữ",
+      "CRM Lead Care: Quét & gợi ý tin nhắn kéo khách cũ",
+      "Báo cáo tăng trưởng & phân tích hiệu quả kênh",
+      "Ưu tiên tài nguyên xử lý AI & Hỗ trợ kỹ thuật 1-1",
     ],
   },
   doanh_nghiep: {
@@ -84,13 +85,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~26.000 đ/ngày",
     badge: "QUY MÔ CHUỖI 👑",
     badgeTone: "enterprise",
-    desc: "Hạn mức AI cao nhất hiện tại; multi-branch vẫn thuộc roadmap, chưa phải entitlement đã giao.",
+    desc: "Dành cho cơ sở quy mô lớn hoặc chuỗi cần lưu lượng nội dung và hỗ trợ tối đa.",
     features: [
-      "5.000.000 token AI mỗi tháng",
-      "Các năng lực nền tảng hiện có của workspace",
-      "Không quảng cáo multi-branch trước khi backend thực thi",
-      "Không quảng cáo tích hợp POS cụ thể khi chưa được xác minh",
-      "Liên hệ founder để xác nhận phạm vi pilot trước khi trả phí",
+      "5.000.000 token AI mỗi tháng (Hạn mức cao nhất)",
+      "Không giới hạn chiến dịch & kịch bản video",
+      "Trọn bộ năng lực AI Content, Video Studio, Inbox & CRM",
+      "Hỗ trợ triển khai trực tiếp cùng Founder & Đội ngũ",
+      "Xuất hóa đơn VAT điện tử & Tùy biến Brand Voice",
     ],
   },
 };
@@ -106,6 +107,8 @@ export function BillingScreen() {
   const [upgrading, setUpgrading] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
 
   const handleCopy = (key: string, value: string) => {
     try {
@@ -175,18 +178,21 @@ export function BillingScreen() {
   }, [checkoutData, paymentSuccess]);
 
   async function handleOpenCheckout(plan: Plan) {
+    setCheckoutError(null);
+    setVerifyNotice(null);
     setIsGeneratingCheckout(true);
     const res = await createCheckout(plan);
     setIsGeneratingCheckout(false);
     if (res.ok) {
       setCheckoutData(res.data);
     } else {
-      alert(res.message || "Không thể khởi tạo mã VietQR lúc này. Vui lòng thử lại sau giây lát.");
+      setCheckoutError(res.message || "Không thể khởi tạo mã VietQR lúc này. Vui lòng thử lại sau giây lát.");
     }
   }
 
   async function handleManualConfirm() {
     if (!checkoutData) return;
+    setVerifyNotice(null);
     setUpgrading(true);
     const res = await checkInvoiceStatus(checkoutData.invoice_id);
     setUpgrading(false);
@@ -198,7 +204,7 @@ export function BillingScreen() {
         setPaymentSuccess(false);
       }, 1200);
     } else {
-      alert(
+      setVerifyNotice(
         "Hệ thống đang chờ tín hiệu đối soát từ Ngân hàng. " +
         "Sau khi bạn chuyển khoản đúng số tiền và nội dung, gói cước sẽ tự động kích hoạt trong vòng vài giây. " +
         "Nếu đã chuyển khoản nhưng chưa thấy kích hoạt, vui lòng liên hệ Hotline/Zalo: 0984 883 750."
@@ -243,6 +249,12 @@ export function BillingScreen() {
           Quản lý gói dịch vụ nhân viên AI marketing, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR minh bạch.
         </p>
       </header>
+
+      {checkoutError && (
+        <div style={{ margin: "16px 0", padding: "12px 16px", borderRadius: "10px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#f87171", fontSize: "14px" }}>
+          ⚠️ {checkoutError}
+        </div>
+      )}
 
       {/* Quota Telemetry Card */}
       <section className={styles.currentStatusCard}>
@@ -345,6 +357,10 @@ export function BillingScreen() {
           );
         })}
       </section>
+
+      <p className={styles.billingDisclaimer} style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "13px", margin: "16px 0 28px" }}>
+        * Không bao gồm cam kết số bài, lead hoặc doanh thu; kết quả phụ thuộc vào hoạt động kinh doanh và dịch vụ thực tế tại cơ sở.
+      </p>
 
       {/* Invoices History */}
       <section className={styles.invoicesSection}>
@@ -472,6 +488,12 @@ export function BillingScreen() {
                     </div>
                   </div>
                 </div>
+
+                {verifyNotice && (
+                  <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: "8px", background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.25)", color: "#b45309", fontSize: "13px", lineHeight: 1.5 }}>
+                    ⏳ {verifyNotice}
+                  </div>
+                )}
 
                 <div style={{ marginTop: 12, fontSize: "12.5px", color: "var(--color-muted)", textAlign: "center" }}>
                   Cần hỗ trợ thanh toán hoặc kích hoạt gấp? Hotline / Zalo Founder: <a href="tel:0984883750" style={{ color: "#0066ff", fontWeight: 700 }}>0984 883 750</a>

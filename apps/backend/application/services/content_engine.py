@@ -115,6 +115,25 @@ class ContentEngine:
         media_descriptions = await self._describe_media(
             workspace_id=workspace_id, raw_inputs=creative_inputs
         )
+        few_shot_examples: list[str] = []
+        try:
+            from core.enums import ContentStatus
+
+            recent_items, _ = await self._content.list_items(
+                workspace_id=workspace_id,
+                status=ContentStatus.PUBLISHED,
+                limit=2,
+            )
+            if not recent_items:
+                recent_items, _ = await self._content.list_items(
+                    workspace_id=workspace_id,
+                    status=ContentStatus.APPROVED,
+                    limit=2,
+                )
+            few_shot_examples = [item.text for item in recent_items if item.text]
+        except Exception as exc:
+            logger.debug("Failed to query few-shot memory: %s", exc)
+
         request = LLMRequest(
             system_prompt=build_system_prompt(workspace, profile, target_channels=target_channels),
             user_prompt=build_user_prompt(
@@ -122,6 +141,7 @@ class ContentEngine:
                 raw_inputs=creative_inputs,
                 media_descriptions=media_descriptions,
                 target_channels=target_channels,
+                few_shot_examples=few_shot_examples,
             ),
             output_schema=output_json_schema(),
         )
@@ -152,7 +172,7 @@ class ContentEngine:
 
         # Trích xuất URL ảnh nếu người dùng có nạp ảnh vào đầu vào
         uploaded_media_url = None
-        for raw in (job.raw_inputs or []):
+        for raw in job.raw_inputs or []:
             if isinstance(raw, dict):
                 if raw.get("preview_url"):
                     uploaded_media_url = raw.get("preview_url")
@@ -164,6 +184,7 @@ class ContentEngine:
                         if asset:
                             from adapters.storage.object_storage import ObjectStorage
                             from core.config import get_settings
+
                             storage = ObjectStorage(get_settings())
                             uploaded_media_url = storage.public_url(asset.object_key)
                     except Exception as err:
@@ -175,10 +196,13 @@ class ContentEngine:
                 break
             elif hasattr(raw, "media_asset_id") and raw.media_asset_id:
                 try:
-                    asset = await self._media.get(workspace_id=workspace_id, asset_id=raw.media_asset_id)
+                    asset = await self._media.get(
+                        workspace_id=workspace_id, asset_id=raw.media_asset_id
+                    )
                     if asset:
                         from adapters.storage.object_storage import ObjectStorage
                         from core.config import get_settings
+
                         storage = ObjectStorage(get_settings())
                         uploaded_media_url = storage.public_url(asset.object_key)
                 except Exception as err:

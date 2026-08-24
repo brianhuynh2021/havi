@@ -161,7 +161,7 @@ export function HeroCinematicShowcase({
                     </li>
                     <li className={styles.scanTagItem}>
                       <span className={styles.scanCheckIcon}>✓</span>
-                      <span>Kênh xuất: <strong>Facebook, TikTok 9:16 Hook 3s, Google Maps, Trực Inbox</strong></span>
+                      <span>Kênh xuất: <strong>Facebook Fanpage, Video 9:16 Hook 3s (TikTok/Reels), Trực Inbox Messenger</strong></span>
                     </li>
                     <li className={styles.scanTagItem}>
                       <span className={styles.scanCheckIcon}>✓</span>
@@ -213,19 +213,19 @@ export function HeroCinematicShowcase({
                   </div>
                 </div>
 
-                {/* Channel 3: Google Maps SEO */}
+                {/* Channel 3: Messenger Lead Care */}
                 <div className={styles.channelPreviewCard}>
                   <div className={styles.channelHeaderMaps}>
-                    <span>📍 Google Business SEO</span>
-                    <span className={styles.channelBadgeGreen}>Top Local</span>
+                    <span>💬 Phản hồi Inbox Khách</span>
+                    <span className={styles.channelBadgeGreen}>Gợi ý chuẩn xác</span>
                   </div>
                   <div className={styles.channelCardBody}>
                     <p className={styles.channelSnippet}>
-                      {currentScenario.tabs.maps.content}
+                      {currentScenario.tabs.inbox.haviReply}
                     </p>
                     <div className={styles.channelMeta}>
-                      <span>🧪 Bản nháp minh hoạ</span>
-                      <span>📍 Google Business: roadmap</span>
+                      <span>⚡ Phản hồi &lt; 10s</span>
+                      <span>📞 {currentScenario.tabs.inbox.capturedPhone}</span>
                     </div>
                   </div>
                 </div>

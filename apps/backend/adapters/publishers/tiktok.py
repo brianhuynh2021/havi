@@ -56,10 +56,14 @@ class TikTokPublisher(PublisherPort):
         video_source = request.media_urls[0]
 
         if self._client is not None:
-            return await self._do_publish(self._client, video_source, access_token, request.idempotency_key)
+            return await self._do_publish(
+                self._client, video_source, access_token, request.idempotency_key
+            )
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
-            return await self._do_publish(client, video_source, access_token, request.idempotency_key)
+            return await self._do_publish(
+                client, video_source, access_token, request.idempotency_key
+            )
 
     async def _do_publish(
         self,
@@ -102,19 +106,25 @@ class TikTokPublisher(PublisherPort):
             try:
                 resp = await client.post(TIKTOK_INBOX_INIT_URL, json=init_payload, headers=headers)
             except httpx.RequestError as exc:
-                raise TemporaryPublishError(self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}") from exc
+                raise TemporaryPublishError(
+                    self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}"
+                ) from exc
 
             if resp.status_code in _TRANSIENT_STATUSES:
                 raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {resp.status_code}")
             if resp.status_code in (401, 403):
-                raise AuthPermissionError(self.channel, "Token TikTok hết hạn hoặc mất quyền đăng bài")
+                raise AuthPermissionError(
+                    self.channel, "Token TikTok hết hạn hoặc mất quyền đăng bài"
+                )
             if "spam_risk_too_many_pending_share" in resp.text:
                 raise TemporaryPublishError(
                     self.channel,
-                    "TikTok tạm giữ nhịp do có nhiều video chờ duyệt trong Hộp thư. Vui lòng mở App TikTok bấm Đăng hoặc xoá bớt bản nháp cũ."
+                    "TikTok tạm giữ nhịp do có nhiều video chờ duyệt trong Hộp thư. Vui lòng mở App TikTok bấm Đăng hoặc xoá bớt bản nháp cũ.",
                 )
             if resp.status_code >= 400:
-                raise ValidationPublishError(self.channel, f"TikTok từ chối video: {resp.text[:200]}")
+                raise ValidationPublishError(
+                    self.channel, f"TikTok từ chối video: {resp.text[:200]}"
+                )
 
             body = resp.json()
             data = body.get("data") or {}
@@ -132,7 +142,9 @@ class TikTokPublisher(PublisherPort):
                 }
                 up_resp = await client.put(upload_url, content=video_bytes, headers=upload_headers)
                 if up_resp.status_code not in (200, 201):
-                    raise TemporaryPublishError(self.channel, f"Lỗi tải binary video lên TikTok: HTTP {up_resp.status_code}")
+                    raise TemporaryPublishError(
+                        self.channel, f"Lỗi tải binary video lên TikTok: HTTP {up_resp.status_code}"
+                    )
 
             return PublishResult(
                 external_post_id=publish_id,
@@ -149,7 +161,9 @@ class TikTokPublisher(PublisherPort):
         try:
             resp = await client.post(TIKTOK_INBOX_INIT_URL, json=payload, headers=headers)
         except httpx.RequestError as exc:
-            raise TemporaryPublishError(self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}") from exc
+            raise TemporaryPublishError(
+                self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}"
+            ) from exc
 
         if resp.status_code in _TRANSIENT_STATUSES:
             raise TemporaryPublishError(self.channel, f"TikTok trả về HTTP {resp.status_code}")

@@ -62,11 +62,11 @@ export function CoachScreen() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t({ vi: "Havi Đồng Hành (AI Coach)", en: "Havi Coach" })}</h1>
+        <h1 className={styles.title}>{t({ vi: "Havi Đồng Hành (Hướng Dẫn Nhanh)", en: "Havi Action Guide" })}</h1>
         <p className={styles.subtitle}>
           {t({
-            vi: "Trợ lý AI bám sát theo mục tiêu, lộ trình và bằng chứng thực tế của bạn.",
-            en: "Contextual AI coach grounded in your current goal, roadmap, and evidence.",
+            vi: "Trợ lý hướng dẫn bám sát theo mục tiêu, nhiệm vụ và phương án giải quyết khó khăn của bạn.",
+            en: "Action guide grounded in your current goal and task context.",
           })}
         </p>
       </header>

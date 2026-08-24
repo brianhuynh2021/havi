@@ -225,7 +225,8 @@ def _pick_page(pages: list[dict]) -> dict:
     nếu chủ tiệm có cả trang thật lẫn trang thử nghiệm.
     """
     non_sandbox_actionable = [
-        p for p in pages
+        p
+        for p in pages
         if "sandbox" not in (p.get("name") or "").lower()
         and "CREATE_CONTENT" in (p.get("tasks") or [])
     ]

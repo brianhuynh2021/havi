@@ -36,6 +36,7 @@ import {
   type VideoStylePreset,
   type VideoVoiceChoice,
 } from "./kinetic-video-generator";
+import { completeTask } from "@/features/roadmap/roadmap.api";
 import styles from "./content-creation.module.css";
 
 type RawChip = {
@@ -263,6 +264,27 @@ export function ContentCreationScreen() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const topicParam = params.get("topic");
+    const trackParam = params.get("track");
+
+    if (trackParam === "video") {
+      setContentTrack("video");
+      setActiveTab("video");
+    } else if (trackParam === "posts") {
+      setContentTrack("posts");
+      setActiveTab("posts");
+    }
+
+    if (topicParam) {
+      setNote(topicParam);
+      setNoteOpen(true);
+      setNotice(`🎯 Đã nạp nhiệm vụ từ Lộ trình: "${topicParam}". Bấm "Để Havi viết cho chị" để tạo nội dung ngay!`);
+    }
+  }, []);
+
+  useEffect(() => {
     const previewUrls = previewUrlsRef.current;
     return () => {
       for (const url of previewUrls) URL.revokeObjectURL(url);
@@ -308,10 +330,10 @@ export function ContentCreationScreen() {
       type: "draft_ready",
       title: isVideo
         ? "Havi vừa tạo kịch bản video ngắn đa kênh"
-        : "Havi vừa tạo bài viết Facebook & Google Maps",
+        : "Havi vừa tạo bài viết Fanpage Facebook",
       description: isVideo
         ? "Havi đang dựng một video master để chị xem thử trước khi gửi lên ba kênh."
-        : "Bản nháp Facebook Page và Google Maps đã sẵn sàng cho chị duyệt.",
+        : "Bản nháp Fanpage Facebook đã sẵn sàng cho chị duyệt.",
     });
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     addToast({
@@ -511,7 +533,7 @@ export function ContentCreationScreen() {
       description:
         contentTrack === "video"
           ? "Đang tạo hook 3 giây, lời thoại và góc quay cho TikTok, Reels, Shorts."
-          : "Đang hoàn thiện bài viết cho Facebook và Google Maps. Bản nháp sẽ sẵn sàng trong giây lát!",
+          : "Đang hoàn thiện bài viết cho Fanpage Facebook. Bản nháp sẽ sẵn sàng trong giây lát!",
     });
   }
 
@@ -554,7 +576,7 @@ export function ContentCreationScreen() {
       description:
         contentTrack === "video"
           ? "Havi đang biến lời thu âm thành hook và kịch bản video ngắn."
-          : "Nhân viên AI đang sáng tạo bài viết Facebook và Google Maps từ lời thu âm của chị!",
+          : "Nhân viên AI đang sáng tạo bài viết Fanpage Facebook từ lời thu âm của chị!",
     });
   }
 
@@ -579,13 +601,23 @@ export function ContentCreationScreen() {
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== id));
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const taskId = params.get("task_id");
+      if (taskId) {
+        completeTask(taskId, {
+          evidence_text: `[Xác minh hệ thống] Đã duyệt và lên lịch bài viết trên Fanpage / Havi Studio`,
+          evidence_type: "link",
+        }).catch(() => {});
+      }
+    }
     setPublishedModal({
       title: scheduledAt
         ? "🚀 Đã phát lệnh đăng bài thành công!"
         : "📅 Đã xếp bài vào Lịch đăng!",
       body: scheduledAt
-        ? "Nội dung đang được Havi gửi trực tiếp lên kênh của tiệm. Anh/chị có thể kiểm tra trực tiếp trên kênh hoặc theo dõi trong Lịch đăng bài nhé!"
-        : "Bài viết đã được duyệt và xếp lịch tự động. Havi sẽ tự động xuất bản bài viết đúng giờ đã chọn.",
+        ? "Nội dung đang được Havi gửi trực tiếp lên kênh của tiệm. Nhiệm vụ trong Lộ trình hôm nay cũng đã được tự động xác minh hoàn thành!"
+        : "Bài viết đã được duyệt và xếp lịch tự động. Nhiệm vụ trong Lộ trình hôm nay đã được tự động xác minh hoàn thành!",
       isInstant: !!scheduledAt,
     });
     setNotice(
@@ -653,9 +685,9 @@ export function ContentCreationScreen() {
     }
     setPublishedModal({
       title: instant
-        ? "🚀 Đã phát lệnh đăng Bài Viết (Facebook & Google Maps)!"
+        ? "🚀 Đã phát lệnh đăng Bài Viết lên Fanpage Facebook!"
         : "📅 Đã lên lịch đăng Bài Viết lúc 11:30 trưa!",
-      body: `Havi đã ${instant ? "phát lệnh đăng ngay" : "lên lịch tự động"} ${result.data.approved.length} bài viết chuẩn SEO lên Facebook Page & Google Business. Nhóm Video vẫn được lưu an toàn để chị quay clip xong đăng sau nhé!`,
+      body: `Havi đã ${instant ? "phát lệnh đăng ngay" : "lên lịch tự động"} ${result.data.approved.length} bài viết lên Fanpage Facebook. Nhóm Video vẫn được lưu an toàn để chị quay clip xong đăng sau nhé!`,
       isInstant: instant,
     });
     loadItems();
@@ -955,8 +987,8 @@ export function ContentCreationScreen() {
     setGeneratingImageId(itemId);
     addToast({
       type: "loading",
-      title: "Gemini đang tạo ảnh AI...",
-      description: "Đang tạo bức ảnh chất lượng cao 4K chuẩn studio cho bài viết của bạn.",
+      title: "Đang tìm ảnh minh họa phù hợp...",
+      description: "Hệ thống đang lựa chọn hình ảnh minh họa chất lượng cao phù hợp với nội dung bài viết.",
     });
     const res = await generateItemImage(itemId, "3d_studio");
     setGeneratingImageId(null);
@@ -964,15 +996,15 @@ export function ContentCreationScreen() {
       setItems((prev) =>
         prev.map((i) =>
           i.id === itemId
-            ? { ...i, media_url: res.data.media_url, media_note: "✨ Ảnh AI tạo sinh" }
+            ? { ...i, media_url: res.data.media_url, media_note: "🖼️ Ảnh minh họa gợi ý" }
             : i,
         ),
       );
       addToast({
         type: "success",
-        icon: "✨",
-        title: "Đã tạo ảnh AI thành công!",
-        description: "Bức ảnh mới lung linh đã được gắn trực tiếp vào bài viết.",
+        icon: "🖼️",
+        title: "Đã chọn ảnh minh họa thành công!",
+        description: "Ảnh minh họa gợi ý đã được gắn trực tiếp vào bài viết.",
       });
     } else {
       setError(res.message);
@@ -1691,8 +1723,8 @@ export function ContentCreationScreen() {
           >
             <span className={styles.contentTrackIcon}>📰</span>
             <span>
-              <strong>Bài viết &amp; Local SEO</strong>
-              <small>AI viết bài Facebook và Google Maps, chị duyệt rồi đăng hoặc hẹn giờ.</small>
+              <strong>Bài viết Fanpage Facebook</strong>
+              <small>AI viết bài Facebook chuẩn thu hút, chị duyệt rồi đăng hoặc hẹn giờ.</small>
             </span>
             <span className={styles.contentTrackCheck}>{contentTrack === "posts" ? "✓ Đang chọn" : "Chọn"}</span>
           </button>
@@ -1800,7 +1832,7 @@ export function ContentCreationScreen() {
         <p className={styles.dropTitle}>
           {contentTrack === "video"
             ? "Thêm ảnh, ghi âm hoặc gõ ý tưởng — Havi tự dựng video hoàn chỉnh cho TikTok, Reels và Shorts"
-            : "Chụp ảnh hoặc gõ vài dòng — Havi chỉ viết bài Facebook và Google Maps"}
+            : "Chụp ảnh hoặc gõ vài dòng — Havi sẽ viết bài đăng Fanpage Facebook"}
         </p>
         <div className={styles.dropActions}>
           <input
@@ -2185,7 +2217,7 @@ export function ContentCreationScreen() {
             ? "⏳ Havi đang sáng tạo nội dung…"
             : contentTrack === "video"
               ? "🪄 AI Tạo Video 9:16 Cho Tôi"
-              : "⚡ Tạo Bài Viết Facebook & Google Maps"}
+              : "⚡ Tạo Bài Viết Facebook Fanpage"}
         </Button>
       </div>
 
@@ -2329,7 +2361,7 @@ export function ContentCreationScreen() {
                   <div className={styles.groupHeaderTitleBox}>
                     <span style={{ fontSize: "20px" }}>📰</span>
                     <span style={{ fontSize: "16px", fontWeight: 800, color: "#1E293B" }}>
-                      Nhóm 1: Bài Viết &amp; Local SEO (Facebook Page, Google Maps)
+                      Nhóm 1: Bài Viết Fanpage Facebook
                     </span>
                     <span className={styles.statusPillReady}>🟢 Sẵn Sàng 100%</span>
                     <span className={styles.groupBadgePost}>

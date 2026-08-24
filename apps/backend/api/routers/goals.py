@@ -14,8 +14,12 @@ router = APIRouter(prefix="/goals", tags=["goals"])
 
 class CreateGoalRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=255, description="Tiêu đề mục tiêu")
-    category: GoalCategory = Field(default=GoalCategory.ACQUIRE_CUSTOMERS, description="Nhóm mục tiêu")
-    evidence_definition: str = Field(..., min_length=1, description="Định nghĩa bằng chứng hoàn thành")
+    category: GoalCategory = Field(
+        default=GoalCategory.ACQUIRE_CUSTOMERS, description="Nhóm mục tiêu"
+    )
+    evidence_definition: str = Field(
+        ..., min_length=1, description="Định nghĩa bằng chứng hoàn thành"
+    )
     description: str | None = Field(default=None, description="Mô tả chi tiết")
     target_deadline: datetime | None = Field(default=None, description="Hạn chót mục tiêu")
     weekly_capacity_hours: int = Field(default=10, ge=1, le=100, description="Số giờ cam kết/tuần")
@@ -178,4 +182,3 @@ async def delete_or_reset_goal(
     success = await service.archive_goal(workspace_id=workspace_id, goal_id=goal_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy mục tiêu")
-

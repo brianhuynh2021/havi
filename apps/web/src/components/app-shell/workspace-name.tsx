@@ -12,6 +12,26 @@ type WorkspaceItem = {
   plan: string;
 };
 
+function getIndustryIcon(industry?: string) {
+  switch (industry) {
+    case "spa":
+      return "💆‍♀️";
+    case "salon":
+      return "💇‍♂️";
+    case "clinic":
+    case "dentistry":
+      return "🦷";
+    case "restaurant":
+    case "cafe":
+      return "☕";
+    case "education":
+    case "training":
+      return "🏫";
+    default:
+      return "🏢";
+  }
+}
+
 /**
  * Tên tiệm trong thẻ workspace kèm Dropdown chuyển đổi không gian làm việc.
  */
@@ -61,9 +81,8 @@ export function WorkspaceName() {
       return;
     }
     setIsSwitching(true);
-    setIsOpen(false);
     try {
-      const res = await apiClient.POST(`/workspaces/{workspace_id}/activate`, {
+      const res = await apiClient.POST("/workspaces/{workspace_id}/activate", {
         params: { path: { workspace_id: w.id } },
       });
       if (res.data) {
@@ -94,9 +113,17 @@ export function WorkspaceName() {
         title="Bấm để đổi tiệm / không gian làm việc"
         disabled={isSwitching}
       >
-        <span className={styles.workspaceNameText}>
-          {isSwitching ? "Đang chuyển tiệm…" : activeWorkspace.name}
-        </span>
+        <div className={styles.workspaceAvatar}>
+          {getIndustryIcon(activeWorkspace.industry)}
+        </div>
+        <div className={styles.workspaceTextCol}>
+          <span className={styles.workspaceNameText}>
+            {isSwitching ? "Đang chuyển…" : activeWorkspace.name}
+          </span>
+          <span className={styles.workspaceSubText}>
+            Không gian làm việc
+          </span>
+        </div>
         {workspaces.length > 1 && (
           <svg
             width="14"

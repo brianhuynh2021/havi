@@ -48,9 +48,7 @@ class BillingRepository:
         await self._session.flush()
         return invoice
 
-    async def get_invoice(
-        self, invoice_id: UUID, *, for_update: bool = False
-    ) -> Invoice | None:
+    async def get_invoice(self, invoice_id: UUID, *, for_update: bool = False) -> Invoice | None:
         query = select(Invoice).where(Invoice.id == invoice_id)
         if for_update:
             query = query.with_for_update()
@@ -60,6 +58,7 @@ class BillingRepository:
     async def find_by_prefix(self, prefix: str) -> Invoice | None:
         """Tìm hoá đơn có UUID bắt đầu bằng prefix (ví dụ 8 ký tự hex)."""
         from sqlalchemy import String, cast
+
         clean = prefix.replace("-", "").strip()
         if not clean:
             return None
@@ -76,21 +75,19 @@ class BillingRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_pending_invoice(
-        self, *, workspace_id: UUID, plan: Plan
-    ) -> Invoice | None:
+    async def get_pending_invoice(self, *, workspace_id: UUID, plan: Plan) -> Invoice | None:
         result = await self._session.execute(
-            select(Invoice).where(
+            select(Invoice)
+            .where(
                 Invoice.workspace_id == workspace_id,
                 Invoice.plan == plan,
                 Invoice.status == InvoiceStatus.PENDING,
-            ).order_by(Invoice.issued_at.desc())
+            )
+            .order_by(Invoice.issued_at.desc())
         )
         return result.scalars().first()
 
-    async def mark_invoice_paid(
-        self, invoice: Invoice, *, gateway_reference: str
-    ) -> Invoice:
+    async def mark_invoice_paid(self, invoice: Invoice, *, gateway_reference: str) -> Invoice:
         invoice.status = InvoiceStatus.PAID
         invoice.gateway_reference = gateway_reference
         await self._session.flush()

@@ -47,13 +47,20 @@ export function WorkspaceChannels() {
 
   const usable = connections.filter(isUsable);
   if (usable.length === 0) {
-    return <p className={styles.workspaceEmpty}>Chưa nối kênh nào</p>;
+    return (
+      <div className={styles.workspaceChips}>
+        <span className={styles.workspaceChipUnconnected}>
+          ⚪ Chưa kết nối Fanpage
+        </span>
+      </div>
+    );
   }
 
   return (
     <div className={styles.workspaceChips}>
       {usable.map((connection) => (
         <span key={connection.platform} className={styles.workspaceChip}>
+          <span className={styles.livePulseDot} />
           {PLATFORM_LABELS[connection.platform] ?? connection.platform}
         </span>
       ))}

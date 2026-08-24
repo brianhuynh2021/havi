@@ -137,5 +137,3 @@ async def test_tiktok_oauth_client_real_url():
     assert "state=test_state_xyz" in auth_url
     assert "code_challenge=" in auth_url
     assert "code_challenge_method=S256" in auth_url
-
-

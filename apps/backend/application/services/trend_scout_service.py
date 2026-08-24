@@ -32,7 +32,14 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
         hook_style=HookStyle.REAL_COMPARISON,
         sample_hook="KHI THIÊN HẠ MÃI HÓNG DRAMA THÌ DÂN AI ĐANG LÀM GÌ?",
         suggested_angle="Bẻ lái cực đỉnh: Trong khi người ta thức đêm hóng livestream thì học viên Nhật Minh đã cài AI Agent tự động trả lời 5.000 tin nhắn và chốt đơn 24/7.",
-        suggested_hashtags=["#drama", "#xuhuong", "#aiagent", "#nhatminhtech", "#tudonghoa", "#kiemtienthongminh"],
+        suggested_hashtags=[
+            "#drama",
+            "#xuhuong",
+            "#aiagent",
+            "#nhatminhtech",
+            "#tudonghoa",
+            "#kiemtienthongminh",
+        ],
     ),
     TrendingTopic(
         id="trend-ai-takeover-myth",
@@ -54,7 +61,14 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
         hook_style=HookStyle.REAL_COMPARISON,
         sample_hook="ĐỪNG MẤT 4 NĂM NẾU CHƯA BIẾT ĐIỀU NÀY!",
         suggested_angle="So sánh thực tế: Học nghề thực chiến 3 tháng cầm tay chỉ việc có việc làm ngay vs học lý thuyết hàn lâm.",
-        suggested_hashtags=["#hocnghe", "#nhatminh", "#huongnghiep", "#genz", "#shorts", "#trending"],
+        suggested_hashtags=[
+            "#hocnghe",
+            "#nhatminh",
+            "#huongnghiep",
+            "#genz",
+            "#shorts",
+            "#trending",
+        ],
     ),
     TrendingTopic(
         id="trend-ai-agent-automation",
@@ -76,7 +90,13 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
         hook_style=HookStyle.WARNING_MISTAKE,
         sample_hook="DỪNG LẠI! 90% THỢ MỚI ĐỀU CHÁY IC VÌ LỖI NÀY!",
         suggested_angle="Chỉ ra thao tác đo nguồn sai cách khiến chập IC và cách học viên Nhật Minh khắc phục bằng máy đo chuyên dụng.",
-        suggested_hashtags=["#kythuat", "#suachuadientu", "#meonghe", "#hocnghethucchien", "#viral"],
+        suggested_hashtags=[
+            "#kythuat",
+            "#suachuadientu",
+            "#meonghe",
+            "#hocnghethucchien",
+            "#viral",
+        ],
     ),
     TrendingTopic(
         id="trend-rescue-hardcase-device",
@@ -158,7 +178,9 @@ class TrendScoutService:
                     results = []
                     for it in items[:count]:
                         title = it.find("title").text if it.find("title") is not None else ""
-                        approx_traffic = it.find("{https://trends.google.com/trending/rss}approx_traffic")
+                        approx_traffic = it.find(
+                            "{https://trends.google.com/trending/rss}approx_traffic"
+                        )
                         traffic = approx_traffic.text if approx_traffic is not None else "10K+"
                         if title:
                             results.append({"keyword": title.strip(), "traffic": traffic.strip()})
@@ -185,10 +207,18 @@ class TrendScoutService:
         count: int = 5,
     ) -> list[TrendingTopic] | None:
         settings = get_settings()
-        if not settings.gemini_api_key or settings.gemini_api_key in ("mock", "mock-gemini-key", "change-me"):
+        if not settings.gemini_api_key or settings.gemini_api_key in (
+            "mock",
+            "mock-gemini-key",
+            "change-me",
+        ):
             return None
 
-        live_kw_context = "\n".join([f"- {k['keyword']} (Lượt tìm kiếm: {k['traffic']})" for k in live_keywords]) if live_keywords else "Các xu hướng công nghệ, AI Agent, việc làm đang hot."
+        live_kw_context = (
+            "\n".join([f"- {k['keyword']} (Lượt tìm kiếm: {k['traffic']})" for k in live_keywords])
+            if live_keywords
+            else "Các xu hướng công nghệ, AI Agent, việc làm đang hot."
+        )
 
         prompt = f"""
 Bạn là Giám đốc Sáng tạo & Radar Trinh Sát Xu Hướng Short-form Video (TikTok, YouTube Shorts, Facebook Reels) tại Việt Nam hôm nay.
@@ -209,7 +239,9 @@ Quy tắc bắt buộc:
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "systemInstruction": {
-                "parts": [{"text": "Bạn là chuyên gia trinh sát xu hướng video ngắn viral tại Việt Nam."}]
+                "parts": [
+                    {"text": "Bạn là chuyên gia trinh sát xu hướng video ngắn viral tại Việt Nam."}
+                ]
             },
             "generationConfig": {
                 "responseMimeType": "application/json",
@@ -265,7 +297,9 @@ Quy tắc bắt buộc:
                             hook_style=HookStyle.WARNING_MISTAKE,
                             sample_hook=it["sample_hook"],
                             suggested_angle=it["suggested_angle"],
-                            suggested_hashtags=it.get("suggested_hashtags", ["#viral", "#shorts", "#xuhuong"]),
+                            suggested_hashtags=it.get(
+                                "suggested_hashtags", ["#viral", "#shorts", "#xuhuong"]
+                            ),
                             discovered_at=datetime.now(UTC),
                         )
                         results.append(t)
@@ -303,13 +337,21 @@ Quy tắc bắt buộc:
                 t = TrendingTopic(
                     id=trend_id,
                     keyword=f"Trend nóng: {kw.upper()} ({traffic} tìm kiếm)",
-                    category=TrendCategory.TECH_EDUCATION if idx % 2 == 0 else TrendCategory.VIRAL_MEME,
+                    category=TrendCategory.TECH_EDUCATION
+                    if idx % 2 == 0
+                    else TrendCategory.VIRAL_MEME,
                     trend_score=99 - idx,
                     source="Google Trends Live VN",
                     hook_style=HookStyle.REAL_COMPARISON,
                     sample_hook=f"TẠI SAO CẢ NƯỚC ĐANG TÌM KIẾM '{kw.upper()}'?",
                     suggested_angle=f"Bẻ lái từ độ nóng của '{kw}' sang cách dân công nghệ tại {brand_name} tự động hóa công việc bằng AI Agent để tăng thu nhập.",
-                    suggested_hashtags=["#googletrends", "#xuhuong", "#aiagent", "#nhatminhtech", "#shorts"],
+                    suggested_hashtags=[
+                        "#googletrends",
+                        "#xuhuong",
+                        "#aiagent",
+                        "#nhatminhtech",
+                        "#shorts",
+                    ],
                     discovered_at=datetime.now(UTC),
                 )
                 self._trends[t.id] = t

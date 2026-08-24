@@ -6,11 +6,11 @@ from enum import StrEnum
 
 
 class LeadIntentKind(StrEnum):
-    PRICE_INQUIRY = "price_inquiry"         # Hỏi học phí, giá dịch vụ
-    CURRICULUM = "curriculum_inquiry"       # Hỏi chương trình học, thời gian, giáo trình
-    LOCATION = "location_inquiry"           # Hỏi địa chỉ, cơ sở, bản đồ
-    ENROLLMENT = "enrollment_intent"        # Muốn đăng ký học, đặt chỗ, giữ suất
-    GENERAL_SUPPORT = "general_support"     # Thắc mắc chung, chào hỏi
+    PRICE_INQUIRY = "price_inquiry"  # Hỏi học phí, giá dịch vụ
+    CURRICULUM = "curriculum_inquiry"  # Hỏi chương trình học, thời gian, giáo trình
+    LOCATION = "location_inquiry"  # Hỏi địa chỉ, cơ sở, bản đồ
+    ENROLLMENT = "enrollment_intent"  # Muốn đăng ký học, đặt chỗ, giữ suất
+    GENERAL_SUPPORT = "general_support"  # Thắc mắc chung, chào hỏi
 
 
 @dataclass
@@ -24,9 +24,7 @@ class LeadAnalysisResult:
 
 
 # Regex chuẩn số điện thoại di động Việt Nam (10 chữ số bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)
-VIETNAM_PHONE_REGEX = re.compile(
-    r"(?:(?:\+84|84|0)[\s\.\-]?[35789])(?:[\s\.\-]?\d){8}\b"
-)
+VIETNAM_PHONE_REGEX = re.compile(r"(?:(?:\+84|84|0)[\s\.\-]?[35789])(?:[\s\.\-]?\d){8}\b")
 
 
 def extract_vietnam_phone(text: str) -> str | None:
@@ -52,10 +50,36 @@ def classify_lead_intent(text: str, author_name: str = "") -> LeadAnalysisResult
     phone = extract_vietnam_phone(text)
 
     # Từ khóa nhận diện
-    price_keywords = ("học phí", "bao nhiêu", "giá", "chi phí", "bao tiền", "hết bao nhiêu", "báo giá")
-    curriculum_keywords = ("học gì", "giáo trình", "mấy tháng", "thời gian học", "khóa học", "dạy những gì", "học nghề", "cấp tốc", "thực hành")
+    price_keywords = (
+        "học phí",
+        "bao nhiêu",
+        "giá",
+        "chi phí",
+        "bao tiền",
+        "hết bao nhiêu",
+        "báo giá",
+    )
+    curriculum_keywords = (
+        "học gì",
+        "giáo trình",
+        "mấy tháng",
+        "thời gian học",
+        "khóa học",
+        "dạy những gì",
+        "học nghề",
+        "cấp tốc",
+        "thực hành",
+    )
     location_keywords = ("địa chỉ", "ở đâu", "chi nhánh", "cơ sở", "quận mấy", "trung tâm ở đâu")
-    enrollment_keywords = ("đăng ký", "ghi danh", "nhập học", "giữ chỗ", "bắt đầu học", "khi nào khai giảng", "muốn học")
+    enrollment_keywords = (
+        "đăng ký",
+        "ghi danh",
+        "nhập học",
+        "giữ chỗ",
+        "bắt đầu học",
+        "khi nào khai giảng",
+        "muốn học",
+    )
 
     tags = []
     if phone:

@@ -22,6 +22,14 @@ class PosOrder:
     items: list[str] = field(default_factory=list)
     timestamp: datetime | None = None
 
+    def __post_init__(self) -> None:
+        if not self.order_id or not str(self.order_id).strip():
+            raise ValueError("order_id không được để trống")
+        if self.amount_vnd <= 0:
+            raise ValueError("amount_vnd phải lớn hơn 0 VNĐ")
+        if self.amount_vnd > 1_000_000_000:
+            raise ValueError("amount_vnd vượt quá giới hạn an toàn 1.000.000.000 VNĐ")
+
     @classmethod
     def from_dict(cls, data: dict) -> "PosOrder":
         raw_phone = data.get("customer_phone") or data.get("phone")

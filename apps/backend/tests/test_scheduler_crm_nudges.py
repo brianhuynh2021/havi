@@ -36,9 +36,7 @@ def test_scheduler_crm_lifecycle_nudges_task_wiring(monkeypatch):
     monkeypatch.setattr(
         "adapters.persistence.workspace_repository.WorkspaceRepository", _FakeWorkspaceRepo
     )
-    monkeypatch.setattr(
-        "application.services.crm_nudge_service.CrmNudgeService", _FakeNudgeService
-    )
+    monkeypatch.setattr("application.services.crm_nudge_service.CrmNudgeService", _FakeNudgeService)
 
     total = crm_lifecycle_nudges()
     assert total == 2

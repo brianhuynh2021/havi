@@ -25,7 +25,9 @@ class MockStorage:
     async def read_object(self, key: str) -> bytes:
         return self.files.get(key, b"MOCK_STORAGE_BYTES")
 
-    async def put_object(self, object_key: str, data: bytes, content_type: str = "video/mp4") -> None:
+    async def put_object(
+        self, object_key: str, data: bytes, content_type: str = "video/mp4"
+    ) -> None:
         self.files[object_key] = data
 
     def get_public_url(self, object_key: str) -> str:

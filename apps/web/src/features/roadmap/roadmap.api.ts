@@ -247,6 +247,22 @@ export async function blockTask(
   }
 }
 
+export async function reopenTask(taskId: string): Promise<Result<RoadmapTask>> {
+  try {
+    const res = await fetchWithAuth(`/roadmaps/tasks/${taskId}/reopen`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      return { ok: false, message: detailToMessage(body?.detail, "Không mở lại được việc") };
+    }
+    const data = await res.json();
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
 export async function fetchRoadmapHistory(): Promise<Result<Roadmap[]>> {
   try {
     const res = await fetchWithAuth("/roadmaps/history");

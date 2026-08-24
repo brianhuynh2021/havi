@@ -33,7 +33,6 @@ from core.schemas import (
     PhoneUpdateRequest,
     RefreshRequest,
     SignUpRequest,
-    SocialLoginRequest,
     TokenPair,
 )
 from domain.policies import rate_limits
@@ -127,20 +126,12 @@ async def login_email(
     response_model=TokenPair,
     dependencies=[limit_by_ip("auth_login", rate_limits.AUTH_LOGIN)],
 )
-async def social_login(
-    payload: SocialLoginRequest,
-    auth_service: AuthServiceDep,
-    response: Response,
-) -> TokenPair:
-    """Đăng nhập 1-chạm qua Google hoặc Facebook."""
-    result = await auth_service.social_sign_in(
-        provider=payload.provider,
-        email=payload.email,
-        name=payload.name or payload.email.split("@")[0],
+async def social_login() -> TokenPair:
+    """Vô hiệu hoá social login không xác thực chữ ký để bảo vệ chống chiếm đoạt tài khoản (P0 Account Takeover)."""
+    raise HTTPException(
+        status.HTTP_400_BAD_REQUEST,
+        "Đăng nhập qua mạng xã hội chưa xác minh bị vô hiệu hoá. Vui lòng sử dụng Email và mật khẩu/OTP.",
     )
-    res = _to_token_pair(result)
-    _set_refresh_cookie(response, result.refresh_token)
-    return res
 
 
 @router.post(

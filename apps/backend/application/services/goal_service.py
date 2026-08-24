@@ -3,13 +3,21 @@
 from datetime import datetime
 from uuid import UUID
 
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.goal_repository import GoalRepository
+from core.events import EventLogEntry
 from domain.models.goal import Goal
 
 
 class GoalService:
-    def __init__(self, *, goal_repo: GoalRepository) -> None:
+    def __init__(
+        self,
+        *,
+        goal_repo: GoalRepository,
+        event_repo: EventLogRepository | None = None,
+    ) -> None:
         self._goals = goal_repo
+        self._events = event_repo
 
     async def create_goal(
         self,
@@ -23,7 +31,7 @@ class GoalService:
         weekly_capacity_hours: int = 10,
         constraints: dict | None = None,
     ) -> Goal:
-        return await self._goals.create(
+        goal = await self._goals.create(
             workspace_id=workspace_id,
             title=title,
             category=category,
@@ -33,6 +41,16 @@ class GoalService:
             weekly_capacity_hours=weekly_capacity_hours,
             constraints=constraints,
         )
+        if self._events:
+            await self._events.record(
+                EventLogEntry(
+                    workspace_id=workspace_id,
+                    job_kind="goal.created",
+                    input_summary=f"Category: {category}",
+                    output_summary=f"Goal created: {title}",
+                )
+            )
+        return goal
 
     async def get_active_goal(self, *, workspace_id: UUID) -> Goal | None:
         return await self._goals.get_active_goal(workspace_id=workspace_id)
@@ -76,4 +94,3 @@ class GoalService:
             return False
         await self._goals.update(goal, status="abandoned")
         return True
-

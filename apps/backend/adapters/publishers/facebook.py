@@ -285,7 +285,11 @@ class FacebookPublisher(PublisherPort):
                     content=video_bytes,
                 )
                 if up_res.status_code >= 400:
-                    logger.warning("Facebook Reels binary upload chunk HTTP %d: %s", up_res.status_code, up_res.text)
+                    logger.warning(
+                        "Facebook Reels binary upload chunk HTTP %d: %s",
+                        up_res.status_code,
+                        up_res.text,
+                    )
             except Exception as exc:
                 logger.warning("Facebook Reels direct binary upload failed: %s", exc)
 

@@ -70,7 +70,7 @@ class TikTokOAuthClient(OAuthClientPort):
         if not (self._client_key and self._client_secret):
             # In local dev / fake mode, return mock callback URL
             return f"http://localhost:8000/connections/tiktok/callback?code=mock_tiktok_code&state={state}"
-        
+
         verifier = _get_pkce_verifier(state, self._client_secret)
         challenge = _get_pkce_challenge(verifier)
 
@@ -159,7 +159,11 @@ class TikTokOAuthClient(OAuthClientPort):
                     display_name = user_data.get("display_name")
                     username = user_data.get("username")
                     if display_name:
-                        account_name = f"{display_name} (@huynhnguyen333)" if "huynh" in display_name.lower() else display_name
+                        account_name = (
+                            f"{display_name} (@huynhnguyen333)"
+                            if "huynh" in display_name.lower()
+                            else display_name
+                        )
                     elif username:
                         account_name = f"@{username}"
         except Exception:

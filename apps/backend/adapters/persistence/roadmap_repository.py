@@ -45,13 +45,12 @@ class RoadmapRepository:
         await self._session.flush()
         return roadmap
 
-    async def get_active_roadmap(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> Roadmap | None:
-        stmt = (
-            select(Roadmap)
-            .where(
-                Roadmap.workspace_id == workspace_id,
-                Roadmap.status == RoadmapStatus.ACTIVE.value,
-            )
+    async def get_active_roadmap(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> Roadmap | None:
+        stmt = select(Roadmap).where(
+            Roadmap.workspace_id == workspace_id,
+            Roadmap.status == RoadmapStatus.ACTIVE.value,
         )
         if goal_id:
             stmt = stmt.where(Roadmap.goal_id == goal_id)
@@ -78,14 +77,15 @@ class RoadmapRepository:
             rm.status = RoadmapStatus.SUPERSEDED.value
         await self._session.flush()
 
-    async def list_roadmap_history(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[Roadmap]:
+    async def list_roadmap_history(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[Roadmap]:
         stmt = select(Roadmap).where(Roadmap.workspace_id == workspace_id)
         if goal_id:
             stmt = stmt.where(Roadmap.goal_id == goal_id)
         stmt = stmt.order_by(desc(Roadmap.version), desc(Roadmap.created_at))
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
-
 
     # --- Tasks CRUD ---
 
@@ -128,7 +128,9 @@ class RoadmapRepository:
         await self._session.flush()
         return task
 
-    async def list_tasks_by_roadmap(self, *, workspace_id: UUID, roadmap_id: UUID) -> list[RoadmapTask]:
+    async def list_tasks_by_roadmap(
+        self, *, workspace_id: UUID, roadmap_id: UUID
+    ) -> list[RoadmapTask]:
         stmt = (
             select(RoadmapTask)
             .where(
@@ -140,7 +142,9 @@ class RoadmapRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_next_recommended_task(self, *, workspace_id: UUID, roadmap_id: UUID) -> RoadmapTask | None:
+    async def get_next_recommended_task(
+        self, *, workspace_id: UUID, roadmap_id: UUID
+    ) -> RoadmapTask | None:
         stmt = (
             select(RoadmapTask)
             .where(
@@ -211,7 +215,9 @@ class RoadmapRepository:
         await self._session.flush()
         return evidence
 
-    async def list_evidence(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[EvidenceLog]:
+    async def list_evidence(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[EvidenceLog]:
         stmt = select(EvidenceLog).where(EvidenceLog.workspace_id == workspace_id)
         if goal_id:
             stmt = stmt.where(EvidenceLog.goal_id == goal_id)
@@ -249,7 +255,9 @@ class RoadmapRepository:
         await self._session.flush()
         return review
 
-    async def list_reviews(self, *, workspace_id: UUID, goal_id: UUID | None = None) -> list[RoadmapReview]:
+    async def list_reviews(
+        self, *, workspace_id: UUID, goal_id: UUID | None = None
+    ) -> list[RoadmapReview]:
         stmt = select(RoadmapReview).where(RoadmapReview.workspace_id == workspace_id)
         if goal_id:
             stmt = stmt.where(RoadmapReview.goal_id == goal_id)

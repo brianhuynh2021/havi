@@ -1,6 +1,7 @@
 """Tests cho GoalService & GoalRepository (Havi 3.0)."""
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +21,9 @@ async def test_create_and_get_active_goal(db_session: AsyncSession):
         password_hash="test_hash",
     )
     ws_repo = WorkspaceRepository(db_session)
-    ws = await ws_repo.create(name="Trung Tâm Nhật Minh", industry=Industry.EDUCATION, owner_user_id=user.id)
+    ws = await ws_repo.create(
+        name="Trung Tâm Nhật Minh", industry=Industry.EDUCATION, owner_user_id=user.id
+    )
     ws_id = ws.id
 
     goal_repo = GoalRepository(db_session)
@@ -73,8 +76,6 @@ async def test_tenant_isolation_for_goals(db_session: AsyncSession):
     goal_repo = GoalRepository(db_session)
     goal_service = GoalService(goal_repo=goal_repo)
 
-
-
     goal_a = await goal_service.create_goal(
         workspace_id=ws_a,
         title="Goal Workspace A",
@@ -92,4 +93,3 @@ async def test_tenant_isolation_for_goals(db_session: AsyncSession):
     # Get by ID sai workspace trả về None
     not_found = await goal_service.get_goal(workspace_id=ws_b, goal_id=goal_a.id)
     assert not_found is None
-

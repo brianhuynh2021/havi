@@ -112,8 +112,7 @@ class BillingService:
                 job_kind="billing.plan_change_requested",
                 input_summary=f"{current.value} -> {target.value}",
                 output_summary=(
-                    f"invoice:{invoice.id} amount_vnd:{amount} "
-                    f"status:{invoice.status.value}"
+                    f"invoice:{invoice.id} amount_vnd:{amount} status:{invoice.status.value}"
                 ),
             )
         )
@@ -155,9 +154,7 @@ class BillingService:
         amount = subscription.price_for(target)
 
         # Kiểm tra xem đã có hoá đơn PENDING cho gói này chưa, nếu có thì dùng lại
-        pending = await self._billing.get_pending_invoice(
-            workspace_id=workspace_id, plan=target
-        )
+        pending = await self._billing.get_pending_invoice(workspace_id=workspace_id, plan=target)
         if pending is None or pending.amount_vnd != amount:
             pending = await self._billing.create_invoice(
                 workspace_id=workspace_id,
@@ -208,13 +205,9 @@ class BillingService:
         if not normalized_reference:
             raise InvoiceInvalidStatusError("Giao dịch thiếu mã tham chiếu duy nhất")
 
-        existing_reference = await self._billing.get_by_gateway_reference(
-            normalized_reference
-        )
+        existing_reference = await self._billing.get_by_gateway_reference(normalized_reference)
         if existing_reference is not None and existing_reference.id != invoice.id:
-            raise DuplicatePaymentReferenceError(
-                "Mã giao dịch đã được dùng cho một hoá đơn khác"
-            )
+            raise DuplicatePaymentReferenceError("Mã giao dịch đã được dùng cho một hoá đơn khác")
 
         # Đối chiếu chính xác số tiền và VND. Không chấp nhận cả thiếu lẫn thừa:
         # một webhook bị gắn nhầm invoice vẫn có thể có số tiền lớn hơn.
@@ -235,14 +228,11 @@ class BillingService:
                         f"currency:{currency.upper()} expected:{invoice.amount_vnd} VND"
                     ),
                     output_summary=(
-                        f"invoice:{invoice.id} status:{invoice.status.value} "
-                        "REJECTED_MISMATCH"
+                        f"invoice:{invoice.id} status:{invoice.status.value} REJECTED_MISMATCH"
                     ),
                 )
             )
-            raise UnderpaidInvoiceError(
-                "Số tiền hoặc tiền tệ không khớp chính xác với hoá đơn"
-            )
+            raise UnderpaidInvoiceError("Số tiền hoặc tiền tệ không khớp chính xác với hoá đơn")
 
         workspace = await self._workspaces.get_by_id_for_update(invoice.workspace_id)
         if workspace is None:

@@ -30,7 +30,11 @@ logger = logging.getLogger(__name__)
 
 def build_provider_router() -> ProviderRouter:
     settings = get_settings()
-    if settings.gemini_api_key and settings.gemini_api_key not in ("mock", "mock-gemini-key", "change-me"):
+    if settings.gemini_api_key and settings.gemini_api_key not in (
+        "mock",
+        "mock-gemini-key",
+        "change-me",
+    ):
         return ProviderRouter(
             {
                 LLMProvider.GEMINI: GeminiProvider(settings),

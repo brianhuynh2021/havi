@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
-from api.deps import AuthDep, PathWorkspaceMemberDep, WorkspaceServiceDep
+from api.deps import AuthDep, PathWorkspaceMemberDep, PathWorkspaceOwnerDep, WorkspaceServiceDep
 from application.services.workspace_service import (
     AlreadyMember,
     CannotDeleteWorkspaceNotOwner,
@@ -62,7 +62,7 @@ async def get_workspace(
 
 @router.patch("/{workspace_id}", response_model=Workspace)
 async def update_workspace(
-    workspace_id: PathWorkspaceMemberDep,
+    workspace_id: PathWorkspaceOwnerDep,
     payload: WorkspaceUpdate,
     workspace_service: WorkspaceServiceDep,
 ) -> Workspace:
@@ -112,7 +112,7 @@ async def list_members(
     status_code=status.HTTP_201_CREATED,
 )
 async def invite_member(
-    workspace_id: PathWorkspaceMemberDep,
+    workspace_id: PathWorkspaceOwnerDep,
     payload: WorkspaceMemberInvite,
     workspace_service: WorkspaceServiceDep,
 ) -> WorkspaceMember:
@@ -132,7 +132,7 @@ async def invite_member(
 
 @router.delete("/{workspace_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(
-    workspace_id: PathWorkspaceMemberDep,
+    workspace_id: PathWorkspaceOwnerDep,
     user_id: UUID,
     workspace_service: WorkspaceServiceDep,
 ) -> None:
@@ -146,7 +146,7 @@ async def remove_member(
 
 @router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workspace(
-    workspace_id: PathWorkspaceMemberDep,
+    workspace_id: PathWorkspaceOwnerDep,
     auth: AuthDep,
     workspace_service: WorkspaceServiceDep,
 ) -> None:

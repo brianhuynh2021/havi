@@ -1,6 +1,7 @@
 """Tests cho RoadmapService & RoadmapRepository (Havi 3.0)."""
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +27,6 @@ async def test_roadmap_lifecycle_and_task_execution(db_session: AsyncSession):
     ws = await ws_repo.create(name="Spa An Nhiên", industry=Industry.SPA, owner_user_id=user.id)
     ws_id = ws.id
 
-
     goal_repo = GoalRepository(db_session)
 
     roadmap_repo = RoadmapRepository(db_session)
@@ -38,7 +38,6 @@ async def test_roadmap_lifecycle_and_task_execution(db_session: AsyncSession):
         goal_repo=goal_repo,
         event_repo=event_repo,
     )
-
 
     # 1. Tạo mục tiêu
     goal = await goal_service.create_goal(

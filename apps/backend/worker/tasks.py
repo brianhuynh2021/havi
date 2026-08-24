@@ -146,11 +146,28 @@ def render_video_job(self, workspace_id: str, job_id: str, request_id: str | Non
                 # Nếu không có source asset, tạo clip nền 9:16 mặc định hợp lệ bằng FFmpeg
                 if not os.path.exists(source_path) or os.path.getsize(source_path) < 100:
                     import subprocess
+
                     subprocess.run(
                         [
-                            "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x1e1b4b:s=1080x1920:d=15",
-                            "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "15",
-                            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", source_path
+                            "ffmpeg",
+                            "-y",
+                            "-f",
+                            "lavfi",
+                            "-i",
+                            "color=c=0x1e1b4b:s=1080x1920:d=15",
+                            "-f",
+                            "lavfi",
+                            "-i",
+                            "anullsrc=r=44100:cl=stereo",
+                            "-t",
+                            "15",
+                            "-c:v",
+                            "libx264",
+                            "-pix_fmt",
+                            "yuv420p",
+                            "-c:a",
+                            "aac",
+                            source_path,
                         ],
                         capture_output=True,
                     )

@@ -287,7 +287,9 @@ class ContentItemUpdate(HaviModel):
 
 class GenerateImageRequest(HaviModel):
     prompt: str | None = None
-    style: str | None = Field(default="photorealistic", description="photorealistic | 3d_studio | cinematic")
+    style: str | None = Field(
+        default="photorealistic", description="photorealistic | 3d_studio | cinematic"
+    )
 
 
 class GenerateImageResponse(HaviModel):
@@ -301,7 +303,7 @@ class GenerateVideoRequest(HaviModel):
 
 
 class GenerateVideoResponse(HaviModel):
-    media_url: str
+    media_url: str | None = None
     target_aspect_ratio: str = "9:16"
     status: str = "completed"
 

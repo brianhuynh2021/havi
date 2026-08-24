@@ -162,7 +162,7 @@ services:
       redis:
         condition: service_healthy
     environment: *backend-env
-    command: ["celery", "-A", "worker.celery_app:celery_app", "beat", "-l", "info"]
+    command: ["celery", "-A", "scheduler.beat:celery_app", "beat", "-l", "info"]
 
   web:
     build:

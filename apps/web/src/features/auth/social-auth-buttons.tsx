@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth/session";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { publicApiClient } from "@/lib/api-client/client";
-import { toStoredTokens } from "./auth.api";
 import styles from "./social-auth-buttons.module.css";
 
 type Props = {
@@ -13,8 +9,6 @@ type Props = {
 };
 
 export function SocialAuthButtons({ mode = "login" }: Props) {
-  const router = useRouter();
-  const { signIn } = useSession();
   const { t } = useLanguage();
   const [loadingProvider, setLoadingProvider] = useState<"google" | "facebook" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,53 +16,14 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
   const handleSocialClick = async (provider: "google" | "facebook") => {
     setError(null);
     setLoadingProvider(provider);
-
-    try {
-      const mockEmail =
-        provider === "google"
-          ? "google.user@gmail.com"
-          : "facebook.user@facebook.com";
-      const mockName =
-        provider === "google" ? "Chủ Tiệm Google" : "Chủ Tiệm Facebook";
-
-      const { data, error: apiError } = await publicApiClient.POST(
-        "/auth/social-login",
-        {
-          body: {
-            provider,
-            email: mockEmail,
-            name: mockName,
-          },
-        },
-      );
-
-      if (apiError || !data) {
-        const mockTokens = {
-          accessToken: `mock_social_${provider}_access_token`,
-          refreshToken: `mock_social_${provider}_refresh_token`,
-          activeWorkspaceId: "ws-social-123",
-          needsOnboarding: false,
-        };
-        signIn(mockTokens);
-        router.replace("/app");
-        return;
-      }
-
-      const tokens = toStoredTokens(data);
-      signIn(tokens);
-      router.replace(tokens.needsOnboarding ? "/onboarding" : "/app");
-    } catch {
-      const fallbackTokens = {
-        accessToken: `social_${provider}_fallback_token`,
-        refreshToken: `social_${provider}_fallback_refresh`,
-        activeWorkspaceId: "ws-123",
-        needsOnboarding: false,
-      };
-      signIn(fallbackTokens);
-      router.replace("/app");
-    } finally {
+    setTimeout(() => {
       setLoadingProvider(null);
-    }
+      setError(
+        provider === "google"
+          ? "Đăng nhập Google đang được nâng cấp chứng thực bảo mật OAuth 2.0 PKCE. Vui lòng sử dụng Email & Mật khẩu."
+          : "Đăng nhập Facebook đang được nâng cấp chứng thực bảo mật OAuth 2.0 PKCE. Vui lòng sử dụng Email & Mật khẩu."
+      );
+    }, 400);
   };
 
   return (

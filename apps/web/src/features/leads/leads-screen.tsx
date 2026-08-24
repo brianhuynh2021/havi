@@ -133,6 +133,7 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
   }, [workspaceId]);
 
   const handleSend = async (id: string, text: string) => {
+    setError(null);
     setSendingId(id);
     const res = await sendInboxReply(id, text);
     setSendingId(null);
@@ -142,23 +143,25 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
       );
       setEditingId(null);
     } else {
-      alert(res.message);
+      setError(res.message);
     }
   };
 
   const handleDismiss = async (id: string) => {
+    setError(null);
     const res = await dismissInboxItem(id);
     if (res.ok) {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status: "dismissed" as const } : item))
       );
     } else {
-      alert(res.message);
+      setError(res.message);
     }
   };
 
   const handleScanNudges = async () => {
     if (!workspaceId) return;
+    setError(null);
     setScanningNudges(true);
     const res = await triggerNudgeScan(workspaceId, 30);
     setScanningNudges(false);
@@ -168,12 +171,13 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
         setNudges(nudgeRes.data.items);
       }
     } else {
-      alert(res.message);
+      setError(res.message);
     }
   };
 
   const handleApproveNudge = async (nudgeId: string) => {
     if (!workspaceId) return;
+    setError(null);
     setProcessingNudgeId(nudgeId);
     const res = await approveNudge(workspaceId, nudgeId);
     setProcessingNudgeId(null);
@@ -182,12 +186,13 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
         prev.map((n) => (n.id === nudgeId ? { ...n, status: "sent" } : n))
       );
     } else {
-      alert(res.message);
+      setError(res.message);
     }
   };
 
   const handleDismissNudge = async (nudgeId: string) => {
     if (!workspaceId) return;
+    setError(null);
     setProcessingNudgeId(nudgeId);
     const res = await dismissNudge(workspaceId, nudgeId);
     setProcessingNudgeId(null);
@@ -196,7 +201,7 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
         prev.map((n) => (n.id === nudgeId ? { ...n, status: "dismissed" } : n))
       );
     } else {
-      alert(res.message);
+      setError(res.message);
     }
   };
 
@@ -354,6 +359,50 @@ export function LeadsScreen({ defaultTab = "inbox" }: Props) {
                       ) : (
                         <p className={styles.replyText}>{currentReply}</p>
                       )}
+
+                      {/* Smart 3-Tone Quick Reply Chips */}
+                      {isPending ? (
+                        <div className={styles.smartReplyChips}>
+                          <button
+                            type="button"
+                            className={styles.smartReplyChip}
+                            onClick={() => {
+                              const name = item.author_name || "anh/chị";
+                              const msg = `Dạ em chào ${name} ạ! Khóa học tại cơ sở đào tạo thực hành trực tiếp 1 kèm 1 trên dự án thật. Em xin phép gửi lộ trình chi tiết và hỗ trợ xếp lịch thuận tiện nhất cho mình nhé ạ!`;
+                              setReplyTextMap((prev) => ({ ...prev, [item.id]: msg }));
+                              setEditingId(item.id);
+                            }}
+                          >
+                            💬 Chu đáo & Chi tiết
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.smartReplyChip}
+                            onClick={() => {
+                              const name = item.author_name || "anh/chị";
+                              const msg = `Dạ em chào ${name}! Cơ sở mở cửa đón khách từ 8h00 - 20h30 hàng ngày. Anh/chị có thể ghé trực tiếp vào sáng mai hoặc chiều nay để trải nghiệm thử nhé ạ!`;
+                              setReplyTextMap((prev) => ({ ...prev, [item.id]: msg }));
+                              setEditingId(item.id);
+                            }}
+                          >
+                            ⚡ Nhanh gọn & Hẹn giờ
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.smartReplyChip}
+                            onClick={() => {
+                              const name = item.author_name || "anh/chị";
+                              const msg = `Dạ chào ${name}! Cơ sở đang có chương trình Tặng 1 buổi trải nghiệm/học thử miễn phí. Anh/chị cho em xin số Zalo/SĐT để chuẩn bị và giữ chỗ cho mình nhé ạ!`;
+                              setReplyTextMap((prev) => ({ ...prev, [item.id]: msg }));
+                              setEditingId(item.id);
+                            }}
+                          >
+                            🎁 Mời trải nghiệm miễn phí
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 

@@ -325,4 +325,3 @@ class ReviewDecision(StrEnum):
     PIVOT = "pivot"
     PAUSE = "pause"
     STOP = "stop"
-

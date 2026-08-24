@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/lib/auth/session";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { signUp } from "./auth.api";
-import { SocialAuthButtons } from "./social-auth-buttons";
 import { MIN_PASSWORD_LENGTH, isValidEmail } from "./auth.constants";
 import styles from "./auth.module.css";
 
@@ -53,8 +52,6 @@ export function SignupScreen() {
       <p className={styles.subtitle}>
         {t("auth.registerSubtitle", "Chỉ cần tên, email và mật khẩu — 30 giây là xong.")}
       </p>
-
-      <SocialAuthButtons mode="signup" />
 
       <form
         className={styles.form}

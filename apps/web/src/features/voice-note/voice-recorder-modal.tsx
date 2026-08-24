@@ -111,7 +111,7 @@ function VoiceRecorderModalContent({
 
         <h2 className={styles.title}>🎙️ Ghi âm ý tưởng bài viết</h2>
         <p className={styles.subtitle}>
-          Chị cứ nói tự nhiên — Nhân viên AI sẽ tự viết bài Facebook, kịch bản Video Shorts và bài Google Maps.
+          Chị cứ nói tự nhiên — Nhân viên AI sẽ tự viết bài Facebook và kịch bản Video ngắn 9:16.
         </p>
 
         {errorMessage || transcribeError ? (

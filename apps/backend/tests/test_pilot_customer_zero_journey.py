@@ -10,7 +10,9 @@ Validates the full 30-day lifecycle across 4 distinct Goal Archetypes:
 from httpx import AsyncClient
 
 
-async def _signup_and_get_workspace(client: AsyncClient, *, email: str, name: str, ws_name: str, industry: str):
+async def _signup_and_get_workspace(
+    client: AsyncClient, *, email: str, name: str, ws_name: str, industry: str
+):
     signup = await client.post(
         "/auth/sign-up", json={"name": name, "email": email, "password": "matkhau123"}
     )
@@ -60,7 +62,9 @@ async def test_customer_zero_nhat_minh_30day_journey(client: AsyncClient):
     goal_id = goal["id"]
 
     # 2. Sinh Lộ Trình đa tầng (90d / 30d / 7d)
-    roadmap_res = await client.post("/roadmaps/generate", json={"goal_id": goal_id}, headers=headers)
+    roadmap_res = await client.post(
+        "/roadmaps/generate", json={"goal_id": goal_id}, headers=headers
+    )
     assert roadmap_res.status_code == 201
     roadmap_data = roadmap_res.json()
     roadmap_id = roadmap_data["roadmap"]["id"]
@@ -143,7 +147,6 @@ async def test_local_hospitality_resort_journey(client: AsyncClient):
         industry="local_service",
     )
 
-
     # Khởi tạo mục tiêu kéo khách đặt phòng trực tiếp không qua OTA
     goal_res = await client.post(
         "/goals",
@@ -159,7 +162,12 @@ async def test_local_hospitality_resort_journey(client: AsyncClient):
     goal_id = goal_res.json()["id"]
 
     # Sinh lộ trình
-    roadmap_res = await client.post("/roadmaps/generate", json={"goal_id": goal_id}, headers=headers)
+    roadmap_res = await client.post(
+        "/roadmaps/generate", json={"goal_id": goal_id}, headers=headers
+    )
     assert roadmap_res.status_code == 201
     roadmap_data = roadmap_res.json()
-    assert "đặt phòng" in roadmap_data["roadmap"]["horizon_90d"] or "khách hàng" in roadmap_data["roadmap"]["horizon_90d"]
+    assert (
+        "đặt phòng" in roadmap_data["roadmap"]["horizon_90d"]
+        or "khách hàng" in roadmap_data["roadmap"]["horizon_90d"]
+    )

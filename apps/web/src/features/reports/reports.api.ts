@@ -8,10 +8,18 @@ export type AnalyticsSummary = components["schemas"]["AnalyticsSummary"] & {
 export type AnalyticsTimeseries = components["schemas"]["AnalyticsTimeseries"];
 export type ChannelAttribution = components["schemas"]["ChannelAttribution"];
 
+export type TopPostItem = {
+  id: string;
+  channel: string;
+  caption: string;
+  published_at?: string | null;
+};
+
 export type ReportsData = {
   summary: AnalyticsSummary;
   timeseries: AnalyticsTimeseries;
   attribution: ChannelAttribution[];
+  topPosts: TopPostItem[];
 };
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
@@ -44,12 +52,15 @@ function monthRange(): { start: string; end: string } {
 export async function fetchReports(): Promise<Result<ReportsData>> {
   const range = monthRange();
   try {
-    const [summary, timeseries, attribution] = await Promise.all([
+    const [summary, timeseries, attribution, calendarData] = await Promise.all([
       apiClient.GET("/analytics/summary", { params: { query: range } }),
       apiClient.GET("/analytics/timeseries", {
         params: { query: { metric: "published_posts", granularity: "week" } },
       }),
       apiClient.GET("/analytics/attribution", { params: { query: range } }),
+      apiClient.GET("/calendar", {
+        params: { query: range },
+      }),
     ]);
 
     if (
@@ -63,12 +74,29 @@ export async function fetchReports(): Promise<Result<ReportsData>> {
       return { ok: false, message: "Chưa tải được báo cáo, thử lại giúp chị nhé." };
     }
 
+    const topPosts: TopPostItem[] = [];
+    if (calendarData.data?.days) {
+      for (const day of calendarData.data.days) {
+        for (const item of day.items) {
+          if (item.status === "published") {
+            topPosts.push({
+              id: item.id,
+              channel: item.channel,
+              caption: item.text || (item as unknown as { caption?: string }).caption || "",
+              published_at: item.scheduled_at,
+            });
+          }
+        }
+      }
+    }
+
     return {
       ok: true,
       data: {
         summary: summary.data,
         timeseries: timeseries.data,
         attribution: attribution.data,
+        topPosts,
       },
     };
   } catch {

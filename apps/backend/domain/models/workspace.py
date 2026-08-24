@@ -60,9 +60,7 @@ class Invoice(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __tablename__ = "invoices"
     __table_args__ = (
         Index("ix_invoices_workspace_issued", "workspace_id", "issued_at"),
-        UniqueConstraint(
-            "gateway_reference", name="uq_invoices_gateway_reference"
-        ),
+        UniqueConstraint("gateway_reference", name="uq_invoices_gateway_reference"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(

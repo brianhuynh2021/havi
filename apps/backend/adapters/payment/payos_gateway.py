@@ -67,6 +67,10 @@ def generate_vietqr_checkout(
     )
 
 
+class PaymentGatewayError(Exception):
+    """Lỗi cổng thanh toán PayOS gián đoạn hoặc cấu hình không hợp lệ."""
+
+
 async def create_payos_payment_link(
     *,
     settings: Settings,
@@ -84,7 +88,9 @@ async def create_payos_payment_link(
     clean_id = invoice_id_str.replace("-", "")[:8]
     description = custom_content or f"HAVI {clean_id}"
 
-    order_code = int(f"{int(datetime.now(UTC).timestamp()) % 1000000}{int(invoice_id.hex[:4], 16) % 10000:04d}")
+    order_code = int(
+        f"{int(datetime.now(UTC).timestamp()) % 1000000}{int(invoice_id.hex[:4], 16) % 10000:04d}"
+    )
     ret_url = f"{settings.web_base_url}/billing"
     can_url = f"{settings.web_base_url}/billing"
 
@@ -110,7 +116,12 @@ async def create_payos_payment_link(
                 f"https://img.vietqr.io/image/{bin_code}-{account_no}-compact2.png"
                 f"?amount={amount_vnd}&addInfo={urllib.parse.quote(description)}&accountName={urllib.parse.quote(account_name)}"
             )
-            logger.info("Đã tạo PayOS payment link thành công: orderCode=%s invoice=%s account=%s", order_code, invoice_id, account_no)
+            logger.info(
+                "Đã tạo PayOS payment link thành công: orderCode=%s invoice=%s account=%s",
+                order_code,
+                invoice_id,
+                account_no,
+            )
             return VietQRCheckout(
                 invoice_id=invoice_id_str,
                 amount_vnd=amount_vnd,
@@ -122,6 +133,15 @@ async def create_payos_payment_link(
             )
         except Exception as exc:
             logger.error("Lỗi khi kết nối PayOS SDK: %s", exc)
+            if settings.env == "production":
+                raise PaymentGatewayError(
+                    "Cổng thanh toán PayOS tạm thời gián đoạn. Vui lòng thử lại sau giây lát."
+                ) from exc
+
+    if settings.env == "production":
+        raise PaymentGatewayError(
+            "Cổng thanh toán PayOS chưa được cấu hình đầy đủ trên môi trường Production."
+        )
 
     return generate_vietqr_checkout(
         settings=settings,
@@ -142,6 +162,7 @@ def verify_payos_signature(
 
     try:
         from payos import PayOS
+
         p = PayOS(client_id="dummy", api_key="dummy", checksum_key=checksum_key)
         payload = {"data": data, "signature": signature}
         p.webhooks.verify(payload)
@@ -190,7 +211,11 @@ def extract_invoice_code(transfer_content: str) -> str | None:
         return None
 
     # Tìm mẫu HAVI kèm 8 ký tự hex hoặc UUID
-    match = re.search(r"HAVI[\s_-]*([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})?|[0-9a-fA-F]{8,32})", transfer_content, re.IGNORECASE)
+    match = re.search(
+        r"HAVI[\s_-]*([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})?|[0-9a-fA-F]{8,32})",
+        transfer_content,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1).lower()
     return None

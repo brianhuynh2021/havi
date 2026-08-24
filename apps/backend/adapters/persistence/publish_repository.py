@@ -183,9 +183,7 @@ class PublishRepository:
         await self._session.flush()
         return job
 
-    async def mark_pending_reconciliation(
-        self, job: PublishJob, *, detail: str
-    ) -> PublishJob:
+    async def mark_pending_reconciliation(self, job: PublishJob, *, detail: str) -> PublishJob:
         """Dừng retry khi kết quả bên ngoài không xác định.
 
         Cùng job không được quay lại `pending` trước khi có bằng chứng bài chưa

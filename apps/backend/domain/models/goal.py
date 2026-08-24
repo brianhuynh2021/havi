@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import GoalCategory, GoalStatus
@@ -24,9 +24,7 @@ class Goal(Base, UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin):
         String(50), nullable=False, default=GoalCategory.ACQUIRE_CUSTOMERS.value
     )
     evidence_definition: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    target_deadline: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    target_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     weekly_capacity_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
     constraints: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     status: Mapped[str] = mapped_column(

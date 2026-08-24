@@ -121,4 +121,3 @@ async def test_goals_and_roadmaps_api_flow(client: AsyncClient):
     restored_data = restore_res.json()
     assert restored_data["roadmap"]["version"] == 2
     assert "Khôi phục từ v1" in restored_data["roadmap"]["title"]
-

@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
-from api.deps import ContentServiceDep, VoiceServiceDep, WorkspaceDep
+from api.deps import ActiveWorkspaceDep, ContentServiceDep, VoiceServiceDep, WorkspaceDep
 from application.services.voice_service import (
     AudioPayloadTooLargeError,
     InvalidAudioFormatError,
@@ -20,7 +20,9 @@ class Base64VoiceRequest(BaseModel):
     """Payload nhận diện âm thanh dạng base64 từ trình duyệt / mobile app."""
 
     audio_base64: str = Field(..., description="Chuỗi base64 của file âm thanh")
-    mime_type: str = Field(default="audio/webm", description="MIME type của âm thanh (audio/webm, audio/mp4...)")
+    mime_type: str = Field(
+        default="audio/webm", description="MIME type của âm thanh (audio/webm, audio/mp4...)"
+    )
 
 
 class VoiceTranscribeResponse(BaseModel):
@@ -42,9 +44,9 @@ class VoiceToContentResponse(BaseModel):
 
 
 @router.post("/transcribe", response_model=VoiceTranscribeResponse)
-async def transcribe_voice(
+async def transcribe_voice_note(
     payload: Base64VoiceRequest,
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
     voice_service: VoiceServiceDep,
 ) -> VoiceTranscribeResponse:
     """Chuyển đổi file ghi âm giọng nói thành văn bản tiếng Việt chuẩn xác."""
@@ -93,7 +95,7 @@ async def transcribe_voice(
 @router.post("/voice-to-content", response_model=VoiceToContentResponse)
 async def voice_to_content(
     payload: Base64VoiceRequest,
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
     voice_service: VoiceServiceDep,
     content_service: ContentServiceDep,
 ) -> VoiceToContentResponse:
@@ -146,8 +148,13 @@ async def voice_to_content(
 class VoiceTTSRequest(BaseModel):
     """Payload yêu cầu tạo file âm thanh giọng đọc tiếng Việt từ văn bản."""
 
-    text: str = Field(..., max_length=2000, description="Văn bản tiếng Việt cần chuyển thành giọng đọc")
-    voice: str = Field(default="vi-VN-HoaiMyNeural", description="Giọng đọc AI (vi-VN-HoaiMyNeural hoặc vi-VN-NamMinhNeural)")
+    text: str = Field(
+        ..., max_length=2000, description="Văn bản tiếng Việt cần chuyển thành giọng đọc"
+    )
+    voice: str = Field(
+        default="vi-VN-HoaiMyNeural",
+        description="Giọng đọc AI (vi-VN-HoaiMyNeural hoặc vi-VN-NamMinhNeural)",
+    )
     rate: str = Field(default="+0%", description="Tốc độ đọc (+0%, +10%, -10%...)")
 
 

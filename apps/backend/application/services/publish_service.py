@@ -257,7 +257,9 @@ class PublishService:
                             media_urls.append(url)
 
         if job.channel in (Channel.YOUTUBE, Channel.TIKTOK, Channel.REELS):
-            has_video = any(u.endswith((".mp4", ".mov", ".webm")) or "video" in u for u in media_urls)
+            has_video = any(
+                u.endswith((".mp4", ".mov", ".webm")) or "video" in u for u in media_urls
+            )
             if not has_video:
                 return await self._mark_failed_with_event(
                     job,
@@ -281,9 +283,7 @@ class PublishService:
                 access_token=access_token,
             )
         except AmbiguousPublishError as exc:
-            pending = await self._publishes.mark_pending_reconciliation(
-                job, detail=exc.detail
-            )
+            pending = await self._publishes.mark_pending_reconciliation(job, detail=exc.detail)
             await self._record_event(
                 pending,
                 output_summary=f"status={pending.status.value}",

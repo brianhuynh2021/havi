@@ -2154,3 +2154,47 @@ graph LR
 
 
 
+
+## 28. Paid Beta Gate (Review: 2026-08-24)
+
+Full findings, evidence, test protocol, and the 4-week plan live in
+[`docs/operations/BETA_READINESS_REVIEW.md`](../operations/BETA_READINESS_REVIEW.md).
+That document was produced by running the suites against the working tree, so it
+supersedes the status claims in §3, §25, and §26.11 where they disagree.
+
+Verified on 2026-08-24: `ruff` and `lint:web` pass; backend **509 passed / 2
+failed**; web 179/179; 100 files uncommitted; no functional browser E2E on the
+paid path.
+
+Blocking defects — no customer may be charged until every box is ticked:
+
+- [ ] P0-1 `MediaStatus.READY` does not exist → `AttributeError` in
+      `api/routers/content.py:445` (one of the two failing tests).
+- [ ] P0-2 PayOS failure falls back to a hardcoded personal-account VietQR with
+      no webhook linkage → the customer pays and is never activated
+      (`adapters/payment/payos_gateway.py:129`). Must fail closed.
+- [ ] P0-3 `sub_state.is_active` is enforced only in
+      `application/services/content_service.py:100`; publish, video render,
+      inbox reply, CRM nudge, trend scout, and roadmap generation are ungated.
+- [ ] P0-4 `TelegramNotifier` returns `True` on the `MOCK_` token path and
+      `HAVI_TELEGRAM_BOT_TOKEN` is absent from the production guard → silent
+      false success on the speed-to-lead promise.
+- [ ] P0-5 `/app/reports`, `/app/evidence`, `/app/coach` have zero inbound links
+      anywhere in the app — the evidence/outcome loop is unreachable.
+- [ ] P0-6 `goal_created`, `roadmap_accepted`, `roadmap_edited`,
+      `evidence_attached`, and `task_scheduled` are never emitted, so the §26.13
+      activation thresholds cannot be computed.
+
+Corrections to earlier ticks in this document:
+
+- §26.11 Phase 1 "Replace industry-first onboarding with goal-first intake" is
+  **not** done: `onboarding-screen.tsx:26` is still
+  `["Chọn ngành", "Nối kênh", "Havi bắt đầu học"]`.
+- §26.11 Phase 0 "Remove fabricated ROI/funnel numbers" is **partial**: the
+  landing page is clean, but `roadmap_service.py:358,374` still ships
+  "gấp 4 lần" / "gấp 3 lần" to customers inside `why_this_is_next`.
+- §3.2's claim that inbox `send_reply` "calls no publisher" is stale;
+  `inbox_service.py:232` calls a real reply publisher.
+- The roadmap engine is four `if/elif` template branches with a hardcoded
+  `confidence_score=0.88` (`roadmap_service.py:347`), not per-customer planning.
+  This is the top retention risk, not a cosmetic gap.

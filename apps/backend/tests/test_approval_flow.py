@@ -478,9 +478,7 @@ async def test_dismiss_item_chuyen_sang_dismissed_va_an_khoi_list(
     assert str(item.id) not in item_ids
 
 
-async def test_dismiss_all_xoa_hang_loat(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_dismiss_all_xoa_hang_loat(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="dismiss_all@havi.vn")
     item1 = await _draft(db_session, token_pair)
     item2 = await _draft(db_session, token_pair)
@@ -523,9 +521,7 @@ async def test_hoan_bai_tren_lich_ve_nhap_xoa_scheduled_at(
     assert body["scheduled_at"] is None
 
 
-async def test_generate_ai_image_cap_nhat_media_url(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_generate_ai_image_cap_nhat_media_url(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="genimage1@havi.vn")
     item = await _draft(db_session, token_pair)
 
@@ -547,9 +543,7 @@ async def test_generate_ai_image_cap_nhat_media_url(
     assert items[0]["media_url"] == data["media_url"]
 
 
-async def test_update_item_media_url_va_xoa_anh(
-    client: AsyncClient, db_session: AsyncSession
-):
+async def test_update_item_media_url_va_xoa_anh(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="editmedia1@havi.vn")
     item = await _draft(db_session, token_pair)
 
@@ -570,4 +564,3 @@ async def test_update_item_media_url_va_xoa_anh(
     )
     assert remove_resp.status_code == 200
     assert remove_resp.json()["media_url"] is None
-

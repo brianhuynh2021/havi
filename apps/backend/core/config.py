@@ -247,8 +247,7 @@ class Settings(BaseSettings):
             "HAVI_JWT_SECRET": self.jwt_secret == "change-me" or len(self.jwt_secret) < 32,
             "HAVI_TOKEN_ENCRYPTION_KEY": self.token_encryption_key
             == "DGS23enMkRy4RNlP8jhrCCOGqz4mVV76lvwWLjn9wq4=",
-            "HAVI_PAYMENT_WEBHOOK_SECRET": self.payment_webhook_secret
-            == "havi_payment_secret_2026"
+            "HAVI_PAYMENT_WEBHOOK_SECRET": self.payment_webhook_secret == "havi_payment_secret_2026"
             or len(self.payment_webhook_secret) < 32,
             "HAVI_MEDIA_ACCESS_KEY": self.media_access_key == "minioadmin",
             "HAVI_MEDIA_SECRET_KEY": self.media_secret_key == "minioadmin",

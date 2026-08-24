@@ -7,17 +7,19 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 """
 
 import logging
-import os
 import re
 from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
+from adapters.persistence.media_repository import MediaRepository
 from api.deps import (
     ApprovalServiceDep,
     AuthDep,
     ContentServiceDep,
+    DbSessionDep,
+    ObjectStorageDep,
     PublishServiceDep,
     VideoRenderServiceDep,
     WorkspaceDep,
@@ -32,7 +34,7 @@ from application.services.publish_service import (
     PublishJobNotFound,
 )
 from core.content_state import InvalidTransitionError
-from core.enums import Channel, ContentStatus, PublishStatus
+from core.enums import Channel, ContentStatus, MediaStatus, MediaType, PublishStatus
 from core.schemas import (
     ApproveRequest,
     BulkApproveFailure,
@@ -103,12 +105,14 @@ async def create_content_job(
     try:
         raw_inputs_data = [item.model_dump(mode="json") for item in payload.raw_inputs]
         if payload.target_channels:
-            raw_inputs_data.append({
-                "kind": "text",
-                "text": "",
-                "meta": "channels_filter",
-                "target_channels": [c.value for c in payload.target_channels],
-            })
+            raw_inputs_data.append(
+                {
+                    "kind": "text",
+                    "text": "",
+                    "meta": "channels_filter",
+                    "target_channels": [c.value for c in payload.target_channels],
+                }
+            )
         created = await content_service.create_job(
             workspace_id=workspace_id,
             raw_inputs=raw_inputs_data,
@@ -289,7 +293,9 @@ async def generate_item_image(
     prompt_used = payload.prompt or f"Professional AI studio visual for: {item.text[:150]}"
 
     # Visual AI chất lượng cao theo ngành
-    if any(k in text_snippet for k in ["ai", "tech", "học", "công nghệ", "agent", "lập trình", "khóa"]):
+    if any(
+        k in text_snippet for k in ["ai", "tech", "học", "công nghệ", "agent", "lập trình", "khóa"]
+    ):
         image_url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=85"
     elif any(k in text_snippet for k in ["spa", "da", "gội", "chăm sóc", "thư giãn"]):
         image_url = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=85"
@@ -305,7 +311,7 @@ async def generate_item_image(
         item_id=content_id,
         user_id=auth.user_id,
         text=None,
-        media_note=f"✨ Ảnh AI tạo sinh ({payload.style or '3D Studio'})",
+        media_note=f"🖼️ Ảnh minh họa gợi ý ({payload.style or '3D Studio'})",
         media_url=image_url,
         scheduled_at=None,
     )
@@ -321,14 +327,14 @@ async def generate_item_video(
     approvals: ApprovalServiceDep,
     video_renders: VideoRenderServiceDep,
 ) -> GenerateVideoResponse:
-    """Tự động dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg."""
+    """Tự động tạo job dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg."""
     try:
         item = await approvals.get_item(workspace_id=workspace_id, item_id=content_id)
     except ContentItemNotFound as exc:
         raise _not_found() from exc
 
     # 1. Trích xuất Hook 3 giây từ nội dung bài viết
-    hook_text = "BÍ QUYẾT TỰ HỌC AI AGENT"
+    hook_text = "BÍ QUYẾT TỰ HỌC THỰC CHIẾN"
     if item.text:
         match = re.search(r'["“]([^"”\n]{6,80})["”]', item.text)
         if match and match.group(1):
@@ -360,32 +366,33 @@ async def generate_item_video(
     }
 
     # 3. Kích hoạt Backend Video Render Engine (FFmpeg)
-    try:
-        render_job = await video_renders.create_job(
-            workspace_id=workspace_id,
-            title=hook_text,
-            target_aspect_ratio=target_ratio,
-            edit_plan=edit_plan,
-        )
-        video_url = render_job.output_url or "/test_tiktok.mp4"
-    except Exception as exc:
-        logger.warning("Video render job creation error: %s", exc)
-        video_url = "/test_tiktok.mp4"
+    render_job = await video_renders.create_job(
+        workspace_id=workspace_id,
+        title=hook_text,
+        target_aspect_ratio=target_ratio,
+        edit_plan=edit_plan,
+    )
 
-    if item.media_url and item.media_url.endswith(".mp4"):
-        video_url = item.media_url
+    if render_job.output_url:
+        video_url = render_job.output_url
+        video_status = "completed"
+        media_note = f"🎬 Video 9:16 đã dựng hoàn tất chuẩn FFmpeg: '{hook_text}'"
+    else:
+        video_url = item.media_url if (item.media_url and item.media_url.endswith(".mp4")) else None
+        video_status = "completed" if video_url else "processing"
+        media_note = f"🎬 Đang xếp hàng xử lý video 9:16: '{hook_text}'"
 
     await approvals.update_item(
         workspace_id=workspace_id,
         item_id=content_id,
         user_id=auth.user_id,
         text=None,
-        media_note=f"🎬 Video 9:16 đã dựng hoàn tất chuẩn FFmpeg: '{hook_text}'",
+        media_note=media_note,
         media_url=video_url,
         scheduled_at=None,
     )
     return GenerateVideoResponse(
-        media_url=video_url, target_aspect_ratio=target_ratio, status="completed"
+        media_url=video_url, target_aspect_ratio=target_ratio, status=video_status
     )
 
 
@@ -396,8 +403,10 @@ async def upload_rendered_video(
     auth: AuthDep,
     workspace_id: WorkspaceDep,
     approvals: ApprovalServiceDep,
+    storage: ObjectStorageDep,
+    session: DbSessionDep,
 ) -> dict:
-    """Lưu file video 9:16 vừa render từ Client Canvas lên hệ thống lưu trữ của Havi."""
+    """Lưu file video 9:16 vừa render từ Client Canvas lên Object Storage của Havi (MinIO/S3)."""
     content_bytes = await request.body()
     if not content_bytes:
         raise HTTPException(
@@ -405,18 +414,42 @@ async def upload_rendered_video(
             detail="Thiếu dữ liệu video nhị phân",
         )
 
-    os.makedirs("/tmp/havi_rendered", exist_ok=True)
-    file_path = f"/tmp/havi_rendered/{content_id}.mp4"
-    with open(file_path, "wb") as f:
-        f.write(content_bytes)
+    # 1. Giới hạn dung lượng an toàn 25MB cho video ngắn
+    max_bytes = 25 * 1024 * 1024
+    if len(content_bytes) > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Kích thước video vượt quá giới hạn 25MB",
+        )
 
-    saved_url = f"file://{file_path}"
+    # 2. Xác thực magic header MP4 (ftyp box)
+    if len(content_bytes) < 8 or content_bytes[4:8] != b"ftyp":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Tệp video không đúng định dạng MP4 hợp lệ",
+        )
+
+    object_key = f"rendered_videos/{workspace_id}/{content_id}.mp4"
+    await storage.put_object(object_key, data=content_bytes, content_type="video/mp4")
+    saved_url = storage.public_url(object_key)
+
+    # 3. Tạo bản ghi MediaAsset để theo dõi vòng đời dữ liệu và xoá dọn khi xoá workspace
+    media_repo = MediaRepository(session)
+    asset = await media_repo.create(
+        workspace_id=workspace_id,
+        object_key=object_key,
+        filename=f"rendered_{content_id}.mp4",
+        content_type="video/mp4",
+        type=MediaType.VIDEO,
+    )
+    asset.status = MediaStatus.RAW
+
     await approvals.update_item(
         workspace_id=workspace_id,
         item_id=content_id,
         user_id=auth.user_id,
         text=None,
-        media_note="🎬 Video 9:16 thật đã được render và sẵn sàng xuất bản",
+        media_note="🎬 Video 9:16 thật đã được render và lưu trữ an toàn",
         media_url=saved_url,
         scheduled_at=None,
     )

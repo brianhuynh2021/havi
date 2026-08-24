@@ -18,8 +18,12 @@ class GenerateRoadmapRequest(BaseModel):
 
 
 class CompleteTaskRequest(BaseModel):
-    evidence_text: str = Field(..., min_length=1, description="Nội dung kết quả / bằng chứng thực tế")
-    evidence_type: str = Field(default="note", description="Loại bằng chứng (note, image, link, transfer, metric)")
+    evidence_text: str = Field(
+        ..., min_length=1, description="Nội dung kết quả / bằng chứng thực tế"
+    )
+    evidence_type: str = Field(
+        default="note", description="Loại bằng chứng (note, image, link, transfer, metric)"
+    )
     value_number: float | None = Field(default=None, description="Số liệu đo lường cụ thể (nếu có)")
     media_asset_id: UUID | None = Field(default=None, description="Ảnh hoặc video bằng chứng")
 
@@ -33,7 +37,9 @@ class ReviewRoadmapRequest(BaseModel):
     completed_summary: str = Field(..., description="Tóm tắt những gì đã làm được")
     evidence_summary: str = Field(..., description="Tóm tắt kết quả / bằng chứng đạt được")
     obstacles_summary: str = Field(..., description="Tóm tắt khó khăn / rào cản")
-    decision: ReviewDecision = Field(default=ReviewDecision.CONTINUE, description="Quyết định tiếp theo")
+    decision: ReviewDecision = Field(
+        default=ReviewDecision.CONTINUE, description="Quyết định tiếp theo"
+    )
     replan_diff: dict | None = Field(default=None, description="Đề xuất điều chỉnh lộ trình")
 
 
@@ -333,6 +339,44 @@ async def block_task(
     )
 
 
+@router.post("/tasks/{task_id}/reopen", response_model=TaskResponse)
+async def reopen_task(
+    task_id: UUID,
+    workspace_id: WorkspaceDep,
+    _auth: AuthDep,
+    service: RoadmapServiceDep,
+) -> TaskResponse:
+    try:
+        updated_task = await service.reopen_task(
+            workspace_id=workspace_id,
+            task_id=task_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return TaskResponse(
+        id=updated_task.id,
+        workspace_id=updated_task.workspace_id,
+        roadmap_id=updated_task.roadmap_id,
+        goal_id=updated_task.goal_id,
+        title=updated_task.title,
+        description=updated_task.description,
+        why_this_is_next=updated_task.why_this_is_next,
+        time_estimate_minutes=updated_task.time_estimate_minutes,
+        owner_type=updated_task.owner_type,
+        capability_module=updated_task.capability_module,
+        inputs_needed=updated_task.inputs_needed,
+        done_rule=updated_task.done_rule,
+        fallback_action=updated_task.fallback_action,
+        status=updated_task.status,
+        scheduled_date=updated_task.scheduled_date,
+        completed_at=updated_task.completed_at,
+        evidence_notes=updated_task.evidence_notes,
+        order_index=updated_task.order_index,
+        created_at=updated_task.created_at,
+    )
+
+
 @router.post("/{roadmap_id}/review", response_model=ReviewResponse)
 async def create_review(
     roadmap_id: UUID,
@@ -500,4 +544,3 @@ async def list_reviews(
         )
         for rv in reviews
     ]
-

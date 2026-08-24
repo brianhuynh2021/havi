@@ -48,10 +48,11 @@ describe("LoginScreen", () => {
     vi.restoreAllMocks();
   });
 
-  it("hiển thị đầy đủ nút đăng nhập 1-chạm Google và Facebook", () => {
+  it("hiển thị form đăng nhập bảo mật bằng Email và Mật khẩu", () => {
     renderLogin();
-    expect(screen.getByRole("button", { name: /google/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /facebook/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Mật khẩu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^đăng nhập$/i })).toBeInTheDocument();
   });
 
   it("đăng nhập thành công thì lưu token và vào app", async () => {

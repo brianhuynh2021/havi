@@ -112,7 +112,9 @@ async def run_tiktok_demo():
             media_note="Video dọc 9:16, nhạc nền xu hướng năng động, chữ vàng viền đen chuẩn TikTok",
             status=ContentStatus.PENDING_APPROVAL,
         )
-        print(f"✅ Đã tạo Bản nháp Video TikTok (ID: {tiktok_item.id}) — Trạng thái: {tiktok_item.status.value}")
+        print(
+            f"✅ Đã tạo Bản nháp Video TikTok (ID: {tiktok_item.id}) — Trạng thái: {tiktok_item.status.value}"
+        )
 
         # 4. Duyệt bài (Approval) -> Tự động đặt lịch khung giờ vàng
         approval_svc = ApprovalService(content=content_repo, events=event_repo)
@@ -122,7 +124,9 @@ async def run_tiktok_demo():
             user_id=user.id,
             scheduled_at=None,  # Tự động chọn khung giờ vàng gần nhất (08:00, 12:00, 20:00 ICT)
         )
-        print(f"✅ Chủ tiệm đã DUYỆT BÀI $\\rightarrow$ Tự động xếp lịch xuất bản: {approved_item.scheduled_at.isoformat()} (Giờ vàng ICT)")
+        print(
+            f"✅ Chủ tiệm đã DUYỆT BÀI $\\rightarrow$ Tự động xếp lịch xuất bản: {approved_item.scheduled_at.isoformat()} (Giờ vàng ICT)"
+        )
 
         # 5. Khởi tạo Publisher mô phỏng xuất bản thành công
         tiktok_pub = FakePublisher(

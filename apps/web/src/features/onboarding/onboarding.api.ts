@@ -112,6 +112,23 @@ export async function initializeBusinessTruthPack(
           approved: true,
         },
       ],
+      education: [
+        {
+          question: "Trung tâm có lớp học thử miễn phí không?",
+          answer: `Dạ ${shopName} có chương trình Học thử 1 buổi miễn phí trải nghiệm thực hành thực tế ạ! Anh/chị cho em xin Tên & SĐT để thầy giáo xếp lịch cho mình/bé nhé!`,
+          approved: true,
+        },
+        {
+          question: "Khóa học đào tạo trong bao lâu và có cam kết đầu ra không?",
+          answer: `Dạ khóa học tại ${shopName} kéo dài từ 2-3 tháng, đào tạo 1 kèm 1 thực hành trên dự án thật và cam kết hỗ trợ học viên đến khi làm được sản phẩm chạy thực tế ạ!`,
+          approved: true,
+        },
+        {
+          question: "Thời gian học như thế nào, có lớp buổi tối hay cuối tuần không?",
+          answer: `Dạ ${shopName} có đầy đủ các ca học linh hoạt: Sáng (8h30-10h30), Chiều (14h-16h), Tối (18h30-20h30) và ca Thứ 7 & Chủ Nhật để học viên dễ dàng sắp xếp ạ.`,
+          approved: true,
+        },
+      ],
       other: [
         {
           question: "Tiệm mở cửa khung giờ nào?",

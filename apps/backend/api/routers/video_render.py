@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Header, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from api.deps import VideoRenderServiceDep, WorkspaceDep
+from api.deps import ActiveWorkspaceDep, VideoRenderServiceDep, WorkspaceDep
 from application.services.video_render_service import VideoRenderJobNotFound
 from core.enums import VideoRenderEngine, VideoRenderStatus
 from core.request_context import REQUEST_ID_HEADER
@@ -54,7 +54,7 @@ class ListVideoRenderJobsResponse(BaseModel):
 @router.post("", response_model=VideoRenderJobResponse, status_code=status.HTTP_201_CREATED)
 async def create_render_job(
     req: CreateVideoRenderJobRequest,
-    workspace_id: WorkspaceDep,
+    workspace_id: ActiveWorkspaceDep,
     service: VideoRenderServiceDep,
     request_id: str | None = Header(default=None, alias=REQUEST_ID_HEADER),
 ) -> VideoRenderJobResponse:
