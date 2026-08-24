@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
@@ -50,7 +50,7 @@ export function OnboardingScreen() {
 
   const previewSample = getIndustrySamplePreview(industry, shopName);
 
-  async function handleStartLearning() {
+  const handleStartLearning = useCallback(async () => {
     if (learning) return;
     setLearning(true);
     setProgressPercent(25);
@@ -73,7 +73,7 @@ export function OnboardingScreen() {
         router.replace("/app");
       }, 400);
     }, 200);
-  }
+  }, [learning, industry, shopName, router]);
 
   function handleStep2Proceed() {
     setStep(3);
@@ -95,7 +95,7 @@ export function OnboardingScreen() {
     if (step === 3 && !learning) {
       void handleStartLearning();
     }
-  }, [step, learning]);
+  }, [step, learning, handleStartLearning]);
 
 
 

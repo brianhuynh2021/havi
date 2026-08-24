@@ -5,9 +5,10 @@ echo "========================================================"
 echo "🚀 Starting Havi Platform Devbox (One-Click Environment)"
 echo "========================================================"
 
-# 0. Free busy ports if lingering from previous run
-echo "🧹 [0/4] Checking and freeing ports 3000 and 8000..."
+# 0. Free busy ports and lingering background processes
+echo "🧹 [0/4] Checking and freeing ports 3000, 8000 and background workers..."
 lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
+pkill -9 -f "worker.celery_app" 2>/dev/null || true
 
 # 1. Ensure Docker is running
 echo "📦 [1/4] Starting Docker infrastructure (Postgres, Redis, MinIO)..."
@@ -35,6 +36,7 @@ cleanup() {
   echo "🛑 Stopping Havi services..."
   kill $(jobs -p) 2>/dev/null || true
   lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
+  pkill -9 -f "worker.celery_app" 2>/dev/null || true
   echo "👋 Devbox stopped cleanly."
   exit 0
 }

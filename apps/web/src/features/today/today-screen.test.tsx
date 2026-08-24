@@ -119,6 +119,38 @@ describe("TodayScreen (Havi 3.0)", () => {
     expect(screen.getByText(/Đã làm xong việc này/i)).toBeInTheDocument();
     expect(screen.getByText(/Cần đổi cách làm khác/i)).toBeInTheDocument();
   });
+
+  it("hiển thị đầy đủ 3 Thẻ Tác Chiến (Trực Chiến 24/7, Săn Khách & Doanh Thu, Clip Thật 10s)", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), "http://localhost:8000");
+      if (url.pathname.includes("/inbox")) {
+        return jsonResponse({ items: [] });
+      }
+      if (url.pathname.includes("/leads")) {
+        return jsonResponse({ items: [] });
+      }
+      if (url.pathname.includes("/goals/active")) {
+        return jsonResponse(null, 404);
+      }
+      return jsonResponse({});
+    });
+
+    renderToday();
+
+    // 1. Thẻ Trực chiến
+    expect(await screen.findByText(/Bảng Điều Khiển Tác Chiến Hôm Nay/i)).toBeInTheDocument();
+    expect(screen.getByText(/TRỰC CHIẾN 24\/7/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI Guard Mode Đang Bật/i)).toBeInTheDocument();
+
+    // 2. Thẻ Doanh thu & Săn khách
+    expect(screen.getByText(/DOANH THU & SĂN KHÁCH/i)).toBeInTheDocument();
+    expect(screen.getByText(/Săn 10 Khách Đầu Tiên \(Day 0\)/i)).toBeInTheDocument();
+
+    // 3. Thẻ Clip Thật
+    expect(screen.getByText(/CLIP THẬT 10S/i)).toBeInTheDocument();
+    expect(screen.getByText(/Quay 10-15s clip thật tại cơ sở và thả vào đây/i)).toBeInTheDocument();
+  });
 });
+
 
 

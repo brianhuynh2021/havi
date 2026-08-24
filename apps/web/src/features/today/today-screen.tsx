@@ -28,6 +28,17 @@ import {
   formatHorizonLabel,
   type GoalTemplate,
 } from "@/features/roadmap/goal-create-modal";
+import {
+  listInbox,
+  listLeads,
+  listNudges,
+  approveNudge,
+  triggerNudgeScan,
+  type CrmNudge,
+  type InboxItem,
+  type Lead,
+} from "@/features/leads/leads.api";
+import { AuthenticVideoDropzone } from "./authentic-video-dropzone";
 import styles from "./today.module.css";
 
 export function TodayScreen() {
@@ -42,6 +53,13 @@ export function TodayScreen() {
   const [isCustomHorizonOpen, setIsCustomHorizonOpen] = useState(false);
   const [customHorizonValue, setCustomHorizonValue] = useState(9);
   const [customHorizonUnit, setCustomHorizonUnit] = useState<"days" | "weeks" | "months" | "years">("months");
+
+  // Leads, Inbox & Revenue Radar State
+  const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [nudges, setNudges] = useState<CrmNudge[]>([]);
+  const [isDayZeroMode, setIsDayZeroMode] = useState<boolean>(false);
+  const [isScanningNudges, setIsScanningNudges] = useState(false);
 
   // Modals & Action States
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
@@ -71,10 +89,15 @@ export function TodayScreen() {
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const [goalRes, roadmapRes, todayRes] = await Promise.all([
+    const activeId = readTokens()?.activeWorkspaceId;
+
+    const [goalRes, roadmapRes, todayRes, inboxRes, leadsRes, nudgesRes] = await Promise.all([
       fetchActiveGoal(),
       fetchActiveRoadmap(),
       fetchTodayAction(),
+      listInbox().catch(() => ({ ok: false as const, message: "error" })),
+      listLeads().catch(() => ({ ok: false as const, message: "error" })),
+      activeId ? listNudges(activeId).catch(() => ({ ok: false as const, message: "error" })) : Promise.resolve({ ok: false as const, message: "no ws" }),
     ]);
 
     if (!goalRes.ok) {
@@ -95,8 +118,62 @@ export function TodayScreen() {
     } else {
       setTodayAction(null);
     }
+
+    if (inboxRes.ok && Array.isArray(inboxRes.data)) {
+      setInboxItems(inboxRes.data);
+    }
+    if (leadsRes.ok && Array.isArray(leadsRes.data)) {
+      setLeads(leadsRes.data);
+      if (leadsRes.data.length === 0) {
+        setIsDayZeroMode(true);
+      }
+    }
+    if (nudgesRes.ok && nudgesRes.data && Array.isArray(nudgesRes.data.items)) {
+      setNudges(nudgesRes.data.items);
+    }
+
     setLoading(false);
   }, []);
+
+  const handleTriggerNudgeScan = async () => {
+    const activeId = readTokens()?.activeWorkspaceId;
+    if (!activeId) return;
+    setIsScanningNudges(true);
+    const res = await triggerNudgeScan(activeId);
+    setIsScanningNudges(false);
+    if (res.ok) {
+      const count = Array.isArray(res.data) ? res.data.length : 0;
+      addToast({
+        type: "success",
+        title: "🎯 Đã quét xong tệp khách cũ!",
+        description: `Tìm thấy ${count} cơ hội kích hoạt lại doanh thu.`,
+      });
+      const nudgesRes = await listNudges(activeId);
+      if (nudgesRes.ok && Array.isArray(nudgesRes.data?.items)) {
+        setNudges(nudgesRes.data.items);
+      }
+    } else {
+      addToast({ type: "info", title: "Thông báo", description: "Đã quét toàn bộ danh sách khách hàng." });
+    }
+  };
+
+  const handleApproveNudgeAction = async (nudgeId: string) => {
+    const activeId = readTokens()?.activeWorkspaceId;
+    if (!activeId) return;
+    setIsSubmitting(true);
+    const res = await approveNudge(activeId, nudgeId);
+    setIsSubmitting(false);
+    if (res.ok) {
+      addToast({
+        type: "success",
+        title: "⚡ Đã gửi tin ưu đãi thành công!",
+        description: "Thông điệp kích hoạt lại đã được chuyển tới khách hàng.",
+      });
+      setNudges((prev) => prev.filter((n) => n.id !== nudgeId));
+    } else {
+      addToast({ type: "error", title: "Lỗi gửi tin", description: res.message });
+    }
+  };
 
   useEffect(() => {
     void (async () => {
@@ -389,6 +466,252 @@ export function TodayScreen() {
             <span className={styles.quickActionDesc}>Duyệt bài & hẹn giờ tự động</span>
           </div>
         </Link>
+      </section>
+
+      {/* =====================================================================
+          HAVI 3.0 ACTION CENTER: BẢNG ĐIỀU KHIỂN TÁC CHIẾN 3 PHÚT MỖI NGÀY
+          ===================================================================== */}
+      <section className={styles.actionCenterSection} aria-label="Bảng điều khiển tác chiến 3 phút">
+        <div className={styles.actionCenterHeader}>
+          <h2 className={styles.actionCenterTitle}>
+            ⚡ {t({ vi: "Bảng Điều Khiển Tác Chiến Hôm Nay (3 Phút)", en: "Today's 3-Minute Action Center" })}
+          </h2>
+          <span style={{ fontSize: "12.5px", color: "#64748b", fontWeight: 600 }}>
+            {t({ vi: "Làm hộ việc & bảo vệ dòng tiền cho bạn", en: "Automating tasks & protecting your revenue" })}
+          </span>
+        </div>
+
+        <div className={styles.actionCenterGrid}>
+          {/* THẺ 1: RADAR TRỰC CHIẾN & CỨU LEAD 24/7 */}
+          <div className={styles.actionMissionCard}>
+            <div className={styles.cardTop}>
+              <span className={styles.cardBadgeAmber}>⚡ TRỰC CHIẾN 24/7</span>
+              <h3 className={styles.cardMissionTitle}>Hộp Thư & Giữ Khách Tức Thì</h3>
+              <p className={styles.cardMissionDesc}>
+                Túc trực Fanpage & Messenger ngày đêm, phản hồi &lt;10s để không bao giờ bị rớt khách.
+              </p>
+
+              {inboxItems.length > 0 || leads.length > 0 ? (
+                <div className={styles.activeLeadItem}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ fontSize: "13px", color: "#0f172a" }}>
+                      👤 {leads[0]?.name || inboxItems[0]?.author_name || "Khách hàng mới"}
+                    </strong>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#2563eb", background: "#dbeafe", padding: "2px 6px", borderRadius: "4px" }}>
+                      Tin nhắn mới
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "12.5px", color: "#475569", margin: "2px 0", lineHeight: 1.4 }}>
+                    💬 &ldquo;{inboxItems[0]?.content || leads[0]?.message || "Đang hỏi thông tin khóa học / dịch vụ..."}&rdquo;
+                  </p>
+                  {leads[0]?.phone ? (
+                    <span style={{ fontSize: "12px", color: "#10b981", fontWeight: 700 }}>
+                      📞 SĐT: {leads[0].phone}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <div className={styles.aiGuardBox}>
+                  <span className={styles.aiGuardPulse} />
+                  <div>
+                    <strong style={{ fontSize: "13px", color: "#065f46", display: "block" }}>
+                      🛡️ AI Guard Mode Đang Bật
+                    </strong>
+                    <span style={{ fontSize: "12px", color: "#047857" }}>
+                      Sẵn sàng phản hồi &lt;10s &amp; xin SĐT khách khi có tin nhắn mới.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href="/app/inbox"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                background: "#f8fafc",
+                border: "1.5px solid #cbd5e1",
+                color: "#1e293b",
+                padding: "8px 14px",
+                borderRadius: "10px",
+                fontSize: "12.5px",
+                fontWeight: 700,
+                textDecoration: "none",
+                transition: "all 0.15s ease",
+              }}
+            >
+              💬 Xem Hộp Thư &amp; Kịch Bản Tư Vấn ➔
+            </Link>
+          </div>
+
+          {/* THẺ 2: RADAR DOANH THU & SĂN KHÁCH (DAY 0 / EXISTING) */}
+          <div className={styles.actionMissionCard}>
+            <div className={styles.cardTop}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className={styles.cardBadgeEmerald}>🎯 DOANH THU &amp; SĂN KHÁCH</span>
+                <div style={{ display: "flex", gap: "4px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDayZeroMode(false)}
+                    style={{
+                      border: "none",
+                      background: !isDayZeroMode ? "#10b981" : "#e2e8f0",
+                      color: !isDayZeroMode ? "#ffffff" : "#475569",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Khách cũ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDayZeroMode(true)}
+                    style={{
+                      border: "none",
+                      background: isDayZeroMode ? "#8b5cf6" : "#e2e8f0",
+                      color: isDayZeroMode ? "#ffffff" : "#475569",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cơ sở mới (Day 0)
+                  </button>
+                </div>
+              </div>
+
+              {!isDayZeroMode ? (
+                <>
+                  <h3 className={styles.cardMissionTitle}>Kích Hoạt Tệp Khách Cũ</h3>
+                  <p className={styles.cardMissionDesc}>
+                    Quét học viên / khách hàng cũ đã lâu chưa quay lại để gửi ưu đãi 1-chạm.
+                  </p>
+
+                  {nudges.length > 0 ? (
+                    <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "10px 12px", borderRadius: "10px", fontSize: "12.5px" }}>
+                      <strong style={{ color: "#166534", display: "block", marginBottom: "4px" }}>
+                        🎁 Có {nudges.length} khách quen cần gửi ưu đãi:
+                      </strong>
+                      <span style={{ color: "#374151" }}>&ldquo;{nudges[0].message.substring(0, 75)}...&rdquo;</span>
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => handleApproveNudgeAction(nudges[0].id)}
+                        style={{
+                          marginTop: "8px",
+                          width: "100%",
+                          padding: "6px 12px",
+                          background: "#10b981",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          fontWeight: 700,
+                          fontSize: "12px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ⚡ Gửi ưu đãi cho khách này ngay
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "10px 12px", borderRadius: "10px", fontSize: "12.5px", color: "#64748b" }}>
+                      <span>Chưa có gợi ý nhắc hẹn mới. Bấm nút dưới để quét tìm cơ hội doanh thu từ khách cũ.</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={isScanningNudges}
+                    onClick={handleTriggerNudgeScan}
+                    style={{
+                      width: "100%",
+                      padding: "8px 14px",
+                      background: "#ffffff",
+                      border: "1.5px solid #10b981",
+                      color: "#065f46",
+                      borderRadius: "10px",
+                      fontSize: "12.5px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {isScanningNudges ? "⚡ Đang quét tệp khách..." : "🔍 Quét Tệp Khách Cũ (1 Chạm)"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className={styles.cardMissionTitle}>Săn 10 Khách Đầu Tiên (Day 0)</h3>
+                  <p className={styles.cardMissionDesc}>
+                    Cơ sở mới mở chưa có khách? Thực hiện 3 bước khởi động nhanh:
+                  </p>
+
+                  <div className={styles.dayZeroContainer}>
+                    <div className={styles.dayZeroStepItem}>
+                      <span>📍</span>
+                      <span><strong>1. Mặt tiền số:</strong> Cắm mốc Google Maps SEO &amp; chuẩn nhận diện trong 5 phút.</span>
+                    </div>
+                    <div className={styles.dayZeroStepItem}>
+                      <span>🎁</span>
+                      <span><strong>2. Mồi câu:</strong> Tặng 30 suất học thử / trải nghiệm miễn phí không thể từ chối.</span>
+                    </div>
+                    <div className={styles.dayZeroStepItem}>
+                      <span>🏘️</span>
+                      <span><strong>3. Du kích:</strong> Quét hội nhóm cư dân/phụ huynh bán kính 2km quanh cơ sở.</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/app/content?topic=${encodeURIComponent(
+                      workspaceIndustry.includes("education")
+                        ? "Khai trương tặng 30 suất học thử Lắp ráp Robot miễn phí cho học sinh tiểu học"
+                        : "Khai trương tặng suất trải nghiệm dịch vụ đặc quyền cho cư dân khu vực"
+                    )}&track=posts`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+                      color: "#ffffff",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      fontSize: "12.5px",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      boxShadow: "0 2px 8px rgba(139, 92, 246, 0.25)",
+                    }}
+                  >
+                    🚀 Soạn Mồi Câu Khai Trương (1 Chạm) ➔
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* THẺ 3: BIẾN CLIP THẬT 10S THÀNH KHÁCH */}
+          <div className={styles.actionMissionCard} style={{ gridColumn: "span 1" }}>
+            <div className={styles.cardTop}>
+              <span className={styles.cardBadgeIndigo}>🎬 CLIP THẬT 10S</span>
+              <h3 className={styles.cardMissionTitle}>Biến Hoạt Động Thật Thành Khách</h3>
+              <p className={styles.cardMissionDesc}>
+                Không cần học dựng phim — Chỉ cần ném clip thật, Havi tự gắn Hook 3s &amp; xuất bản đa kênh.
+              </p>
+
+              <AuthenticVideoDropzone
+                industry={workspaceIndustry}
+                onSuccessToast={(title, desc) => addToast({ type: "success", title, description: desc })}
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
       {!goal ? (

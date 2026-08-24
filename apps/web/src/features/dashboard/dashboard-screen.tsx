@@ -241,7 +241,7 @@ export function DashboardScreen() {
             </section>
           ) : null}
 
-          {/* Customer Acquisition & Revenue Radar (Havi 2.0 OS) */}
+          {/* Customer Acquisition & Revenue Radar */}
           <section className={styles.revenueRadarCard} aria-label="Phễu tìm khách & doanh thu">
             <div className={styles.radarHeader}>
               <h2 className={styles.radarTitle}>
