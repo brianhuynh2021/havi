@@ -6,9 +6,9 @@
 export type Step = { n: string; title: string; desc: string };
 
 export const heroStats = [
-  { v: "Facebook Beta", l: "Xuất bản qua API khi đủ quyền Meta", icon: "🌐" },
+  { v: "Facebook Beta", l: "Xuất bản qua API chính thức khi đủ quyền Meta", icon: "🌐" },
   { v: "7 ngày", l: "Dùng thử có hạn mức, không cần thẻ", icon: "💳" },
-  { v: "Duyệt trước", l: "Người dùng kiểm soát nội dung phát hành", icon: "✓" },
+  { v: "Duyệt trước", l: "Không gì lên kênh khi bạn chưa bấm duyệt", icon: "✓" },
 ];
 
 
@@ -17,21 +17,21 @@ export const heroStats = [
 /** Các kênh siêu năng lực hỗ trợ. */
 export const heroChannels = [
   { n: "Facebook Beta", b: "f", c: "#1877F2" },
-  { n: "Bản nháp nội dung", b: "✍", c: "#16A34A" },
-  { n: "Kịch bản video", b: "🎬", c: "#FE2C55" },
-  { n: "Hội thoại", b: "💬", c: "#FF0000" },
+  { n: "Lịch đăng", b: "📅", c: "#16A34A" },
+  { n: "Hội thoại", b: "💬", c: "#7C3AED" },
+  { n: "Đội ngũ & phân quyền", b: "👥", c: "#EA580C" },
 ];
 
 export const steps: Step[] = [
   {
     n: "1",
-    title: "30s Chụp ảnh hoặc Ghi âm",
-    desc: "Chụp 1 tấm ảnh tiệm hoặc ghi âm 15s giọng nói. Không cần biết viết prompt hay am hiểu công nghệ.",
+    title: "Chụp ảnh, ghi âm, hoặc tải clip lên",
+    desc: "Ảnh và ghi chú để Havi soạn bài; clip bạn đã quay sẵn thì tải thẳng lên — Havi không sửa video.",
   },
   {
     n: "2",
-    title: "Havi tạo bản nháp và kịch bản",
-    desc: "AI gợi ý bài Facebook, kịch bản video 9:16 và câu trả lời để bạn kiểm tra trước.",
+    title: "Havi soạn bản nháp",
+    desc: "AI gợi ý bài Facebook và câu trả lời cho khách, để bạn kiểm tra trước khi đăng.",
   },
   {
     n: "3",
@@ -59,112 +59,6 @@ export interface IndustryScenario {
 }
 
 /** Kịch bản Demo thực chiến theo 4 ngành nghề mũi nhọn */
-export const industryScenarios: IndustryScenario[] = [
-  {
-    name: "Spa & Thẩm mỹ viện",
-    badge: "SPA",
-    color: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-    image: "/images/spa_photo_hq.jpg",
-    rawInput: "Chụp 1 tấm ảnh khách làm liệu trình vi kim trị mụn sáng nay",
-    tabs: {
-      facebook: {
-        title: "Bài đăng Fanpage Facebook",
-        badge: "Facebook Feed",
-        content: "🎉 Da căng bóng, sạch mụn chỉ sau 1 liệu trình vi kim tảo biển tại tiệm! Chị em nào đang bị thâm mụn, lỗ chân lông to nhắn tin ngay để nhận 1 trong 30 suất soi da & tặng serum phục hồi cao cấp tuần này nha! ✨",
-      },
-      video: {
-        title: "Kịch bản Video TikTok / Reels (Hook 3s)",
-        badge: "Short-form Video 9:16",
-        hook: "🚨 3 sai lầm rửa mặt khiến mụn ẩn cứ tái đi tái lại mà 90% chị em không ngờ tới...",
-        script: "1. Dùng khăn bông ẩm lau mặt ➔ Ổ vi khuẩn sinh mụn.\n2. Bỏ qua bước cấp ẩm sau khi rửa ➔ Da tiết dầu nhiều hơn.\n3. Nặn mụn bằng tay không vô trùng ➔ Thâm sẹo vĩnh viễn.\n👉 Muốn da sạch mịn đón Tết? Bấm link bio đặt lịch soi da miễn phí hôm nay!",
-      },
-      inbox: {
-        title: "Mẫu FAQ chờ xác minh",
-        badge: "Minh hoạ Inbox",
-        customerMsg: "Liệu trình vi kim bên mình giá bao nhiêu vậy shop? Trị thâm tốt không?",
-        haviReply: "Dạ em chào chị! Gói vi kim tảo biển bên em trọn gói 450k đang được tặng kèm 1 chai serum phục hồi B5 trị giá 250k trong tuần này ạ. Chị cho em xin Tên & SĐT để chuyên viên xếp lịch soi da và giữ suất ưu đãi cho chị nhé!",
-      },
-    },
-  },
-  {
-    name: "Môi giới Bất động sản",
-    badge: "BĐS",
-    color: "linear-gradient(135deg,#0068FF,#0041A8)",
-    image: "/images/bds_photo_hq.jpg",
-    rawInput: "Chụp 1 ảnh sổ đỏ và mặt tiền căn nhà phố Quận 7 chính chủ",
-    tabs: {
-      facebook: {
-        title: "Bài đăng Bán Nhà Fanpage",
-        badge: "Facebook Feed",
-        content: "🔥 [CHÍNH CHỦ GỬI BÁN] Nhà phố Quận 7 diện tích 85m² (5x17m), đúc 3 tầng kiên cố, đường nhựa 8m ô tô tránh nhau thoải mái. Khu dân trí cao, sổ hồng riêng công chứng trong ngày. Giá đầu tư cực tốt: 4.2 tỷ (thương lượng chính chủ).",
-      },
-      video: {
-        title: "Kịch bản Video TikTok BĐS (Hook 3s)",
-        badge: "Short-form Video 9:16",
-        hook: "🏡 Cầm 4 tỷ mua nhà Quận 7 liệu có căn nào đường ô tô đỗ cửa, đúc 3 tầng? Xem ngay căn này!",
-        script: "Mặt tiền 5m cực thoáng, phòng khách rộng thênh thang, 4 phòng ngủ khép kín. Vị trí chỉ 5 phút ra Phú Mỹ Hưng. Sổ hồng trao tay, pháp lý sạch 100%. Anh/chị xem nhà liên hệ em ngay!",
-      },
-      inbox: {
-        title: "Mẫu FAQ chờ xác minh",
-        badge: "Minh hoạ Inbox",
-        customerMsg: "Căn nhà Quận 7 này còn không em? Có hỗ trợ vay ngân hàng không?",
-        haviReply: "Dạ căn này chính chủ gửi em bán độc quyền, hiện vẫn còn ạ! Nhà sổ hồng riêng nên ngân hàng hỗ trợ vay tối đa 70% lãi suất ưu đãi. Anh/chị cho em xin SĐT và thời gian tiện nhất để em dẫn anh/chị xem nhà thực tế nhé!",
-      },
-    },
-  },
-  {
-    name: "Quán ăn & Cafe",
-    badge: "F&B",
-    color: "linear-gradient(135deg,#E65100,#EF6C00)",
-    image: "/images/cafe_photo_hq.jpg",
-    rawInput: "Ảnh món mới Cà Phê Muối & Bánh nướng phô mai giòn rụm",
-    tabs: {
-      facebook: {
-        title: "Bài đăng Kéo Khách Fanpage",
-        badge: "Facebook Feed",
-        content: "☕ Món mới toanh đã có mặt tại quán: Cà phê muối béo ngậy kèm bánh nướng phô mai thơm phức! Rủ ngay cạ cứng ghé quán hôm nay: Áp dụng MUA 2 TẶNG 1 cho toàn bộ menu đồ uống mới từ 14h – 18h hàng ngày.",
-      },
-      video: {
-        title: "Kịch bản Video Review TikTok (Hook 3s)",
-        badge: "Short-form Video 9:16",
-        hook: "🤫 Tiết lộ quán cafe bí mật view ngắm hoàng hôn cực chill đồ uống chỉ từ 25k ít người biết...",
-        script: "Không gian mở ngập tràn cây xanh, góc nào cũng có ảnh đẹp sống ảo. Đặc biệt món cafe muối kem béo ở đây uống 1 lần là ghiền. Tag ngay bạn thân vào set kèo đi thôi!",
-      },
-      inbox: {
-        title: "Mẫu FAQ chờ xác minh",
-        badge: "Minh hoạ Inbox",
-        customerMsg: "Quán có nhận đặt bàn tiệc sinh nhật 12 người tối nay không bạn?",
-        haviReply: "Dạ quán em còn khu vực bàn dài view kính tầng 2 cực đẹp cho nhóm 12 người tối nay ạ! Em hỗ trợ giữ bàn và trang trí sẵn cho mình nhé, anh/chị cho em xin Tên & SĐT để nhân viên chuẩn bị chu đáo nha!",
-      },
-    },
-  },
-  {
-    name: "Đào tạo & Dịch vụ nghề",
-    badge: "DẠY NGHỀ",
-    color: "linear-gradient(135deg,#7C3AED,#5B21B6)",
-    image: "/images/hero_ai_studio_hq.jpg",
-    rawInput: "Ảnh học viên thực hành kỹ thuật số và tay nghề thực chiến",
-    tabs: {
-      facebook: {
-        title: "Bài đăng Tuyển sinh & Khóa học",
-        badge: "Facebook Feed",
-        content: "💡 Học nghề không lý thuyết suông: 100% học viên được tự tay thực hành trên dự án thực tế ngay trong khóa học. Đăng ký nhận lộ trình học 1 kèm 1 và ưu đãi học phí tháng này nhé!",
-      },
-      video: {
-        title: "Kịch bản Video Review TikTok (Hook 3s)",
-        badge: "Short-form Video 9:16",
-        hook: "💻 Đừng học lý thuyết suông nữa! Đây là cách học viên tự tay làm ra website bán hàng chỉ sau 2 tuần...",
-        script: "1. Học thực hành 1 kèm 1 trên dự án thật.\n2. Tự tay làm web, gắn tính năng thanh toán online.\n3. Hỗ trợ việc làm ngay sau khi hoàn thành khóa học.\n👉 Đăng ký học thử 1 buổi miễn phí tại Học Viện ngay hôm nay!",
-      },
-      inbox: {
-        title: "Mẫu FAQ chờ xác minh",
-        badge: "Minh hoạ Inbox",
-        customerMsg: "Khóa Lập trình Web cho người mới bắt đầu học phí thế nào và học mấy tháng ạ?",
-        haviReply: "Dạ chào bạn! Khóa Lập trình Web Khởi động kéo dài 3 tháng, đào tạo 1 kèm 1 trên dự án thật. Bạn cho mình xin SĐT hoặc Zalo để thầy giáo tư vấn chi tiết lộ trình và ưu đãi học phí tháng này nhé!",
-      },
-    },
-  },
-];
 
 /** Nguyên tắc sản phẩm */
 export const principles = [

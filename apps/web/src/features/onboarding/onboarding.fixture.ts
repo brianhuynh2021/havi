@@ -21,7 +21,7 @@ export const industryOptions: IndustryOption[] = [
     value: "food_beverage",
     label: "Ăn uống, Cà phê & Tiệm bánh",
     icon: "☕",
-    desc: "Đăng món mới, menu bánh tươi mỗi ngày & giờ vàng kéo khách ghé quán",
+    desc: "Đăng món mới và thực đơn mỗi ngày, hẹn giờ đăng vào khung đông người xem",
   },
   {
     value: "spa",
@@ -34,7 +34,7 @@ export const industryOptions: IndustryOption[] = [
     value: "retail_shop",
     label: "Cửa hàng bán lẻ & Shop thời trang",
     icon: "🛍️",
-    desc: "Bài xả kho, chào hàng đa kênh, video giới thiệu sản phẩm & chốt đơn",
+    desc: "Bài chào hàng, đăng clip giới thiệu sản phẩm, trả lời khách trong một hộp thư",
   },
   {
     value: "education",
@@ -52,13 +52,13 @@ export const industryOptions: IndustryOption[] = [
     value: "real_estate",
     label: "Bất động sản & Môi giới nhà đất",
     icon: "🏡",
-    desc: "Chụp ảnh sổ đỏ/nhà đất ra bài chuẩn phong thủy, kịch bản video TikTok 3s",
+    desc: "Từ ảnh bất động sản ra bài giới thiệu, đăng kèm clip bạn đã quay sẵn",
   },
   {
     value: "professional",
     label: "Dịch vụ chuyên môn & Tư vấn",
     icon: "⚖️",
-    desc: "Khẳng định uy tín chuyên gia, chia sẻ kinh nghiệm & thu hút khách tư vấn",
+    desc: "Chia sẻ kinh nghiệm chuyên môn, giữ nhịp đăng đều và không sót tin nhắn",
   },
   {
     value: "other",

@@ -13,10 +13,10 @@ export function ConnectionsScreen() {
         <div className={styles.badge}>
           <span>⚡ API Chính Thức</span>
         </div>
-        <h1 className={styles.title}>Kênh truyền thông đã kết nối</h1>
+        <h1 className={styles.title}>Kênh kết nối</h1>
         <p className={styles.subtitle}>
           Kết nối Facebook Fanpage và Reels qua Meta Graph API chính thức.
-          Toàn bộ bài viết, kịch bản video và trả lời tin nhắn Messenger sẽ hoạt động tự động.
+          Sau khi nối, Havi đăng được bài và clip lên kênh, và nhận tin nhắn khách về hộp thư chung.
         </p>
       </header>
       <ConnectionList returnTo="settings" />

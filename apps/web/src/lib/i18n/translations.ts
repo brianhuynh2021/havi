@@ -18,7 +18,6 @@ export const translations = {
     "nav.settings": "Cài đặt",
 
     "shell.assistant": "Trợ lý Havi",
-    "shell.workspace": "Không gian làm việc",
     "shell.signOut": "Đăng xuất",
     "shell.notifications": "Thông báo",
     "shell.search": "Tìm kiếm...",
@@ -45,7 +44,7 @@ export const translations = {
     "auth.backToLogin": "Quay lại đăng nhập",
 
     // Dashboard
-    "dashboard.title": "Tổng quan hoạt động",
+    "dashboard.title": "Tổng quan",
     "dashboard.subtitle": "Theo dõi trạng thái kênh, nội dung và hội thoại",
     "dashboard.quickStats": "Thống kê nhanh",
     "dashboard.publishedPosts": "Bài đã đăng",
@@ -75,7 +74,7 @@ export const translations = {
     "content.copyContent": "Sao chép nội dung",
 
     // Calendar
-    "calendar.title": "Lịch Đăng Bài",
+    "calendar.title": "Lịch đăng",
     "calendar.subtitle": "Quản lý và theo dõi lịch đăng bài tự động",
     "calendar.viewMonth": "Tháng",
     "calendar.viewWeek": "Tuần",
@@ -86,7 +85,7 @@ export const translations = {
     "calendar.addEvent": "Thêm bài hẹn giờ",
 
     // Settings
-    "settings.title": "Cài Đặt Hệ Thống",
+    "settings.title": "Cài đặt",
     "settings.subtitle": "Quản lý doanh nghiệp, tài khoản và kết nối kênh",
     "settings.workspaceTab": "Thông tin doanh nghiệp",
     "settings.channelsTab": "Kết nối kênh truyền thông",
@@ -99,7 +98,7 @@ export const translations = {
     "settings.notConnected": "Chưa kết nối",
 
     // Reports
-    "reports.title": "Báo Cáo & Phân Tích",
+    "reports.title": "Báo cáo",
     "reports.subtitle": "Theo dõi tình trạng xuất bản và hội thoại",
     "reports.overview": "Tổng quan hiệu suất",
     "reports.engagement": "Tương tác khách hàng",
@@ -138,7 +137,6 @@ export const translations = {
     "nav.settings": "Settings",
 
     "shell.assistant": "Havi Assistant",
-    "shell.workspace": "Workspace",
     "shell.signOut": "Sign Out",
     "shell.notifications": "Notifications",
     "shell.search": "Search...",

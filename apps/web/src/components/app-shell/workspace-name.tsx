@@ -35,8 +35,13 @@ function getIndustryIcon(industry?: string) {
 /**
  * Tên tiệm trong thẻ workspace kèm Dropdown chuyển đổi không gian làm việc.
  */
+type BrandGroup = { organizationName: string; brands: WorkspaceItem[] };
+
 export function WorkspaceName() {
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
+  /** Thương hiệu gom theo tổ chức — để chuỗi nhiều chi nhánh không thành một
+   *  danh sách phẳng dài dằng dặc không biết cái nào thuộc công ty nào. */
+  const [groups, setGroups] = useState<BrandGroup[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceItem | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -46,13 +51,20 @@ export function WorkspaceName() {
     let cancelled = false;
     const activeId = readTokens()?.activeWorkspaceId;
 
+    // Đọc từ `/organizations`: nó trả sẵn thương hiệu của từng tổ chức, nên
+    // dựng menu chỉ tốn một request thay vì N+1.
     apiClient
-      .GET("/workspaces")
+      .GET("/organizations")
       .then(({ data }) => {
         if (cancelled || !data) return;
-        const list = data as WorkspaceItem[];
-        setWorkspaces(list);
-        const active = list.find((w) => w.id === activeId) ?? list[0];
+        const orgGroups: BrandGroup[] = data.map((entry) => ({
+          organizationName: entry.organization.name,
+          brands: entry.brands as unknown as WorkspaceItem[],
+        }));
+        const flat = orgGroups.flatMap((g) => g.brands);
+        setGroups(orgGroups);
+        setWorkspaces(flat);
+        const active = flat.find((w) => w.id === activeId) ?? flat[0];
         if (active) setActiveWorkspace(active);
       })
       .catch(() => {
@@ -117,11 +129,13 @@ export function WorkspaceName() {
           {getIndustryIcon(activeWorkspace.industry)}
         </div>
         <div className={styles.workspaceTextCol}>
-          <span className={styles.workspaceNameText}>
+          {/* `title` để rê chuột đọc đủ: chuỗi nhiều chi nhánh có tên gần
+              giống nhau, và cắt ở giữa làm mất đúng phần phân biệt. */}
+          <span className={styles.workspaceNameText} title={activeWorkspace.name}>
             {isSwitching ? "Đang chuyển…" : activeWorkspace.name}
           </span>
           <span className={styles.workspaceSubText}>
-            Không gian làm việc
+            {workspaces.length > 1 ? `${workspaces.length} thương hiệu` : "Thương hiệu"}
           </span>
         </div>
         {workspaces.length > 1 && (
@@ -148,8 +162,33 @@ export function WorkspaceName() {
 
       {isOpen && workspaces.length > 0 && (
         <div className={styles.workspaceSwitcherDropdown}>
-          <div className={styles.dropdownHeader}>Chọn không gian làm việc</div>
-          {workspaces.map((w) => {
+          {/* Chỉ hiện tên tổ chức khi thật sự có nhiều — với chủ tiệm đơn lẻ,
+              một tiêu đề "Spa An Nhiên" phía trên đúng một mục tên "Spa An
+              Nhiên" là nhiễu thuần tuý. */}
+          {groups.length > 1 || workspaces.length > 1 ? (
+            groups.map((group) => (
+              <div key={group.organizationName}>
+                <div className={styles.dropdownHeader}>{group.organizationName}</div>
+                {group.brands.map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    className={`${styles.workspaceOption} ${
+                      w.id === activeWorkspace.id ? styles.workspaceOptionActive : ""
+                    }`}
+                    onClick={() => handleSelectWorkspace(w)}
+                  >
+                    <span className={styles.workspaceAvatar}>
+                      {getIndustryIcon(w.industry)}
+                    </span>
+                    <span className={styles.workspaceOptionName}>{w.name}</span>
+                    {w.id === activeWorkspace.id ? <span>✓</span> : null}
+                  </button>
+                ))}
+              </div>
+            ))
+          ) : null}
+          {groups.length > 1 || workspaces.length > 1 ? null : workspaces.map((w) => {
             const isActive = w.id === activeWorkspace.id;
             return (
               <button

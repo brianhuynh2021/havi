@@ -149,4 +149,29 @@ describe("DashboardScreen — bảng điều khiển vận hành", () => {
     expect(await screen.findByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("Không có bài nào thất bại");
   });
+
+  it("ô đang yên ổn KHÔNG có link — bấm vào chỉ tới danh sách rỗng", async () => {
+    mockApi({ connections: [connectedPage] });
+    render(<DashboardScreen />);
+    await screen.findByText("Không có bài nào thất bại");
+
+    // "Xem lý do →" dưới dòng "Không có bài nào thất bại" là ngõ cụt.
+    expect(screen.queryByText(/Xem lý do/)).toBeNull();
+    expect(screen.queryByText(/Mở Hội thoại/)).toBeNull();
+  });
+
+  it("ô có việc thì vẫn có link để đi xử lý", async () => {
+    mockApi({ summary: { failed: 2 }, connections: [connectedPage] });
+    render(<DashboardScreen />);
+
+    expect(await screen.findByText(/Xem lý do/)).toBeInTheDocument();
+  });
+
+  it("chưa nối kênh nào: đếm 0 nhưng VẪN có link, vì đó là việc cần làm", async () => {
+    mockApi({ connections: [] });
+    render(<DashboardScreen />);
+
+    expect(await screen.findByText(/Chưa nối kênh nào/)).toBeInTheDocument();
+    expect(screen.getByText(/Mở Kênh kết nối/)).toBeInTheDocument();
+  });
 });

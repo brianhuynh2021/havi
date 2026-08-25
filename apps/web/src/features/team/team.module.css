@@ -44,3 +44,16 @@
   background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 700;
 }
 .roleCan { margin: 0; font-size: 13px; color: var(--color-muted); line-height: 1.5; }
+
+/* Nhắc phạm vi: đội ngũ thuộc về thương hiệu đang mở, không phải cả tổ chức. */
+.scopeNote {
+  margin: 0 0 20px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--color-border-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-body);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.scopeNote a { color: var(--color-primary); font-weight: 700; }

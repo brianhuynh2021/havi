@@ -10,14 +10,12 @@ import {
   heroStats,
   principles,
 } from "./landing.content";
-import { HeroCinematicShowcase } from "./hero-cinematic-showcase";
-import { VideoDemoModal } from "./video-demo-modal";
+import { ProductWalkthrough } from "./product-walkthrough";
 import styles from "./landing.module.css";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 export function LandingScreen() {
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [b2bSubmitted, setB2bSubmitted] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
   const [b2bForm, setB2bForm] = useState({
@@ -52,7 +50,7 @@ export function LandingScreen() {
 
           <nav className={styles.nav}>
             <a href="#demo-studio" className={styles.navLink}>
-              {lang === "VN" ? "Dùng thử Demo" : "Interactive Demo"}
+              {lang === "VN" ? "Cách hoạt động" : "How it works"}
             </a>
             <a href="#khach-hang" className={styles.navLink}>
               {lang === "VN" ? "Trạng thái pilot" : "Pilot status"}
@@ -89,29 +87,29 @@ export function LandingScreen() {
       <section className={styles.hero}>
         <div>
           <div className={styles.eyebrow}>
-            <span style={{ fontSize: "14px" }}>✨</span> FACEBOOK BETA • TẠO, DUYỆT, ĐĂNG &amp; THEO DÕI
+            <span style={{ fontSize: "14px" }}>✨</span> FACEBOOK BETA • QUẢN TRỊ &amp; VẬN HÀNH MẠNG XÃ HỘI
           </div>
           <h1 className={styles.heroTitle}>
             {lang === "VN" ? (
               <>
-                <span style={{ display: "block" }}>Từ tư liệu thật</span>
+                <span style={{ display: "block" }}>Mọi kênh trong tầm kiểm soát</span>
                 <span className={styles.purpleGradient} style={{ display: "inline-block" }}>
-                  đến bài Facebook đã duyệt
+                  Vận hành social nhẹ đầu hơn
                 </span>
               </>
             ) : (
               <>
-                <span style={{ display: "block" }}>From real material</span>
+                <span style={{ display: "block" }}>Every channel under control</span>
                 <span className={styles.purpleGradient} style={{ display: "inline-block" }}>
-                  to an approved Facebook post
+                  Social operations, off your mind
                 </span>
               </>
             )}
           </h1>
           <p className={styles.heroBody}>
             {lang === "VN"
-              ? "Havi giúp tạo bản nháp từ ảnh hoặc ý tưởng, yêu cầu bạn duyệt trước khi đăng và chỉ ghi nhận thành công khi nền tảng xác nhận."
-              : "Havi drafts from your material, requires approval before publishing, and records success only after platform confirmation."}
+              ? "Một nơi để quản kênh, nội dung, lịch đăng, hội thoại và thành viên. Bạn duyệt trước khi đăng, và Havi chỉ báo thành công sau khi đọc lại nền tảng để xác nhận."
+              : "One place for channels, content, schedule, conversations, and members. You approve before anything publishes, and Havi reports success only after reading the platform back."}
           </p>
 
           <div className={styles.heroActions}>
@@ -130,16 +128,18 @@ export function LandingScreen() {
                 </svg>
               </Link>
             )}
-            <button
-              type="button"
-              className={styles.heroSecondaryBtn}
-              onClick={() => setIsVideoModalOpen(true)}
-            >
+            {/* Trỏ xuống demo thật ngay trên trang này.
+                Nút cũ mở `VideoDemoModal` — thứ KHÔNG chứa video nào: một đồng
+                hồ đếm giây giả (`prev + 0.15` mỗi 100ms), một comment tự thú
+                "Simulated live visual", và một ảnh Unsplash gán nhãn "Cơ sở Spa
+                thẩm mỹ thực tế". Hứa video rồi đưa ảnh stock là cùng loại sai
+                với việc báo "đã đăng" khi chưa gửi đi. */}
+            <a href="#demo-studio" className={styles.heroSecondaryBtn}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" strokeWidth="2.5">
-                <polygon points="5 3 19 12 5 21 5 3" />
+                <polyline points="6 9 12 15 18 9" />
               </svg>
-              {lang === "VN" ? "Xem Video Thực Chiến 60s" : "Watch 60s Demo"}
-            </button>
+              {lang === "VN" ? "Xem demo bên dưới" : "See the demo below"}
+            </a>
           </div>
 
           <div className={styles.heroTrustLine}>
@@ -149,11 +149,16 @@ export function LandingScreen() {
           </div>
 
           {/* Hero 3D Cinematic Showcase (Unified Demo Hub) */}
+          {/* Demo dựng bằng DOM thật, không phải ảnh AI hay file video: nét ở
+              mọi độ phân giải, hiện tức thì, và đổi theo giao diện thật khi UI
+              thay đổi — thay vì đóng băng một phiên bản cũ.
+
+              Khối cũ (`HeroCinematicShowcase`) dùng bốn tấm ảnh spa/BĐS/cafe do
+              AI sinh, kèm nhãn "HAVI VISION AI · 0.34s" và một dòng tự thú
+              "Bản nháp minh hoạ — cần thay bằng dữ liệu thật". Nó tự nói ra
+              rằng nó không có thật. */}
           <div id="demo-studio" style={{ scrollMarginTop: "100px" }}>
-            <HeroCinematicShowcase
-              onOpenVideoModal={() => setIsVideoModalOpen(true)}
-              lang={lang}
-            />
+            <ProductWalkthrough />
           </div>
 
           {/* Stats Section */}
@@ -300,7 +305,7 @@ export function LandingScreen() {
             <div>
               <div className={styles.footerColTitle}>SẢN PHẨM</div>
               <ul className={styles.footerLinkList}>
-                <li><a href="#demo-studio">Studio Demo</a></li>
+                <li><a href="#demo-studio">Xem cách hoạt động</a></li>
                 <li><a href="#khach-hang">Trạng thái pilot</a></li>
                 <li><a href="#nguyen-tac">Nguyên tắc an toàn</a></li>
                 <li><a href="#faq">Hỏi đáp FAQ</a></li>
@@ -545,12 +550,6 @@ export function LandingScreen() {
         </div>
       )}
 
-      {/* Video Demo Modal (60s Tour) */}
-      <VideoDemoModal
-        isOpen={isVideoModalOpen}
-        onClose={() => setIsVideoModalOpen(false)}
-        lang={lang}
-      />
     </div>
   );
 }

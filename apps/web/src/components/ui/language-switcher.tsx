@@ -67,7 +67,15 @@ export function LanguageSwitcher({
     );
   }
 
-  // Default: Pill variant — Tương phản cao, không có mũi tên tam giác thừa
+  // Default: pill — **điều khiển phụ trợ**, không phải hành động.
+  //
+  // Bản trước dùng nền trắng đặc + đậm 700 + đổ bóng, đặt trên header nền tối.
+  // Đo ra thì nó nổi hơn cả nút "Đăng nhập": thứ bậc thị giác ngược với thứ bậc
+  // quan trọng. Người dùng Việt vào trang tiếng Việt gần như không bao giờ bấm
+  // nó, nhưng mắt phải xử lý nó mỗi lần nhìn lên header.
+  //
+  // Thứ tự đúng: hành động chính → hành động phụ → điều hướng → đổi ngôn ngữ.
+  // Ở đây nó nhận trọng lượng của nhóm cuối, và chỉ rõ lên khi rê chuột.
   return (
     <button
       type="button"
@@ -75,19 +83,26 @@ export function LanguageSwitcher({
       className={className}
       title={lang === "VN" ? "Chuyển sang Tiếng Anh (English)" : "Chuyển sang Tiếng Việt"}
       style={{
-        background: "var(--color-surface)",
+        background: "transparent",
         border: "1px solid var(--color-border)",
         borderRadius: "999px",
-        padding: "6px 14px",
-        color: "var(--color-ink)",
+        padding: "6px 13px",
+        color: "var(--color-muted)",
         fontSize: "13px",
-        fontWeight: 700,
+        fontWeight: 600,
         cursor: "pointer",
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        transition: "all 0.2s ease",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
+        transition: "color 0.18s ease, border-color 0.18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = "var(--color-ink)";
+        e.currentTarget.style.borderColor = "var(--color-primary-light)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = "var(--color-muted)";
+        e.currentTarget.style.borderColor = "var(--color-border)";
       }}
     >
       <span>{lang === "VN" ? "🇻🇳 VN" : "🇬🇧 EN"}</span>

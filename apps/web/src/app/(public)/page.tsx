@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { LandingScreen } from "@/features/landing/landing-screen";
 
 export const metadata: Metadata = {
-  title: "Havi — Chỉ 1 chạm tiếp cận khách hàng đa nền tảng",
+  title: "Havi — Quản trị & vận hành mạng xã hội cho doanh nghiệp",
   description:
-    "Không còn mất hàng giờ nghĩ ý tưởng. Chỉ cần gửi ảnh, Havi tự động sinh bài, dựng video bắt trend và trực inbox kéo khách.",
+    "Quản lý kênh, nội dung, lịch đăng, hội thoại và thành viên tại một nơi. "
+    + "Bạn duyệt trước, Havi đăng đúng giờ và xác nhận bài đã lên.",
 };
 
 export default function Page() {

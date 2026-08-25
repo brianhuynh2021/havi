@@ -28,8 +28,10 @@ export const viewport: Viewport = {
 
 
 export const metadata: Metadata = {
-  title: "Havi — Trợ lý Marketing AI Đa Kênh",
-  description: "Hệ thống tự động hóa marketing, bắt trend video ngắn và chăm sóc khách hàng tự động",
+  title: "Havi — Quản trị & vận hành mạng xã hội",
+  description:
+    "Quản lý kênh, nội dung, lịch đăng, hội thoại và thành viên tại một nơi. "
+    + "Mọi kênh trong tầm kiểm soát.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

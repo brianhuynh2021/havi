@@ -995,52 +995,154 @@
 
 
 
-/* --- Bảng điều khiển vận hành (thay phễu lead / tiến độ mục tiêu) --- */
+/* --- Bảng điều khiển vận hành ------------------------------------------
+   Ngoại lệ trước, phần yên ổn nén lại. Xem chú thích trong dashboard-screen. */
 
-.tileGrid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
-
-.tile {
+.attentionList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 20px;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+/* Việc cần làm chiếm hết bề ngang: mắt quét dọc một cột thay vì zig-zag qua
+   một lưới. Với 1–3 việc thì đó là cách đọc nhanh nhất. */
+.attentionCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-surface);
+  /* Dải màu mảnh bên trái thay vì tô nền cả thẻ: nền vàng trên mọi thẻ làm
+     màn hình trông như đang báo động, và người dùng học cách bỏ qua màu. */
+  border-left: 3px solid var(--color-action);
 }
 
-/* Chỉ tô cảnh báo khi thật sự cần người xử lý. Tô hết thì không còn phân biệt
-   được ô nào quan trọng, và người dùng học cách bỏ qua màu. */
-.tileAttention {
-  border-color: #fdba74;
-  background: #fffbeb;
+.attentionBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .tileQuestion {
   margin: 0;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-muted);
 }
 
-.tileAnswer {
+.attentionAnswer {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
   color: var(--color-ink);
 }
 
-.tileLink {
-  margin-top: auto;
+.attentionAction {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.attentionAction:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Không còn việc gì: nói thẳng một lần, không để năm ô rỗng chiếm màn hình. */
+.allClear {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+  margin-bottom: 26px;
+}
+
+.allClearMark {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.allClearTitle {
+  margin: 0 0 3px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #14532d;
+}
+
+.allClearBody {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #166534;
+}
+
+/* Dải "đang ổn": một dòng mỗi mục, chữ nhỏ, không viền — hiện diện nhưng không
+   giành chỗ. Vẫn có link vì đây là những màn người dùng hay mở nhất. */
+.calmStrip {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.calmRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+}
+
+.calmRow + .calmRow {
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.calmMark {
+  flex-shrink: 0;
+  color: #16a34a;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.calmText {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--color-body);
+}
+
+.calmLink {
+  flex-shrink: 0;
   font-size: 13px;
   font-weight: 700;
   color: var(--color-primary);
   text-decoration: none;
+  opacity: 0.85;
+}
+
+.calmLink:hover {
+  opacity: 1;
 }
 
 .partialError {
@@ -1051,4 +1153,19 @@
   border: 1px solid #fde68a;
   color: #92400e;
   font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .attentionCard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .attentionAction {
+    text-align: center;
+  }
+  .calmRow {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
 }

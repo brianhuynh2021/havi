@@ -4,39 +4,38 @@
 
 /* --- Top Header Install Button ----------------------------------------- */
 
+/* Nút phụ trợ, không phải hành động chính.
+   Bản trước dùng gradient xanh-tím, viền 1.5px, đổ bóng và một chấm xanh nhấp
+   nháy — tức là thứ nổi bật nhất trên màn hình lại là "cài app", trong khi việc
+   thật của người dùng nằm ở giữa trang. Ở đây nó chỉ là một nút chữ nhạt, nổi
+   lên khi rê chuột. */
 .headerInstallBtn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.15) 0%, rgba(139, 92, 246, 0.18) 100%);
-  border: 1.5px solid rgba(0, 102, 255, 0.4);
-  color: #0066ff;
-  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  padding: 6px 13px;
   border-radius: 999px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   white-space: nowrap;
-  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.12);
   position: relative;
 }
 
 .headerInstallBtn:hover {
-  background: linear-gradient(135deg, #0066ff 0%, #7c3aed 100%);
-  border-color: transparent;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+  background: var(--color-border-soft);
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
+/* Chấm nhấp nháy đã bỏ: nó báo hiệu "có chuyện đang xảy ra", trong khi không
+   có chuyện gì cả. Dành tín hiệu đó cho lúc thật sự cần. */
 .pulseDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: pulseGlow 1.8s infinite ease-in-out;
+  display: none;
 }
 
 @keyframes pulseGlow {

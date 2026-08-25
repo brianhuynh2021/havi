@@ -113,7 +113,7 @@ function getPlatformDescription(platform: Platform): string {
     case "facebook":
       return "Tự động đăng bài viết, hình ảnh và Reels lên Fanpage chính thức.";
     case "google_business":
-      return "Cập nhật bài viết, ưu đãi lên Google Maps SEO & Tìm kiếm địa phương để kéo khách.";
+      return "Đăng bài và cập nhật thông tin cơ sở lên hồ sơ Google Business.";
     case "tiktok":
       return "Đăng video ngắn viral 9:16 có Hook 3s lên kênh TikTok của tiệm.";
     case "youtube":

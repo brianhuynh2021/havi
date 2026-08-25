@@ -8,6 +8,7 @@
  * đang phải chọn vai cho nhân viên mới.
  */
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,14 @@ export function TeamScreen() {
           {notice}
         </p>
       ) : null}
+
+      {/* Tổ chức nhiều thương hiệu: mỗi thương hiệu có danh sách thành viên
+          riêng, nên phải nói rõ màn này chỉ quản trị thương hiệu đang mở. */}
+      <p className={styles.scopeNote}>
+        Danh sách này thuộc về thương hiệu đang mở. Mỗi thương hiệu có đội ngũ
+        riêng — xem và mở thêm thương hiệu ở{" "}
+        <Link href="/app/brands">Thương hiệu &amp; chi nhánh</Link>.
+      </p>
 
       <section className={styles.inviteCard} aria-labelledby="invite-title">
         <h2 id="invite-title" className={styles.sectionTitle}>

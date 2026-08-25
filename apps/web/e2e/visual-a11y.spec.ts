@@ -391,7 +391,7 @@ const publicRoutes = [
   {
     name: "landing",
     path: "/",
-    heading: /Từ tư liệu thật đến bài Facebook đã duyệt/i,
+    heading: /Mọi kênh trong tầm kiểm soát/i,
     auth: false,
   },
   { name: "login", path: "/login", heading: /Đăng nhập Havi/i, auth: false },

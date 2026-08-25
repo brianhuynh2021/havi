@@ -116,6 +116,40 @@ class CurrentUser(HaviModel):
     permissions: list[str] = Field(default_factory=list)
 
 
+# --- Organization -----------------------------------------------------------
+
+
+class Organization(HaviModel):
+    """Doanh nghiệp sở hữu một hoặc nhiều workspace (thương hiệu / chi nhánh)."""
+
+    id: UUID
+    name: str
+    owner_user_id: UUID
+    created_at: datetime
+
+
+class OrganizationCreate(HaviModel):
+    name: str = Field(min_length=1, max_length=160, examples=["Chuỗi Spa An Nhiên"])
+
+
+class OrganizationBrand(HaviModel):
+    """Một workspace nhìn từ cấp tổ chức — chỉ những gì cần để chọn và điều hướng.
+
+    Không trả `plan`, `publish_mode`, hay số liệu: màn chọn thương hiệu chỉ cần
+    trả lời "vào cái nào", còn chi tiết thuộc về chính workspace đó.
+    """
+
+    id: UUID
+    name: str
+    industry: Industry
+    created_at: datetime
+
+
+class OrganizationWithBrands(HaviModel):
+    organization: Organization
+    brands: list[OrganizationBrand]
+
+
 # --- Workspace --------------------------------------------------------------
 
 

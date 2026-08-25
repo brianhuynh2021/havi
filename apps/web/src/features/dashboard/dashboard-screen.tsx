@@ -172,6 +172,7 @@ export function DashboardScreen() {
   ];
 
   const attention = tiles.filter((tile) => tile.needsAttention);
+  const calm = tiles.filter((tile) => !tile.needsAttention);
 
   return (
     <>
@@ -191,22 +192,65 @@ export function DashboardScreen() {
         </p>
       ) : null}
 
-      <section className={styles.tileGrid} aria-label="Tình trạng vận hành">
-        {tiles.map((tile) => (
-          <article
-            key={tile.key}
-            className={`${styles.tile} ${tile.needsAttention ? styles.tileAttention : ""}`}
-          >
-            <p className={styles.tileQuestion}>{tile.question}</p>
-            <p className={styles.tileAnswer}>
-              {tile.count === 0 ? tile.calm : tile.busy.replace("{n}", String(tile.count))}
+      {/*
+        Ngoại lệ trước, phần yên ổn nén lại — khuôn của một bảng điều khiển vận
+        hành, không phải một lưới thẻ.
+
+        Bản trước hiện năm ô cùng kích cỡ: "3 nội dung chờ duyệt" trông ngang
+        hàng với "không có bài nào thất bại". Mắt phải quét cả năm ô mới biết
+        hôm nay cần làm gì. Ở đây việc cần làm chiếm hết bề ngang, còn những thứ
+        đang ổn gộp thành một dải mỏng — vẫn hiện, vì biết chắc mọi thứ ổn cũng
+        là thông tin, nhưng không giành chỗ của việc cần làm.
+      */}
+      {attention.length > 0 ? (
+        <section className={styles.attentionList} aria-label="Việc cần xử lý">
+          {attention.map((tile) => (
+            <article key={tile.key} className={styles.attentionCard}>
+              <div className={styles.attentionBody}>
+                <p className={styles.tileQuestion}>{tile.question}</p>
+                <p className={styles.attentionAnswer}>
+                  {tile.count === 0
+                    ? tile.calm
+                    : tile.busy.replace("{n}", String(tile.count))}
+                </p>
+              </div>
+              <Link href={tile.href} className={styles.attentionAction}>
+                {tile.action}
+              </Link>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <section className={styles.allClear} aria-label="Tình trạng vận hành">
+          <span className={styles.allClearMark} aria-hidden="true">✓</span>
+          <div>
+            <p className={styles.allClearTitle}>Không có việc nào cần xử lý</p>
+            <p className={styles.allClearBody}>
+              Kênh đang hoạt động, không có bài nào thất bại, và mọi hội thoại
+              đều đã được trả lời.
             </p>
-            <Link href={tile.href} className={styles.tileLink}>
-              {tile.action} →
-            </Link>
-          </article>
-        ))}
-      </section>
+          </div>
+        </section>
+      )}
+
+      {/* Dải này KHÔNG có link. "Xem lý do →" dưới dòng "Không có bài nào thất
+          bại" dẫn tới danh sách rỗng; một link luôn hiện dạy người dùng rằng bấm
+          vào cũng chẳng để làm gì, rồi họ bỏ qua cả lúc nó thật sự cần bấm. */}
+      {calm.length > 0 ? (
+        <section className={styles.calmStrip} aria-label="Đang bình thường">
+          {calm.map((tile) => (
+            <div key={tile.key} className={styles.calmRow}>
+              <span className={styles.calmMark} aria-hidden="true">✓</span>
+              <span className={styles.calmText}>
+                {tile.count === 0
+                  ? tile.calm
+                  : tile.busy.replace("{n}", String(tile.count))}
+              </span>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
     </>
   );
 }

@@ -91,7 +91,7 @@ export function DangerConfirmModal({
                   </li>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Xoá toàn bộ lịch bài nháp và lịch sử tạo kịch bản video của tiệm.</span>
+                    <span>Xoá toàn bộ bản nháp, lịch đăng và kho media của thương hiệu này.</span>
                   </li>
                 </>
               ) : (

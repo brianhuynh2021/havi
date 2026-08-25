@@ -93,7 +93,30 @@ async def test_voice_to_content_1tap(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_voice_tts_generate_audio(client: AsyncClient):
+async def test_voice_tts_generate_audio(client: AsyncClient, monkeypatch):
+    """Chặn mạng thật: `edge_tts` gọi dịch vụ Microsoft qua Internet.
+
+    Test này từng đỏ ngẫu nhiên trong lần chạy full suite rồi xanh lại ngay sau
+    đó — dấu hiệu kinh điển của phụ thuộc mạng. Một test đỏ ngẫu nhiên tệ hơn
+    không có test: đội ngũ học cách chạy lại cho tới khi xanh, rồi bỏ qua cả
+    những lần đỏ thật.
+
+    Điều cần kiểm ở đây là **router ghép các chunk lại và trả đúng content-type**,
+    không phải chất lượng giọng đọc của Microsoft.
+    """
+    import edge_tts
+
+    class FakeCommunicate:
+        def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+            self.args = args
+
+        async def stream(self):  # noqa: ANN202
+            # Hai chunk, để khẳng định router thật sự nối chúng lại.
+            yield {"type": "audio", "data": b"\xff\xfb" + b"a" * 800}
+            yield {"type": "audio", "data": b"b" * 800}
+
+    monkeypatch.setattr(edge_tts, "Communicate", FakeCommunicate)
+
     headers = _headers(await _onboard(client, email="voice.tts@havi.vn"))
 
     payload = {
@@ -106,3 +129,4 @@ async def test_voice_tts_generate_audio(client: AsyncClient):
     assert res.status_code == 200, res.text
     assert res.headers["content-type"] == "audio/mpeg"
     assert len(res.content) > 1000
+    assert res.content.endswith(b"b" * 800), "phải nối đủ mọi chunk, không chỉ chunk đầu"

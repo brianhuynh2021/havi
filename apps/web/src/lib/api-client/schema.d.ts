@@ -407,6 +407,79 @@ export interface paths {
         patch: operations["update_media_media__asset_id__patch"];
         trace?: never;
     };
+    "/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List My Organizations
+         * @description Các tổ chức tôi thuộc về, kèm thương hiệu của từng tổ chức.
+         *
+         *     Trả kèm luôn danh sách thương hiệu thay vì bắt gọi thêm N lượt: màn chọn
+         *     thương hiệu luôn cần cả hai cùng lúc, và N+1 request chỉ để dựng một menu là
+         *     chi phí không mua được gì.
+         */
+        get: operations["list_my_organizations_organizations_get"];
+        put?: never;
+        /**
+         * Create Organization
+         * @description Tạo một tổ chức mới. Người tạo thành chủ tổ chức.
+         */
+        post: operations["create_organization_organizations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organizations/{organization_id}/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Brand
+         * @description Mở thêm một thương hiệu / chi nhánh.
+         *
+         *     Thương hiệu mới là một workspace hoàn chỉnh: kênh riêng, nội dung riêng, kho
+         *     media riêng, thành viên riêng. Dữ liệu **không** chảy chéo giữa các thương
+         *     hiệu trong cùng tổ chức — đó là điểm khiến multi-brand khác với gắn nhãn.
+         */
+        post: operations["create_brand_organizations__organization_id__brands_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organizations/{organization_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite To Organization
+         * @description Thêm người vào tổ chức. Họ chưa vào được thương hiệu nào cho tới khi được
+         *     cấp vai ở đó qua `/workspaces/{id}/members`.
+         */
+        post: operations["invite_to_organization_organizations__organization_id__members_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/trends/hot": {
         parameters: {
             query?: never;
@@ -1443,6 +1516,15 @@ export interface components {
             mime_type: string;
         };
         /**
+         * BrandCreate
+         * @description Mở thêm một thương hiệu / chi nhánh trong tổ chức đang có.
+         */
+        BrandCreate: {
+            /** Name */
+            name: string;
+            industry: components["schemas"]["Industry"];
+        };
+        /**
          * BrandProfile
          * @description Input bắt buộc cho mọi prompt chế bản — worker đọc từ đây, không hardcode.
          */
@@ -2169,6 +2251,80 @@ export interface components {
             success_rate: number;
             /** Dead Letter Rate */
             dead_letter_rate: number;
+        };
+        /**
+         * Organization
+         * @description Doanh nghiệp sở hữu một hoặc nhiều workspace (thương hiệu / chi nhánh).
+         */
+        Organization: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Owner User Id
+             * Format: uuid
+             */
+            owner_user_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * OrganizationBrand
+         * @description Một workspace nhìn từ cấp tổ chức — chỉ những gì cần để chọn và điều hướng.
+         *
+         *     Không trả `plan`, `publish_mode`, hay số liệu: màn chọn thương hiệu chỉ cần
+         *     trả lời "vào cái nào", còn chi tiết thuộc về chính workspace đó.
+         */
+        OrganizationBrand: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            industry: components["schemas"]["Industry"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** OrganizationCreate */
+        OrganizationCreate: {
+            /**
+             * Name
+             * @example Chuỗi Spa An Nhiên
+             */
+            name: string;
+        };
+        /**
+         * OrganizationInvite
+         * @description Mời vào **tổ chức**, không phải vào một thương hiệu cụ thể.
+         *
+         *     Quyền làm việc thật (soạn / duyệt / trả lời khách) vẫn cấp riêng ở từng
+         *     workspace qua `/workspaces/{id}/members`. Vào tổ chức chỉ nghĩa là "người
+         *     này thuộc công ty" — chưa vào được thương hiệu nào cả.
+         */
+        OrganizationInvite: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** OrganizationWithBrands */
+        OrganizationWithBrands: {
+            organization: components["schemas"]["Organization"];
+            /** Brands */
+            brands: components["schemas"]["OrganizationBrand"][];
         };
         /**
          * OtpChallenge
@@ -3550,6 +3706,127 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MediaAsset"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_my_organizations_organizations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationWithBrands"][];
+                };
+            };
+        };
+    };
+    create_organization_organizations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_brand_organizations__organization_id__brands_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organization_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationBrand"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_to_organization_organizations__organization_id__members_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organization_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationInvite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

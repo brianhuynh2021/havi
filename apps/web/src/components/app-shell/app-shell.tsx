@@ -44,8 +44,12 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <main className={styles.content}>
+        {/* Header không lặp lại tên thương hiệu: sidebar ngay bên trái đã hiện
+            nó kèm số thương hiệu. Hai nhãn cho cùng một thứ, cách nhau vài
+            centimet, chỉ làm người đọc phải quyết định xem chúng có khác nhau
+            không. */}
         <header className={styles.topHeader}>
-          <div className={styles.topHeaderTitle}>{t("shell.workspace", "Workspace")}</div>
+          <div />
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <PwaInstallModal />
             <LanguageSwitcher variant="pill" />
