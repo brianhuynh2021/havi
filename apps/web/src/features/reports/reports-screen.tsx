@@ -21,16 +21,8 @@ const channelLabels: Record<string, string> = {
   zalo_oa: "Zalo OA (Lưu trữ)",
 };
 
-function percent(value: number): string {
-  return `${Math.round(value * 100)}%`;
-}
-
 function attributionPercent(item: ChannelAttribution): number {
   return Math.max(0, Math.min(100, Math.round(item.share * 100)));
-}
-
-function formatVnd(amount: number): string {
-  return `${amount.toLocaleString("vi-VN")} đ`;
 }
 
 export function ReportsScreen() {
@@ -62,10 +54,9 @@ export function ReportsScreen() {
   function getStatCards(reportsData: ReportsData) {
     return [
       { label: t("dashboard.publishedPosts", "Bài đã đăng"), value: String(reportsData.summary.published_posts) },
-      { label: t("dashboard.leadsCaptured", "Lead đã ghi nhận"), value: String(reportsData.summary.new_leads) },
-      { label: t({ vi: "Lead đã xác nhận", en: "Verified Leads" }), value: String(reportsData.summary.won_leads) },
-      { label: t({ vi: "Tỷ lệ chốt", en: "Win Rate" }), value: percent(reportsData.summary.lead_won_rate) },
-      { label: t({ vi: "Doanh thu xác thực (VietQR/POS)", en: "Verified Revenue" }), value: formatVnd(reportsData.summary.total_revenue_vnd || 0) },
+      { label: t({ vi: "Hội thoại đã nhận", en: "Inbox items received" }), value: String(reportsData.summary.inbox_items) },
+      { label: t({ vi: "Phản hồi đã gửi", en: "Replies sent" }), value: String(reportsData.summary.replies_sent) },
+      { label: t({ vi: "Lượt đăng thất bại", en: "Failed publishes" }), value: String(reportsData.summary.failed_posts) },
     ];
 
   }
@@ -80,7 +71,7 @@ export function ReportsScreen() {
       <header className={styles.header}>
         <h1 className={styles.title}>{t("reports.title", "Báo Cáo & Phân Tích")}</h1>
         <p className={styles.subtitle}>
-          {t("reports.subtitle", "Đánh giá hiệu quả truyền thông và chuyển đổi")}
+          {t("reports.subtitle", "Theo dõi tình trạng xuất bản và hội thoại theo dữ liệu nền tảng")}
         </p>
       </header>
 
@@ -97,26 +88,40 @@ export function ReportsScreen() {
         <LoadingState title={t({ vi: "Đang tải báo cáo…", en: "Loading reports…" })} />
       ) : (
         <>
-          {/* Peace of Mind & Daily Human Utility */}
-          <section className={styles.peaceOfMindCard} aria-label="Thời gian và công sức tiết kiệm">
-            <div className={styles.peaceOfMindBadge}>🌿 GIÁ TRỊ THIẾT THỰC CÙNG BẠN</div>
-            <div className={styles.peaceOfMindGrid}>
-              <div className={styles.peaceOfMindItem}>
-                <span className={styles.peaceOfMindVal}>
-                  ~{Math.max(1, Math.round(data.summary.published_posts * 1.5 + data.summary.price_inquiries * 0.2))} giờ
-                </span>
-                <span className={styles.peaceOfMindLbl}>⏱️ Thời gian soạn bài & trực chat Havi đã gánh vác</span>
+          {/*
+            Chỉ hiện những gì Havi THẬT SỰ làm và đếm được.
+
+            Bản trước hiện ba con số: "~N giờ tiết kiệm" (nhân 1,5 giờ mỗi bài
+            — hệ số bịa, và `Math.max(1, …)` khiến nó hiện "~1 giờ" ngay cả khi
+            chưa đăng bài nào), "< 10 giây phản hồi Messenger" và "100% đúng
+            giọng thương hiệu" — cả hai hard-code, không đo gì.
+
+            Một chủ tiệm mở báo cáo ngày đầu, thấy thành tích mình chưa hề có,
+            thì mọi con số còn lại cũng mất giá trị theo.
+          */}
+          {data.summary.published_posts > 0 || data.summary.inbox_items > 0 ? (
+            <section className={styles.peaceOfMindCard} aria-label="Việc Havi đã làm">
+              <div className={styles.peaceOfMindBadge}>VIỆC HAVI ĐÃ LÀM</div>
+              <div className={styles.peaceOfMindGrid}>
+                <div className={styles.peaceOfMindItem}>
+                  <span className={styles.peaceOfMindVal}>{data.summary.published_posts}</span>
+                  <span className={styles.peaceOfMindLbl}>Bài đã lên Trang</span>
+                </div>
+                <div className={styles.peaceOfMindItem}>
+                  <span className={styles.peaceOfMindVal}>{data.summary.inbox_items}</span>
+                  <span className={styles.peaceOfMindLbl}>Hội thoại đã nhận</span>
+                </div>
               </div>
-              <div className={styles.peaceOfMindItem}>
-                <span className={styles.peaceOfMindVal}>&lt; 10 giây</span>
-                <span className={styles.peaceOfMindLbl}>⚡ Tốc độ phản hồi khách Messenger tức thì</span>
-              </div>
-              <div className={styles.peaceOfMindItem}>
-                <span className={styles.peaceOfMindVal}>100%</span>
-                <span className={styles.peaceOfMindLbl}>📘 Bài viết giữ vững đúng giọng văn thương hiệu</span>
-              </div>
-            </div>
-          </section>
+            </section>
+          ) : (
+            <section className={styles.peaceOfMindCard} aria-label="Chưa đủ dữ liệu">
+              <div className={styles.peaceOfMindBadge}>CHƯA ĐỦ DỮ LIỆU</div>
+              <p className={styles.emptyHint}>
+                Báo cáo hiện lên sau khi có bài đầu tiên được đăng hoặc khách đầu
+                tiên nhắn tin. Havi không hiện số liệu mẫu.
+              </p>
+            </section>
+          )}
 
           <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
             {getStatCards(data).map((card) => (

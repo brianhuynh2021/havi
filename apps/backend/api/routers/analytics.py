@@ -1,8 +1,4 @@
-"""/analytics — đo bằng khách hỏi giá / lead đã chốt / khách quay lại, không phải like.
-
-Nguồn: `content_item.published_at` + engagement snapshot (polling theo lịch) + `lead`.
-Không cần real-time.
-"""
+"""/analytics — báo cáo trạng thái xuất bản và hội thoại từ dữ liệu Havi."""
 
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
@@ -13,10 +9,9 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
-from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.publish_repository import PublishRepository
-from api.deps import WorkspaceDep
-from core.enums import ContentStatus, PublishStatus
+from api.deps import AuditViewerWorkspaceDep, WorkspaceDep
+from core.enums import ContentStatus, InboxItemStatus, PublishStatus
 from core.schemas import (
     AnalyticsSummary,
     AnalyticsTimeseries,
@@ -57,7 +52,9 @@ async def dashboard(workspace_id: WorkspaceDep, session: DbSessionDep) -> Dashbo
 
 @router.get("/events", response_model=Page[EventLogRecord])
 async def events(
-    workspace_id: WorkspaceDep,
+    # Lịch sử hoạt động lộ ra ai làm gì trong cả workspace. Người soạn và trực
+    # hội thoại không cần thấy — và không nên thấy.
+    workspace_id: AuditViewerWorkspaceDep,
     session: DbSessionDep,
     job_id: UUID | None = None,
     request_id: str | None = Query(default=None, max_length=80),
@@ -133,23 +130,28 @@ def _percent_change(current: float, previous: float) -> float:
 async def _outcomes_for(
     session, *, workspace_id: UUID, start: datetime, end: datetime
 ) -> dict[str, float]:
-    leads = await LeadRepository(session).outcomes_in_range(
+    inbox = InboxRepository(session)
+    inbox_items = await inbox.count_in_range(
         workspace_id=workspace_id, start=start, end=end
     )
-    inquiries = await InboxRepository(session).count_in_range(
-        workspace_id=workspace_id, start=start, end=end
+    replies_sent = await inbox.count_by_status_in_range(
+        workspace_id=workspace_id,
+        status=InboxItemStatus.SENT,
+        start=start,
+        end=end,
     )
     published = await ContentRepository(session).count_published_posts(
         workspace_id=workspace_id, start=start, end=end
     )
+    publish_counts = await PublishRepository(session).status_counts_for_window(
+        workspace_id=workspace_id, start=start, end=end
+    )
     return {
-        "price_inquiries": inquiries,
-        "won_leads": leads.won_leads,
-        "returning_customers": leads.returning_customers,
         "published_posts": published,
-        "new_leads": leads.new_leads,
-        "lead_won_rate": leads.won_rate,
-        "total_revenue_vnd": leads.total_revenue_vnd,
+        "inbox_items": inbox_items,
+        "replies_sent": replies_sent,
+        "failed_posts": publish_counts.get(PublishStatus.DEAD_LETTER, 0)
+        + publish_counts.get(PublishStatus.FAILED, 0),
     }
 
 
@@ -157,12 +159,7 @@ async def _outcomes_for(
 async def summary(
     workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
 ) -> AnalyticsSummary:
-    """3 stat card ở tab Báo cáo, kèm ▲ so kỳ trước.
-
-    Số liệu dựng từ `leads`, `inbox_items` và `content_items` thật. Trước đây
-    hàm này trả 0 cứng cho mọi chỉ số kết quả — không sai kiểu bịa số, nhưng
-    cũng không chứng minh được điều Havi bán.
-    """
+    """Các số liệu vận hành trong kỳ, kèm thay đổi so với kỳ trước."""
     range_start, range_end = _date_range(start, end)
     span = range_end - range_start
     current = await _outcomes_for(
@@ -176,13 +173,10 @@ async def summary(
     )
 
     return AnalyticsSummary(
-        price_inquiries=int(current["price_inquiries"]),
-        won_leads=int(current["won_leads"]),
-        returning_customers=int(current["returning_customers"]),
         published_posts=int(current["published_posts"]),
-        new_leads=int(current["new_leads"]),
-        lead_won_rate=current["lead_won_rate"],
-        total_revenue_vnd=int(current["total_revenue_vnd"]),
+        inbox_items=int(current["inbox_items"]),
+        replies_sent=int(current["replies_sent"]),
+        failed_posts=int(current["failed_posts"]),
         change_vs_previous_period={
             key: _percent_change(current[key], previous[key]) for key in current
         },
@@ -193,23 +187,8 @@ async def summary(
 async def attribution(
     workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
 ) -> list[ChannelAttribution]:
-    """Khối "Lead đến từ kênh nào"."""
+    """Phân bổ bài đã đăng theo kênh."""
     range_start, range_end = _date_range(start, end)
-    customer_counts = await LeadRepository(session).count_customers_by_channel(
-        workspace_id=workspace_id, start=range_start, end=range_end
-    )
-    if customer_counts:
-        total = sum(customer_counts.values())
-        return [
-            ChannelAttribution(
-                channel=channel,
-                customers=count,
-                share=round(count / total, 4) if total else 0,
-                note="Phân bổ theo khách hàng thực tế thu thập từ bài đăng.",
-            )
-            for channel, count in sorted(customer_counts.items(), key=lambda item: item[0].value)
-        ]
-
     counts = await ContentRepository(session).count_published_by_channel(
         workspace_id=workspace_id, start=range_start, end=range_end
     )
@@ -217,9 +196,9 @@ async def attribution(
     return [
         ChannelAttribution(
             channel=channel,
-            customers=count,
+            posts=count,
             share=round(count / total, 4) if total else 0,
-            note="Tạm tính theo bài đã đăng; chưa có dữ liệu lead gắn với bài viết.",
+            note="Tính theo bài đã được nền tảng xác nhận đăng thành công.",
         )
         for channel, count in sorted(counts.items(), key=lambda item: item[0].value)
     ]

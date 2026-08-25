@@ -26,7 +26,6 @@ export function AppShell({ children }: AppShellProps) {
           <div className={styles.brand}>
             <Logo size={32} />
             <div className={styles.brandText}>Havi</div>
-            <span className={styles.brandPill}>OS 3.0</span>
           </div>
 
           <div className={styles.workspaceSection}>

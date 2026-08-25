@@ -22,6 +22,17 @@ class Workspace(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     )
     owner_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
 
+    #: Doanh nghiệp sở hữu workspace này. Một workspace = một thương hiệu hoặc
+    #: một chi nhánh.
+    #:
+    #: Nullable: workspace tạo trước tầng tổ chức vẫn hợp lệ, và chủ tiệm đơn lẻ
+    #: không cần biết khái niệm này tồn tại. **Không** dùng cột này để cách ly
+    #: dữ liệu — mọi query nghiệp vụ vẫn scope theo `workspace_id`, đó là lớp
+    #: cách ly đã được test đầy đủ.
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id"), default=None, nullable=True, index=True
+    )
+
     # --- Gói cước ------------------------------------------------------------
     #
     # Chỉ lưu hai MỐC THỜI GIAN, không lưu `status`: trạng thái là hàm của thời

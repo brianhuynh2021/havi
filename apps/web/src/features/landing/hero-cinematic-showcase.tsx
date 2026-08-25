@@ -78,10 +78,10 @@ export function HeroCinematicShowcase({
               type="button"
               className={`${styles.stepPill} ${activeStep === 2 ? styles.stepPillActive : ""}`}
               onClick={() => setActiveStep(2)}
-              aria-label="Bước 3: Theo dõi kết quả"
+              aria-label="Bước 3: Theo dõi vận hành"
             >
               <span className={styles.stepNum}>3</span>
-              <span>{lang === "VN" ? "Theo dõi kết quả" : "Track results"}</span>
+              <span>{lang === "VN" ? "Theo dõi vận hành" : "Track operations"}</span>
             </button>
           </div>
 
@@ -213,19 +213,19 @@ export function HeroCinematicShowcase({
                   </div>
                 </div>
 
-                {/* Channel 3: Messenger Lead Care */}
+                {/* Channel 3: Messenger conversation draft */}
                 <div className={styles.channelPreviewCard}>
                   <div className={styles.channelHeaderMaps}>
                     <span>💬 Phản hồi Inbox Khách</span>
-                    <span className={styles.channelBadgeGreen}>Gợi ý chuẩn xác</span>
+                    <span className={styles.channelBadgeGreen}>Chờ kiểm tra</span>
                   </div>
                   <div className={styles.channelCardBody}>
                     <p className={styles.channelSnippet}>
                       {currentScenario.tabs.inbox.haviReply}
                     </p>
                     <div className={styles.channelMeta}>
-                      <span>⚡ Phản hồi &lt; 10s</span>
-                      <span>📞 {currentScenario.tabs.inbox.capturedPhone}</span>
+                      <span>✍ Bản nháp có thể chỉnh sửa</span>
+                      <span>✓ Người dùng bấm gửi</span>
                     </div>
                   </div>
                 </div>
@@ -233,54 +233,41 @@ export function HeroCinematicShowcase({
             </div>
           )}
 
-          {/* STEP 3: Telegram alert illustration; no latency guarantee. */}
+          {/* STEP 3: Operational status overview. */}
           {activeStep === 2 && (
             <div className={styles.stepContentSlide} data-testid="step-content-2">
-              <div className={styles.telegramRadarStage}>
-                <div className={styles.telegramCardBox}>
-                  {/* Telegram header */}
-                  <div className={styles.tgHeader}>
-                    <div className={styles.tgHeaderLeft}>
-                      <span className={styles.tgIcon}>✈️</span>
+              <div className={styles.operationsRadarStage}>
+                <div className={styles.operationsCardBox}>
+                  <div className={styles.operationsHeader}>
+                    <div className={styles.operationsHeaderLeft}>
+                      <span className={styles.operationsIcon}>◎</span>
                       <div>
-                        <div className={styles.tgBotName}>Havi Hot Lead Radar Bot</div>
-                        <div className={styles.tgSub}>Minh hoạ cảnh báo từ webhook</div>
+                        <div className={styles.operationsTitle}>Trung tâm vận hành Havi</div>
+                        <div className={styles.operationsSubtitle}>Trạng thái từ API nền tảng</div>
                       </div>
                     </div>
-                    <span className={styles.tgTimeBadge}>Demo</span>
+                    <span className={styles.operationsTimeBadge}>Demo</span>
                   </div>
 
-                  {/* Telegram Message Body */}
-                  <div className={styles.tgBody}>
-                    <div className={styles.tgAlertHeader}>
-                      🔔 <strong>[HAVI HOT LEAD] CÓ KHÁCH CẦN TƯ VẤN GẤP!</strong>
+                  <div className={styles.operationsBody}>
+                    <div className={styles.operationsAlertHeader}>
+                      🔔 <strong>CÓ MỘT HỘI THOẠI CHƯA XỬ LÝ</strong>
                     </div>
-                    <div className={styles.tgLeadDetail}>
-                      <div>👤 <strong>Khách hàng:</strong> {currentScenario.tabs.inbox.badge || "Chị Khách Hàng"}</div>
-                      <div>📱 <strong>Số điện thoại:</strong> <span className={styles.tgPhoneHighlight}>{currentScenario.tabs.inbox.capturedPhone}</span></div>
-                      <div>💬 <strong>Nhu cầu:</strong> &ldquo;{currentScenario.tabs.inbox.customerMsg}&rdquo;</div>
-                      <div>📍 <strong>Kênh đến:</strong> Facebook Fanpage ({currentScenario.name})</div>
-                      <div>⚡ <strong>Trạng thái:</strong> AI đã trả lời &amp; bắt số điện thoại thành công</div>
+                    <div className={styles.operationsConversationDetail}>
+                      <div>👤 <strong>Người gửi:</strong> {currentScenario.tabs.inbox.badge || "Khách hàng"}</div>
+                      <div>💬 <strong>Nội dung:</strong> &ldquo;{currentScenario.tabs.inbox.customerMsg}&rdquo;</div>
+                      <div>📍 <strong>Kênh:</strong> Facebook Fanpage ({currentScenario.name})</div>
+                      <div>✍ <strong>Trạng thái:</strong> Có bản nháp, chờ người dùng kiểm tra</div>
                     </div>
 
                     {/* Action buttons */}
-                    <div className={styles.tgActionsGrid}>
-                      <a
-                        href="tel:0912345678"
-                        className={styles.tgCallBtn}
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        📞 BẤM GỌI ĐIỆN NGAY
-                      </a>
-                      <a
-                        href="https://zalo.me"
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.tgZaloBtn}
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        💬 BẤM MỞ CHAT ZALO
-                      </a>
+                    <div className={styles.operationsActionsGrid}>
+                      <button type="button" className={styles.operationsPrimaryButton}>
+                        MỞ HỘI THOẠI
+                      </button>
+                      <button type="button" className={styles.operationsSecondaryButton}>
+                        KIỂM TRA BẢN NHÁP
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -291,9 +278,9 @@ export function HeroCinematicShowcase({
                     <span className={styles.radarWave} />
                     <span className={styles.radarCenterIcon}>📡</span>
                   </div>
-                  <h4 className={styles.radarTitle}>Chuông Báo Rung <span className={styles.highlightText}>Dưới 3s</span></h4>
+                  <h4 className={styles.radarTitle}>Không Bỏ Sót <span className={styles.highlightText}>Việc Cần Làm</span></h4>
                   <p className={styles.radarDesc}>
-                    Khách nhắn tin ban đêm hay rạng sáng, AI tự động trực chat theo bảng giá tiệm, khéo léo lấy SĐT và bắn chuông ngay về máy chủ tiệm để không bao giờ bị rơi mất đơn.
+                    Havi gom hội thoại và trạng thái xử lý vào một nơi để đội ngũ biết việc nào mới, việc nào có bản nháp, đã gửi hay gửi thất bại.
                   </p>
                 </div>
               </div>

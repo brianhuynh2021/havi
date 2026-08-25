@@ -1,24 +1,80 @@
 # Havi
 
-> Multi-industry AI marketing for small shops and solo operators. Havi sells
-> outcomes, not tools.
+> **Nền tảng quản trị và vận hành mạng xã hội** dành cho doanh nghiệp và đội ngũ
+> social. Quản lý kênh, nội dung, lịch đăng, hội thoại và thành viên tại một nơi.
+>
+> *Mọi kênh trong tầm kiểm soát. Mọi hoạt động đều có thể truy vết. Social vận
+> hành nhẹ đầu hơn.*
+>
+> **Tầm nhìn:** trung tâm kiểm soát đáng tin cậy cho toàn bộ sự hiện diện và
+> hoạt động mạng xã hội của doanh nghiệp — *the trusted control plane for
+> business social media operations*. Chi tiết 5–10 năm ở
+> [ROADMAP §1b](docs/product/ROADMAP.md).
 
-Havi is an "AI marketing employee" for non-technical users such as spas, F&B
-shops, real-estate brokers, engineers, specialists, and small online sellers. The
-product is built around one closed-loop workflow:
+Havi quản trị **hệ thống social của bạn** — không quản trị mục tiêu kinh doanh
+của bạn. Cụ thể là chín thứ:
 
-1. **Capture raw material** in under 30 seconds: quick photos, voice notes, typed
-   notes, or future POS/webhook inputs.
-2. **AI content engine**: detect the industry, process media context, and use one
-   LLM call to generate several channel-specific drafts.
-3. **Distribution hub**: publish approved content through official platform APIs
-   at suitable local posting times.
-4. **Lead and care loop**: draft replies for owner approval, run CRM nudges, and
-   answer approved FAQ items only.
+| | |
+|---|---|
+| Tài khoản & kết nối social | Trạng thái kết nối, lỗi, cảnh báo cần xác thực lại |
+| Kho ảnh, video, nội dung | Thư viện dùng lại được, không phải tải lên mỗi lần |
+| Lịch đăng & trạng thái xuất bản | Cái gì lên lúc nào, cái gì đã lên, cái gì hỏng |
+| Inbox, bình luận, hội thoại | Mọi kênh về một danh sách |
+| Thành viên, vai trò, quyền hạn | Ai được soạn, ai được duyệt, ai được đăng |
+| Quy trình soạn → duyệt → đăng | Không gì lên kênh mà chưa qua mắt người |
+| Lịch sử hoạt động & audit log | Ai làm gì, lúc nào |
+| Báo cáo vận hành đa kênh | Số liệu vận hành, không phải lời hứa kinh doanh |
 
-Reports should measure business outcomes: price inquiries, visits, returning
-customers, and published-post reliability. Vanity metrics such as likes and reach
-are secondary.
+Hết. Không kéo sang mục tiêu kinh doanh, lộ trình tăng trưởng, hay chứng minh
+doanh thu.
+
+## Vai trò của AI
+
+AI ở đây là **tiện ích hỗ trợ, không phải định vị**: gợi ý caption, điều chỉnh
+nội dung theo từng nền tảng, tóm tắt hội thoại, phân loại inbox, phát hiện nội
+dung trùng, cảnh báo bất thường, gợi ý câu trả lời để con người duyệt.
+
+AI **không** tự đặt mục tiêu, **không** hứa marketing, và **không** tự quyết
+định thay doanh nghiệp.
+
+## Những gì Havi không làm
+
+Mỗi mục dưới đây từng tồn tại trong sản phẩm rồi bị gỡ. Đưa lại là một quyết
+định sản phẩm, không phải một lần refactor:
+
+* **Không tự đăng khi chưa ai duyệt.** Quy trình soạn → duyệt → đăng là ràng
+  buộc, không phải tuỳ chọn.
+* **Không dựng hay sửa video.** Người dùng quen CapCut hơn bất cứ trình sửa nào
+  chạy trong trình duyệt. Havi nhận clip đã xong và đăng.
+* **Không đặt mục tiêu hộ.** Không có Goal, Roadmap, Evidence, hay "tiến độ mục
+  tiêu" trên dashboard.
+* **Không hứa khách đến, doanh thu, hay tăng trưởng.** Havi báo cáo việc nó đã
+  làm; kết quả kinh doanh thuộc về doanh nghiệp.
+* **Không chạy quảng cáo, không tiêu tiền của bạn.** Havi *có* nút "🚀 Quảng bá
+  bài viết", nhưng nó kiểm tra bài, chuẩn bị dữ liệu rồi **mở đúng trang trên
+  Meta/TikTok/Google** để bạn tự đặt ngân sách và tự thanh toán. Havi theo dõi
+  ở chế độ chỉ đọc, không tự tạo, không đổi ngân sách, không bật/tắt quảng cáo.
+  Ranh giới đầy đủ ở [ROADMAP §1c](docs/product/ROADMAP.md).
+
+Nếu còn dùng từ **"chiến dịch"**, nó chỉ có nghĩa là *một nhóm nội dung được tổ
+chức cùng nhau* — không phải cam kết tạo ra kết quả kinh doanh.
+
+### Bài kiểm cho mọi tính năng mới
+
+> Nó có giúp doanh nghiệp **kiểm soát social tốt hơn**, **giảm thao tác**, hoặc
+> **giảm nguy cơ bỏ sót** không?
+
+Không trả lời được câu đó thì nó không thuộc Havi — kể cả khi nó hay.
+
+## Chỉ số
+
+Havi **không có North Star hướng người dùng**. Sản phẩm không bắt ai theo đuổi
+một con số.
+
+Đội vận hành theo dõi các chỉ số sức khoẻ **nội bộ**: tỷ lệ đăng thành công, số
+kết nối đang hoạt động, độ trễ đồng bộ, số bài đăng thất bại, số nội dung chờ
+duyệt, số hội thoại chưa xử lý, thời gian xử lý lỗi, tỷ lệ tiếp tục sử dụng, số
+workspace trả phí. Đây là telemetry, không phải triết lý sản phẩm.
 
 ## Repository Layout
 
@@ -30,7 +86,6 @@ runtime boundary but live in one repository.
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 🏛️ Master Architecture Blueprint & Mermaid Sequence Diagrams |
 | [`apps/web/`](apps/web/) | Next.js frontend |
 | [`apps/backend/`](apps/backend/) | FastAPI API, Celery worker, scheduler, and domain core |
-| [`prototypes/`](prototypes/) | High-fidelity `.dc.html` design prototypes plus `support.js` |
 | [`docs/`](docs/) | Handoff, product, and architecture documentation |
 
 ## Local Development
@@ -61,7 +116,6 @@ Use these pre-configured test credentials to sign in directly at `http://localho
 | **Chị Hương** | `huong@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
 | **Chị Mai** | `testuser@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
 | **Mai Inbox** | `mai.inbox@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
-| **Mai Leads** | `mai.leads@havi.vn` | `matkhau123` | Spa & Beauty | Active Workspace |
 
 ---
 
@@ -132,13 +186,13 @@ The web app runs at <http://localhost:3000>.
 
 | Route | Local URL | Description |
 |---|---|---|
-| **Landing Page** | [http://localhost:3000/gioi-thieu](http://localhost:3000/gioi-thieu) | Public marketing landing page with interactive prompt sandbox and industry showcase |
-| **Onboarding** | [http://localhost:3000/onboarding](http://localhost:3000/onboarding) | Three-step shop setup wizard (Industry selection, channel connection, AI setup) |
+| **Landing Page** | [http://localhost:3000/gioi-thieu](http://localhost:3000/gioi-thieu) | Public product overview and workflow showcase |
+| **Onboarding** | [http://localhost:3000/onboarding](http://localhost:3000/onboarding) | Business setup and channel connection |
 | **Sign Up** | [http://localhost:3000/dang-ky](http://localhost:3000/dang-ky) | Email & password registration screen |
 | **Sign In** | [http://localhost:3000/dang-nhap](http://localhost:3000/dang-nhap) | Email & password login screen |
 | **Content Creation** | [http://localhost:3000/noi-dung](http://localhost:3000/noi-dung) | Raw material input, AI draft generation, and 1-click approval |
 | **Calendar** | [http://localhost:3000/lich-dang](http://localhost:3000/lich-dang) | Vietnam-timezone schedule grid with ISO offset rescheduling |
-| **Reports** | [http://localhost:3000/bao-cao](http://localhost:3000/bao-cao) | Real workspace business outcomes, attribution, and published stats |
+| **Reports** | [http://localhost:3000/bao-cao](http://localhost:3000/bao-cao) | Publishing and conversation operations from workspace data |
 | **Internal Operations** | [http://localhost:3000/noi-bo/van-hanh](http://localhost:3000/noi-bo/van-hanh) | Pilot operational metrics (job latency, token usage, error rates) |
 
 ## Checks Before Commit
@@ -192,7 +246,6 @@ pushes to `main` / `dev`:
 - [docs/handoff/DEPLOYMENT.md](docs/handoff/DEPLOYMENT.md) — configuration,
   deployment, Facebook setup, quota, rate limits, required processes, and beta
   checklist
-- [docs/handoff/HANDOFF.md](docs/handoff/HANDOFF.md) — design-to-build handoff
 - [docs/product/ROADMAP.md](docs/product/ROADMAP.md) — product roadmap
 - [docs/architecture/SYSTEM_ARCHITECTURE.md](docs/architecture/SYSTEM_ARCHITECTURE.md)
   — architecture and process boundaries
@@ -200,20 +253,6 @@ pushes to `main` / `dev`:
   technical specification
 - [docs/architecture/REPOSITORY_STRATEGY.md](docs/architecture/REPOSITORY_STRATEGY.md)
   — repository strategy
-
-## Prototypes
-
-The `.dc.html` files are high-fidelity design references. They are not production
-code to copy.
-
-| File | Screen |
-|---|---|
-| `Havi - MVP App.dc.html` | Main product app |
-| `Havi - Onboarding.dc.html` | Three-step onboarding |
-| `Havi - Dang Nhap.dc.html` | Login, signup, OTP, password reset |
-| `Havi - Landing Page.dc.html` | Public landing page |
-| `Havi - AI Marketing.dc.html` | Pitch/demo flow |
-| `Havi - Kien Truc He Thong.dc.html` | Architecture reference |
 
 ## Tech Stack
 

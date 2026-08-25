@@ -25,7 +25,10 @@ function clipAsset(overrides: Record<string, unknown> = {}) {
   return {
     id: "asset-1",
     url: "https://storage.havi.vn/clip.mp4",
-    aspect_ratio: "9:16",
+    // Kích thước pixel thật, không phải nhãn: khung hình giờ tính từ đây.
+    width: 720,
+    height: 1648,
+    aspect_ratio: "720:1648",
     duration_seconds: 20,
     has_audio: true,
     eligible_channels: ["reels", "tiktok"],
@@ -66,21 +69,20 @@ describe("VideoBranch (nhánh Video của luồng Đăng bài)", () => {
 
     expect(await screen.findByText(/Facebook Reels: đăng được/)).toBeInTheDocument();
     expect(screen.getByText(/YouTube Shorts: chưa hợp/)).toBeInTheDocument();
-    expect(screen.getByText(/khung 9:16/)).toBeInTheDocument();
+    // 720×1648 phải đọc ra "khung dọc 20.6:9", không phải "720:1648".
+    expect(screen.getByText(/khung dọc 20.6:9/)).toBeInTheDocument();
   });
 
-  it("clip không hợp Reels thì chặn nút gửi và nói rõ lý do", async () => {
+  it("clip quay ngang thì bảng kênh báo chưa hợp cả ba", async () => {
     render(<VideoBranch />);
     await waitFor(() => expect(listVideoPosts).toHaveBeenCalled());
 
     await uploadAClip(
-      clipAsset({ aspect_ratio: "16:9", eligible_channels: [] }),
+      clipAsset({ width: 1920, height: 1080, aspect_ratio: "16:9", eligible_channels: [] }),
     );
 
-    expect(
-      await screen.findByRole("button", { name: /Đưa vào hàng chờ duyệt/ }),
-    ).toBeDisabled();
-    expect(screen.getByRole("alert")).toHaveTextContent(/9:16/);
+    expect(await screen.findByText(/Facebook Reels: chưa hợp/)).toBeInTheDocument();
+    expect(screen.getByText(/khung ngang 16:9/)).toBeInTheDocument();
   });
 
   it("backend từ chối clip thì hiện HẾT lý do, không chỉ lý do đầu", async () => {
@@ -90,13 +92,31 @@ describe("VideoBranch (nhánh Video của luồng Đăng bài)", () => {
 
     createVideoPost.mockResolvedValue({
       ok: false,
-      message: "Facebook Reels cần khung hình 9:16, video này là 16:9. Reels chỉ nhận video tối đa 90 giây",
+      message:
+        "Facebook Reels cần khung dọc hoặc vuông, video này là khung ngang 16:9. " +
+        "Facebook Reels chỉ nhận video tối đa 90 giây, video này 120 giây",
     });
 
     await userEvent.click(screen.getByRole("button", { name: /Đưa vào hàng chờ duyệt/ }));
 
-    const alert = await screen.findByText(/Facebook Reels cần khung hình 9:16/);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/khung ngang 16:9/);
     expect(alert).toHaveTextContent(/tối đa 90 giây/);
+    // Hai lý do là hai dòng riêng, không phải một câu dài dính liền.
+    expect(alert.querySelectorAll("li")).toHaveLength(2);
+  });
+
+  it("lý do cũ biến mất khi chọn clip khác", async () => {
+    render(<VideoBranch />);
+    await waitFor(() => expect(listVideoPosts).toHaveBeenCalled());
+    await uploadAClip();
+
+    createVideoPost.mockResolvedValue({ ok: false, message: "Clip quay ngang" });
+    await userEvent.click(screen.getByRole("button", { name: /Đưa vào hàng chờ duyệt/ }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    await uploadAClip();
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
 
   it("video đang chờ xác nhận KHÔNG được hiện là đã đăng", async () => {

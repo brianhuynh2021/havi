@@ -17,7 +17,7 @@ Hai ràng buộc, hai vai trò khác nhau:
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index, UniqueConstraint
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import Channel, PublishFailureKind, VideoPublishAttemptStatus
@@ -63,4 +63,6 @@ class VideoPublishAttempt(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     #: Số lần đã đối soát. Dùng để dừng hẳn thay vì kiểm mãi một video đã mất.
     reconcile_attempts: Mapped[int] = mapped_column(default=0)
 
-    settled_at: Mapped[datetime | None] = mapped_column(default=None, nullable=True)
+    settled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None, nullable=True
+    )

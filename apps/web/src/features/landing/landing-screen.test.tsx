@@ -121,12 +121,12 @@ describe("LandingScreen", () => {
     expect(step1El).toBeInTheDocument();
     expect(within(step1El).getByText(/TikTok Video 9:16/i)).toBeInTheDocument();
 
-    // Click step 3: Theo dõi kết quả
-    const step3Btn = screen.getByRole("button", { name: /Bước 3: Theo dõi kết quả/i });
+    // Click step 3: Theo dõi vận hành
+    const step3Btn = screen.getByRole("button", { name: /Bước 3: Theo dõi vận hành/i });
     await user.click(step3Btn);
     const step2El = screen.getByTestId("step-content-2");
     expect(step2El).toBeInTheDocument();
-    expect(within(step2El).getByText(/Havi Hot Lead Radar Bot/i)).toBeInTheDocument();
+    expect(within(step2El).getByText(/Trung tâm vận hành Havi/i)).toBeInTheDocument();
   });
 
   it("bấm nút Xem Video Thực Chiến 60s thì mở video modal và có thể đóng lại", async () => {

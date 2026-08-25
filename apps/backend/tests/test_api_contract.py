@@ -57,7 +57,7 @@ def test_http_request_log_la_json_va_khong_log_query(client: TestClient, caplog)
         "/calendar",
         "/connections",
         "/inbox",
-        "/leads",
+        "/analytics/dashboard",
         "/analytics/summary",
         "/analytics/operations",
         "/billing/subscription",

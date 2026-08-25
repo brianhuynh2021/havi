@@ -75,9 +75,25 @@ type ClipDraft = {
   previewUrl: string;
 };
 
+/**
+ * Khung hình nói bằng hình dạng, không bằng số pixel.
+ *
+ * "khung 720:1648" không cho biết clip dọc hay ngang — chủ tiệm phải tự chia
+ * trong đầu. Quy về dạng `:9` thì đọc được ngay: 20.6:9 là dọc, 16:9 là ngang.
+ * Khớp với `describe_shape` ở `domain/policies/video_constraints.py`.
+ */
+function describeShape(width?: number | null, height?: number | null): string | null {
+  if (!width || !height) return null;
+  const ratio = width / height;
+  if (ratio < 1) return `khung dọc ${+(((1 / ratio) * 9).toFixed(1))}:9`;
+  if (ratio === 1) return "khung vuông 1:1";
+  return `khung ngang ${+((ratio * 9).toFixed(1))}:9`;
+}
+
 function describeClip(asset: MediaAsset): string {
   const parts: string[] = [];
-  if (asset.aspect_ratio) parts.push(`khung ${asset.aspect_ratio}`);
+  const shape = describeShape(asset.width, asset.height);
+  if (shape) parts.push(shape);
   if (typeof asset.duration_seconds === "number") {
     parts.push(`${Math.round(asset.duration_seconds)} giây`);
   }
@@ -94,6 +110,8 @@ export function VideoBranch() {
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  /** Lý do backend từ chối clip. Rỗng = chưa hỏi, hoặc clip hợp lệ. */
+  const [blockReasons, setBlockReasons] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
@@ -179,6 +197,7 @@ export function VideoBranch() {
       return;
     }
 
+    setBlockReasons([]);
     setDraft({ asset: result.data, previewUrl });
   }
 
@@ -192,12 +211,14 @@ export function VideoBranch() {
     setSubmitting(false);
 
     if (!result.ok) {
-      // Backend trả hết lý do một lượt — hiện nguyên văn để sửa một lần.
-      setError(result.message);
+      // Backend trả hết lý do một lượt — hiện nguyên văn để sửa một lần, ngay
+      // cạnh clip chứ không phải ở dải lỗi trên cùng màn hình.
+      setBlockReasons(result.message.split(". ").filter(Boolean));
       return;
     }
 
     setError(null);
+    setBlockReasons([]);
     resetDraft();
     setPosts((prev) => [result.data, ...prev]);
     addToast({
@@ -268,7 +289,6 @@ export function VideoBranch() {
     .reverse();
 
   const eligibleChannels = draft?.asset.eligible_channels ?? [];
-  const canPostToReels = eligibleChannels.includes("reels" as never);
 
   return (
     <>
@@ -338,11 +358,7 @@ export function VideoBranch() {
               />
 
               <div className={styles.draftActions}>
-                <Button
-                  variant="primary"
-                  onClick={onSubmit}
-                  disabled={submitting || !canPostToReels}
-                >
+                <Button variant="primary" onClick={onSubmit} disabled={submitting}>
                   {submitting ? "Đang lưu…" : "Đưa vào hàng chờ duyệt"}
                 </Button>
                 <Button variant="outline" onClick={resetDraft} disabled={submitting}>
@@ -350,11 +366,15 @@ export function VideoBranch() {
                 </Button>
               </div>
 
-              {!canPostToReels && draft.asset.aspect_ratio ? (
-                <p className={styles.blockReason} role="alert">
-                  Clip này chưa đăng được lên Facebook Reels. Reels cần khung dọc 9:16
-                  và độ dài từ 3 đến 90 giây.
-                </p>
+              {blockReasons.length ? (
+                <div className={styles.blockReason} role="alert">
+                  <strong>Clip này chưa đăng được:</strong>
+                  <ul>
+                    {blockReasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
             </div>
           </div>

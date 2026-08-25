@@ -17,19 +17,16 @@ Ba tính chất bắt buộc của mọi endpoint ở đây, vì chúng public v
 import hashlib
 import hmac
 import logging
-import uuid
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
-from pydantic import Field
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
-from api.deps import InboxServiceDep, SalesServiceDep, SettingsDep, WorkspaceDep
+from api.deps import InboxServiceDep, SettingsDep, WorkspaceDep
 from core.enums import InboxItemType, Platform
 from core.events import EventLogEntry
 from core.schemas import HaviModel
-from domain.policies.sales_attribution import PosOrder
 
 logger = logging.getLogger(__name__)
 
@@ -250,70 +247,3 @@ def _iter_inquiries(payload: dict):
                 sender_id=str(from_id) if from_id else None,
                 item_type=InboxItemType.COMMENT,
             )
-
-
-class PosOrderPayload(HaviModel):
-    """Payload nhận đơn hàng / hóa đơn từ máy POS hoặc phần mềm bán hàng."""
-
-    order_id: str = Field(min_length=1, max_length=128, description="Mã đơn hàng POS")
-    customer_name: str = Field(default="Khách tại quầy", max_length=255)
-    customer_phone: str | None = None
-    amount_vnd: int = Field(
-        gt=0, le=1_000_000_000, description="Số tiền thanh toán phải > 0 VNĐ và <= 1 tỷ VNĐ"
-    )
-    source: str = Field(default="pos", max_length=64)
-    items: list[str] = Field(default_factory=list)
-
-
-class PosIngestResponse(HaviModel):
-    success: bool
-    lead_id: str
-    customer_name: str
-    amount_vnd: int
-    stage: str
-
-
-@router.post(
-    "/pos",
-    response_model=PosIngestResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Tiếp nhận đơn hàng POS bán hàng tại quầy (Station 5)",
-)
-async def ingest_pos_webhook(
-    payload: PosOrderPayload,
-    workspace_id: str,
-    sales_service: SalesServiceDep,
-    workspace_dep: WorkspaceDep,
-) -> PosIngestResponse:
-    """Tiếp nhận đơn hàng từ máy POS, gắn doanh thu vào Lead và chuyển sang stage WON."""
-    try:
-        ws_uuid = uuid.UUID(workspace_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="workspace_id không hợp lệ.",
-        ) from None
-
-    # Khóa chặt Tenant Isolation (P0 Fix): Không cho phép inject doanh thu chéo workspace
-    if ws_uuid != workspace_dep:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Không có quyền nạp đơn hàng vào workspace của tài khoản khác.",
-        )
-
-    order = PosOrder(
-        order_id=payload.order_id,
-        customer_name=payload.customer_name,
-        customer_phone=payload.customer_phone,
-        amount_vnd=payload.amount_vnd,
-        source=payload.source,
-        items=payload.items,
-    )
-    lead = await sales_service.ingest_pos_order(workspace_id=ws_uuid, order=order)
-    return PosIngestResponse(
-        success=True,
-        lead_id=str(lead.id),
-        customer_name=lead.name,
-        amount_vnd=lead.revenue_vnd or payload.amount_vnd,
-        stage=lead.stage.value if hasattr(lead.stage, "value") else str(lead.stage),
-    )

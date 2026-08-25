@@ -10,7 +10,7 @@ SĐT (`PUT /auth/phone`) là tuỳ chọn, chỉ để nhận bản nháp/nhắc
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
-from api.deps import AuthDep, AuthServiceDep
+from api.deps import AuthDep, AuthServiceDep, DbSessionDep
 from api.rate_limit import limit_by_ip
 from application.services.auth_service import (
     CannotDeleteUserWithOwnedWorkspaces,
@@ -241,11 +241,29 @@ async def logout(
 
 
 @router.get("/me", response_model=CurrentUser)
-async def me(auth: AuthDep, auth_service: AuthServiceDep) -> CurrentUser:
+async def me(auth: AuthDep, auth_service: AuthServiceDep, session: DbSessionDep) -> CurrentUser:
     user = await auth_service.get_user_by_id(auth.user_id)
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy user")
-    return CurrentUser.model_validate(user)
+
+    profile = CurrentUser.model_validate(user)
+
+    # Kèm vai và quyền của workspace đang active, để UI ẩn đúng những nút người
+    # này không bấm được. Backend vẫn kiểm lại ở từng endpoint.
+    if user.active_workspace_id:
+        from adapters.persistence.workspace_member_repository import (
+            WorkspaceMemberRepository,
+        )
+        from domain.policies.permissions import ROLE_PERMISSIONS
+
+        member = await WorkspaceMemberRepository(session).get(
+            workspace_id=user.active_workspace_id, user_id=user.id
+        )
+        if member is not None:
+            profile.role = member.role
+            profile.permissions = sorted(ROLE_PERMISSIONS.get(member.role, frozenset()))
+
+    return profile
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

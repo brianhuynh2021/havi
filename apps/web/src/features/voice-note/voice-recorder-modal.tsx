@@ -181,7 +181,7 @@ function VoiceRecorderModalContent({
               onClick={handleGenerateDirect}
               data-testid="btn-voice-generate"
             >
-              {isGenerating ? "⚡ Đang viết bài…" : "⚡ Để Nhân viên AI viết bài ngay (30s)"}
+              {isGenerating ? "⚡ Đang viết bài…" : "Để Havi viết bài từ lời này"}
             </Button>
             <Button
               variant="outline"

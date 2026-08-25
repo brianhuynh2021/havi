@@ -334,3 +334,42 @@ async def _onboard(client: AsyncClient, email: str) -> dict:
     )
     assert refreshed.status_code == 200, refreshed.text
     return {"Authorization": f"Bearer {refreshed.json()['access_token']}"}
+
+
+class TestFaqFailClosed:
+    """FAQ tự động là đường DUY NHẤT trong Havi đi tới người ngoài không qua mắt chủ tiệm.
+
+    Nói sai giờ mở cửa hay một cam kết dịch vụ với khách thì không rút lại được,
+    nên mọi trạng thái không rõ ràng phải nghiêng về "không gửi".
+    """
+
+    def test_thieu_co_approved_thi_khong_tu_tra_loi(self):
+        """Bản trước dùng `entry.get("approved", True)` — thiếu trường là gửi luôn.
+
+        Một hàng FAQ đến từ import, migration, hay client cũ không khai
+        `approved` sẽ được gửi thẳng tới khách mà không ai từng đọc nó.
+        """
+        from application.services.inbox_service import _match_approved_faq
+
+        faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h"}]
+        assert _match_approved_faq(faqs, "Mấy giờ mở cửa?") is None
+
+    def test_approved_false_thi_khong_tu_tra_loi(self):
+        from application.services.inbox_service import _match_approved_faq
+
+        faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h", "approved": False}]
+        assert _match_approved_faq(faqs, "Mấy giờ mở cửa?") is None
+
+    def test_gia_tri_khong_phai_boolean_cung_bi_tu_choi(self):
+        """`"true"`, `1`, `"yes"` đều KHÔNG phải là chủ tiệm đã bấm duyệt."""
+        from application.services.inbox_service import _match_approved_faq
+
+        for value in ("true", 1, "yes", [], {}, None):
+            faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h", "approved": value}]
+            assert _match_approved_faq(faqs, "Mấy giờ mở cửa?") is None, value
+
+    def test_chi_approved_true_that_su_moi_gui(self):
+        from application.services.inbox_service import _match_approved_faq
+
+        faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h", "approved": True}]
+        assert _match_approved_faq(faqs, "Mấy giờ mở cửa?") == "8h–20h"

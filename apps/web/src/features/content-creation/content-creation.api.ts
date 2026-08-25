@@ -408,14 +408,21 @@ export async function approveAll(
   postsPerDay = 1,
 ): Promise<Result<BulkApproveOutcome>> {
   try {
-    const { data, error } = await apiClient.POST("/content/approve-all", {
+    const { data, error, response } = await apiClient.POST("/content/approve-all", {
       body: {
         content_item_ids: itemIds,
         publish_now: publishNow,
         posts_per_day: postsPerDay,
       },
     });
-    if (error || !data) return { ok: false, message: GENERIC_ERROR };
+    if (error || !data) {
+      // 403 = vai không được duyệt. Nuốt thành lỗi chung là người dùng bấm lại
+      // mãi mà không hiểu vì sao — thông báo từ backend đã nói rõ cần vai nào.
+      if (response?.status === 403) {
+        return { ok: false, message: detailToMessage(error, GENERIC_ERROR) };
+      }
+      return { ok: false, message: GENERIC_ERROR };
+    }
     return {
       ok: true,
       data: { approved: data.approved ?? [], rejected: data.rejected ?? [] },

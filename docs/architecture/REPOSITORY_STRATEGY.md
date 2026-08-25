@@ -238,7 +238,7 @@ becomes genuinely independent.
 | Landing page, auth UI, onboarding, main app | `apps/web` |
 | Auth, content CRUD, approval, connected accounts | `apps/backend/api` |
 | AI content generation, listening, reply drafting | `apps/backend/worker` |
-| Scheduled publishing, CRM reminders | `apps/backend/scheduler` |
+| Scheduled publishing and provider health checks | `apps/backend/scheduler` |
 
 Mandatory Havi constraints:
 

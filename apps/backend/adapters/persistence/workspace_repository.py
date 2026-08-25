@@ -45,7 +45,14 @@ class WorkspaceRepository:
         )
         return list(result.scalars().all())
 
-    async def create(self, *, name: str, industry: Industry, owner_user_id: UUID) -> Workspace:
+    async def create(
+        self,
+        *,
+        name: str,
+        industry: Industry,
+        owner_user_id: UUID,
+        organization_id: UUID | None = None,
+    ) -> Workspace:
         # Đồng hồ dùng thử chạy từ lúc tạo workspace, và mốc được ghi ngay ở đây.
         # Tính lười ("created_at + 14 ngày") thì mọi chỗ đọc phải nhớ cùng một
         # công thức, và đổi độ dài dùng thử sau này sẽ lặng lẽ gia hạn cho cả
@@ -55,6 +62,7 @@ class WorkspaceRepository:
             name=name,
             industry=industry,
             owner_user_id=owner_user_id,
+            organization_id=organization_id,
             trial_ends_at=trial_end_for(now),
         )
         self._session.add(workspace)

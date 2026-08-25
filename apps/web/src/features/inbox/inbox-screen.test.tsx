@@ -1,0 +1,80 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { writeTokens } from "@/lib/auth/token-store";
+import { InboxScreen } from "./inbox-screen";
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+const inboxItem = {
+  id: "inbox-1",
+  workspace_id: "w1",
+  platform: "facebook",
+  external_thread_id: "thread-1",
+  external_message_id: "message-1",
+  author_name: "Minh Anh",
+  content: "Shop còn lịch chiều nay không?",
+  status: "drafted",
+  ai_suggested_reply: "Dạ shop còn lịch lúc 15:00 ạ.",
+  created_at: "2026-08-25T08:00:00Z",
+  updated_at: "2026-08-25T08:00:00Z",
+};
+
+beforeEach(() => {
+  writeTokens({
+    accessToken: "at",
+    refreshToken: "rt",
+    activeWorkspaceId: "w1",
+    needsOnboarding: false,
+  });
+});
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("InboxScreen", () => {
+  it("cho phép kiểm tra, sửa rồi chủ động gửi bản nháp", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const request = input instanceof Request ? input : new Request(String(input), init);
+        const url = new URL(request.url);
+
+        if (request.method === "GET" && url.pathname.endsWith("/inbox")) {
+          return jsonResponse({ items: [inboxItem], total: 1 });
+        }
+        if (request.method === "POST" && url.pathname.endsWith("/inbox/inbox-1/reply")) {
+          return jsonResponse({ ...inboxItem, status: "sent", ai_suggested_reply: "Dạ shop còn lịch lúc 16:00 ạ." });
+        }
+        return jsonResponse({ detail: "not found" }, 404);
+      },
+    );
+
+    render(<InboxScreen />);
+
+    expect(await screen.findByText("Shop còn lịch chiều nay không?")).toBeInTheDocument();
+    const draft = screen.getByLabelText(/Bản nháp trả lời/);
+    fireEvent.change(draft, { target: { value: "Dạ shop còn lịch lúc 16:00 ạ." } });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi trả lời" }));
+
+    await screen.findByText("Đã trả lời");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    const replyRequest = fetchMock.mock.calls[1]?.[0];
+    expect(replyRequest).toBeInstanceOf(Request);
+    expect(await (replyRequest as Request).clone().json()).toEqual({
+      text: "Dạ shop còn lịch lúc 16:00 ạ.",
+    });
+  });
+
+  it("hiển thị trạng thái trống trung thực", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ items: [], total: 0 }));
+
+    render(<InboxScreen />);
+
+    expect(await screen.findByText("Chưa có hội thoại")).toBeInTheDocument();
+    expect(screen.getByText(/Hội thoại mới từ các kênh/)).toBeInTheDocument();
+  });
+});

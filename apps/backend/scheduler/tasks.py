@@ -40,54 +40,6 @@ def refresh_platform_tokens() -> None:
     logger.info("refresh_platform_tokens: Scheduled platform token health check completed.")
 
 
-@celery_app.task(name="havi.scheduler.crm_lifecycle_nudges")
-def crm_lifecycle_nudges() -> int:
-    """Soạn tin nhắc 14 / 30 ngày cho khách hàng cũ. Luôn tạo `crm_nudge` ở `pending_approval`."""
-    from adapters.persistence.brand_profile_repository import BrandProfileRepository
-    from adapters.persistence.crm_nudge_repository import CrmNudgeRepository
-    from adapters.persistence.db import session_scope
-    from adapters.persistence.event_log_repository import EventLogRepository
-    from adapters.persistence.workspace_repository import WorkspaceRepository
-    from application.services.crm_nudge_service import CrmNudgeService
-
-    async def _run() -> int:
-        total_created = 0
-        async with session_scope() as session:
-            ws_repo = WorkspaceRepository(session)
-            nudge_repo = CrmNudgeRepository(session)
-            profile_repo = BrandProfileRepository(session)
-            event_repo = EventLogRepository(session)
-            service = CrmNudgeService(
-                nudge_repo=nudge_repo,
-                workspace_repo=ws_repo,
-                profile_repo=profile_repo,
-                event_repo=event_repo,
-            )
-            workspaces = await ws_repo.list_all()
-            for ws in workspaces:
-                nudges = await service.scan_and_generate_nudges(
-                    workspace_id=ws.id, inactive_days=30
-                )
-                total_created += len(nudges)
-        return total_created
-
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop and loop.is_running():
-        import concurrent.futures
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            total = pool.submit(asyncio.run, _run()).result()
-    else:
-        total = asyncio.run(_run())
-
-    logger.info("crm_lifecycle_nudges: Generated %d new re-engagement nudge drafts", total)
-    return total
-
-
 @celery_app.task(name="havi.scheduler.poll_engagement")
 def poll_engagement() -> None:
     """Chụp engagement snapshot của bài đã đăng để dựng số cho tab Báo cáo."""

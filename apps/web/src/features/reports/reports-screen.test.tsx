@@ -28,7 +28,7 @@ function renderReports() {
   );
 }
 
-function mockReports() {
+function mockReports(summaryOverrides: Record<string, number> = {}) {
   const asked: string[] = [];
   vi.spyOn(globalThis, "fetch").mockImplementation(
     async (input: RequestInfo | URL) => {
@@ -36,12 +36,11 @@ function mockReports() {
       asked.push(url.pathname);
       if (url.pathname.endsWith("/summary")) {
         return jsonResponse({
-          price_inquiries: 0,
-          won_leads: 0,
-          returning_customers: 0,
           published_posts: 5,
-          new_leads: 0,
-          lead_won_rate: 0,
+          inbox_items: 2,
+          replies_sent: 1,
+          failed_posts: 0,
+          ...summaryOverrides,
           change_vs_previous_period: {},
         });
       }
@@ -79,7 +78,7 @@ function mockReports() {
       return jsonResponse([
         {
           channel: "facebook_page",
-          customers: 5,
+          posts: 5,
           share: 1,
           note: "Tạm tính theo bài đã đăng",
         },
@@ -104,11 +103,12 @@ describe("ReportsScreen", () => {
 
     renderReports();
 
-    expect(await screen.findByText("5")).toBeInTheDocument();
+    // "5" xuất hiện ở cả thẻ "Việc Havi đã làm" lẫn ô thống kê — đúng số liệu
+    // thật từ API, nên khẳng định số lần xuất hiện thay vì đòi duy nhất một.
+    expect((await screen.findAllByText("5")).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Bài đã đăng")).toBeInTheDocument();
-    expect(screen.getByText("Khách tiềm năng")).toBeInTheDocument();
+    expect(screen.getAllByText("Hội thoại đã nhận").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Facebook Page").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("100%").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Khai giảng khóa Lập trình Web/i)).toBeInTheDocument();
     await waitFor(() =>
       expect(asked).toEqual(
@@ -127,12 +127,10 @@ describe("ReportsScreen", () => {
         const url = new URL(input instanceof Request ? input.url : String(input));
         if (url.pathname.endsWith("/summary")) {
           return jsonResponse({
-            price_inquiries: 0,
-            won_leads: 0,
-            returning_customers: 0,
             published_posts: 0,
-            new_leads: 0,
-            lead_won_rate: 0,
+            inbox_items: 0,
+            replies_sent: 0,
+            failed_posts: 0,
             change_vs_previous_period: {},
           });
         }
@@ -166,5 +164,22 @@ describe("ReportsScreen", () => {
       /không kết nối được/i,
     );
     expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
+  });
+
+  it("chưa có dữ liệu thì nói thẳng, không hiện số liệu mẫu", async () => {
+    mockReports({ published_posts: 0, inbox_items: 0 });
+
+    renderReports();
+
+    expect(await screen.findByText(/CHƯA ĐỦ DỮ LIỆU/)).toBeInTheDocument();
+
+    // Ba lời hứa hard-code của bản trước, không cái nào được đo:
+    //   "~N giờ Havi đã gánh vác"  — nhân 1,5 giờ/bài, và Math.max(1,…) khiến
+    //                                nó hiện "~1 giờ" cả khi chưa có bài nào
+    //   "< 10 giây phản hồi"        — chưa bao giờ đo tốc độ trả lời
+    //   "100% đúng giọng thương hiệu" — chưa bao giờ chấm giọng văn
+    expect(screen.queryByText(/đã gánh vác/)).toBeNull();
+    expect(screen.queryByText(/10 giây/)).toBeNull();
+    expect(screen.queryByText(/giọng văn thương hiệu/)).toBeNull();
   });
 });

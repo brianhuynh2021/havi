@@ -141,11 +141,6 @@ class Settings(BaseSettings):
     # Phần đuôi của file xác minh Zalo yêu cầu đặt ở gốc domain, ví dụ
     # `zalo_verifierAbC123.html` thì đây là `AbC123.html`.
     zalo_verifier_suffix: str = ""
-    # Telegram Bot — chuông báo Hot Lead. Rỗng ở local nghĩa là chỉ ghi log;
-    # `_force_real_telegram_outside_local` bên dưới chặn cấu hình rỗng ở
-    # staging/production.
-    telegram_bot_token: str = ""
-    telegram_default_chat_id: str = ""
     # Cổng thanh toán tự động VietQR & PayOS
     payos_client_id: str = ""
     payos_api_key: str = ""
@@ -190,26 +185,6 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"HAVI_USE_FAKE_PUBLISHER=true không được phép khi HAVI_ENV={self.env}. "
                 "Fake publisher chỉ dùng ở local; staging/production phải đăng thật."
-            )
-        return self
-
-    @model_validator(mode="after")
-    def _reject_mock_telegram_outside_local(self) -> "Settings":
-        """Token Telegram giả không được sống ngoài local.
-
-        Khác với fake publisher: thiếu cấu hình Telegram chỉ nghĩa là *tính năng
-        tắt*, và `TelegramNotifier` nói thật về điều đó — trả `False` và ghi log
-        cảnh báo kèm nguyên nội dung lẽ ra gửi. Nên không chặn khởi động: một cơ
-        sở không dùng Telegram vẫn phải deploy được.
-
-        Nhưng một token bắt đầu bằng `MOCK_` thì khác. Nó *trông như* đã cấu
-        hình, qua được mọi kiểm tra "có đặt biến môi trường chưa", rồi hỏng ở
-        lúc gọi API thật. Đó là kiểu sai chỉ lộ ra khi có lead nóng đầu tiên.
-        """
-        if self.env != "local" and self.telegram_bot_token.startswith("MOCK_"):
-            raise ValueError(
-                f"HAVI_TELEGRAM_BOT_TOKEN không được là token MOCK khi HAVI_ENV={self.env}. "
-                "Đặt token thật, hoặc để rỗng nếu chưa dùng chuông Hot Lead."
             )
         return self
 

@@ -14,6 +14,7 @@ from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from api.deps import (
     ApprovalServiceDep,
+    ApproverWorkspaceDep,
     AuthDep,
     ContentServiceDep,
     PublishServiceDep,
@@ -326,7 +327,9 @@ async def list_versions(
 async def approve_all(
     payload: BulkApproveRequest,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    # Duyệt là hành động đưa nội dung LÊN KÊNH. Người soạn không tự duyệt bài
+    # mình viết — đó là toàn bộ lý do quy trình soạn → duyệt tồn tại.
+    workspace_id: ApproverWorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> BulkApproveResult:
     """Duyệt cả loạt: `publish_now=true` đăng ngay, `false` thì rải ra nhiều ngày."""
@@ -373,7 +376,7 @@ async def approve_content(
     content_id: UUID,
     payload: ApproveRequest,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    workspace_id: ApproverWorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> ContentItem:
     """Duyệt lẻ 1 bài: pending_approval → approved → scheduled.

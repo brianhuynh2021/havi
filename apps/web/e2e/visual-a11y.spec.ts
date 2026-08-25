@@ -14,7 +14,6 @@ const API_PATH_PREFIXES = [
   "/connections",
   "/content",
   "/inbox",
-  "/leads",
   "/workspaces",
 ];
 
@@ -126,7 +125,7 @@ async function mockApi(page: Page) {
     }
     if (path === "/workspaces") return json(route, [workspace]);
     if (path === "/workspaces/w1") return json(route, workspace);
-    if (path.endsWith("/video/render-jobs")) {
+    if (path.endsWith("/video/posts")) {
       return json(route, { items: [], total: 0, limit: 20, offset: 0 });
     }
     if (path.endsWith("/trends/hot")) return json(route, []);
@@ -203,12 +202,10 @@ async function mockApi(page: Page) {
     }
     if (path === "/analytics/summary") {
       return json(route, {
-        price_inquiries: 0,
-        won_leads: 0,
-        returning_customers: 0,
         published_posts: 5,
-        new_leads: 0,
-        lead_won_rate: 0,
+        inbox_items: 1,
+        replies_sent: 0,
+        failed_posts: 0,
         change_vs_previous_period: {},
       });
     }
@@ -227,7 +224,7 @@ async function mockApi(page: Page) {
       return json(route, [
         {
           channel: "facebook_page",
-          customers: 5,
+          posts: 5,
           share: 1,
           note: "Tạm tính theo bài đã đăng; chưa có engagement snapshot.",
         },
@@ -270,29 +267,6 @@ async function mockApi(page: Page) {
             status: "pending",
             ai_suggested_reply: "Dạ combo gội đầu thảo dược 180k ạ.",
             external_message_id: "m1",
-            created_at: FIXED_NOW_ISO,
-          },
-        ],
-        total: 1,
-        limit: 50,
-        offset: 0,
-      });
-    }
-    if (path === "/leads") {
-      return json(route, {
-        items: [
-          {
-            id: "l1",
-            workspace_id: "w1",
-            name: "Chị Lan",
-            phone: "0901234567",
-            source: "fanpage",
-            stage: "new",
-            reply_status: "new",
-            message: "Combo gội đầu bao nhiêu tiền ạ?",
-            suggested_reply: null,
-            notes: null,
-            content_item_id: null,
             created_at: FIXED_NOW_ISO,
           },
         ],
@@ -407,13 +381,6 @@ async function expectReady(page: Page, route: VisualRoute) {
     ).toBeAttached();
     await expect(page.getByText(/Dùng thử trọn vẹn sức mạnh/i)).toHaveCount(0);
   }
-  if (route.name === "video-studio") {
-    await expect(
-      page.getByText(/xuất bản đa kênh vẫn ở trạng thái Beta/i),
-    ).toBeAttached();
-    await expect(page.getByText(/Tự động tối ưu video dọc/i)).toHaveCount(0);
-    await expect(page.getByRole("alert")).toHaveCount(0);
-  }
 }
 
 // Đường dẫn tiếng Anh chuẩn (Gate J) và tiêu đề đúng như app render. Bảng này
@@ -432,15 +399,12 @@ const publicRoutes = [
 
 const authenticatedRoutes = [
   { name: "dashboard", path: "/app", heading: /Tổng quan/i, auth: true },
-  { name: "content", path: "/app/content", heading: /Chiến Dịch Tăng Trưởng/i, auth: true },
+  { name: "content", path: "/app/content", heading: /Đăng bài/i, auth: true },
   { name: "calendar", path: "/app/calendar", heading: /Lịch [Đđ]ăng/i, auth: true },
   { name: "reports", path: "/app/reports", heading: /Báo [Cc]áo/i, auth: true },
   { name: "settings", path: "/app/settings", heading: /Cài [Đđ]ặt/i, auth: true },
   { name: "billing", path: "/app/billing", heading: /Gói Cước/i, auth: true },
-  { name: "video-studio", path: "/app/video-studio", heading: /Studio Video/i, auth: true },
-  // `/app/leads` render đúng `LeadsScreen` này nên không thêm route riêng —
-  // baseline thứ hai của cùng một màn chỉ tốn thời gian chạy.
-  { name: "inbox", path: "/app/inbox", heading: /Hộp [Tt]hư/i, auth: true },
+  { name: "inbox", path: "/app/inbox", heading: /Hội thoại/i, auth: true },
   {
     name: "operations",
     path: "/app/internal/operations",

@@ -1976,15 +1976,15 @@
   padding-top: 8px;
 }
 
-/* Phase 3: Telegram Hot Lead Stage */
-.telegramRadarStage {
+/* Phase 3: operational conversation status */
+.operationsRadarStage {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 28px;
   align-items: center;
 }
 
-.telegramCardBox {
+.operationsCardBox {
   background: #18222d;
   border: 1px solid rgba(0, 136, 204, 0.3);
   border-radius: 14px;
@@ -1992,7 +1992,7 @@
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 136, 204, 0.15);
 }
 
-.tgHeader {
+.operationsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2001,28 +2001,28 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.tgHeaderLeft {
+.operationsHeaderLeft {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.tgIcon {
+.operationsIcon {
   font-size: 18px;
 }
 
-.tgBotName {
+.operationsTitle {
   font-size: 13px;
   font-weight: 800;
   color: #ffffff;
 }
 
-.tgSub {
+.operationsSubtitle {
   font-size: 10.5px;
   color: #8da3b8;
 }
 
-.tgTimeBadge {
+.operationsTimeBadge {
   font-size: 11px;
   font-weight: 700;
   color: #22c55e;
@@ -2031,21 +2031,21 @@
   border-radius: 4px;
 }
 
-.tgBody {
+.operationsBody {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.tgAlertHeader {
+.operationsAlertHeader {
   font-size: 14px;
   font-weight: 800;
   color: #38bdf8;
   line-height: 1.4;
 }
 
-.tgLeadDetail {
+.operationsConversationDetail {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2057,19 +2057,13 @@
   border-radius: 8px;
 }
 
-.tgPhoneHighlight {
-  color: #fbbf24;
-  font-weight: 900;
-  font-size: 14px;
-}
-
-.tgActionsGrid {
+.operationsActionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.tgCallBtn {
+.operationsPrimaryButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2084,11 +2078,11 @@
   transition: transform 0.2s ease;
 }
 
-.tgCallBtn:hover {
+.operationsPrimaryButton:hover {
   transform: translateY(-1px);
 }
 
-.tgZaloBtn {
+.operationsSecondaryButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2103,7 +2097,7 @@
   transition: transform 0.2s ease;
 }
 
-.tgZaloBtn:hover {
+.operationsSecondaryButton:hover {
   transform: translateY(-1px);
 }
 
@@ -2574,7 +2568,7 @@
 
 @media (max-width: 900px) {
   .scanStageGrid,
-  .telegramRadarStage,
+  .operationsRadarStage,
   .playerVisualScene {
     grid-template-columns: 1fr;
   }
@@ -2584,5 +2578,3 @@
     grid-template-columns: 1fr;
   }
 }
-
-

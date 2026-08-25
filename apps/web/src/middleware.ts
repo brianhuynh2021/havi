@@ -14,8 +14,6 @@ const LEGACY_ALIASES: Record<string, string> = {
   "/content": "/app/content",
   "/lich-dang": "/app/calendar",
   "/calendar": "/app/calendar",
-  "/khach-tiem-nang": "/app/leads",
-  "/leads": "/app/leads",
   "/bao-cao": "/app/reports",
   "/reports": "/app/reports",
   "/cai-dat": "/app/settings",

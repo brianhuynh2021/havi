@@ -6,23 +6,17 @@ NGUYÊN TẮC #2 & #7:
 """
 
 import logging
-import re
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
-from adapters.persistence.lead_repository import LeadRepository
-from core.enums import InboxItemStatus, InboxItemType, LeadSource, Platform
+from core.enums import InboxItemStatus, InboxItemType, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
 from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
-from domain.ports.telegram import TelegramNotifierPort
 
 logger = logging.getLogger(__name__)
-
-PHONE_REGEX = re.compile(r"(?:0|\+84)(?:3[2-9]|5[689]|7[06-9]|8[1-9]|9\d)\d{7}")
-
 
 class InboxItemNotFound(Exception):
     pass
@@ -35,14 +29,24 @@ def _normalize(text: str) -> str:
 
 
 def _match_approved_faq(faqs: list[dict], content: str) -> str | None:
-    """Trả câu trả lời FAQ khi câu hỏi khớp *tuyệt đối*, ngược lại `None`."""
+    """Trả câu trả lời FAQ khi câu hỏi khớp *tuyệt đối*, ngược lại `None`.
+
+    **Fail-closed ở cờ `approved`.** Bản trước dùng `entry.get("approved", True)`
+    — thiếu trường thì coi như đã duyệt. Nghĩa là một hàng FAQ đến từ import,
+    từ migration, hay từ một client cũ không khai `approved` sẽ được gửi thẳng
+    tới khách thật mà không ai từng đọc nó.
+
+    Câu trả lời tự động là thứ duy nhất trong Havi đi tới người ngoài mà không
+    qua mắt chủ tiệm. Nói sai giờ mở cửa hay một cam kết dịch vụ không rút lại
+    được, nên mặc định phải là "chưa duyệt", không phải "đã duyệt".
+    """
     normalized_content = _normalize(content)
     for entry in faqs:
         question = _normalize(entry.get("question") or "")
         answer = entry.get("answer") or ""
         if not question or not answer:
             continue
-        if not entry.get("approved", True):
+        if entry.get("approved") is not True:
             continue
         if question == normalized_content:
             return answer
@@ -57,9 +61,6 @@ class InboxService:
         profiles: BrandProfileRepository,
         events: EventLogRepository,
         reply_publishers: dict[Platform, ReplyPublisherPort] | None = None,
-        telegram: TelegramNotifierPort | None = None,
-        leads: LeadRepository | None = None,
-        workspaces=None,  # noqa: ANN001 — WorkspaceRepository, chỉ để lấy tên tiệm
     ) -> None:
         self._inbox = inbox
         self._profiles = profiles
@@ -68,9 +69,6 @@ class InboxService:
         # Service không được tự rơi về fake vì điều đó biến cấu hình thiếu ở
         # production thành một lần gửi "thành công" không hề xảy ra ngoài đời.
         self._reply_publishers = reply_publishers if reply_publishers is not None else {}
-        self._telegram = telegram
-        self._leads = leads
-        self._workspaces = workspaces
 
     async def list_items(
         self,
@@ -167,51 +165,8 @@ class InboxService:
             )
             return item
 
-        # Bắt số điện thoại tự động và bắn chuông báo Telegram tức thì (< 3 giây)
-        phone_match = PHONE_REGEX.search(content)
-        if phone_match:
-            phone_num = phone_match.group(0)
-            if self._leads:
-                try:
-                    await self._leads.create(
-                        workspace_id=workspace_id,
-                        name=author_name,
-                        phone=phone_num,
-                        source=LeadSource.FANPAGE
-                        if platform == Platform.FACEBOOK
-                        else LeadSource.INBOX,
-                        message=content,
-                    )
-                except Exception as exc:
-                    logger.warning("Không thể tự động lưu lead từ inbox: %s", exc)
-
-            if self._telegram:
-                platform_label = "Facebook Fanpage"
-                if platform == Platform.TIKTOK:
-                    platform_label = "TikTok"
-                elif platform == Platform.GOOGLE_BUSINESS:
-                    platform_label = "Google Maps SEO"
-
-                # Tên tiệm thật ở tiêu đề chuông: người trực nhiều cơ sở cần
-                # biết ngay khách này của tiệm nào trước khi bấm gọi.
-                shop_name = "Tiệm của bạn"
-                if self._workspaces:
-                    workspace = await self._workspaces.get(workspace_id)
-                    if workspace and workspace.name:
-                        shop_name = workspace.name
-
-                await self._telegram.send_hot_lead_alert(
-                    customer_name=author_name,
-                    phone=phone_num,
-                    message=content,
-                    platform=platform_label,
-                    shop_name=shop_name,
-                )
-
         # Không khớp FAQ -> Tạo bản nháp gợi ý, chờ người thật duyệt
-        suggested_reply = (
-            f"Chào {author_name}, Havi đã nhận thông tin! Tiệm sẽ phản hồi bạn ngay ạ."
-        )
+        suggested_reply = f"Chào {author_name}, cảm ơn bạn đã nhắn tin. Tiệm sẽ phản hồi bạn sớm ạ."
         return await self._inbox.create(
             workspace_id=workspace_id,
             platform=platform,

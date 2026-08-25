@@ -25,7 +25,7 @@ const dataDeletionSections: Section[] = [
       "Theo quy định của Meta, bạn cũng có thể gỡ quyền truy cập của Havi từ chính giao diện Facebook:",
       "1. Mở Facebook và vào phần Cài đặt & Quản lý quyền riêng tư -> Cài đặt.",
       "2. Chọn 'Ứng dụng và trang web' (Apps and Websites).",
-      "3. Tìm ứng dụng 'Havi AI Marketing' và nhấn nút 'Gỡ' (Remove).",
+      "3. Tìm ứng dụng 'Havi' và nhấn nút 'Gỡ' (Remove).",
       "Khi bạn thực hiện thao tác này, Facebook sẽ tự động gửi thông báo Hủy quyền (Data Deletion Request) đến máy chủ của Havi.",
     ],
   },

@@ -6,10 +6,13 @@ export const translations = {
   VN: {
     // Navigation / Shell
     "nav.dashboard": "Tổng quan",
-    "nav.content": "Đăng bài",
+    "nav.content": "Nội dung",
+    "nav.media": "Thư viện media",
+    "nav.connections": "Kênh kết nối",
+    "nav.team": "Đội ngũ",
     "nav.calendar": "Lịch đăng",
-    "nav.inbox": "Tin nhắn",
-    "nav.leads": "Khách tiềm năng",
+    "nav.inbox": "Hội thoại",
+    "nav.activity": "Lịch sử",
     "nav.reports": "Báo cáo",
     "nav.billing": "Gói cước",
     "nav.settings": "Cài đặt",
@@ -31,7 +34,7 @@ export const translations = {
     "auth.noAccount": "Chưa có tài khoản?",
     "auth.signUpNow": "Đăng ký ngay",
     "auth.registerTitle": "Tạo tài khoản Havi",
-    "auth.registerSubtitle": "Bắt đầu sáng tạo nội dung AI và quản lý đa kênh chỉ trong vài phút.",
+    "auth.registerSubtitle": "Quản lý nội dung, lịch đăng và hội thoại đa kênh trong một nơi.",
     "auth.fullName": "Họ và tên",
     "auth.businessName": "Tên doanh nghiệp / Cửa hàng",
     "auth.registerButton": "Tạo tài khoản miễn phí",
@@ -43,11 +46,10 @@ export const translations = {
 
     // Dashboard
     "dashboard.title": "Tổng quan hoạt động",
-    "dashboard.subtitle": "Theo dõi hiệu suất truyền thông và hoạt động AI",
+    "dashboard.subtitle": "Theo dõi trạng thái kênh, nội dung và hội thoại",
     "dashboard.quickStats": "Thống kê nhanh",
     "dashboard.publishedPosts": "Bài đã đăng",
     "dashboard.scheduledPosts": "Bài hẹn giờ",
-    "dashboard.leadsCaptured": "Khách tiềm năng",
     "dashboard.aiDraftsGenerated": "Dự thảo AI tạo",
     "dashboard.quickActions": "Thao tác nhanh",
     "dashboard.createContent": "Tạo nội dung mới",
@@ -58,7 +60,7 @@ export const translations = {
 
     // Content Creation
     "content.title": "Xưởng Sáng Tạo Nội Dung",
-    "content.subtitle": "Tạo bài viết truyền thông bằng AI tối ưu cho từng kênh",
+    "content.subtitle": "Soạn, duyệt và phát hành nội dung cho từng kênh",
     "content.promptLabel": "Yêu cầu / Ý tưởng nội dung",
     "content.promptPlaceholder": "Nhập chủ đề, sản phẩm hoặc chương trình khuyến mãi...",
     "content.toneLabel": "Giọng văn",
@@ -83,18 +85,6 @@ export const translations = {
     "calendar.statusFailed": "Lỗi đăng",
     "calendar.addEvent": "Thêm bài hẹn giờ",
 
-    // Leads & Care Loop
-    "leads.title": "Khách Tiềm Năng & Hộp Thư",
-    "leads.subtitle": "Theo dõi inbox Facebook và quản lý lead theo dữ liệu workspace",
-    "leads.faqTab": "Tự động trả lời (FAQ Loop)",
-    "leads.crmTab": "Danh sách khách hàng (CRM)",
-    "leads.autoReplyEnabled": "Bật tự động phản hồi AI",
-    "leads.addFaq": "Thêm câu hỏi FAQ",
-    "leads.customerName": "Tên khách hàng",
-    "leads.channel": "Kênh",
-    "leads.status": "Trạng thái",
-    "leads.phone": "Số điện thoại",
-
     // Settings
     "settings.title": "Cài Đặt Hệ Thống",
     "settings.subtitle": "Quản lý doanh nghiệp, tài khoản và kết nối kênh",
@@ -110,7 +100,7 @@ export const translations = {
 
     // Reports
     "reports.title": "Báo Cáo & Phân Tích",
-    "reports.subtitle": "Đánh giá hiệu quả truyền thông và chuyển đổi",
+    "reports.subtitle": "Theo dõi tình trạng xuất bản và hội thoại",
     "reports.overview": "Tổng quan hiệu suất",
     "reports.engagement": "Tương tác khách hàng",
     "reports.topPosts": "Bài viết nổi bật",
@@ -136,10 +126,13 @@ export const translations = {
   EN: {
     // Navigation / Shell
     "nav.dashboard": "Overview",
-    "nav.content": "Publish",
+    "nav.content": "Content",
+    "nav.media": "Media library",
+    "nav.connections": "Channels",
+    "nav.team": "Team",
     "nav.calendar": "Schedule",
-    "nav.inbox": "Messages",
-    "nav.leads": "Leads",
+    "nav.inbox": "Conversations",
+    "nav.activity": "Activity",
     "nav.reports": "Reports",
     "nav.billing": "Plan",
     "nav.settings": "Settings",
@@ -161,7 +154,7 @@ export const translations = {
     "auth.noAccount": "Don't have an account?",
     "auth.signUpNow": "Sign up now",
     "auth.registerTitle": "Create a Havi Account",
-    "auth.registerSubtitle": "Start AI content creation and multi-channel management in minutes.",
+    "auth.registerSubtitle": "Manage content, publishing schedules, and channel conversations in one place.",
     "auth.fullName": "Full Name",
     "auth.businessName": "Business / Store Name",
     "auth.registerButton": "Create Free Account",
@@ -173,11 +166,10 @@ export const translations = {
 
     // Dashboard
     "dashboard.title": "Activity Overview",
-    "dashboard.subtitle": "Track marketing performance and AI automation operations",
+    "dashboard.subtitle": "Track channel, content, and conversation status",
     "dashboard.quickStats": "Quick Stats",
     "dashboard.publishedPosts": "Published Posts",
     "dashboard.scheduledPosts": "Scheduled Posts",
-    "dashboard.leadsCaptured": "Captured Leads",
     "dashboard.aiDraftsGenerated": "AI Drafts Generated",
     "dashboard.quickActions": "Quick Actions",
     "dashboard.createContent": "Create New Content",
@@ -188,7 +180,7 @@ export const translations = {
 
     // Content Creation
     "content.title": "Content Creation Studio",
-    "content.subtitle": "Generate multi-channel AI social media posts effortlessly",
+    "content.subtitle": "Draft, review, and publish content for each channel",
     "content.promptLabel": "Content Prompt / Idea",
     "content.promptPlaceholder": "Enter topic, product features, or promotion details...",
     "content.toneLabel": "Tone of Voice",
@@ -213,18 +205,6 @@ export const translations = {
     "calendar.statusFailed": "Failed",
     "calendar.addEvent": "Add Scheduled Post",
 
-    // Leads & Care Loop
-    "leads.title": "Leads & Customer Care",
-    "leads.subtitle": "Track Facebook inbox items and manage workspace lead data",
-    "leads.faqTab": "FAQ Auto-reply Loop",
-    "leads.crmTab": "Lead Contacts (CRM)",
-    "leads.autoReplyEnabled": "Enable AI Auto-reply",
-    "leads.addFaq": "Add FAQ Item",
-    "leads.customerName": "Customer Name",
-    "leads.channel": "Channel",
-    "leads.status": "Status",
-    "leads.phone": "Phone Number",
-
     // Settings
     "settings.title": "System Settings",
     "settings.subtitle": "Manage business profile, account and channel integrations",
@@ -240,7 +220,7 @@ export const translations = {
 
     // Reports
     "reports.title": "Analytics & Reports",
-    "reports.subtitle": "Evaluate marketing performance and customer conversion",
+    "reports.subtitle": "Track publishing and conversation operations",
     "reports.overview": "Performance Overview",
     "reports.engagement": "Customer Engagement",
     "reports.topPosts": "Top Performing Posts",

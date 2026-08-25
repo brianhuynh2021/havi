@@ -44,7 +44,7 @@ Havi tích hợp cơ chế tự động Fallback linh hoạt giữa các nhà cu
 
 ## 4. Kênh Mạng Xã Hội Đa Nền Tảng (OAuth & Publishing)
 
-Toàn bộ các kênh liên kết của tiệm để Havi tự động đăng bài, tạo video ngắn 9:16 và trực Lead:
+Các kênh liên kết để Havi đăng nội dung đã duyệt, nhận hội thoại và theo dõi trạng thái:
 
 ### A. Meta / Facebook Fanpage
 * **Trang quản trị**: [Meta for Developers](https://developers.facebook.com/) $\rightarrow$ Chọn App Havi.

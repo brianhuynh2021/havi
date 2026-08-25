@@ -41,20 +41,20 @@ export function AboutScreen() {
         <h1 className={styles.heroTitle}>
           {lang === "VN" ? (
             <>
-              Nâng Tầm Hàng Triệu Chủ Tiệm Việt Nam{" "}
-              <span className={styles.highlightGradient}>Bằng Trí Tuệ Nhân Tạo</span>
+              Vận Hành Social Media Đa Kênh{" "}
+              <span className={styles.highlightGradient}>Trong Một Nơi</span>
             </>
           ) : (
             <>
-              Empowering Millions of Small Businesses with{" "}
-              <span className={styles.highlightGradient}>Human-Centered AI</span>
+              Multi-channel Social Operations{" "}
+              <span className={styles.highlightGradient}>In One Place</span>
             </>
           )}
         </h1>
         <p className={styles.heroLead}>
           {lang === "VN"
-            ? "Havi được sinh ra với sứ mệnh bình dân hoá công nghệ AI marketing đỉnh cao thế giới cho từng chủ tiệm Spa, Salon, Quán Cafe, Môi giới BĐS và hộ kinh doanh tại Việt Nam."
-            : "Havi democratizes cutting-edge AI marketing technology for local salon, spa, F&B and retail owners across Vietnam and beyond."}
+            ? "Havi giúp doanh nghiệp, freelancer và đội ngũ social quản lý kênh, nội dung, lịch đăng, hội thoại và phân quyền mà không phải nhảy qua từng nền tảng."
+            : "Havi helps businesses, freelancers, and social teams manage channels, content, schedules, conversations, and access without jumping between platforms."}
         </p>
       </section>
 
@@ -92,7 +92,7 @@ export function AboutScreen() {
           </div>
 
           <p className={styles.storyParagraph}>
-            Chúng tôi tin rằng, những người thức khuya dậy sớm mở tiệm kinh doanh chính là xương sống của nền kinh tế. Họ xứng đáng được trang bị những vũ khí công nghệ AI hiện đại nhất để tự tin cạnh tranh và phát triển vững mạnh.
+            Chúng tôi tin rằng doanh nghiệp Việt cần một công cụ vận hành rõ ràng, nhẹ đầu và trung thực: biết kênh nào đang hoạt động, bài nào chờ duyệt, lịch nào sắp chạy và hội thoại nào chưa xử lý.
           </p>
         </section>
 
@@ -133,9 +133,9 @@ export function AboutScreen() {
 
         {/* Bottom CTA */}
         <section className={styles.ctaSection}>
-          <h2 className={styles.ctaHeading}>Sẵn Sàng Trải Nghiệm Đội Ngũ AI Marketing?</h2>
+          <h2 className={styles.ctaHeading}>Sẵn Sàng Quản Trị Social Media Nhẹ Đầu Hơn?</h2>
           <p className={styles.ctaSubtitle}>
-            Đăng ký chỉ mất 30 giây. Trải nghiệm trọn vẹn sức mạnh đa kênh của Havi trong 7 ngày hoàn toàn miễn phí.
+            Kết nối kênh, tập trung nội dung và theo dõi công việc vận hành trong một không gian chung.
           </p>
           <Link href="/signup" className={styles.ctaActionBtn}>
             Bắt đầu dùng thử 7 ngày miễn phí ➔

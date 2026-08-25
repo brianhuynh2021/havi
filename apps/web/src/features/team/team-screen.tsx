@@ -1,0 +1,175 @@
+"use client";
+
+/**
+ * Đội ngũ — ai đang ở trong workspace và mỗi người làm được gì.
+ *
+ * Vai trò hiện bằng **việc người đó làm được**, không bằng tên chức danh: "Người
+ * duyệt — duyệt nội dung để Havi đăng lên kênh" nói rõ hơn "reviewer" với người
+ * đang phải chọn vai cho nhân viên mới.
+ */
+
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
+import {
+  ROLE_LABELS,
+  inviteMember,
+  listMembers,
+  removeMember,
+  type WorkspaceMember,
+  type WorkspaceRole,
+} from "./team.api";
+import styles from "./team.module.css";
+
+const INVITABLE_ROLES: WorkspaceRole[] = ["marketer", "reviewer", "sales"];
+
+export function TeamScreen() {
+  const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<WorkspaceRole>("marketer");
+  const [inviting, setInviting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const result = await listMembers();
+    if (result.ok) {
+      setMembers(result.data);
+      setError(null);
+    } else {
+      setError(result.message);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function onInvite() {
+    if (!email.trim()) return;
+    setInviting(true);
+    const result = await inviteMember(email.trim(), role);
+    setInviting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setError(null);
+    setEmail("");
+    setNotice(`Đã thêm ${result.data.name} vào workspace.`);
+    load();
+  }
+
+  async function onRemove(member: WorkspaceMember) {
+    if (!confirm(`Gỡ ${member.name} khỏi workspace?`)) return;
+    setBusyId(member.user_id);
+    const result = await removeMember(member.user_id);
+    setBusyId(null);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setError(null);
+    setNotice(`Đã gỡ ${member.name}.`);
+    load();
+  }
+
+  return (
+    <>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Đội ngũ</h1>
+        <p className={styles.subtitle}>
+          Ai đang ở trong workspace và mỗi người làm được gì. Người soạn và người
+          duyệt nên là hai người khác nhau — đó là điểm khiến bước duyệt có nghĩa.
+        </p>
+      </header>
+
+      {error ? <ErrorState title={error} /> : null}
+      {notice ? (
+        <p className={styles.notice} role="status">
+          {notice}
+        </p>
+      ) : null}
+
+      <section className={styles.inviteCard} aria-labelledby="invite-title">
+        <h2 id="invite-title" className={styles.sectionTitle}>
+          Thêm thành viên
+        </h2>
+        <p className={styles.inviteHint}>
+          Người được mời phải có tài khoản Havi trước. Havi không tự tạo tài khoản
+          hộ ai.
+        </p>
+        <div className={styles.inviteRow}>
+          <Input
+            type="email"
+            value={email}
+            placeholder="email@congty.vn"
+            aria-label="Email người muốn thêm"
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <select
+            className={styles.roleSelect}
+            value={role}
+            aria-label="Vai trò"
+            onChange={(event) => setRole(event.target.value as WorkspaceRole)}
+          >
+            {INVITABLE_ROLES.map((value) => (
+              <option key={value} value={value}>
+                {ROLE_LABELS[value]?.name ?? value}
+              </option>
+            ))}
+          </select>
+          <Button variant="primary" onClick={onInvite} disabled={inviting || !email.trim()}>
+            {inviting ? "Đang thêm…" : "Thêm"}
+          </Button>
+        </div>
+        <p className={styles.roleHint}>{ROLE_LABELS[role]?.can}</p>
+      </section>
+
+      <section aria-labelledby="members-title">
+        <h2 id="members-title" className={styles.sectionTitle}>
+          Thành viên hiện tại
+        </h2>
+
+        {loading ? (
+          <LoadingState title="Đang tải danh sách…" />
+        ) : members.length === 0 ? (
+          <EmptyState title="Chưa có thành viên nào" body="Thêm người vào workspace ở trên." />
+        ) : (
+          <ul className={styles.memberList}>
+            {members.map((member) => {
+              const info = ROLE_LABELS[member.role];
+              const isOwner = member.role === "owner";
+              return (
+                <li key={member.user_id} className={styles.memberRow}>
+                  <div className={styles.memberMain}>
+                    <strong className={styles.memberName}>{member.name}</strong>
+                    <span className={styles.roleTag}>{info?.name ?? member.role}</span>
+                    <p className={styles.roleCan}>{info?.can}</p>
+                  </div>
+                  {/* Chủ workspace không gỡ được: gỡ hết chủ là workspace không
+                      còn ai mời lại được ai. */}
+                  {isOwner ? null : (
+                    <Button
+                      variant="outline"
+                      onClick={() => onRemove(member)}
+                      disabled={busyId === member.user_id}
+                    >
+                      Gỡ
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}

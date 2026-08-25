@@ -2,12 +2,12 @@
 
 Documentation in `docs/` is grouped by audience and purpose:
 
-- [`handoff/`](handoff/) — design-to-implementation handoff, [DEPLOYMENT.md](handoff/DEPLOYMENT.md), and [CREDENTIALS_AND_SECRETS_GUIDE.md](handoff/CREDENTIALS_AND_SECRETS_GUIDE.md)
+- [`handoff/`](handoff/) — [DEPLOYMENT.md](handoff/DEPLOYMENT.md) and [CREDENTIALS_AND_SECRETS_GUIDE.md](handoff/CREDENTIALS_AND_SECRETS_GUIDE.md)
 - [`product/`](product/) — roadmap, product direction, and [COMMERCIALIZATION_PHASES.md](product/COMMERCIALIZATION_PHASES.md)
 - [`architecture/`](architecture/) — technical spec, repository strategy, and
   architecture decisions
-- [`operations/`](operations/) — dogfooding, external beta launch, Facebook App
-  Review, and [BETA_READINESS_REVIEW.md](operations/BETA_READINESS_REVIEW.md)
+- [`operations/`](operations/) — dogfooding, external beta launch, and Facebook
+  App Review
 - [`security/`](security/) — security review checklists and release gates
 - [`testing/`](testing/) — visual regression and accessibility baselines
 
@@ -21,10 +21,9 @@ Preparing founder beta? Read
 [`security/SECURITY_REVIEW.md`](security/SECURITY_REVIEW.md) before inviting
 users.
 
-About to charge a real customer? Read
-[`operations/BETA_READINESS_REVIEW.md`](operations/BETA_READINESS_REVIEW.md)
-first. It records the verified state of the tree, the P0 defects that block
-payment, the test protocol, and the paid-beta gate.
+Positioning, vision, and scope boundaries live in
+[`product/ROADMAP.md`](product/ROADMAP.md) §1, §1b, §1c. If any other document
+disagrees with those sections, those sections win.
 
 Canonical deployment architecture:
 [`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md).

@@ -19,221 +19,134 @@ function signedIn() {
   });
 }
 
-function event(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "e1",
-    workspace_id: "w1",
-    job_id: "11111111-1111-1111-1111-111111111111",
-    request_id: null,
-    job_kind: "publish.run_job",
-    input_summary: "raw post body should not be shown",
-    output_summary: "external id should not be shown",
-    tokens_in: 0,
-    tokens_out: 0,
-    provider: "facebook",
-    duration_ms: 120,
-    error: null,
-    created_at: "2026-08-11T03:00:00Z",
-    ...overrides,
-  };
+type Fixture = {
+  summary?: Partial<{
+    drafts: number;
+    pending_approval: number;
+    scheduled: number;
+    published: number;
+    failed: number;
+  }>;
+  connections?: Array<Record<string, unknown>>;
+  inbox?: Array<Record<string, unknown>>;
+  summaryFails?: boolean;
+};
+
+function mockApi(fixture: Fixture = {}) {
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+
+    if (url.pathname.endsWith("/analytics/dashboard")) {
+      if (fixture.summaryFails) return jsonResponse({ detail: "hỏng" }, 500);
+      return jsonResponse({
+        drafts: 0,
+        pending_approval: 0,
+        scheduled: 0,
+        published: 0,
+        failed: 0,
+        ...fixture.summary,
+      });
+    }
+    if (url.pathname.endsWith("/connections")) {
+      return jsonResponse(fixture.connections ?? []);
+    }
+    if (url.pathname.endsWith("/inbox")) {
+      // `/inbox` trả về `Page` — bọc trong `items`, không phải mảng trần.
+      return jsonResponse({ items: fixture.inbox ?? [], total: (fixture.inbox ?? []).length });
+    }
+    return jsonResponse([]);
+  });
 }
 
-function mockDashboard({
-  summary,
-  events = [],
-  summaryStatus = 200,
-  eventsStatus = 200,
-}: {
-  summary: unknown;
-  events?: unknown[];
-  summaryStatus?: number;
-  eventsStatus?: number;
-}) {
-  return vi
-    .spyOn(globalThis, "fetch")
-    .mockImplementation(async (input: RequestInfo | URL) => {
-      const request = input instanceof Request ? input : new Request(input);
-      const url = new URL(request.url);
-      if (url.pathname.includes("/analytics/events")) {
-        return jsonResponse(
-          { items: events, total: events.length, limit: 5, offset: 0 },
-          eventsStatus,
-        );
-      }
-      if (url.pathname.includes("/billing/subscription")) {
-        return jsonResponse({
-          plan: "trial",
-          status: "trialing",
-          trial_ends_at: new Date(Date.now() + 5 * 86400000).toISOString(),
-          paid_until: null,
-        });
-      }
-      if (url.pathname.includes("/leads")) {
-        return jsonResponse({
-          items: [],
-          total: 0,
-          limit: 50,
-          offset: 0,
-        });
-      }
-      return jsonResponse(summary, summaryStatus);
-    });
-}
+const connectedPage = {
+  platform: "facebook",
+  status: "connected",
+  external_account_id: "page-1",
+  external_account_name: "Trang Thử",
+};
 
-describe("DashboardScreen", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    signedIn();
+beforeEach(signedIn);
+afterEach(() => vi.restoreAllMocks());
+
+describe("DashboardScreen — bảng điều khiển vận hành", () => {
+  it("KHÔNG hỏi mục tiêu và KHÔNG hiện phễu lead hay doanh thu", async () => {
+    mockApi({ connections: [connectedPage] });
+    render(<DashboardScreen />);
+    await screen.findByText(/Tổng quan/);
+
+    const body = document.body.textContent ?? "";
+    for (const word of [
+      "mục tiêu",
+      "Mục tiêu",
+      "Lộ trình",
+      "PHỄU KHÉP KÍN",
+      "Doanh thu",
+      "Đã chốt",
+      "Khách quan tâm",
+    ]) {
+      expect(body).not.toContain(word);
+    }
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("hiện số liệu thật từ analytics dashboard", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 4,
-        scheduled: 2,
-        published: 3,
-        failed: 1,
-      },
-      events: [event()],
-    });
-
+  it("mọi thứ ổn thì nói thẳng là ổn, không giấu ô đi", async () => {
+    mockApi({ connections: [connectedPage] });
     render(<DashboardScreen />);
 
-    expect((await screen.findAllByText("4"))[0]).toBeInTheDocument();
-    expect(screen.getByText("bài chờ duyệt")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("bài đã lên lịch")).toBeInTheDocument();
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("bài đăng lỗi")).toBeInTheDocument();
-    expect(screen.getByText(/một bài đã đăng thành công/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1 kênh đang hoạt động bình thường/)).toBeInTheDocument();
+    expect(document.body.textContent).toContain("mọi thứ đang chạy bình thường");
+    expect(screen.getByText("Không có nội dung nào chờ duyệt")).toBeInTheDocument();
+    expect(screen.getByText("Không có bài nào thất bại")).toBeInTheDocument();
   });
 
-  it("workspace rỗng không render activity fixture", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 0,
-        scheduled: 0,
-        published: 0,
-        failed: 0,
-      },
+  it("có việc thì đếm đúng số việc cần xử lý", async () => {
+    mockApi({
+      summary: { pending_approval: 3, failed: 2, scheduled: 5 },
+      connections: [connectedPage, { ...connectedPage, platform: "tiktok", status: "revoked" }],
+      inbox: [{ id: "i1", status: "new" }, { id: "i2", status: "drafted" }],
     });
-
     render(<DashboardScreen />);
 
-    expect(await screen.findByText(/chưa có việc nào đang chờ/i)).toBeInTheDocument();
-    expect(screen.getByText(/chưa có hoạt động gần đây/i)).toBeInTheDocument();
-    expect(screen.queryByText(/chị Mai hỏi giá/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("Đã bật")).not.toBeInTheDocument();
+    // Kênh hỏng + chờ duyệt + đăng lỗi + hội thoại chưa xử lý = 4.
+    // Bài đã xếp lịch KHÔNG tính: chờ tới giờ là chuyện bình thường.
+    expect(await screen.findByText("1 kênh cần xác thực lại")).toBeInTheDocument();
+    expect(document.body.textContent).toContain("4 việc cần bạn xử lý");
+    expect(screen.getByText("3 nội dung đang chờ người duyệt")).toBeInTheDocument();
+    expect(screen.getByText("2 bài chưa lên được kênh")).toBeInTheDocument();
+    expect(screen.getByText("2 hội thoại chưa được trả lời")).toBeInTheDocument();
+    expect(screen.getByText("5 bài đã xếp lịch, chờ tới giờ")).toBeInTheDocument();
   });
 
-  it("activity feed lấy event thật nhưng không lộ raw summary kỹ thuật", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 0,
-        scheduled: 0,
-        published: 1,
-        failed: 1,
-      },
-      events: [
-        event({
-          id: "e1",
-          job_kind: "content.approve",
-          input_summary: "approved_by=user@example.com",
-        }),
-        event({
-          id: "e2",
-          job_kind: "publish.run_job",
-          error: "Graph API token expired",
-          output_summary: "auth_permission page-1",
-        }),
-      ],
+  it("hội thoại đã trả lời hoặc đã bỏ qua không tính là chưa xử lý", async () => {
+    mockApi({
+      connections: [connectedPage],
+      inbox: [{ id: "i1", status: "sent" }, { id: "i2", status: "dismissed" }],
     });
-
     render(<DashboardScreen />);
 
-    expect(
-      await screen.findByText(/một bài đã được duyệt và đưa vào lịch đăng/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/một bài chưa đăng được/i)).toBeInTheDocument();
-    expect(screen.getByText("Đã duyệt")).toBeInTheDocument();
-    expect(screen.getByText("Lỗi đăng")).toBeInTheDocument();
-    expect(screen.queryByText(/user@example.com/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/graph api token expired/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/auth_permission/i)).not.toBeInTheDocument();
+    expect(await screen.findByText("Không còn hội thoại nào chờ")).toBeInTheDocument();
   });
 
-  it("hiển thị thẻ bằng chứng giá trị hiện có trên workspace", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 0,
-        scheduled: 0,
-        published: 1,
-        failed: 0,
-      },
-    });
-
+  it("chưa nối kênh nào cũng là việc cần làm, không phải trạng thái yên ổn", async () => {
+    mockApi({ connections: [] });
     render(<DashboardScreen />);
 
-    expect(await screen.findByText(/Bằng Chứng Giá Trị Hiện Có/i)).toBeInTheDocument();
-    expect(screen.getByText(/DỮ LIỆU WORKSPACE/i)).toBeInTheDocument();
-    expect(screen.getByText(/Bài đã xuất bản/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Chưa nối kênh nào/)).toBeInTheDocument();
+    expect(document.body.textContent).toContain("1 việc cần bạn xử lý");
   });
 
-  it("activity feed lỗi riêng thì tổng quan vẫn hiển thị", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 2,
-        scheduled: 0,
-        published: 0,
-        failed: 0,
-      },
-      eventsStatus: 500,
-    });
-
+  it("API phụ hỏng thì phần còn lại của bảng vẫn hiện", async () => {
+    // `/connections` và `/inbox` trả rỗng chứ không chặn cả màn.
+    mockApi({ summary: { pending_approval: 2 }, connections: [], inbox: [] });
     render(<DashboardScreen />);
 
-    expect((await screen.findAllByText("2"))[0]).toBeInTheDocument();
-    expect(screen.getByText("bài chờ duyệt")).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(/hoạt động gần đây/i);
+    expect(await screen.findByText("2 nội dung đang chờ người duyệt")).toBeInTheDocument();
   });
 
-  it("lỗi mạng thì báo rõ và cho thử lại", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fail"));
-
+  it("số liệu chính hỏng thì báo lỗi kèm nút thử lại, không hiện số bịa", async () => {
+    mockApi({ summaryFails: true });
     render(<DashboardScreen />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      /không kết nối được với havi/i,
-    );
-    expect(screen.getByRole("button", { name: /thử lại/i })).toBeInTheDocument();
-  });
-
-  it("hiển thị nút mic ghi âm nói để tạo bài và hướng dẫn khởi động nhanh", async () => {
-    mockDashboard({
-      summary: {
-        drafts: 0,
-        pending_approval: 0,
-        scheduled: 0,
-        published: 0,
-        failed: 0,
-      },
-    });
-
-    render(<DashboardScreen />);
-
-    expect(await screen.findByRole("link", { name: /nói để tạo bài/i })).toBeInTheDocument();
-    expect(screen.getByText(/Khởi động nhanh: 3 bước để có khách đầu tiên/i)).toBeInTheDocument();
-    expect(screen.getByText(/Kết nối Fanpage \/ Kênh mạng xã hội/i)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Không có bài nào thất bại");
   });
 });
-
-

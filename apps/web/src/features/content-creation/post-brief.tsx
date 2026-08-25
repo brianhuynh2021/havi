@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Phần "kể cho Havi nghe" — ảnh, giọng nói, ghi chú, mục tiêu chiến dịch.
+ * Phần "kể cho Havi nghe" — ảnh, giọng nói, ghi chú và loại nội dung.
  *
  * Tách khỏi màn chính vì nó là *đầu vào*, còn danh sách bản nháp là *đầu ra*.
  * Hai nửa này thay đổi vì hai lý do khác nhau (thêm cách nhập liệu / đổi cách
@@ -33,7 +33,7 @@ export type UploadRow = {
   controller: AbortController;
 };
 
-export type CampaignGoal = {
+export type ContentPurpose = {
   id: string;
   icon: string;
   title: string;
@@ -43,13 +43,13 @@ export type CampaignGoal = {
 };
 
 /**
- * Mục tiêu chiến dịch, không phải "playbook".
+ * Các loại nội dung thường dùng để người dùng không phải bắt đầu từ trang trắng.
  *
  * Mỗi mục chỉ nạp sẵn một câu gợi ý vào ô ghi chú. Havi không hứa kết quả nào ở
  * đây — hiệu quả thật chỉ đo được sau khi bài đã đăng, nên phần mô tả nói về
  * *nội dung sẽ viết ra*, không nói về doanh thu.
  */
-export const CAMPAIGN_GOALS: CampaignGoal[] = [
+export const CONTENT_PURPOSES: ContentPurpose[] = [
   {
     id: "offer",
     icon: "🏷️",
@@ -122,7 +122,7 @@ type PostBriefProps = {
   chips: RawChip[];
   uploads: UploadRow[];
   note: string;
-  selectedGoal: string | null;
+  selectedPurpose: string | null;
   uploading: boolean;
   generating: boolean;
   onNoteChange: (value: string) => void;
@@ -130,7 +130,7 @@ type PostBriefProps = {
   onRemoveChip: (key: string) => void;
   onPickFiles: (files: FileList | null) => void;
   onOpenVoice: () => void;
-  onSelectGoal: (goal: CampaignGoal) => void;
+  onSelectPurpose: (purpose: ContentPurpose) => void;
   onGenerate: () => void;
 };
 
@@ -138,7 +138,7 @@ export function PostBrief({
   chips,
   uploads,
   note,
-  selectedGoal,
+  selectedPurpose,
   uploading,
   generating,
   onNoteChange,
@@ -146,7 +146,7 @@ export function PostBrief({
   onRemoveChip,
   onPickFiles,
   onOpenVoice,
-  onSelectGoal,
+  onSelectPurpose,
   onGenerate,
 }: PostBriefProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,25 +160,25 @@ export function PostBrief({
 
   return (
     <>
-      <section className={styles.playbookSection} aria-labelledby="goal-title">
+      <section className={styles.playbookSection} aria-labelledby="purpose-title">
         <div className={styles.stepTitle}>
           <span className={styles.stepNumber}>1</span>
-          <span id="goal-title">Bài này để làm gì?</span>
+          <span id="purpose-title">Chọn loại nội dung</span>
         </div>
         <div className={styles.playbookGrid}>
-          {CAMPAIGN_GOALS.map((goal) => (
+          {CONTENT_PURPOSES.map((purpose) => (
             <button
-              key={goal.id}
+              key={purpose.id}
               type="button"
-              aria-pressed={selectedGoal === goal.id}
+              aria-pressed={selectedPurpose === purpose.id}
               className={`${styles.playbookCard} ${
-                selectedGoal === goal.id ? styles.playbookCardActive : ""
+                selectedPurpose === purpose.id ? styles.playbookCardActive : ""
               }`}
-              onClick={() => onSelectGoal(goal)}
+              onClick={() => onSelectPurpose(purpose)}
             >
-              <span className={styles.playbookIcon}>{goal.icon}</span>
-              <strong>{goal.title}</strong>
-              <small>{goal.desc}</small>
+              <span className={styles.playbookIcon}>{purpose.icon}</span>
+              <strong>{purpose.title}</strong>
+              <small>{purpose.desc}</small>
             </button>
           ))}
         </div>

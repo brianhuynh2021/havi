@@ -189,7 +189,7 @@ uv sync --extra queue
 ```
 
 Some beat schedules are still placeholders for later product areas. Known
-`NotImplementedError` traces for unfinished refresh/CRM/engagement jobs are not
+`NotImplementedError` traces for unfinished refresh/engagement jobs are not
 regressions unless the roadmap says those areas are complete.
 
 ## 5. Staging Deployment Runbook

@@ -25,7 +25,6 @@ import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
-import { completeTask } from "@/features/roadmap/roadmap.api";
 import { VideoBranch } from "@/features/video/video-branch";
 import {
   approveAll,
@@ -39,7 +38,7 @@ import {
   type RawInput,
 } from "./content-creation.api";
 import { DraftList } from "./draft-list";
-import { PostBrief, type CampaignGoal, type RawChip, type UploadRow } from "./post-brief";
+import { PostBrief, type ContentPurpose, type RawChip, type UploadRow } from "./post-brief";
 import { QuotaBanner } from "./quota-banner";
 import { SchedulePicker, type SchedulePlan } from "./schedule-picker";
 import { useJobPolling } from "./use-job-polling";
@@ -64,7 +63,7 @@ export function ContentCreationScreen() {
   const [chips, setChips] = useState<RawChip[]>([]);
   const [uploads, setUploads] = useState<UploadRow[]>([]);
   const [note, setNote] = useState("");
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [selectedPurpose, setSelectedPurpose] = useState<string | null>(null);
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,16 +121,13 @@ export function ContentCreationScreen() {
     loadItems();
   }, [loadItems]);
 
-  // Lộ trình gửi chủ đề sang qua query string. Nạp vào ô ghi chú thay vì tự tạo
-  // bài luôn: nhiệm vụ là gợi ý, còn nội dung cuối cùng vẫn do chủ tiệm chốt.
+  // Cho phép mở thẳng nhánh video bằng `?kind=video` — dùng khi điều hướng từ
+  // Tổng quan. Không nạp "chủ đề" từ đâu khác: Havi không giao việc cho ai.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("kind") === "video") setKind("video");
-    const topic = params.get("topic");
-    if (!topic) return;
-    setNote(topic);
-    setNotice(`Đã nạp chủ đề từ Lộ trình: “${topic}”.`);
+    if (new URLSearchParams(window.location.search).get("kind") === "video") {
+      setKind("video");
+    }
   }, []);
 
   const onJobReady = useCallback(() => {
@@ -244,9 +240,9 @@ export function ContentCreationScreen() {
     setUploads((prev) => prev.filter((upload) => upload.assetId !== key));
   }
 
-  function selectGoal(goal: CampaignGoal) {
-    setSelectedGoal(goal.id);
-    setNote(goal.text);
+  function selectPurpose(purpose: ContentPurpose) {
+    setSelectedPurpose(purpose.id);
+    setNote(purpose.text);
   }
 
   /** Gom chips + ghi chú đang gõ dở thành một job. Dùng chung cho nút và giọng nói. */
@@ -302,7 +298,6 @@ export function ContentCreationScreen() {
       setError(result.message);
       return;
     }
-    markRoadmapTaskDone();
     setNotice(
       plan.publishNow
         ? `Đã duyệt ${result.data.approved.length} bài — Havi đang gửi lên Trang.`
@@ -349,17 +344,6 @@ export function ContentCreationScreen() {
         item.id === id ? { ...item, media_url: result.data.media_url } : item,
       ),
     );
-  }
-
-  /** Duyệt bài xong thì nhiệm vụ trong Lộ trình cũng coi như xong — nếu có. */
-  function markRoadmapTaskDone() {
-    if (typeof window === "undefined") return;
-    const taskId = new URLSearchParams(window.location.search).get("task_id");
-    if (!taskId) return;
-    completeTask(taskId, {
-      evidence_text: "Đã duyệt và lên lịch một bài viết trên Trang",
-      evidence_type: "link",
-    }).catch(() => {});
   }
 
   return (
@@ -422,7 +406,7 @@ export function ContentCreationScreen() {
             chips={chips}
             uploads={uploads}
             note={note}
-            selectedGoal={selectedGoal}
+            selectedPurpose={selectedPurpose}
             uploading={uploading}
             generating={generating}
             onNoteChange={setNote}
@@ -430,7 +414,7 @@ export function ContentCreationScreen() {
             onRemoveChip={removeChip}
             onPickFiles={onPickFiles}
             onOpenVoice={() => setVoiceModalOpen(true)}
-            onSelectGoal={selectGoal}
+            onSelectPurpose={selectPurpose}
             onGenerate={generate}
           />
 

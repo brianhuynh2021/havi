@@ -10,14 +10,9 @@ from core.enums import (
     ConnectionStatus,
     ContentJobStatus,
     ContentStatus,
-    CrmChannel,
-    CrmMessageStatus,
     InboxItemStatus,
     InboxItemType,
     Industry,
-    LeadReplyStatus,
-    LeadSource,
-    LeadStage,
     MediaStatus,
     MediaType,
     Plan,
@@ -109,6 +104,16 @@ class CurrentUser(HaviModel):
     email: str
     phone: str | None = None
     active_workspace_id: UUID | None = None
+
+    #: Vai trong workspace đang active, và các quyền suy ra từ vai đó.
+    #:
+    #: Frontend cần chúng để **không hiện nút người dùng không bấm được**. Đây
+    #: thuần tuý là trải nghiệm: backend vẫn kiểm lại ở từng endpoint, vì ẩn nút
+    #: không phải là phân quyền — ai cũng gọi thẳng API được.
+    #:
+    #: `None` khi tài khoản chưa chọn workspace.
+    role: WorkspaceRole | None = None
+    permissions: list[str] = Field(default_factory=list)
 
 
 # --- Workspace --------------------------------------------------------------
@@ -472,67 +477,16 @@ class InboxReplyRequest(HaviModel):
     text: str = Field(min_length=1)
 
 
-# --- Leads ------------------------------------------------------------------
-
-
-class Lead(HaviModel):
-    id: UUID
-    workspace_id: UUID
-    name: str
-    phone: str | None = None
-    source: LeadSource
-    stage: LeadStage
-    reply_status: LeadReplyStatus
-    message: str | None = None
-    suggested_reply: str | None = None
-    notes: str | None = None
-    revenue_vnd: int = 0
-    content_item_id: UUID | None = None
-    created_at: datetime
-
-
-class LeadCreate(HaviModel):
-    name: str
-    phone: str | None = None
-    source: LeadSource
-    message: str | None = None
-    content_item_id: UUID | None = None
-
-
-class LeadUpdate(HaviModel):
-    name: str | None = None
-    phone: str | None = None
-    stage: LeadStage | None = None
-    notes: str | None = None
-    content_item_id: UUID | None = None
-
-
-class CrmMessage(HaviModel):
-    id: UUID
-    lead_id: UUID
-    channel: CrmChannel
-    draft_text: str
-    status: CrmMessageStatus
-    created_at: datetime
-
-
 # --- Analytics --------------------------------------------------------------
 
 
 class AnalyticsSummary(HaviModel):
-    """Đo bằng khách hỏi giá / lead đã chốt / khách quay lại — không phải like/reach."""
+    """Bốn số liệu vận hành có nguồn dữ liệu trực tiếp trong Havi."""
 
-    price_inquiries: int
-    #: Lead ở stage `WON`. Từng có tên `walk_ins`, nhưng Havi chưa nối POS hay
-    #: check-in nào cả — không có gì ở đây đếm được người bước qua cửa tiệm. Cái
-    #: tên cũ hứa một phép đo mà hệ thống không thực hiện, nên nó nói đúng thứ nó
-    #: đo. Đổi lại tên khi có nguồn check-in thật.
-    won_leads: int
-    returning_customers: int
     published_posts: int
-    new_leads: int
-    lead_won_rate: float
-    total_revenue_vnd: int = 0
+    inbox_items: int
+    replies_sent: int
+    failed_posts: int
     change_vs_previous_period: dict[str, float] = Field(default_factory=dict)
 
 
@@ -603,7 +557,7 @@ class OperationsMetrics(HaviModel):
 
 class ChannelAttribution(HaviModel):
     channel: Channel
-    customers: int
+    posts: int
     share: float
     note: str | None = None
 

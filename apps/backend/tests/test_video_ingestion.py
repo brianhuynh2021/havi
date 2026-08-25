@@ -161,12 +161,24 @@ class TestProbeRealVideo:
         assert processor.thumbnail_bytes(b"khong-phai-video") is None
 
 
-def _meta(*, ratio: str = "9:16", seconds: float = 20, audio: bool = True) -> VideoMetadata:
+def _meta(
+    *,
+    width: int = 1080,
+    height: int = 1920,
+    seconds: float = 20,
+    audio: bool = True,
+) -> VideoMetadata:
+    """Fixture nhận **kích thước pixel**, không nhận nhãn khung hình.
+
+    Bản trước nhận `ratio="16:9"` mà vẫn giữ 1080×1920 — nhãn nói ngang, pixel
+    nói dọc. Ràng buộc khung hình giờ tính từ pixel, nên một fixture tự mâu
+    thuẫn như vậy sẽ khoá lại đúng cái sai mà nó lẽ ra phải bắt.
+    """
     return VideoMetadata(
         duration_seconds=seconds,
-        width=1080,
-        height=1920,
-        aspect_ratio=ratio,
+        width=width,
+        height=height,
+        aspect_ratio=f"{width}:{height}",
         has_audio=audio,
     )
 
@@ -180,16 +192,45 @@ class TestChannelConstraints:
         }
 
     def test_landscape_clip_rejected_by_short_form_channels(self):
-        wide = _meta(ratio="16:9")
+        wide = _meta(width=1920, height=1080)
         assert eligible_channels(wide) == []
         reasons = check_video_for_channel(wide, Channel.REELS)
-        assert any("khung hình" in reason for reason in reasons)
+        assert any("khung ngang" in reason for reason in reasons)
 
-    def test_youtube_shorts_rejects_over_sixty_seconds(self):
-        long_clip = _meta(seconds=75)
-        assert Channel.YOUTUBE not in eligible_channels(long_clip)
-        # Reels cho tới 90 giây nên vẫn nhận.
-        assert Channel.REELS in eligible_channels(long_clip)
+    def test_dien_thoai_man_hinh_dai_van_dang_duoc_moi_kenh(self):
+        """720×1648 (~20.6:9) — dọc HƠN 9:16, nhưng vẫn là clip điện thoại bình thường.
+
+        Bản trước phân loại khung hình thành vài ô rời rạc rồi khớp chuỗi, nên
+        clip này rơi ra ngoài mọi ô và bị cả ba kênh từ chối — trong khi chính
+        nó upload thẳng từ điện thoại lên Reels/TikTok/Shorts đều được.
+        """
+        tall = _meta(width=720, height=1648, seconds=13)
+        assert set(eligible_channels(tall)) == {
+            Channel.REELS,
+            Channel.TIKTOK,
+            Channel.YOUTUBE,
+        }
+
+    def test_khung_vuong_van_dang_duoc(self):
+        assert Channel.TIKTOK in eligible_channels(_meta(width=1080, height=1080))
+
+    def test_doc_qua_hep_thi_bi_chan(self):
+        """Ảnh chụp màn hình chat kéo dài không phải video để đăng."""
+        sliver = _meta(width=300, height=2400)
+        assert eligible_channels(sliver) == []
+
+    def test_youtube_shorts_van_nhan_video_75_giay(self):
+        """Shorts đã nâng lên 3 phút — giới hạn 60 giây cũ chặn nhầm nội dung hợp lệ."""
+        assert Channel.YOUTUBE in eligible_channels(_meta(seconds=75))
+
+    def test_youtube_shorts_tu_choi_video_qua_ba_phut(self):
+        assert Channel.YOUTUBE not in eligible_channels(_meta(seconds=200))
+
+    def test_moi_kenh_co_gioi_han_thoi_luong_rieng(self):
+        """75 giây: Reels (≤90s) và Shorts (≤180s) nhận, nhưng 120 giây thì Reels thôi."""
+        assert Channel.REELS in eligible_channels(_meta(seconds=75))
+        assert Channel.REELS not in eligible_channels(_meta(seconds=120))
+        assert Channel.YOUTUBE in eligible_channels(_meta(seconds=120))
 
     def test_tiktok_requires_audio(self):
         silent = _meta(audio=False)
@@ -212,5 +253,5 @@ class TestChannelConstraints:
         assert eligible_channels(None) == []
 
     def test_non_video_channels_have_no_video_constraints(self):
-        assert check_video_for_channel(_meta(ratio="16:9"), Channel.FACEBOOK_PAGE) == []
+        assert check_video_for_channel(_meta(width=1920, height=1080), Channel.FACEBOOK_PAGE) == []
         assert check_video_for_channel(None, Channel.ZALO_OA) == []

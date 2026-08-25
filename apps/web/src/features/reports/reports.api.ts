@@ -2,9 +2,7 @@ import { NETWORK_ERROR_MESSAGE } from "@/features/auth/auth.api";
 import { apiClient } from "@/lib/api-client/client";
 import type { components } from "@/lib/api-client/schema";
 
-export type AnalyticsSummary = components["schemas"]["AnalyticsSummary"] & {
-  total_revenue_vnd?: number;
-};
+export type AnalyticsSummary = components["schemas"]["AnalyticsSummary"];
 export type AnalyticsTimeseries = components["schemas"]["AnalyticsTimeseries"];
 export type ChannelAttribution = components["schemas"]["ChannelAttribution"];
 

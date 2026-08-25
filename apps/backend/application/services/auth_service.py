@@ -14,6 +14,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.organization_repository import OrganizationRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
@@ -101,6 +102,7 @@ class AuthService:
         members: WorkspaceMemberRepository | None = None,
         workspaces: WorkspaceRepository | None = None,
         events: EventLogRepository | None = None,
+        organizations: OrganizationRepository | None = None,
     ) -> None:
         self._users = users
         self._otp_challenges = otp_challenges
@@ -110,6 +112,7 @@ class AuthService:
         self._members = members
         self._workspaces = workspaces
         self._events = events
+        self._organizations = organizations
 
     async def sign_up(self, *, name: str, email: str, password: str) -> TokenPairResult:
         """Đăng ký xong đăng nhập luôn — email chưa cần xác minh để dùng app.
@@ -283,6 +286,9 @@ class AuthService:
                         raise CannotDeleteUserWithOwnedWorkspaces()
 
             await self._members.remove_all_for_user(user_id)
+
+        if self._organizations is not None:
+            await self._organizations.delete_empty_owned_organizations(user_id)
 
         await self._refresh_sessions.delete_all_for_user(user_id)
 

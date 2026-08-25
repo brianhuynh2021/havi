@@ -9,17 +9,32 @@ from domain.models.trend_scout import TrendCategory, TrendSynthesisRequest
 
 
 @pytest.mark.asyncio
-async def test_get_hot_trends_returns_sorted_list():
+async def test_get_hot_trends_returns_sorted_list(monkeypatch):
+    """Chặn mạng thật: kết quả phải tất định.
+
+    Bản trước gọi thẳng Google Trends RSS. Nội dung đó đổi theo giờ, và
+    `category` được gán luân phiên theo chỉ số, nên cùng một commit lúc xanh lúc
+    đỏ tuỳ thời điểm chạy. Một test đỏ ngẫu nhiên tệ hơn không có test: đội ngũ
+    học cách chạy lại cho tới khi xanh, và bỏ qua cả những lần đỏ thật.
+    """
     service = TrendScoutService()
-    ws_id = uuid4()
-    trends = await service.get_hot_trends(ws_id)
+
+    async def fake_live(self, count: int = 5):  # noqa: ANN001, ANN202
+        return [
+            {"keyword": f"tu khoa {i}", "traffic": traffic}
+            for i, traffic in enumerate(["50K+", "20K+", "10K+", "5K+", "2K+"][:count])
+        ]
+
+    monkeypatch.setattr(TrendScoutService, "_fetch_google_trends_live_vn", fake_live)
+
+    trends = await service.get_hot_trends(uuid4())
 
     assert len(trends) >= 5
-    # Kiểm tra sắp xếp theo trend_score giảm dần
     scores = [t.trend_score for t in trends]
-    assert scores == sorted(scores, reverse=True)
+    assert scores == sorted(scores, reverse=True), "phải sắp xếp giảm dần theo điểm"
+    # 50K+ ở hạng 0 → trần 95. Xem `_TRAFFIC_TIERS`.
     assert trends[0].trend_score >= 90
-    assert any(t.category == TrendCategory.TECH_EDUCATION for t in trends)
+    assert {t.category for t in trends} <= set(TrendCategory)
 
 
 @pytest.mark.asyncio

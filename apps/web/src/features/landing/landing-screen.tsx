@@ -287,7 +287,7 @@ export function LandingScreen() {
                 <span style={{ fontWeight: 800, fontSize: "22px", color: "#fff" }}>Havi</span>
               </div>
               <p className={styles.footerDesc}>
-                Trợ lý tạo bản nháp, duyệt lịch đăng Facebook Beta và theo dõi dữ liệu inbox/lead có nguồn trong một workspace.
+                Nền tảng quản trị nội dung, lịch đăng, hội thoại và trạng thái kênh trong một workspace.
               </p>
               <div className={styles.trustBadges}>
                 <span className={styles.trustBadge}>🛡️ API chính thức</span>

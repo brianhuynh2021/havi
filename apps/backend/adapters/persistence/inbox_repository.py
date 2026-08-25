@@ -24,15 +24,29 @@ class InboxRepository:
         return result.scalar_one_or_none()
 
     async def count_in_range(self, *, workspace_id: UUID, start: datetime, end: datetime) -> int:
-        """Số tin nhắn/bình luận khách gửi tới trong kỳ — "khách hỏi giá".
-
-        Đếm mọi inquiry chứ không lọc theo từ khoá giá: phân loại ý định là việc
-        của classifier chưa có, và lọc bằng danh sách từ khoá sẽ vừa sót vừa
-        thừa mà không ai biết sai bao nhiêu.
-        """
+        """Số tin nhắn, bình luận và đánh giá đi vào hộp thư trong kỳ."""
         result = await self._session.execute(
             select(func.count(InboxItem.id)).where(
                 InboxItem.workspace_id == workspace_id,
+                InboxItem.created_at >= start,
+                InboxItem.created_at < end,
+            )
+        )
+        return result.scalar_one()
+
+    async def count_by_status_in_range(
+        self,
+        *,
+        workspace_id: UUID,
+        status: InboxItemStatus,
+        start: datetime,
+        end: datetime,
+    ) -> int:
+        """Đếm item theo trạng thái để báo cáo việc đội ngũ đã xử lý."""
+        result = await self._session.execute(
+            select(func.count(InboxItem.id)).where(
+                InboxItem.workspace_id == workspace_id,
+                InboxItem.status == status,
                 InboxItem.created_at >= start,
                 InboxItem.created_at < end,
             )

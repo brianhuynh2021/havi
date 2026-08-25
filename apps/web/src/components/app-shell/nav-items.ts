@@ -9,23 +9,24 @@ export type NavItem = {
 };
 
 /**
- * Điều hướng chính — mỗi mục là một việc chủ tiệm thật sự làm, gọi bằng tên họ
- * dùng khi nói chuyện.
+ * Điều hướng chính — chín khu vực quản trị, đúng phạm vi sản phẩm.
  *
- * Danh sách này cố tình ngắn. Bản trước có 8 mục cho 14 route, nghĩa là một nửa
- * số màn chỉ vào được qua link rải rác trong nội dung — người dùng không dựng
- * nổi bản đồ trong đầu về app. Màn phụ (Lead, Lộ trình, Kết nối, Thanh toán)
- * vào từ đúng chỗ cần chúng: Tổng quan và Cài đặt.
+ * Havi quản trị **hệ thống social** của khách: kênh, nội dung, kho media, lịch
+ * đăng, hội thoại, thành viên. Không quản trị mục tiêu kinh doanh của họ.
  *
- * Bài viết và video **chung một mục**. Chủ tiệm không nghĩ theo loại nội dung;
- * họ nghĩ "tối nay ngồi chuẩn bị nội dung cho tuần sau", trong đó có cả hai xen
- * kẽ. Việc rẽ nhánh nằm ở bước đầu của luồng, không nằm ở thanh điều hướng.
+ * Vì vậy ở đây **không có** Lộ trình, Bằng chứng hay Trợ lý gợi ý tăng trưởng.
+ * Chúng từng tồn tại và từng bị đẩy ra khỏi nav bởi chính người viết ra chúng —
+ * một dấu hiệu rõ ràng rằng người dùng không mở app theo cách đó.
  */
 export const navItems: NavItem[] = [
   { key: "nav.dashboard", label: "Tổng quan", href: "/app", icon: "🏠" },
-  { key: "nav.content", label: "Đăng bài", href: "/app/content", icon: "✍️" },
+  { key: "nav.content", label: "Nội dung", href: "/app/content", icon: "✍️" },
+  { key: "nav.media", label: "Thư viện media", href: "/app/media", icon: "🖼️" },
   { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar", icon: "📅" },
-  { key: "nav.inbox", label: "Tin nhắn", href: "/app/inbox", icon: "💬" },
+  { key: "nav.inbox", label: "Hội thoại", href: "/app/inbox", icon: "💬" },
+  { key: "nav.connections", label: "Kênh kết nối", href: "/app/connections", icon: "🔗" },
+  { key: "nav.team", label: "Đội ngũ", href: "/app/team", icon: "👥" },
+  { key: "nav.activity", label: "Lịch sử", href: "/app/activity", icon: "🧾" },
   { key: "nav.reports", label: "Báo cáo", href: "/app/reports", icon: "📊" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings", icon: "⚙️" },
 ];

@@ -22,6 +22,12 @@ vi.mock("./content-creation.api", async (importOriginal) => {
 });
 
 vi.mock("./quota-banner", () => ({ QuotaBanner: () => null }));
+
+const permissions = vi.fn();
+vi.mock("@/lib/auth/use-permissions", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/auth/use-permissions")>();
+  return { ...actual, usePermissions: () => permissions() };
+});
 vi.mock("@/features/video/video-branch", () => ({
   VideoBranch: () => <div data-testid="video-branch">nhánh video</div>,
 }));
@@ -46,6 +52,13 @@ function draft(index: number) {
 beforeEach(() => {
   vi.clearAllMocks();
   listPendingItems.mockResolvedValue({ ok: true, data: [] });
+  // Mặc định: Chủ workspace, duyệt được.
+  permissions.mockReturnValue({
+    known: true,
+    role: "owner",
+    permissions: ["draft_content", "approve_content"],
+    can: () => true,
+  });
 });
 
 describe("ContentCreationScreen — một tab, một luồng", () => {
@@ -146,5 +159,36 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     await waitFor(() => expect(listPendingItems).toHaveBeenCalled());
 
     expect(screen.queryByRole("button", { name: /Duyệt/ })).toBeNull();
+  });
+
+  it("vai Người soạn KHÔNG thấy nút duyệt, nhưng vẫn thấy danh sách", async () => {
+    permissions.mockReturnValue({
+      known: true,
+      role: "marketer",
+      permissions: ["draft_content"],
+      can: (p: string) => p === "draft_content",
+    });
+    listPendingItems.mockResolvedValue({ ok: true, data: [draft(1), draft(2)] });
+
+    render(<ContentCreationScreen />);
+
+    expect(await screen.findByText(/2 bài này đang chờ duyệt/)).toBeInTheDocument();
+    expect(screen.getByText(/Người soạn/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Duyệt/ })).toBeNull();
+    // Vẫn thấy nội dung để bàn với người duyệt.
+    expect(document.querySelectorAll("ol li")).toHaveLength(2);
+  });
+
+  it("chưa biết vai thì VẪN hiện nút — tránh nháy và tránh chặn nhầm", async () => {
+    permissions.mockReturnValue({
+      known: false,
+      role: null,
+      permissions: [],
+      can: () => true,
+    });
+    listPendingItems.mockResolvedValue({ ok: true, data: [draft(1)] });
+
+    render(<ContentCreationScreen />);
+    expect(await screen.findByRole("button", { name: /Duyệt & xếp lịch/ })).toBeInTheDocument();
   });
 });

@@ -80,7 +80,6 @@ _RAW_INPUT_LABELS: dict[RawInputKind, str] = {
     RawInputKind.PHOTO: "Ảnh chủ tiệm vừa gửi",
     RawInputKind.VOICE: "Ghi âm chủ tiệm vừa gửi",
     RawInputKind.TEXT: "Ghi chú chủ tiệm gõ",
-    RawInputKind.SALES_WEBHOOK: "Dữ liệu từ phần mềm bán hàng",
 }
 
 

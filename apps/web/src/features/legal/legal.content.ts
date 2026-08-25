@@ -32,7 +32,7 @@ export const termsSections: Section[] = [
   {
     heading: "1. Havi là gì",
     paragraphs: [
-      "Havi là nền tảng trợ lý AI giúp doanh nghiệp nhỏ tạo bản nháp nội dung, duyệt lịch đăng và theo dõi inbox/lead trong một workspace.",
+      "Havi là nền tảng quản trị và vận hành mạng xã hội giúp doanh nghiệp tập trung kênh kết nối, thư viện media, nội dung, lịch đăng, hội thoại và thành viên trong một workspace.",
       "Bạn có thể nạp tư liệu để Havi gợi ý bài viết và kịch bản. Khả năng xuất bản phụ thuộc vào từng kênh được hỗ trợ và quyền API được nền tảng cấp.",
     ],
   },

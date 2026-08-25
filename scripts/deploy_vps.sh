@@ -76,12 +76,32 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 # 4. Chờ API sẵn sàng và chạy Migration Database
 echo "⏳ Đang chờ PostgreSQL và FastAPI khởi động..."
 sleep 8
-docker compose -f docker-compose.prod.yml exec api alembic upgrade head || true
+# KHÔNG `|| true`. Migration hỏng mà deploy vẫn báo thành công là cách app chạy
+# lên với schema cũ: các truy vấn tham chiếu cột chưa tồn tại sẽ đổ ở request
+# đầu tiên của khách, chứ không đổ ở đây nơi có người đang nhìn.
+if ! docker compose -f docker-compose.prod.yml exec -T api alembic upgrade head; then
+    echo "❌ Migration THẤT BẠI — dừng deploy. Schema chưa được cập nhật."
+    echo "   Xem log: docker compose -f docker-compose.prod.yml logs api"
+    exit 1
+fi
+
+# Model và schema phải khớp. `upgrade head` chạy được không có nghĩa là khớp —
+# một index quên đổi tên vẫn cho `upgrade` xanh nhưng khiến môi trường dựng mới
+# khác môi trường nâng cấp dần.
+if ! docker compose -f docker-compose.prod.yml exec -T api alembic check; then
+    echo "⚠️  CẢNH BÁO: schema lệch so với model (alembic check đỏ)."
+    echo "   Deploy vẫn tiếp tục, nhưng phải vá drift trước lần phát hành sau."
+fi
 
 echo "========================================================"
 echo "🎉 CHÚC MỪNG! HỆ THỐNG HAVI ĐÃ SẴN SÀNG TRÊN PRODUCTION!"
-echo "🌐 Frontend (PWA):  http://<IP-VPS>"
-echo "🔌 Backend (API):   http://<IP-VPS>/api"
-echo "📜 API Docs:        http://<IP-VPS>/docs"
-echo "💳 VietQR Webhook:  http://<IP-VPS>/webhooks/payos"
+echo "🌐 Frontend (PWA):  https://<DOMAIN>"
+echo "🔌 Backend (API):   https://<DOMAIN>/api"
+echo "📜 API Docs:        https://<DOMAIN>/docs"
+echo "💳 VietQR Webhook:  https://<DOMAIN>/webhooks/payos"
+echo
+echo "⚠️  Nginx chỉ khởi động khi đã có chứng chỉ TLS tại"
+echo "   /etc/letsencrypt/live/havi/. Chưa cấp thì chạy certbot trước:"
+echo "   docker compose -f docker-compose.prod.yml run --rm certbot certonly \\"
+echo "     --webroot -w /var/www/certbot -d <DOMAIN> --cert-name havi"
 echo "========================================================"

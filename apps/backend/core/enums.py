@@ -21,6 +21,20 @@ class Industry(StrEnum):
     OTHER = "other"
 
 
+class OrganizationRole(StrEnum):
+    """Vai ở cấp doanh nghiệp — cố tình chỉ có hai.
+
+    Quyền chi tiết (ai soạn, ai duyệt, ai trả lời khách) nằm ở `WorkspaceRole`,
+    tức ở từng thương hiệu. Nhân đôi bảng quyền ở cấp tổ chức chỉ tạo ra hai
+    nguồn sự thật cho cùng một câu hỏi.
+    """
+
+    #: Tạo/xoá thương hiệu, mời người vào tổ chức.
+    OWNER = "owner"
+    #: Thuộc tổ chức; quyền thật sự phụ thuộc vai ở từng workspace.
+    MEMBER = "member"
+
+
 class WorkspaceRole(StrEnum):
     OWNER = "owner"
     MARKETER = "marketer"
@@ -120,7 +134,6 @@ class RawInputKind(StrEnum):
     PHOTO = "photo"
     VOICE = "voice"
     TEXT = "text"
-    SALES_WEBHOOK = "sales_webhook"
 
 
 class MediaType(StrEnum):
@@ -213,57 +226,6 @@ class InboxItemStatus(StrEnum):
     DISMISSED = "dismissed"
 
 
-class LeadSource(StrEnum):
-    FANPAGE = "fanpage"
-    MAPS = "maps"
-    GOOGLE_BUSINESS = "google_business"
-    TIKTOK = "tiktok"
-    INBOX = "inbox"
-    GROUP = "group"
-    CRM = "crm"
-    POS = "pos"
-
-
-class LeadStage(StrEnum):
-    """Pipeline kanban trong Settings/CRM (TECHNICAL_SPEC §8)."""
-
-    NEW = "new"
-    CONTACTED = "contacted"
-    QUALIFIED = "qualified"
-    WON = "won"
-    LOST = "lost"
-
-
-class LeadReplyStatus(StrEnum):
-    """Status pill trên lead card ở tab Khách tiềm năng (HANDOFF State Management).
-
-    Tách khỏi LeadStage: đây là trạng thái của câu trả lời, không phải giai đoạn bán hàng.
-    """
-
-    NEW = "new"
-    AUTO_REPLIED = "auto_replied"
-    AWAITING_APPROVAL = "awaiting_approval"
-    SENT = "sent"
-    BOOKED = "booked"
-
-
-class CrmChannel(StrEnum):
-    ZALO = "zalo"
-    EMAIL = "email"
-
-
-class CrmNudgeType(StrEnum):
-    INACTIVE_30_DAYS = "inactive_30_days"
-    FOLLOWUP_14_DAYS = "followup_14_days"
-    BIRTHDAY_SPECIAL = "birthday_special"
-
-
-class CrmMessageStatus(StrEnum):
-    PENDING_APPROVAL = "pending_approval"
-    SENT = "sent"
-    DISMISSED = "dismissed"
-
-
 class SubscriptionStatus(StrEnum):
     TRIALING = "trialing"
     ACTIVE = "active"
@@ -296,53 +258,3 @@ class OAuthReturnTarget(StrEnum):
 
     ONBOARDING = "onboarding"
     SETTINGS = "settings"
-
-
-class GoalCategory(StrEnum):
-    """8 nhóm mục tiêu cơ bản theo Havi 3.0 (§26.7)."""
-
-    ACQUIRE_CUSTOMERS = "acquire_customers"
-    SELL_OFFER = "sell_offer"
-    LAUNCH = "launch"
-    RECRUIT = "recruit"
-    DELIVER_PROJECT = "deliver_project"
-    LEARN_SKILL = "learn_skill"
-    GROW_AUDIENCE = "grow_audience"
-    IMPROVE_OPERATIONS = "improve_operations"
-    OTHER = "other"
-
-
-class GoalStatus(StrEnum):
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    ABANDONED = "abandoned"
-
-
-class RoadmapStatus(StrEnum):
-    DRAFT = "draft"
-    ACTIVE = "active"
-    ARCHIVED = "archived"
-    SUPERSEDED = "superseded"
-
-
-class TaskOwnerType(StrEnum):
-    USER = "user"
-    HAVI = "havi"
-    COLLABORATIVE = "collaborative"
-
-
-class TaskStatus(StrEnum):
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    BLOCKED = "blocked"
-    SKIPPED = "skipped"
-
-
-class ReviewDecision(StrEnum):
-    CONTINUE = "continue"
-    IMPROVE = "improve"
-    PIVOT = "pivot"
-    PAUSE = "pause"
-    STOP = "stop"

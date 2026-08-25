@@ -7,10 +7,29 @@
 
 ## 1. Executive Summary & GTM Strategy
 
-Havi is positioned as an **"AI Marketing Employee"** ($299k–$599k/month) that replaces a part-time marketer (3–5M/month) by running 3 autonomous loops:
-1. **Content & Video Publishing:** 30s mobile ingest $\rightarrow$ Multi-channel posts (Facebook, Google Maps, TikTok/Shorts hooks).
-2. **24/7 Lead Care (Inbox Speed-to-Lead):** Auto-responds with verified price lists and captures customer phone numbers within 5 seconds.
-3. **Automated CRM Nudge:** Re-engages past customers with 1-tap re-activation offers.
+Havi is a **multi-channel communications manager for small businesses**
+(299k–599k VND/month). Positioning source of truth:
+[ROADMAP.md §1](../product/ROADMAP.md).
+
+What the pitch may claim, because the software does it and can prove it:
+
+1. **Posting keeps its rhythm.** Prepare a week in one sitting; Havi publishes
+   one story per day on the schedule the owner approved, and reports which posts
+   actually landed.
+2. **Messages land in one inbox.** Comments and Messenger together; approved
+   FAQs answer themselves, everything else waits for a human.
+3. **Clips already made get published.** Upload, Havi checks the clip fits the
+   channel, posts it, then reads the page back to confirm.
+
+What the pitch must **never** claim:
+
+* that Havi replaces a marketer — it drafts, a person approves;
+* that Havi brings customers, visits, or revenue;
+* a response time Havi does not measure ("5 giây", "24/7 tự động");
+* any number not taken from the customer's own workspace data.
+
+A promise the product cannot keep costs more than the sale is worth: the
+customer discovers it in week one and never trusts the rest.
 
 ---
 
@@ -99,6 +118,10 @@ cd apps/backend && uv run pytest
 npm --prefix apps/web test
 
 # Chạy kịch bản giả lập Dogfooding 7 ngày
-cd apps/backend && python ../../scripts/dogfood_suite.py
+# Dogfooding is done against the running app, by a person.
+# The old dogfood_suite.py runner was removed: it printed a scripted
+# journey with invented numbers, which looks like a passing test but
+# exercises nothing.
+cd apps/backend && uv run pytest
 ```
 

@@ -33,12 +33,6 @@ x-backend-env: &backend-env
   HAVI_PAYOS_API_KEY: ${HAVI_PAYOS_API_KEY:?Vui lòng cung cấp HAVI_PAYOS_API_KEY}
   HAVI_PAYOS_CHECKSUM_KEY: ${HAVI_PAYOS_CHECKSUM_KEY:?Vui lòng cung cấp HAVI_PAYOS_CHECKSUM_KEY}
   HAVI_PAYMENT_WEBHOOK_SECRET: ${HAVI_PAYMENT_WEBHOOK_SECRET:?Vui lòng cung cấp HAVI_PAYMENT_WEBHOOK_SECRET}
-  # Chuông Hot Lead qua Telegram. Không dùng `:?` bắt buộc vì cơ sở không dùng
-  # chuông vẫn phải deploy được — nhưng phải có mặt ở đây, nếu không biến đặt
-  # trong .env sẽ không bao giờ tới được container và chuông im lặng.
-  HAVI_TELEGRAM_BOT_TOKEN: ${HAVI_TELEGRAM_BOT_TOKEN:-}
-  HAVI_TELEGRAM_DEFAULT_CHAT_ID: ${HAVI_TELEGRAM_DEFAULT_CHAT_ID:-}
-
 services:
   postgres:
     image: postgres:16.15-alpine3.24

@@ -14,7 +14,7 @@ lưu trạng thái thì cách duy nhất để biết là hỏi lại Facebook, 
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index
+from sqlalchemy import DateTime, Enum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import Channel, VideoPostStatus
@@ -63,8 +63,12 @@ class VideoPost(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     #: Có cột này thì video đi chung một luồng với bài viết: chủ tiệm ngồi một
     #: buổi chuẩn bị cả tuần nội dung rồi rải lịch, thay vì phải mở app đúng giờ
     #: mỗi ngày để bấm đăng.
-    scheduled_at: Mapped[datetime | None] = mapped_column(default=None, nullable=True)
+    scheduled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None, nullable=True
+    )
 
     error_message: Mapped[str | None] = mapped_column(default=None, nullable=True)
 
-    published_at: Mapped[datetime | None] = mapped_column(default=None, nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None, nullable=True
+    )

@@ -1,13 +1,60 @@
-"""End-to-End Customer Zero (Trung Tâm Nhật Minh) & Local Pilot Journey Tests (Havi 3.0 Phase 4).
+"""Hành trình vận hành thật của Customer Zero (Trung Tâm Nhật Minh).
 
-Validates the full 30-day lifecycle across 4 distinct Goal Archetypes:
-1. Acquire Customers (Nhật Minh training center student cohort)
-2. Launch (Boutique Resort / Homestay direct booking campaign)
-3. Sell Offer (Spa / Clinic high-ticket package)
-4. Deliver Project (Local service milestone delivery)
+Bản trước test vòng lặp Goal → Roadmap → Evidence → Review. Tầng đó đã được gỡ
+khỏi sản phẩm ngày 2026-08-25 vì nó quản trị *mục tiêu kinh doanh của khách*,
+không phải *hệ thống social của khách*.
+
+Bộ test này thay bằng đúng thứ Havi làm: tạo workspace → soạn nội dung → duyệt →
+xếp lịch → theo dõi trạng thái, và tin khách nhắn tới thì không bị rơi.
+
+Vì sao giữ một test "hành trình" bên cạnh các test đơn lẻ đã có: từng bước đều
+xanh không có nghĩa là **nối lại với nhau** vẫn xanh. Chỗ đứt thường nằm ở giao
+giữa hai tầng — workspace vừa tạo chưa active, quota chưa cấp, bài duyệt xong
+không xuất hiện ở lịch.
 """
 
+import json
+from uuid import UUID
+
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from adapters.llm.fake import FakeProvider
+from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.content_repository import ContentRepository
+from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.media_repository import MediaRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
+from application.services.content_engine import ContentEngine
+from domain.policies.provider_router import ProviderRouter
+
+#: Ba bản nháp Facebook — đủ để kiểm việc rải lịch cho nhiều bài.
+_DRAFTS = json.dumps(
+    {
+        "drafts": [
+            {
+                "channel": "facebook_page",
+                "kind": "Bài viết",
+                "text": f"Khai giảng lớp Lập trình AI — buổi {i}",
+                "media_note": None,
+            }
+            for i in (1, 2, 3)
+        ]
+    }
+)
+
+
+def _engine(session: AsyncSession) -> ContentEngine:
+    """LLM giả: hành trình này kiểm luồng nghiệp vụ, không kiểm chất lượng câu chữ."""
+    provider = FakeProvider(response_text=_DRAFTS)
+    return ContentEngine(
+        content=ContentRepository(session),
+        workspaces=WorkspaceRepository(session),
+        profiles=BrandProfileRepository(session),
+        media=MediaRepository(session),
+        events=EventLogRepository(session),
+        router=ProviderRouter({provider.provider: provider}),
+    )
 
 
 async def _signup_and_get_workspace(
@@ -28,6 +75,8 @@ async def _signup_and_get_workspace(
     assert create_ws.status_code == 201, create_ws.text
     ws_id = create_ws.json()["id"]
 
+    # Token cũ chưa mang `active_workspace_id` — phải refresh, nếu không mọi
+    # request sau đó đều 403. Đây đúng là chỗ đứt mà test từng bước không thấy.
     refreshed = await client.post(
         "/auth/refresh", json={"refresh_token": token_pair["refresh_token"]}
     )
@@ -36,9 +85,11 @@ async def _signup_and_get_workspace(
     return new_headers, ws_id
 
 
-async def test_customer_zero_nhat_minh_30day_journey(client: AsyncClient):
-    """Mô phỏng trọn vẹn vòng lặp Customer Zero tại Trung Tâm Nhật Minh."""
-    headers, _ = await _signup_and_get_workspace(
+async def test_hanh_trinh_soan_duyet_xep_lich_cua_customer_zero(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Từ lúc đăng ký tới lúc bài nằm trong lịch chờ đăng."""
+    headers, ws_id = await _signup_and_get_workspace(
         client,
         email="nhatminh_c0@havi.vn",
         name="Thầy Minh (Customer Zero)",
@@ -46,128 +97,110 @@ async def test_customer_zero_nhat_minh_30day_journey(client: AsyncClient):
         industry="education",
     )
 
-    # 1. Khởi tạo Mục tiêu 30 ngày: Tuyển sinh 20 học viên khóa Lập trình AI
-    goal_res = await client.post(
-        "/goals",
+    # 1. Tổng quan lúc mới tinh: mọi ô bằng 0, không có số liệu mẫu nào.
+    dashboard = await client.get("/analytics/dashboard", headers=headers)
+    assert dashboard.status_code == 200, dashboard.text
+    assert dashboard.json()["published"] == 0
+    assert dashboard.json()["pending_approval"] == 0
+
+    # 2. Soạn nội dung từ vài dòng ghi chú.
+    job = await client.post(
+        "/content/jobs",
         json={
-            "title": "Tuyển sinh 20 học viên khóa Lập trình AI ứng dụng",
-            "category": "acquire_customers",
-            "evidence_definition": "Học viên đóng học phí xác nhận qua VietQR",
-            "weekly_capacity_hours": 12,
+            "raw_inputs": [
+                {"kind": "text", "text": "Khai giảng lớp Lập trình AI cho học sinh cấp 3"}
+            ],
+            "idempotency_key": "pilot-c0-job-1",
+            "channels": ["facebook_page"],
         },
         headers=headers,
     )
-    assert goal_res.status_code == 201
-    goal = goal_res.json()
-    goal_id = goal["id"]
-
-    # 2. Sinh Lộ Trình đa tầng (90d / 30d / 7d)
-    roadmap_res = await client.post(
-        "/roadmaps/generate", json={"goal_id": goal_id}, headers=headers
+    # 202 = đã xếp hàng. Worker chạy ngầm ở production; trong test gọi thẳng
+    # engine để hành trình không phụ thuộc vào Redis/Celery.
+    assert job.status_code == 202, job.text
+    await _engine(db_session).generate_drafts(
+        workspace_id=UUID(job.json()["workspace_id"]), job_id=UUID(job.json()["id"])
     )
-    assert roadmap_res.status_code == 201
-    roadmap_data = roadmap_res.json()
-    roadmap_id = roadmap_data["roadmap"]["id"]
-    assert len(roadmap_data["tasks"]) >= 3
 
-    # 3. Thực hiện Tuần 1: Việc hôm nay -> Hoàn thành kèm bằng chứng (Evidence 1)
-    today_res = await client.get("/roadmaps/today", headers=headers)
-    assert today_res.status_code == 200
-    task1 = today_res.json()
+    # 3. Bản nháp phải nằm ở hàng chờ duyệt — không tự lên Trang.
+    pending = await client.get("/content", headers=headers, params={"status": "pending_approval"})
+    assert pending.status_code == 200, pending.text
+    items = pending.json()["items"]
+    assert items, "job chạy xong phải sinh ra ít nhất một bản nháp"
+    assert all(item["status"] == "pending_approval" for item in items)
 
-    done1 = await client.post(
-        f"/roadmaps/tasks/{task1['id']}/complete",
+    # 4. Duyệt cả loạt, rải lịch — KHÔNG đăng ngay.
+    approve = await client.post(
+        "/content/approve-all",
         json={
-            "evidence_text": "Đã quay 1 video lớp học thực tế 15s và soạn bài ưu đãi khóa AI",
-            "evidence_type": "note",
-            "value_number": 1.0,
+            "content_item_ids": [item["id"] for item in items],
+            "publish_now": False,
+            "posts_per_day": 1,
         },
         headers=headers,
     )
-    assert done1.status_code == 200
+    assert approve.status_code == 200, approve.text
+    approved_ids = approve.json()["approved"]
+    assert approved_ids
 
-    # 4. Review Tuần 1 (Weekly Review 1): Đánh giá tiếp tục
-    rev1 = await client.post(
-        f"/roadmaps/{roadmap_id}/review",
-        json={
-            "completed_summary": "Đã đăng bài viết và nhận 8 tin nhắn hỏi lịch học",
-            "evidence_summary": "Có 2 phụ huynh đặt cọc giữ chỗ qua VietQR",
-            "obstacles_summary": "Tốc độ trả lời tư vấn buổi tối còn chậm",
-            "decision": "continue",
-        },
-        headers=headers,
-    )
-    assert rev1.status_code == 200
-    assert rev1.json()["decision"] == "continue"
+    # 5. Mỗi bài nhận một mốc giờ RIÊNG — đây là điểm khiến "chuẩn bị cả tuần
+    #    nội dung trong một buổi" có nghĩa. Dồn tất cả vào một phút là spam.
+    scheduled = await client.get("/content", headers=headers, params={"status": "approved"})
+    assert scheduled.status_code == 200
+    stamps = [item["scheduled_at"] for item in scheduled.json()["items"]]
+    assert all(stamps), "bài đã duyệt phải có giờ đăng"
+    assert len(set(stamps)) == len(stamps), "không bài nào được trùng giờ với bài khác"
 
-    # 5. Thực hiện Tuần 2: Gặp trở ngại & dùng Fallback Task
-    today_res2 = await client.get("/roadmaps/today", headers=headers)
-    assert today_res2.status_code == 200
-    task2 = today_res2.json()
-
-    block_res = await client.post(
-        f"/roadmaps/tasks/{task2['id']}/block",
-        json={"reason": "Chưa kịp quay video mới", "use_fallback": True},
-        headers=headers,
-    )
-    assert block_res.status_code == 200
-
-    # 6. Review Tuần 2: Cải tiến (Improve) -> Tự động sinh roadmap v2
-    rev2 = await client.post(
-        f"/roadmaps/{roadmap_id}/review",
-        json={
-            "completed_summary": "Đã dùng ảnh chụp lớp học thay cho video",
-            "evidence_summary": "Đã tuyển thêm 5 học viên chính thức (tổng cộng 7/20)",
-            "obstacles_summary": "Cần thêm bài viết chia sẻ cảm nhận học viên cũ",
-            "decision": "improve",
-        },
-        headers=headers,
-    )
-    assert rev2.status_code == 200
-    assert rev2.json()["decision"] == "improve"
-
-    # 7. Kiểm tra Lịch sử Roadmap (Phải có ít nhất 1 phiên bản được lưu trữ)
-    history_res = await client.get("/roadmaps/history", headers=headers)
-    assert history_res.status_code == 200
-    assert len(history_res.json()) >= 1
-
-    # 8. Kiểm tra Dòng Bằng Chứng (Evidence Stream)
-    evidence_res = await client.get("/roadmaps/evidence", headers=headers)
-    assert evidence_res.status_code == 200
-    assert len(evidence_res.json()) >= 1
+    # 6. Tổng quan phản ánh đúng việc vừa làm.
+    after = await client.get("/analytics/dashboard", headers=headers)
+    assert after.json()["scheduled"] >= len(approved_ids)
+    assert after.json()["published"] == 0, "chưa tới giờ thì chưa có bài nào đã đăng"
 
 
-async def test_local_hospitality_resort_journey(client: AsyncClient):
-    """Mô phỏng vòng lặp Direct Booking cho Boutique Resort / Homestay nghỉ dưỡng."""
-    headers, _ = await _signup_and_get_workspace(
+async def test_tin_khach_nhan_toi_khong_bi_roi(client: AsyncClient):
+    """Khách nhắn hỏi giá → vào hộp thư, và KHÔNG tự trả lời khi chưa ai duyệt.
+
+    Đây là ràng buộc đắt nhất của sản phẩm: câu trả lời tự động là đường duy
+    nhất trong Havi đi tới người ngoài. Nói sai với khách thì không rút lại được.
+    """
+    headers, ws_id = await _signup_and_get_workspace(
         client,
         email="resort_pilot@havi.vn",
-        name="Chủ Resort An Nhiên",
-        ws_name="An Nhiên Eco Resort & Villa",
-        industry="local_service",
+        name="Quản lý Resort",
+        ws_name="Boutique Resort Ven Biển",
+        industry="other",
     )
 
-    # Khởi tạo mục tiêu kéo khách đặt phòng trực tiếp không qua OTA
-    goal_res = await client.post(
-        "/goals",
+    inbound = await client.post(
+        f"/webhooks/dev/simulate?workspace_id={ws_id}",
         json={
-            "title": "Lấp đầy 30 đêm phòng trực tiếp (Direct Booking) trong tháng",
-            "category": "acquire_customers",
-            "evidence_definition": "Khách chuyển khoản cọc phòng qua VietQR",
-            "weekly_capacity_hours": 10,
+            "platform": "facebook",
+            "author_name": "Khách Lan",
+            "content": "Phòng view biển cuối tuần này còn không shop?",
+            "external_message_id": "pilot-msg-1",
         },
         headers=headers,
     )
-    assert goal_res.status_code == 201
-    goal_id = goal_res.json()["id"]
+    assert inbound.status_code == 200, inbound.text
 
-    # Sinh lộ trình
-    roadmap_res = await client.post(
-        "/roadmaps/generate", json={"goal_id": goal_id}, headers=headers
+    inbox = await client.get("/inbox", headers=headers)
+    assert inbox.status_code == 200, inbox.text
+    items = inbox.json()["items"]
+    assert len(items) == 1
+
+    # Không khớp FAQ đã duyệt → phải là bản nháp chờ người, không phải đã gửi.
+    assert items[0]["status"] != "sent", "không được tự trả lời khách khi chưa ai duyệt"
+
+    # Webhook gửi lại cùng một message_id không được đẻ thêm tin nhắn khách.
+    again = await client.post(
+        f"/webhooks/dev/simulate?workspace_id={ws_id}",
+        json={
+            "platform": "facebook",
+            "author_name": "Khách Lan",
+            "content": "Phòng view biển cuối tuần này còn không shop?",
+            "external_message_id": "pilot-msg-1",
+        },
+        headers=headers,
     )
-    assert roadmap_res.status_code == 201
-    roadmap_data = roadmap_res.json()
-    assert (
-        "đặt phòng" in roadmap_data["roadmap"]["horizon_90d"]
-        or "khách hàng" in roadmap_data["roadmap"]["horizon_90d"]
-    )
+    assert again.status_code == 200
+    assert len((await client.get("/inbox", headers=headers)).json()["items"]) == 1

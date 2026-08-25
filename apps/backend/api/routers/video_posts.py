@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from api.deps import (
     ActiveWorkspaceDep,
+    ApproverWorkspaceDep,
     VideoPostServiceDep,
     VideoPublishServiceDep,
     WorkspaceDep,
@@ -184,7 +185,9 @@ class ApproveVideoPostResponse(BaseModel):
 async def approve_video_post(
     post_id: UUID,
     req: ApproveVideoPostRequest,
-    workspace_id: ActiveWorkspaceDep,
+    # Cùng ràng buộc với bài viết: chỉ Người duyệt / Chủ workspace mới đưa được
+    # nội dung lên kênh.
+    workspace_id: ApproverWorkspaceDep,
     publish_service: VideoPublishServiceDep,
     request_id: str | None = Header(default=None, alias=REQUEST_ID_HEADER),
 ) -> ApproveVideoPostResponse:

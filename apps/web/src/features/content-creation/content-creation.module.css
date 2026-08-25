@@ -2351,3 +2351,15 @@
     gap: 2px;
   }
 }
+
+/* Vai không được duyệt: vẫn thấy danh sách, chỉ mất nút bấm. */
+.approveBlocked {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: var(--color-border-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-body);
+  font-size: 13.5px;
+  line-height: 1.55;
+}

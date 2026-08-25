@@ -148,8 +148,13 @@ def _metadata_of(asset) -> VideoMetadata | None:  # noqa: ANN001 — MediaAsset,
     Trả `None` thay vì dựng một `VideoMetadata` với số 0: `check_video_for_channel`
     coi `None` là "chưa biết nên chưa kết luận được", còn số 0 thì trông như một
     phép đo thật và sẽ sinh ra lý do từ chối sai.
+
+    Kiểm cả `width`/`height` chứ không chỉ `duration`: từ khi ràng buộc khung
+    hình so bằng số, kích thước pixel mới là thứ quyết định — thiếu nó thì không
+    tính được tỉ lệ, và chia cho 0 là cách biến một lần probe hỏng thành một
+    exception ở giữa luồng upload.
     """
-    if asset.duration_seconds is None or asset.aspect_ratio is None:
+    if asset.duration_seconds is None or not asset.width or not asset.height:
         return None
     return VideoMetadata(
         duration_seconds=asset.duration_seconds,

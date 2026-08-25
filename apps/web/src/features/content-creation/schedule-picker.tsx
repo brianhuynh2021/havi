@@ -12,6 +12,7 @@
  */
 
 import { Button } from "@/components/ui/button";
+import { PERMISSIONS, usePermissions } from "@/lib/auth/use-permissions";
 import styles from "./content-creation.module.css";
 
 /**
@@ -23,6 +24,14 @@ import styles from "./content-creation.module.css";
 const GOLDEN_HOURS = [8, 12, 20];
 
 const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
+/** Tên vai bằng tiếng Việt — `marketer` không nói gì với người đang bị chặn. */
+const ROLE_NAMES: Record<string, string> = {
+  owner: "Chủ workspace",
+  marketer: "Người soạn",
+  reviewer: "Người duyệt",
+  sales: "Trực hội thoại",
+};
 
 export type SchedulePlan = { publishNow: boolean; postsPerDay: number };
 
@@ -87,9 +96,37 @@ export function SchedulePicker({
   busy,
   noun,
 }: SchedulePickerProps) {
+  const { can, role } = usePermissions();
+  const mayApprove = can(PERMISSIONS.approveContent);
+
   const count = labels.length;
   const slots = plan.publishNow ? [] : previewSchedule(count, plan.postsPerDay);
   const lastDay = slots.length ? slots[slots.length - 1] : null;
+
+  // Vai không được duyệt vẫn **thấy toàn bộ bảng xem trước** — họ cần biết nội
+  // dung sẽ lên lúc nào để bàn với người duyệt. Chỉ nút bấm biến mất.
+  if (!mayApprove) {
+    return (
+      <section className={styles.scheduleCard} aria-labelledby="schedule-title">
+        <h3 id="schedule-title" className={styles.scheduleTitle}>
+          {count} {noun} này đang chờ duyệt
+        </h3>
+        <p className={styles.approveBlocked}>
+          Vai của bạn{role ? ` (${ROLE_NAMES[role] ?? role})` : ""} soạn được nhưng
+          không duyệt được. Nhờ Người duyệt hoặc Chủ workspace bấm duyệt giúp —
+          đó là điểm khiến bước duyệt có nghĩa.
+        </p>
+        <ol className={styles.schedulePreview}>
+          {labels.map((label, index) => (
+            <li key={`${label}-${index}`} className={styles.scheduleRow}>
+              <span className={styles.scheduleWhen}>—</span>
+              <span className={styles.scheduleWhat}>{label}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.scheduleCard} aria-labelledby="schedule-title">

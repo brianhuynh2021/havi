@@ -37,13 +37,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Miễn phí 100% · Không cần thẻ",
     badge: null,
     badgeTone: null,
-    desc: "Trải nghiệm toàn diện quy trình sáng tạo, duyệt bài Fanpage và chăm sóc inbox bằng AI.",
+    desc: "Trải nghiệm quy trình tập trung nội dung, duyệt bài Fanpage và xử lý hội thoại.",
     features: [
       "7 ngày dùng thử đầy đủ tính năng",
       "100.000 token AI (~30 bài viết & kịch bản)",
       "Tạo & lên lịch bài đăng Fanpage Facebook",
-      "Máy nhắc chữ Teleprompter quay video ngắn 9:16",
-      "Gợi ý phản hồi Messenger & lưu khách quan tâm",
+      "Tải video đã quay lên và đăng Reels tự động",
+      "Hộp thư Messenger và bản nháp phản hồi",
     ],
   },
   tiem_nho: {
@@ -53,13 +53,13 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~6.000 đ/ngày",
     badge: "TIẾT KIỆM NHẤT",
     badgeTone: "popular",
-    desc: "Giải pháp tự động hóa nội dung và chăm sóc khách hàng tiết kiệm cho tiệm đơn lẻ.",
+    desc: "Quản lý nội dung, lịch đăng và hội thoại cho một thương hiệu.",
     features: [
       "500.000 token AI mỗi tháng (~150 bài viết)",
       "Đăng bài và lên lịch Fanpage Facebook tự động",
-      "AI Video Studio: Tạo hook 3s & kịch bản video ngắn",
-      "Trực Inbox Messenger & tự động nhận diện SĐT",
-      "Lộ trình mục tiêu 7-30 ngày dẫn dắt từng bước",
+      "Hẹn lịch rải bài nhiều ngày, mỗi ngày một câu chuyện",
+      "Hộp thư Messenger và trạng thái xử lý rõ ràng",
+      "Lịch sử hoạt động để kiểm tra ai đã làm gì",
     ],
   },
   toan_dien: {
@@ -69,12 +69,12 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~12.000 đ/ngày",
     badge: "PHỔ BIẾN NHẤT 💎",
     badgeTone: "featured",
-    desc: "Tối ưu hóa chuyển đổi và mở rộng lượng khách địa phương đến cơ sở mỗi tuần.",
+    desc: "Dành cho đội ngũ cần quy trình soạn, duyệt, đăng và trả lời rõ ràng.",
     features: [
       "2.000.000 token AI mỗi tháng (Thoải mái sáng tạo)",
-      "Full tính năng AI Video Studio & Máy nhắc chữ",
-      "CRM Lead Care: Quét & gợi ý tin nhắn kéo khách cũ",
-      "Báo cáo tăng trưởng & phân tích hiệu quả kênh",
+      "Đăng video Reels kèm xác nhận bài đã lên Trang",
+      "Phân quyền thành viên theo vai trò",
+      "Báo cáo xuất bản và hội thoại theo dữ liệu thật",
       "Ưu tiên tài nguyên xử lý AI & Hỗ trợ kỹ thuật 1-1",
     ],
   },
@@ -85,11 +85,11 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~26.000 đ/ngày",
     badge: "QUY MÔ CHUỖI 👑",
     badgeTone: "enterprise",
-    desc: "Dành cho cơ sở quy mô lớn hoặc chuỗi cần lưu lượng nội dung và hỗ trợ tối đa.",
+    desc: "Dành cho doanh nghiệp nhiều thương hiệu hoặc chi nhánh cần quản trị tập trung.",
     features: [
       "5.000.000 token AI mỗi tháng (Hạn mức cao nhất)",
-      "Không giới hạn chiến dịch & kịch bản video",
-      "Trọn bộ năng lực AI Content, Video Studio, Inbox & CRM",
+      "Quản lý nhiều thương hiệu và không gian làm việc",
+      "Trọn bộ: thư viện media, nội dung, lịch đăng và hộp thư chung",
       "Hỗ trợ triển khai trực tiếp cùng Founder & Đội ngũ",
       "Xuất hóa đơn VAT điện tử & Tùy biến Brand Voice",
     ],
@@ -246,7 +246,7 @@ export function BillingScreen() {
           </Badge>
         </div>
         <p className={styles.subtitle}>
-          Quản lý gói dịch vụ nhân viên AI marketing, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR minh bạch.
+          Quản lý gói dịch vụ, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR.
         </p>
       </header>
 
@@ -359,7 +359,7 @@ export function BillingScreen() {
       </section>
 
       <p className={styles.billingDisclaimer} style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "13px", margin: "16px 0 28px" }}>
-        * Không bao gồm cam kết số bài, lead hoặc doanh thu; kết quả phụ thuộc vào hoạt động kinh doanh và dịch vụ thực tế tại cơ sở.
+        * Gói cước cung cấp công cụ quản trị và vận hành social media; không bao gồm ngân sách quảng cáo hoặc dịch vụ vận hành thuê ngoài.
       </p>
 
       {/* Invoices History */}

@@ -86,6 +86,24 @@ async def test_clip_hop_le_vao_thang_cho_duyet(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
+async def test_clip_dien_thoai_man_hinh_dai_van_dang_duoc(db_session: AsyncSession):
+    """720×1648 (~20.6:9) — dọc hơn 9:16, và vẫn phải đăng được.
+
+    Bản trước phân loại khung hình thành vài ô rời rạc rồi khớp chuỗi tuyệt đối:
+    clip này rơi ra ngoài mọi ô, nhận nhãn thô "720:1648", rồi bị cả ba kênh từ
+    chối — trong khi chính nó upload thẳng từ điện thoại lên Reels/TikTok/Shorts
+    đều được. Havi khắt khe hơn nền tảng là lỗi của Havi.
+    """
+    ws = await _workspace(db_session, "tallphone")
+    clip = await _clip(db_session, ws.id, width=720, height=1648, duration=13.0)
+
+    post = await _service(db_session).create_from_upload(
+        workspace_id=ws.id, source_media_id=clip.id
+    )
+    assert post.status is VideoPostStatus.READY_FOR_REVIEW
+
+
+@pytest.mark.asyncio
 async def test_clip_quay_ngang_bi_chan_ngay_luc_upload(db_session: AsyncSession):
     ws = await _workspace(db_session, "landscape")
     clip = await _clip(db_session, ws.id, aspect="16:9", width=1920, height=1080)
@@ -94,7 +112,9 @@ async def test_clip_quay_ngang_bi_chan_ngay_luc_upload(db_session: AsyncSession)
         await _service(db_session).create_from_upload(
             workspace_id=ws.id, source_media_id=clip.id
         )
-    assert any("9:16" in reason for reason in exc.value.reasons)
+    # Lý do nói bằng hình dạng, không bằng số pixel: "khung ngang 16:9" thì chủ
+    # tiệm hiểu ngay là quay sai chiều, còn "720:1648" thì không.
+    assert any("khung ngang" in reason for reason in exc.value.reasons)
 
 
 @pytest.mark.asyncio
@@ -131,6 +151,27 @@ async def test_chua_probe_duoc_thi_tu_choi_ro_rang_chu_khong_doan_bua(
     clip = await _clip(db_session, ws.id)
     clip.duration_seconds = None
     clip.aspect_ratio = None
+    await db_session.flush()
+
+    with pytest.raises(ClipNotPublishable) as exc:
+        await _service(db_session).create_from_upload(
+            workspace_id=ws.id, source_media_id=clip.id
+        )
+    assert any("thông số" in reason.lower() for reason in exc.value.reasons)
+
+
+@pytest.mark.asyncio
+async def test_thieu_kich_thuoc_pixel_thi_cung_tu_choi(db_session: AsyncSession):
+    """Từ khi khung hình tính bằng số, thiếu width/height là không kết luận được.
+
+    Kiểm riêng khỏi test trên: ở đó `duration` NULL đã đủ chặn, nên nó không
+    chứng minh được gì về kích thước. Mà chia cho `height = 0` mới là thứ biến
+    một lần probe hỏng thành exception giữa luồng upload.
+    """
+    ws = await _workspace(db_session, "nosize")
+    clip = await _clip(db_session, ws.id)
+    clip.width = None
+    clip.height = None
     await db_session.flush()
 
     with pytest.raises(ClipNotPublishable) as exc:
@@ -217,13 +258,13 @@ async def test_khong_huy_duoc_video_da_gui_di(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_goi_y_kenh_dang_duoc_ngay_sau_khi_upload(db_session: AsyncSession):
-    """Clip 9:16 70 giây có tiếng: Reels và TikTok nhận, Shorts (tối đa 60s) thì không."""
+    """Clip dọc 120 giây: TikTok và Shorts nhận, Reels (tối đa 90s) thì không."""
     ws = await _workspace(db_session, "eligible")
-    clip = await _clip(db_session, ws.id, duration=70.0)
+    clip = await _clip(db_session, ws.id, duration=120.0)
 
     channels = await _service(db_session).channels_for_clip(
         workspace_id=ws.id, source_media_id=clip.id
     )
-    assert Channel.REELS in channels
     assert Channel.TIKTOK in channels
-    assert Channel.YOUTUBE not in channels
+    assert Channel.YOUTUBE in channels
+    assert Channel.REELS not in channels

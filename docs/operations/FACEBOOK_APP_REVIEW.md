@@ -9,7 +9,7 @@
 Before clicking **Submit for Review** in the Meta Developer Dashboard:
 
 ### 1.1 App Settings -> Basic
-* **Display Name:** `Havi — AI Marketing Employee`
+* **Display Name:** `Havi — Quản trị truyền thông đa kênh`
 * **App Icon:** 1024x1024 PNG logo.
 * **Category:** `Business and Pages`
 * **Privacy Policy URL:** `https://<your-domain>/bao-mat`
@@ -40,10 +40,10 @@ Havi requests three permissions for the closed-loop publishing workflow:
 
 ### Permission 1: `pages_show_list`
 > **How is your app using this permission?**
-> Havi is an AI marketing assistant designed for small businesses (e.g., spas, cafes, restaurants). When a shop owner connects their Facebook account via OAuth, Havi uses `pages_show_list` to show a selection list of the Facebook Pages they manage. The owner selects which specific Page they want Havi to publish approved content to.
+> Havi is a social media management and operations platform for businesses. When a user connects Facebook via OAuth, Havi uses `pages_show_list` to show the Pages they manage. The user selects the specific Page they want Havi to manage and publish approved content to.
 >
 > **English Version for Reviewer:**
-> Havi is an AI marketing platform for small-business owners. We request `pages_show_list` to list the Facebook Pages managed by the authenticated user during the onboarding and connection process. This allows the user to choose which specific Page Havi should connect to for publishing their approved marketing posts.
+> Havi is a social media management and operations platform. We request `pages_show_list` to list the Facebook Pages managed by the authenticated user during onboarding and connection. This lets the user choose the specific Page Havi should connect to for publishing content the user has reviewed and approved.
 
 ---
 

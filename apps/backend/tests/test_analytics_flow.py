@@ -200,7 +200,7 @@ async def test_analytics_summary_va_attribution_khong_lan_workspace_khac(
     assert summary.status_code == 200, summary.text
     assert summary.json()["published_posts"] == 2
     assert attribution.status_code == 200, attribution.text
-    assert {item["channel"]: item["customers"] for item in attribution.json()} == {
+    assert {item["channel"]: item["posts"] for item in attribution.json()} == {
         "facebook_page": 1,
         "zalo_oa": 1,
     }

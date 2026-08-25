@@ -47,12 +47,17 @@ class MemberWithUser:
     user: User
 
 
+class NotOrganizationMember(Exception):
+    """Tạo thương hiệu trong một tổ chức mình không thuộc về."""
+
+
 class WorkspaceService:
     def __init__(
         self,
         *,
         workspaces: WorkspaceRepository,
         members: WorkspaceMemberRepository,
+        organizations=None,  # noqa: ANN001 — OrganizationRepository, tránh vòng import
         users: UserRepository,
         auth_service: AuthService,
         events: EventLogRepository | None = None,
@@ -60,6 +65,7 @@ class WorkspaceService:
     ) -> None:
         self._workspaces = workspaces
         self._members = members
+        self._organizations = organizations
         self._users = users
         self._auth_service = auth_service
         self._events = events
@@ -69,13 +75,37 @@ class WorkspaceService:
         return await self._workspaces.list_for_user(user_id)
 
     async def create_workspace(
-        self, *, owner_user_id: UUID, name: str, industry: Industry
+        self,
+        *,
+        owner_user_id: UUID,
+        name: str,
+        industry: Industry,
+        organization_id: UUID | None = None,
     ) -> Workspace:
         """Bước 1 Onboarding. Tự đặt làm active_workspace_id — client gọi lại
         `/auth/refresh` (hoặc `/workspaces/{id}/activate`) để JWT phản ánh workspace mới.
         """
+        # Mỗi workspace thuộc về một tổ chức. Không truyền vào thì dùng tổ chức
+        # đầu tiên của người tạo, tạo mới nếu họ chưa có — chủ tiệm đơn lẻ không
+        # bao giờ thấy khái niệm này, nhưng ngày họ mở thương hiệu thứ hai thì
+        # không phải migrate gì.
+        if organization_id is None and self._organizations is not None:
+            organization_id = await self._organizations.ensure_personal_org(
+                user_id=owner_user_id, name=name
+            )
+        elif organization_id is not None and self._organizations is not None:
+            # Tạo thương hiệu trong một tổ chức có sẵn: người tạo phải là thành
+            # viên tổ chức đó, nếu không họ vừa gắn dữ liệu vào công ty người khác.
+            if await self._organizations.get_role(
+                organization_id=organization_id, user_id=owner_user_id
+            ) is None:
+                raise NotOrganizationMember()
+
         workspace = await self._workspaces.create(
-            name=name, industry=industry, owner_user_id=owner_user_id
+            name=name,
+            industry=industry,
+            owner_user_id=owner_user_id,
+            organization_id=organization_id,
         )
         await self._members.add(
             workspace_id=workspace.id, user_id=owner_user_id, role=WorkspaceRole.OWNER

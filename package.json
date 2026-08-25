@@ -15,18 +15,11 @@
     "e2e": "cd apps/backend && uv run pytest tests/test_e2e_core_flow.py",
     "generate:api": "npm run generate:api --workspace web",
     "dev:api": "cd apps/backend && uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000",
-    "dev:worker": "cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_render -l info",
+    "dev:worker": "cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_publish -l info",
     "test:api": "cd apps/backend && uv run pytest",
     "lint:api": "cd apps/backend && uv run ruff check .",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
-    "migrate": "cd apps/backend && uv run alembic upgrade head",
-    "loop": "python3 agent-loop/run_loop.py",
-    "loop:ai": "python3 agent-loop/run_loop.py --execute",
-    "loop:ai:3": "python3 agent-loop/run_loop.py --execute --task-limit 3",
-    "loop:ai:5": "python3 agent-loop/run_loop.py --execute --task-limit 5",
-    "loop:patch": "python3 agent-loop/run_loop.py --execute --code",
-    "loop:code": "python3 agent-loop/run_loop.py --execute --code --apply-patch --verify",
-    "loop:code:no-verify": "python3 agent-loop/run_loop.py --execute --code --apply-patch --no-verify"
+    "migrate": "cd apps/backend && uv run alembic upgrade head"
   }
 }

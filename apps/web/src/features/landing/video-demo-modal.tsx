@@ -41,9 +41,9 @@ const CHAPTERS: Chapter[] = [
     id: 3,
     timeSec: 40,
     timeLabel: "00:40 - 01:00",
-    title: "3. Theo dõi inquiry và cảnh báo Telegram",
-    desc: "Khi webhook hỗ trợ chuyển inquiry có SĐT vào Havi, notifier đã cấu hình có thể cảnh báo chủ cơ sở; độ trễ phụ thuộc nhà cung cấp.",
-    channel: "🔔 TELEGRAM RADAR",
+    title: "3. Theo dõi hội thoại và trạng thái xử lý",
+    desc: "Havi gom hội thoại từ các kênh được hỗ trợ, cho phép chỉnh bản nháp rồi gửi hoặc bỏ qua.",
+    channel: "🔔 SOCIAL OPERATIONS",
   },
 ];
 
@@ -137,7 +137,7 @@ export function VideoDemoModal({
           <div className={styles.videoModalTitleBox}>
             <span className={styles.videoBadge}>🎥 DEMO THỰC CHIẾN 60S</span>
             <h3 className={styles.videoModalTitle}>
-              Xem Havi Tự Động Vận Hành Đa Kênh Cho Chủ Tiệm
+              Xem Havi Quản Trị Social Media Đa Kênh
             </h3>
           </div>
           <button
@@ -219,21 +219,21 @@ export function VideoDemoModal({
               <div className={styles.playerVisualScene}>
                 <div className={styles.sceneTgAlertCard}>
                   <div className={styles.sceneTgTop}>
-                    <span>✈️ Telegram Hot Lead Radar</span>
-                    <span className={styles.scenePulseLive}>⚡ 3s trước</span>
+                    <span>💬 Hộp thư chung</span>
+                    <span className={styles.scenePulseLive}>Mới</span>
                   </div>
                   <div className={styles.sceneTgContent}>
-                    <div>🔔 <strong>[HAVI HOT LEAD] CÓ KHÁCH CẦN TƯ VẤN GẤP!</strong></div>
-                    <div>👤 <strong>Khách:</strong> Chị Thanh Hằng (0912.345.678)</div>
-                    <div>💬 <strong>Nhu cầu:</strong> Báo giá combo vi kim mụn thâm</div>
+                    <div>🔔 <strong>CÓ MỘT HỘI THOẠI CHƯA XỬ LÝ</strong></div>
+                    <div>👤 <strong>Người gửi:</strong> Khách Facebook</div>
+                    <div>💬 <strong>Nội dung:</strong> Cho mình xin thông tin liệu trình</div>
                     <div className={styles.sceneTgBtnRow}>
-                      <span className={styles.sceneBtnCall}>📞 [ BẤM GỌI ĐIỆN NGAY ]</span>
-                      <span className={styles.sceneBtnZalo}>💬 [ BẤM MỞ ZALO ]</span>
+                      <span className={styles.sceneBtnCall}>[ MỞ HỘI THOẠI ]</span>
+                      <span className={styles.sceneBtnZalo}>[ KIỂM TRA BẢN NHÁP ]</span>
                     </div>
                   </div>
                 </div>
                 <div className={styles.sceneMetaCard}>
-                  <div className={styles.sceneTagGreen}>✓ Minh hoạ chăm sóc lead</div>
+                  <div className={styles.sceneTagGreen}>✓ Minh hoạ xử lý hội thoại</div>
                   <h4 className={styles.sceneCardHeading}>Theo dõi inquiry trong một hộp thư</h4>
                   <p className={styles.sceneCardDesc}>
                     Đây là kịch bản minh hoạ. Chỉ FAQ đã duyệt mới được tự phản hồi; các trường hợp khác chờ người dùng duyệt và gửi.

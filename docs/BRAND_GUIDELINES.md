@@ -14,7 +14,7 @@ $$\mathbf{HAVI} = \mathbf{Ha}\text{rry (Con trai yêu quý của Founder)} + \ma
 
 - **Cấu trúc biểu tượng**:
   - **Chữ "H" nghiêng tốc độ**: Đại diện cho Havi và Harry.
-  - **Mũi tên vút lên (Ascending Velocity Arrow)**: Biểu trưng cho sự tăng trưởng doanh thu, độ phủ đa kênh và tốc độ tự động hóa.
+  - **Mũi tên vút lên (Ascending Velocity Arrow)**: Biểu trưng cho luồng công việc rõ ràng, độ phủ đa kênh và tốc độ vận hành.
   - **Lõi hạt nhân Hexagon AI (AI Core Node)**: Biểu trưng cho trí tuệ nhân tạo, sự kết nối dữ liệu thông minh và an toàn bảo mật.
   - **Khung Squircle bo góc công nghệ**: Phong cách thiết kế tối giản, hiện đại theo chuẩn Silicon Valley (tương đồng với Apple, Stripe, Linear, Vercel).
 
@@ -26,7 +26,7 @@ $$\mathbf{HAVI} = \mathbf{Ha}\text{rry (Con trai yêu quý của Founder)} + \ma
 | :--- | :---: | :---: | :---: | :--- |
 | **Electric Indigo** | `#4F46E5` | `rgb(79, 70, 229)` | `C:75 M:75 Y:0 K:0` | Màu thương hiệu chủ đạo (Gốc chữ H) |
 | **Ultra Violet** | `#7C3AED` | `rgb(124, 58, 237)` | `C:65 M:80 Y:0 K:0` | Dải chuyển màu AI sáng tạo |
-| **Cyan Pulse** | `#00D2FF` | `rgb(0, 210, 255)` | `C:60 M:0 Y:0 K:0` | Mũi tên tăng trưởng & điểm nhấn Neon |
+| **Cyan Pulse** | `#00D2FF` | `rgb(0, 210, 255)` | `C:60 M:0 Y:0 K:0` | Mũi tên vận hành & điểm nhấn Neon |
 | **Deep Space Navy** | `#090D16` | `rgb(9, 13, 22)` | `C:85 M:75 Y:55 K:75` | Nền Squircle & giao diện Dark Mode |
 | **Pure Surface White**| `#FFFFFF`| `rgb(255, 255, 255)`| `C:0 M:0 Y:0 K:0` | Lõi AI hạt nhân & Nền sáng |
 

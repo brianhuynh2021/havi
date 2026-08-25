@@ -1,6 +1,5 @@
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, toStoredTokens } from "@/features/auth/auth.api";
-import { createGoal, generateRoadmap } from "@/features/roadmap/roadmap.api";
 import type { StoredTokens } from "@/lib/auth/token-store";
 import type { IndustryOption } from "./onboarding.fixture";
 
@@ -80,60 +79,70 @@ export async function initializeBusinessTruthPack(
 
     const tone = industry ? (toneMap[industry] ?? toneMap.other) : toneMap.other;
 
+    // FAQ mẫu theo ngành — **luôn `approved: false`**.
+    //
+    // Đây là câu chữ Havi *đoán* cho một ngành, không phải sự thật về cơ sở
+    // này: giờ mở cửa, lớp học thử, cam kết đầu ra đều là số bịa để chủ tiệm
+    // sửa lại cho đúng. Trước đây chúng vào thẳng với `approved: true`, nghĩa
+    // là Havi có thể tự nhắn cho khách thật một giờ mở cửa mà chủ tiệm chưa
+    // từng nhìn thấy.
+    //
+    // Câu trả lời tự động là đường duy nhất trong Havi đi tới người ngoài mà
+    // không qua mắt chủ tiệm. Nói sai với khách thì không rút lại được.
     const faqMap: Record<string, Array<{ question: string; answer: string; approved: boolean }>> = {
       spa: [
         {
           question: "Tiệm có làm việc cuối tuần không?",
           answer: `${shopName} mở cửa phục vụ xuyên suốt từ 8h30 đến 20h30 tất cả các ngày trong tuần kể cả Thứ 7 & Chủ Nhật ạ.`,
-          approved: true,
+          approved: false,
         },
         {
           question: "Có cần đặt lịch trước không?",
           answer: `Dạ để được phục vụ chu đáo nhất và không phải chờ đợi, chị/anh vui lòng nhắn trước cho ${shopName} thời gian dự kiến nhé ạ!`,
-          approved: true,
+          approved: false,
         },
       ],
       restaurant: [
         {
           question: "Quán mở cửa mấy giờ?",
           answer: `${shopName} mở cửa từ 7h00 đến 22h30 hàng ngày ạ.`,
-          approved: true,
+          approved: false,
         },
         {
           question: "Có nhận đặt bàn trước không?",
           answer: `Dạ ${shopName} có nhận đặt bàn trước cho tiệc gia đình, bạn bè ạ. Chị/anh báo số lượng khách và giờ đến nhé!`,
-          approved: true,
+          approved: false,
         },
       ],
       clinic: [
         {
           question: "Phòng khám có đặt lịch khám trước không?",
           answer: `Dạ có ạ, quý khách vui lòng đặt hẹn trước với ${shopName} để được bác sĩ tư vấn chu đáo nhất.`,
-          approved: true,
+          approved: false,
         },
       ],
       education: [
         {
           question: "Trung tâm có lớp học thử miễn phí không?",
           answer: `Dạ ${shopName} có chương trình Học thử 1 buổi miễn phí trải nghiệm thực hành thực tế ạ! Anh/chị cho em xin Tên & SĐT để thầy giáo xếp lịch cho mình/bé nhé!`,
-          approved: true,
+          approved: false,
         },
         {
           question: "Khóa học đào tạo trong bao lâu và có cam kết đầu ra không?",
           answer: `Dạ khóa học tại ${shopName} kéo dài từ 2-3 tháng, đào tạo 1 kèm 1 thực hành trên dự án thật và cam kết hỗ trợ học viên đến khi làm được sản phẩm chạy thực tế ạ!`,
-          approved: true,
+          approved: false,
         },
         {
           question: "Thời gian học như thế nào, có lớp buổi tối hay cuối tuần không?",
           answer: `Dạ ${shopName} có đầy đủ các ca học linh hoạt: Sáng (8h30-10h30), Chiều (14h-16h), Tối (18h30-20h30) và ca Thứ 7 & Chủ Nhật để học viên dễ dàng sắp xếp ạ.`,
-          approved: true,
+          approved: false,
         },
       ],
       other: [
         {
           question: "Tiệm mở cửa khung giờ nào?",
           answer: `${shopName} mở cửa từ 8h00 đến 21h00 hàng ngày ạ.`,
-          approved: true,
+          approved: false,
         },
       ],
     };
@@ -147,49 +156,16 @@ export async function initializeBusinessTruthPack(
       },
     });
 
-    // Tự động khởi tạo Mục Tiêu & Lộ Trình mẫu để khi bước vào app có ngay việc làm
-    try {
-      const goalTitles: Record<string, { title: string; evidence: string }> = {
-        spa: {
-          title: `Thu hút 20 khách hàng trải nghiệm dịch vụ mới tại ${shopName} trong 30 ngày`,
-          evidence: "Có 20 khách hàng để lại số điện thoại hoặc đặt lịch trải nghiệm",
-        },
-        restaurant: {
-          title: `Tăng 30% khách hàng ghé quán & đặt bàn tại ${shopName}`,
-          evidence: "Ghi nhận 30 lượt khách đặt bàn hoặc check-in tại quán",
-        },
-        retail: {
-          title: `Thu hút 20 khách hàng mua sắm & để lại thông tin tại ${shopName}`,
-          evidence: "Có 20 đơn hàng mới hoặc khách hàng mới để lại thông tin",
-        },
-        clinic: {
-          title: `Thu hút 15 bệnh nhân đặt hẹn khám tư vấn tại ${shopName}`,
-          evidence: "Có 15 lượt bệnh nhân đặt lịch khám tư vấn",
-        },
-        education: {
-          title: `Tuyển sinh 20 học viên khóa học mới tại ${shopName} trong 30 ngày`,
-          evidence: "Có 20 học viên đăng ký hoặc chuyển khoản cọc VietQR",
-        },
-        other: {
-          title: `Thu hút 20 khách hàng tiềm năng đầu tiên tại ${shopName} trong 30 ngày`,
-          evidence: "Có 20 khách hàng liên hệ tư vấn hoặc để lại số điện thoại",
-        },
-      };
-
-      const selectedGoal = industry ? (goalTitles[industry] ?? goalTitles.other) : goalTitles.other;
-      const goalRes = await createGoal({
-        title: selectedGoal.title,
-        category: "acquire_customers",
-        evidence_definition: selectedGoal.evidence,
-        weekly_capacity_hours: 10,
-      });
-
-      if (goalRes.ok) {
-        await generateRoadmap(goalRes.data.id);
-      }
-    } catch {
-      // Non-blocking fallback
-    }
+    // Onboarding KHÔNG đặt mục tiêu hộ người dùng.
+    //
+    // Bản trước âm thầm tạo một Goal ("Thu hút 20 khách hàng… trong 30 ngày")
+    // kèm một Roadmap, chỉ dựa trên ngành nghề vừa chọn. Người dùng chưa từng
+    // nói họ muốn 20 khách, chưa từng nói 30 ngày, và không hề biết Havi vừa
+    // cam kết điều đó thay mình.
+    //
+    // Havi quản trị hệ thống social của khách, không quản trị mục tiêu kinh
+    // doanh của khách. Toàn bộ tầng Goal/Roadmap/Evidence đã được gỡ khỏi sản
+    // phẩm ngày 2026-08-25.
 
     return { ok: true };
   } catch {

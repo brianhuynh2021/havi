@@ -1,9 +1,9 @@
-import { LeadsScreen } from "@/features/leads/leads-screen";
+import { InboxScreen } from "@/features/inbox/inbox-screen";
 
 export const metadata = {
   title: "Hộp Thư — Havi",
 };
 
 export default function InboxPage() {
-  return <LeadsScreen defaultTab="inbox" />;
+  return <InboxScreen />;
 }

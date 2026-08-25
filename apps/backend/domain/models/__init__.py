@@ -9,13 +9,10 @@ from domain.models.audit import EventLog
 from domain.models.base import Base
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
-from domain.models.crm_nudge import CrmNudge
-from domain.models.goal import Goal
 from domain.models.inbox import InboxItem
-from domain.models.lead import Lead
 from domain.models.media import MediaAsset
+from domain.models.organization import Organization, OrganizationMember
 from domain.models.publish import PublishJob
-from domain.models.roadmap import EvidenceLog, Roadmap, RoadmapReview, RoadmapTask
 from domain.models.user import OtpChallenge, RefreshSession, User
 from domain.models.video_post import VideoPost
 from domain.models.video_publish import VideoPublishAttempt
@@ -35,6 +32,8 @@ __all__ = [
     "WorkspaceMember",
     "BrandProfile",
     "MediaAsset",
+    "Organization",
+    "OrganizationMember",
     "VideoPublishAttempt",
     "VideoPost",
     "ContentJob",
@@ -44,12 +43,5 @@ __all__ = [
     "PlatformConnection",
     "PublishJob",
     "InboxItem",
-    "Lead",
-    "CrmNudge",
     "Invoice",
-    "Goal",
-    "Roadmap",
-    "RoadmapTask",
-    "EvidenceLog",
-    "RoadmapReview",
 ]

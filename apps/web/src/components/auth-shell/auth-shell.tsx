@@ -26,11 +26,10 @@ export function AuthShell({ children }: AuthShellProps) {
       <div className={styles.card}>{children}</div>
       <p className={styles.tagline}>
         {t({
-          vi: "Havi — trợ lý marketing cho tiệm của bạn",
-          en: "Havi — AI marketing assistant for your store",
+          vi: "Havi — quản trị mạng xã hội nhẹ đầu hơn",
+          en: "Havi — lighter social media operations",
         })}
       </p>
     </div>
   );
 }
-

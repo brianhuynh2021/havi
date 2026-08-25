@@ -21,22 +21,18 @@ from adapters.oauth.google_business import GoogleBusinessOAuthClient
 from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
 from adapters.oauth.tiktok import TikTokOAuthClient
 from adapters.oauth.zalo import ZaloOAuthClient
-from adapters.outbound.telegram_notifier import TelegramNotifier
 from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
-from adapters.persistence.crm_nudge_repository import CrmNudgeRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
-from adapters.persistence.goal_repository import GoalRepository
 from adapters.persistence.inbox_repository import InboxRepository
-from adapters.persistence.lead_repository import LeadRepository
 from adapters.persistence.media_repository import MediaRepository
+from adapters.persistence.organization_repository import OrganizationRepository
 from adapters.persistence.otp_repository import OtpRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
-from adapters.persistence.roadmap_repository import RoadmapRepository
 from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.video_post_repository import VideoPostRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
@@ -45,29 +41,23 @@ from adapters.publishers.facebook_reply import FacebookReplyAdapter
 from adapters.publishers.fake_reply import FakeReplyPublisher
 from adapters.ratelimit import NullRateLimiter, RedisRateLimiter
 from adapters.storage.object_storage import ObjectStorage
-from application.services.ai_lead_agent_service import AILeadAgentService
 from application.services.approval_service import ApprovalService
 from application.services.auth_service import AuthService
 from application.services.billing_service import BillingService
 from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
-from application.services.crm_nudge_service import CrmNudgeService
-from application.services.goal_service import GoalService
 from application.services.inbox_service import InboxService
 from application.services.job_queue import CeleryJobQueue, JobQueue
-from application.services.lead_service import LeadService
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
-from application.services.roadmap_service import RoadmapService
-from application.services.sales_service import SalesService
 from application.services.video_post_service import VideoPostService
 from application.services.video_publish_service import VideoPublishService
 from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
 from core.config import Settings, get_settings
-from core.enums import Platform
+from core.enums import Platform, WorkspaceRole
 from core.security import decode_access_token
 from domain.ports.email import EmailSender
 from domain.ports.reply_publisher import ReplyPublisherPort
@@ -95,6 +85,7 @@ def get_auth_service(session: DbSessionDep, settings: SettingsDep) -> AuthServic
         members=WorkspaceMemberRepository(session),
         workspaces=WorkspaceRepository(session),
         events=EventLogRepository(session),
+        organizations=OrganizationRepository(session),
     )
 
 
@@ -105,6 +96,7 @@ def get_workspace_service(session: DbSessionDep, auth_service: AuthServiceDep) -
     return WorkspaceService(
         workspaces=WorkspaceRepository(session),
         members=WorkspaceMemberRepository(session),
+        organizations=OrganizationRepository(session),
         users=UserRepository(session),
         auth_service=auth_service,
         events=EventLogRepository(session),
@@ -151,46 +143,10 @@ def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxServ
         profiles=BrandProfileRepository(session),
         events=EventLogRepository(session),
         reply_publishers=reply_publishers,
-        telegram=TelegramNotifier(settings),
-        leads=LeadRepository(session),
-        workspaces=WorkspaceRepository(session),
     )
 
 
 InboxServiceDep = Annotated[InboxService, Depends(get_inbox_service)]
-
-
-def get_lead_service(session: DbSessionDep, settings: SettingsDep) -> LeadService:
-    return LeadService(
-        leads=LeadRepository(session),
-        telegram=TelegramNotifier(settings),
-        workspaces=WorkspaceRepository(session),
-    )
-
-
-LeadServiceDep = Annotated[LeadService, Depends(get_lead_service)]
-
-
-def get_crm_nudge_service(session: DbSessionDep) -> CrmNudgeService:
-    return CrmNudgeService(
-        nudge_repo=CrmNudgeRepository(session),
-        workspace_repo=WorkspaceRepository(session),
-        profile_repo=BrandProfileRepository(session),
-        event_repo=EventLogRepository(session),
-    )
-
-
-CrmNudgeServiceDep = Annotated[CrmNudgeService, Depends(get_crm_nudge_service)]
-
-
-def get_sales_service(session: DbSessionDep) -> SalesService:
-    return SalesService(
-        lead_repo=LeadRepository(session),
-        event_repo=EventLogRepository(session),
-    )
-
-
-SalesServiceDep = Annotated[SalesService, Depends(get_sales_service)]
 
 
 @lru_cache
@@ -375,16 +331,6 @@ def get_video_publish_service(
 VideoPublishServiceDep = Annotated[VideoPublishService, Depends(get_video_publish_service)]
 
 
-def get_ai_lead_agent_service(session: DbSessionDep) -> AILeadAgentService:
-    return AILeadAgentService(
-        leads=LeadRepository(session),
-        inbox=InboxRepository(session),
-    )
-
-
-AILeadAgentServiceDep = Annotated[AILeadAgentService, Depends(get_ai_lead_agent_service)]
-
-
 def get_voice_service(session: DbSessionDep, settings: SettingsDep) -> VoiceService:
     from adapters.voice.gemini_transcriber import GeminiVoiceTranscriber
     from adapters.voice.mock_transcriber import MockVoiceTranscriber
@@ -400,27 +346,6 @@ def get_voice_service(session: DbSessionDep, settings: SettingsDep) -> VoiceServ
 
 
 VoiceServiceDep = Annotated[VoiceService, Depends(get_voice_service)]
-
-
-def get_goal_service(session: DbSessionDep) -> GoalService:
-    return GoalService(
-        goal_repo=GoalRepository(session),
-        event_repo=EventLogRepository(session),
-    )
-
-
-GoalServiceDep = Annotated[GoalService, Depends(get_goal_service)]
-
-
-def get_roadmap_service(session: DbSessionDep) -> RoadmapService:
-    return RoadmapService(
-        roadmap_repo=RoadmapRepository(session),
-        goal_repo=GoalRepository(session),
-        event_repo=EventLogRepository(session),
-    )
-
-
-RoadmapServiceDep = Annotated[RoadmapService, Depends(get_roadmap_service)]
 
 
 class AuthContext:
@@ -512,6 +437,51 @@ async def require_path_workspace_owner(
 
 
 PathWorkspaceOwnerDep = Annotated[UUID, Depends(require_path_workspace_owner)]
+
+
+def _require_permission(permission: str):  # noqa: ANN202
+    """Dựng một dependency cưỡng chế đúng một quyền trên workspace đang active.
+
+    Trả về `workspace_id` giống `WorkspaceDep` để router thay thế được tại chỗ,
+    không phải nhận thêm tham số.
+
+    Thông báo lỗi nêu **vai nào làm được**: "bạn không có quyền" khiến người dùng
+    đi hỏi support, còn "cần vai Người duyệt hoặc Chủ workspace" thì họ tự nhắn
+    cho đúng đồng nghiệp.
+    """
+
+    async def dependency(
+        workspace_id: WorkspaceDep, auth: AuthDep, session: DbSessionDep
+    ) -> UUID:
+        from domain.policies.permissions import can, roles_with
+
+        member = await WorkspaceMemberRepository(session).get(
+            workspace_id=workspace_id, user_id=auth.user_id
+        )
+        if not can(member.role if member else None, permission):
+            allowed = ", ".join(_ROLE_NAMES.get(r, r.value) for r in roles_with(permission))
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Thao tác này cần vai: {allowed}.",
+            )
+        return workspace_id
+
+    return dependency
+
+
+#: Tên vai bằng tiếng Việt cho thông báo lỗi. Tên kỹ thuật (`reviewer`) không
+#: giúp người đang bị chặn biết phải nhắn cho ai.
+_ROLE_NAMES = {
+    WorkspaceRole.OWNER: "Chủ workspace",
+    WorkspaceRole.MARKETER: "Người soạn",
+    WorkspaceRole.REVIEWER: "Người duyệt",
+    WorkspaceRole.SALES: "Trực hội thoại",
+}
+
+#: Chỉ Người duyệt và Chủ workspace được đưa nội dung lên kênh.
+ApproverWorkspaceDep = Annotated[UUID, Depends(_require_permission("approve_content"))]
+#: Xem lịch sử hoạt động của cả workspace.
+AuditViewerWorkspaceDep = Annotated[UUID, Depends(_require_permission("view_audit_log"))]
 
 
 async def require_active_subscription_workspace(

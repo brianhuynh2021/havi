@@ -19,7 +19,7 @@ export const heroChannels = [
   { n: "Facebook Beta", b: "f", c: "#1877F2" },
   { n: "Bản nháp nội dung", b: "✍", c: "#16A34A" },
   { n: "Kịch bản video", b: "🎬", c: "#FE2C55" },
-  { n: "Inbox & CRM", b: "💬", c: "#FF0000" },
+  { n: "Hội thoại", b: "💬", c: "#FF0000" },
 ];
 
 export const steps: Step[] = [
@@ -40,7 +40,7 @@ export const steps: Step[] = [
   },
   {
     n: "4",
-    title: "Theo dõi inbox và kết quả",
+    title: "Theo dõi hội thoại và trạng thái",
     desc: "Havi lưu inquiry nhận được, gợi ý phản hồi và chỉ tự gửi FAQ đã được duyệt trước.",
   },
 ];
@@ -54,7 +54,7 @@ export interface IndustryScenario {
   tabs: {
     facebook: { title: string; content: string; badge: string };
     video: { title: string; hook: string; script: string; badge: string };
-    inbox: { title?: string; customerMsg: string; haviReply: string; capturedPhone: string; badge: string };
+    inbox: { title?: string; customerMsg: string; haviReply: string; badge: string };
   };
 }
 
@@ -83,7 +83,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Minh hoạ Inbox",
         customerMsg: "Liệu trình vi kim bên mình giá bao nhiêu vậy shop? Trị thâm tốt không?",
         haviReply: "Dạ em chào chị! Gói vi kim tảo biển bên em trọn gói 450k đang được tặng kèm 1 chai serum phục hồi B5 trị giá 250k trong tuần này ạ. Chị cho em xin Tên & SĐT để chuyên viên xếp lịch soi da và giữ suất ưu đãi cho chị nhé!",
-        capturedPhone: "0912.345.678 (Khách cần trị mụn thâm)",
       },
     },
   },
@@ -110,7 +109,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Minh hoạ Inbox",
         customerMsg: "Căn nhà Quận 7 này còn không em? Có hỗ trợ vay ngân hàng không?",
         haviReply: "Dạ căn này chính chủ gửi em bán độc quyền, hiện vẫn còn ạ! Nhà sổ hồng riêng nên ngân hàng hỗ trợ vay tối đa 70% lãi suất ưu đãi. Anh/chị cho em xin SĐT và thời gian tiện nhất để em dẫn anh/chị xem nhà thực tế nhé!",
-        capturedPhone: "0988.765.432 (Khách xem nhà Q7 cuối tuần)",
       },
     },
   },
@@ -137,7 +135,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Minh hoạ Inbox",
         customerMsg: "Quán có nhận đặt bàn tiệc sinh nhật 12 người tối nay không bạn?",
         haviReply: "Dạ quán em còn khu vực bàn dài view kính tầng 2 cực đẹp cho nhóm 12 người tối nay ạ! Em hỗ trợ giữ bàn và trang trí sẵn cho mình nhé, anh/chị cho em xin Tên & SĐT để nhân viên chuẩn bị chu đáo nha!",
-        capturedPhone: "0903.112.233 (Đặt bàn sinh nhật 12 người)",
       },
     },
   },
@@ -164,7 +161,6 @@ export const industryScenarios: IndustryScenario[] = [
         badge: "Minh hoạ Inbox",
         customerMsg: "Khóa Lập trình Web cho người mới bắt đầu học phí thế nào và học mấy tháng ạ?",
         haviReply: "Dạ chào bạn! Khóa Lập trình Web Khởi động kéo dài 3 tháng, đào tạo 1 kèm 1 trên dự án thật. Bạn cho mình xin SĐT hoặc Zalo để thầy giáo tư vấn chi tiết lộ trình và ưu đãi học phí tháng này nhé!",
-        capturedPhone: "0971.888.999 (Học viên tìm hiểu khóa Web)",
       },
     },
   },
@@ -181,8 +177,8 @@ export const principles = [
     desc: "Không dùng tool lậu hoặc báo thành công khi nền tảng chưa xác nhận. Quyền truy cập vẫn phụ thuộc chính sách của từng nền tảng.",
   },
   {
-    title: "Văn phong thuần Việt, chốt đơn khéo",
-    desc: "Hiểu đúng cách xưng hô anh/chị gần gũi, giọng điệu tự nhiên như người thật, tư vấn duyên dáng và khéo léo xin số điện thoại khách hàng.",
+    title: "Bản nháp hữu ích, người thật quyết định",
+    desc: "Havi có thể gợi ý nội dung và câu trả lời; người dùng chịu trách nhiệm kiểm tra sự thật, cách xưng hô và bấm gửi.",
   },
 ];
 
@@ -208,9 +204,9 @@ export const faqs: FAQItem[] = [
       "Không. Workspace mới có 7 ngày dùng thử với hạn mức token. Sau đó bạn có thể chủ động tạo checkout VietQR nếu muốn nâng cấp.",
   },
   {
-    question: "Tính năng Hot Lead Radar và chuông báo Telegram hoạt động thế nào?",
+    question: "Havi quản lý hội thoại từ các kênh như thế nào?",
     answer:
-      "Khi Havi nhận được inquiry chứa số điện thoại từ một nguồn được hỗ trợ, hệ thống có thể lưu lead và gửi cảnh báo Telegram nếu workspace đã cấu hình notifier. Thời gian nhận phụ thuộc webhook và nhà cung cấp.",
+      "Havi đưa tin nhắn, bình luận và đánh giá từ kênh được hỗ trợ vào một hộp thư chung. Bản nháp phản hồi luôn chờ người dùng kiểm tra và gửi; chỉ FAQ khớp chính xác và đã duyệt mới có thể tự trả lời.",
   },
   {
     question: "Tôi có được đội ngũ kỹ sư Havi hỗ trợ cài đặt ban đầu không?",
