@@ -7,7 +7,7 @@ export type PublishFailureKind = components["schemas"]["PublishFailureKind"];
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp bạn nhé.";
 
 /** Bài đã dừng hẳn sau nhiều lần đăng lỗi — cần chủ tiệm xử lý. */
 export async function listDeadLetterJobs(): Promise<Result<PublishJob[]>> {
@@ -46,7 +46,7 @@ export async function retryPublishJob(jobId: string): Promise<Result<PublishJob>
             ? // 409 = bài này vừa đổi trạng thái ở nơi khác (scheduler đã nhận,
               // hoặc đã đăng xong). Nói theo hướng "tải lại" chứ không "thử
               // lại" để chủ tiệm không bấm mãi một nút không còn hợp lệ.
-              "Bài này vừa đổi trạng thái — tải lại danh sách giúp chị nhé."
+              "Bài này vừa đổi trạng thái — tải lại danh sách giúp bạn nhé."
             : response?.status === 404
               ? "Không tìm thấy lượt đăng này."
               : GENERIC_ERROR,
@@ -76,14 +76,14 @@ export function failureCopy(kind: PublishFailureKind | null | undefined): {
     case "auth_permission":
       return {
         title: "Mất quyền đăng bài",
-        hint: "Havi không còn quyền đăng lên Page. Chị nối lại kênh ở Cài đặt rồi bài sẽ đăng được.",
+        hint: "Havi không còn quyền đăng lên Page. Bạn nối lại kênh ở Cài đặt rồi bài sẽ đăng được.",
         canRetry: false,
         needsReconnect: true,
       };
     case "validation_permanent":
       return {
         title: "Nền tảng từ chối nội dung",
-        hint: "Facebook không nhận bài này. Chị sửa nội dung ở tab Tạo nội dung rồi bấm thử lại.",
+        hint: "Facebook không nhận bài này. Bạn sửa nội dung ở tab Tạo nội dung rồi bấm thử lại.",
         // Vẫn cho thử lại: `run_job` đọc lại `content_item` mỗi lượt, nên sau khi
         // sửa text thì lần thử sau gửi bản mới. Ẩn nút ở đây là chặn đúng con
         // đường khắc phục duy nhất có tác dụng.
@@ -93,7 +93,7 @@ export function failureCopy(kind: PublishFailureKind | null | undefined): {
     case "temporary":
       return {
         title: "Lỗi tạm thời",
-        hint: "Havi đã thử lại vài lần nhưng chưa được. Chị bấm thử lại giúp em nhé.",
+        hint: "Havi đã thử lại vài lần nhưng chưa được. Bạn bấm thử lại nhé.",
         canRetry: true,
         needsReconnect: false,
       };
@@ -102,7 +102,7 @@ export function failureCopy(kind: PublishFailureKind | null | undefined): {
       // nhưng cho bấm thử lại vẫn tốt hơn là một thẻ chết không có hành động nào.
       return {
         title: "Đăng chưa được",
-        hint: "Chị bấm thử lại giúp em nhé.",
+        hint: "Bạn bấm thử lại nhé.",
         canRetry: true,
         needsReconnect: false,
       };

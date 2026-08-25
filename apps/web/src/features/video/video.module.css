@@ -1,0 +1,252 @@
+/* Màn Video — tải clip lên, duyệt, đăng. Không có công cụ biên tập nào ở đây. */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin: 0 0 14px;
+}
+
+/* --- Tải clip lên --- */
+
+.uploadCard {
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  margin-bottom: 28px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 26px;
+  border: 2px dashed var(--color-border);
+  border-radius: 14px;
+  background: var(--color-border-soft);
+}
+
+.dropzoneHint {
+  margin: 0;
+  color: var(--color-body);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 460px;
+}
+
+/* Bản nháp: xem lại clip bên trái, viết nội dung bên phải. Đặt cạnh nhau để
+   người duyệt nhìn thấy cả hai cùng lúc — duyệt mà không xem lại clip là cách
+   một video quay hỏng lên Trang. */
+.draftGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .draftGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.preview {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 12px;
+  background: #000;
+  object-fit: contain;
+}
+
+.draftForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.clipSpec {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-body);
+}
+
+.channelList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.channelFits,
+.channelUnfit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.channelFits {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.channelUnfit {
+  background: var(--color-border-soft);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.draftActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.blockReason {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* --- Danh sách video --- */
+
+.postList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.postRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.postMain {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.postCaption {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-body);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.postError {
+  margin: 0;
+  font-size: 13px;
+  color: #b91c1c;
+  line-height: 1.5;
+}
+
+.postActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.statusPill {
+  align-self: flex-start;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* Bốn tông cho bốn ý nghĩa khác nhau. `warn` dành riêng cho "đã gửi nhưng chưa
+   xác nhận được" — không phải lỗi, cũng chưa phải thành công, và trộn nó vào
+   một trong hai tông kia là cách người dùng hiểu sai điều nguy hiểm nhất. */
+.tone_ok {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.tone_wait {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.tone_warn {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.tone_bad {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.tone_muted {
+  background: var(--color-border-soft);
+  color: var(--color-muted);
+}
+
+.postSchedule {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e40af;
+}

@@ -11,7 +11,7 @@ export type Channel = components["schemas"]["Channel"];
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp bạn nhé.";
 
 type UploadImageOptions = {
   signal?: AbortSignal;
@@ -63,7 +63,7 @@ export async function uploadMedia(
         message:
           ticket.response?.status === 415
             ? `Havi chưa nhận được định dạng ${noun} này (${file.type || "không rõ"})`
-            : `Chưa tải được ${noun} lên, thử lại giúp chị nhé.`,
+            : `Chưa tải được ${noun} lên, thử lại giúp bạn nhé.`,
       };
     }
     options.onProgress?.(20);
@@ -86,8 +86,8 @@ export async function uploadMedia(
         ok: false,
         message:
           uploaded.status === 400
-            ? `${noun === "clip" ? "Clip" : "Ảnh"} quá nặng hoặc sai định dạng — chọn ${noun} khác giúp chị nhé.`
-            : `Tải ${noun} lên chưa xong, thử lại giúp chị nhé.`,
+            ? `${noun === "clip" ? "Clip" : "Ảnh"} quá nặng hoặc sai định dạng — chọn ${noun} khác giúp bạn nhé.`
+            : `Tải ${noun} lên chưa xong, thử lại giúp bạn nhé.`,
       };
     }
     options.onProgress?.(85);
@@ -142,7 +142,7 @@ export async function createJob(
       if (response?.status === 401) {
         return {
           ok: false,
-          message: detailToMessage(detailObj, "Phiên đăng nhập đã hết hạn. Chị đăng nhập lại hoặc F5 tải lại trang giúp em nhé."),
+          message: detailToMessage(detailObj, "Phiên đăng nhập đã hết hạn. Bạn đăng nhập lại hoặc tải lại trang nhé."),
         };
       }
       if (response?.status === 409) {
@@ -154,7 +154,7 @@ export async function createJob(
       if (response?.status === 429) {
         return {
           ok: false,
-          message: detailToMessage(detailObj, "Chị thao tác hơi nhanh — đợi một chút rồi thử lại nhé."),
+          message: detailToMessage(detailObj, "Bạn thao tác hơi nhanh — đợi một chút rồi thử lại nhé."),
         };
       }
       return {
@@ -236,7 +236,7 @@ export async function approveItem(
         ok: false,
         message:
           response?.status === 409
-            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp bạn nhé."
             : GENERIC_ERROR,
       };
     }
@@ -257,7 +257,7 @@ export async function rejectItem(itemId: string): Promise<Result<ContentItem>> {
         ok: false,
         message:
           response?.status === 409
-            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp bạn nhé."
             : GENERIC_ERROR,
       };
     }
@@ -286,7 +286,7 @@ export async function updateItemText(
         message:
           response?.status === 409
             ? "Bài đang đăng hoặc đã đăng rồi nên không sửa được nữa."
-            : "Chưa lưu được, thử lại giúp chị nhé.",
+            : "Chưa lưu được, thử lại giúp bạn nhé.",
       };
     }
     return { ok: true, data };
@@ -321,7 +321,7 @@ export async function dismissItem(itemId: string): Promise<Result<ContentItem>> 
         ok: false,
         message:
           response?.status === 409
-            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp chị nhé."
+            ? "Bài này vừa đổi trạng thái ở nơi khác — tải lại giúp bạn nhé."
             : GENERIC_ERROR,
       };
     }
@@ -383,7 +383,7 @@ export async function updateItemMedia(
       params: { path: { content_id: itemId } },
       body: { media_url: mediaUrl === null ? "__NONE__" : mediaUrl },
     });
-    if (error || !data) return { ok: false, message: "Chưa cập nhật được ảnh, thử lại giúp chị nhé." };
+    if (error || !data) return { ok: false, message: "Chưa cập nhật được ảnh, thử lại giúp bạn nhé." };
     return { ok: true, data };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
@@ -396,13 +396,24 @@ export type BulkApproveOutcome = {
 };
 
 /** "Duyệt & đăng hết". publishNow=true: phát lệnh xuất bản ngay lập tức. */
+/**
+ * Duyệt cả loạt. `publishNow=false` thì backend **rải lịch ra nhiều ngày**.
+ *
+ * Thứ tự `itemIds` là thứ tự lên bài — bài đầu danh sách đăng trước. Đừng sort
+ * lại trước khi gọi: đó là cách chủ tiệm xếp câu chuyện của tuần.
+ */
 export async function approveAll(
   itemIds: string[],
   publishNow = true,
+  postsPerDay = 1,
 ): Promise<Result<BulkApproveOutcome>> {
   try {
     const { data, error } = await apiClient.POST("/content/approve-all", {
-      body: { content_item_ids: itemIds, publish_now: publishNow },
+      body: {
+        content_item_ids: itemIds,
+        publish_now: publishNow,
+        posts_per_day: postsPerDay,
+      },
     });
     if (error || !data) return { ok: false, message: GENERIC_ERROR };
     return {

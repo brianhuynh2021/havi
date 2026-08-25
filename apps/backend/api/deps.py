@@ -38,7 +38,7 @@ from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.roadmap_repository import RoadmapRepository
 from adapters.persistence.user_repository import UserRepository
-from adapters.persistence.video_render_repository import VideoRenderRepository
+from adapters.persistence.video_post_repository import VideoPostRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from adapters.publishers.facebook_reply import FacebookReplyAdapter
@@ -61,7 +61,8 @@ from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.roadmap_service import RoadmapService
 from application.services.sales_service import SalesService
-from application.services.video_render_service import VideoRenderService
+from application.services.video_post_service import VideoPostService
+from application.services.video_publish_service import VideoPublishService
 from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
 from core.alerts import AlertSink, LoggingAlertSink
@@ -152,6 +153,7 @@ def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxServ
         reply_publishers=reply_publishers,
         telegram=TelegramNotifier(settings),
         leads=LeadRepository(session),
+        workspaces=WorkspaceRepository(session),
     )
 
 
@@ -333,15 +335,44 @@ def get_publish_service(session: DbSessionDep) -> PublishService:
 PublishServiceDep = Annotated[PublishService, Depends(get_publish_service)]
 
 
-def get_video_render_service(session: DbSessionDep) -> VideoRenderService:
-    return VideoRenderService(
-        render_repo=VideoRenderRepository(session),
-        media_repo=MediaRepository(session),
-        event_repo=EventLogRepository(session),
+def get_video_post_service(session: DbSessionDep) -> VideoPostService:
+    return VideoPostService(
+        posts=VideoPostRepository(session),
+        media=MediaRepository(session),
     )
 
 
-VideoRenderServiceDep = Annotated[VideoRenderService, Depends(get_video_render_service)]
+VideoPostServiceDep = Annotated[VideoPostService, Depends(get_video_post_service)]
+
+
+def get_video_publish_service(
+    session: DbSessionDep, settings: SettingsDep
+) -> VideoPublishService:
+    from adapters.persistence.video_publish_repository import VideoPublishRepository
+    from adapters.publishers.facebook import FacebookPublisher
+    from adapters.storage.object_storage import ObjectStorage
+
+    storage = ObjectStorage(settings)
+
+    def signed_url_for(post) -> str:  # noqa: ANN001 — VideoPost
+        """URL tải clip nguồn, ký lại mỗi lần gọi.
+
+        Ký lại thay vì lưu sẵn một URL trong DB: URL ký có hạn dùng, nên một URL
+        lưu từ hôm trước có thể đã hết hạn đúng lúc đăng. Ký lại rẻ hơn nhiều so
+        với một lần đăng hỏng.
+        """
+        return storage.public_url(post.source_object_key)
+
+    return VideoPublishService(
+        posts=VideoPostRepository(session),
+        attempts=VideoPublishRepository(session),
+        connections=get_connection_service(session, settings),
+        publisher=FacebookPublisher(settings),
+        signed_url_for=signed_url_for,
+    )
+
+
+VideoPublishServiceDep = Annotated[VideoPublishService, Depends(get_video_publish_service)]
 
 
 def get_ai_lead_agent_service(session: DbSessionDep) -> AILeadAgentService:

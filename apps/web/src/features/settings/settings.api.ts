@@ -22,8 +22,8 @@ export type SaveSettingsInput = {
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Chưa tải được cài đặt, thử lại giúp chị nhé.";
-const SAVE_ERROR = "Chưa lưu được cài đặt, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Chưa tải được cài đặt, thử lại giúp bạn nhé.";
+const SAVE_ERROR = "Chưa lưu được cài đặt, thử lại giúp bạn nhé.";
 
 export async function loadSettings(): Promise<Result<SettingsData>> {
   const workspaceId = readTokens()?.activeWorkspaceId;
@@ -100,7 +100,7 @@ export async function deleteWorkspace(workspaceId: string): Promise<Result<void>
         : null;
       return {
         ok: false,
-        message: detail || "Không thể xoá workspace, thử lại giúp chị nhé.",
+        message: detail || "Không thể xoá workspace, thử lại giúp bạn nhé.",
       };
     }
     return { ok: true, data: undefined };
@@ -119,7 +119,7 @@ export async function deleteAccount(): Promise<Result<void>> {
         : null;
       return {
         ok: false,
-        message: detail || "Không thể xoá tài khoản, thử lại giúp chị nhé.",
+        message: detail || "Không thể xoá tài khoản, thử lại giúp bạn nhé.",
       };
     }
     return { ok: true, data: undefined };

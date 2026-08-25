@@ -718,42 +718,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/workspaces/{workspace_id}/video/render-jobs": {
+    "/workspaces/{workspace_id}/video/posts": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Render Jobs
-         * @description Lấy danh sách các render jobs của workspace với phân trang.
-         */
-        get: operations["list_render_jobs_workspaces__workspace_id__video_render_jobs_get"];
+        /** List Video Posts */
+        get: operations["list_video_posts_workspaces__workspace_id__video_posts_get"];
         put?: never;
         /**
-         * Create Render Job
-         * @description Tạo một job render video mới và xếp vào hàng đợi `havi.video_render`.
+         * Create Video Post
+         * @description Đưa một clip đã upload vào hàng chờ duyệt.
          */
-        post: operations["create_render_job_workspaces__workspace_id__video_render_jobs_post"];
+        post: operations["create_video_post_workspaces__workspace_id__video_posts_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/workspaces/{workspace_id}/video/render-jobs/{job_id}": {
+    "/workspaces/{workspace_id}/video/posts/eligible-channels": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Render Job
-         * @description Kiểm tra tiến độ render (0-100%) và kết quả video đầu ra.
-         */
-        get: operations["get_render_job_workspaces__workspace_id__video_render_jobs__job_id__get"];
+        /** Eligible Channels For Clip */
+        get: operations["eligible_channels_for_clip_workspaces__workspace_id__video_posts_eligible_channels_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -762,7 +756,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/workspaces/{workspace_id}/video/render-jobs/{job_id}/retry": {
+    "/workspaces/{workspace_id}/video/posts/{post_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Video Post */
+        get: operations["get_video_post_workspaces__workspace_id__video_posts__post_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Video Post */
+        patch: operations["update_video_post_workspaces__workspace_id__video_posts__post_id__patch"];
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/video/posts/{post_id}/approve": {
         parameters: {
             query?: never;
             header?: never;
@@ -772,17 +784,21 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Retry Render Job
-         * @description Thử lại một video render job đã bị thất bại.
+         * Approve Video Post
+         * @description Chủ tiệm duyệt → xếp hàng đăng lên Facebook Reels.
+         *
+         *     Chỉ chuyển sang `APPROVED` và xếp hàng. Việc gửi bytes và đọc lại nền tảng
+         *     chạy ở worker vì cả hai đều chờ Facebook, và giữ một HTTP request mở trong
+         *     lúc chờ là cách dễ nhất để nhận một timeout không biết đã đăng hay chưa.
          */
-        post: operations["retry_render_job_workspaces__workspace_id__video_render_jobs__job_id__retry_post"];
+        post: operations["approve_video_post_workspaces__workspace_id__video_posts__post_id__approve_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/workspaces/{workspace_id}/video/render-jobs/{job_id}/cancel": {
+    "/workspaces/{workspace_id}/video/posts/{post_id}/cancel": {
         parameters: {
             query?: never;
             header?: never;
@@ -792,10 +808,13 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Cancel Render Job
-         * @description Huỷ một video render job đang trong hàng đợi.
+         * Cancel Video Post
+         * @description Huỷ một video chưa gửi đi.
+         *
+         *     Đã gửi sang Facebook thì không huỷ được: huỷ ở Havi không gỡ bài khỏi Trang,
+         *     nên cho phép huỷ lúc đó chỉ là nói dối chủ tiệm.
          */
-        post: operations["cancel_render_job_workspaces__workspace_id__video_render_jobs__job_id__cancel_post"];
+        post: operations["cancel_video_post_workspaces__workspace_id__video_posts__post_id__cancel_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1047,46 +1066,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/content/{content_id}/generate-video": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Generate Item Video
-         * @description Tự động tạo job dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg.
-         */
-        post: operations["generate_item_video_content__content_id__generate_video_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/content/{content_id}/upload-rendered-video": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Upload Rendered Video
-         * @description Lưu file video 9:16 vừa render từ Client Canvas lên Object Storage của Havi (MinIO/S3).
-         */
-        post: operations["upload_rendered_video_content__content_id__upload_rendered_video_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/content/{content_id}/versions": {
         parameters: {
             query?: never;
@@ -1115,7 +1094,7 @@ export interface paths {
         put?: never;
         /**
          * Approve All
-         * @description Nút "Duyệt & đăng hết" — publish_now=True kích hoạt đăng ngay lập tức.
+         * @description Duyệt cả loạt: `publish_now=true` đăng ngay, `false` thì rải ra nhiều ngày.
          */
         post: operations["approve_all_content_approve_all_post"];
         delete?: never;
@@ -1916,6 +1895,20 @@ export interface components {
             scheduled_at?: string | null;
         };
         /**
+         * ApproveVideoPostRequest
+         * @description `scheduled_at=None` = gửi ngay ở lượt worker kế tiếp.
+         */
+        ApproveVideoPostRequest: {
+            /** Scheduled At */
+            scheduled_at?: string | null;
+        };
+        /** ApproveVideoPostResponse */
+        ApproveVideoPostResponse: {
+            post: components["schemas"]["VideoPostResponse"];
+            /** Queued For Publish */
+            queued_for_publish: boolean;
+        };
+        /**
          * Base64VoiceRequest
          * @description Payload nhận diện âm thanh dạng base64 từ trình duyệt / mobile app.
          */
@@ -2003,17 +1996,26 @@ export interface components {
         };
         /**
          * BulkApproveRequest
-         * @description Nút "Duyệt & đăng hết" trên thanh duyệt nhanh.
+         * @description Duyệt cả loạt: đăng ngay, hoặc rải ra nhiều ngày.
+         *
+         *     `content_item_ids` giữ nguyên thứ tự — bài đầu danh sách lên trước. Đó là
+         *     cách chủ tiệm sắp xếp câu chuyện của tuần.
          */
         BulkApproveRequest: {
             /** Content Item Ids */
             content_item_ids: string[];
             /**
              * Publish Now
-             * @description Đăng ngay lập tức thay vì chờ giờ vàng
+             * @description Đăng ngay lập tức thay vì rải lịch
              * @default true
              */
             publish_now: boolean;
+            /**
+             * Posts Per Day
+             * @description Số bài mỗi ngày khi rải lịch. Chỉ dùng khi publish_now=false. Tối đa 3 vì mỗi ngày chỉ có 3 khung giờ vàng (8h, 12h, 20h).
+             * @default 1
+             */
+            posts_per_day: number;
         };
         /** BulkApproveResult */
         BulkApproveResult: {
@@ -2286,7 +2288,7 @@ export interface components {
         };
         /**
          * ContentJobCreate
-         * @description Nút "Để Havi viết cho chị" — 1 job, 1 lần gọi LLM, nhiều đầu ra.
+         * @description Nút "Để Havi viết bài" — 1 job, 1 lần gọi LLM, nhiều đầu ra.
          */
         ContentJobCreate: {
             /** Raw Inputs */
@@ -2345,26 +2347,23 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        /** CreateVideoRenderJobRequest */
-        CreateVideoRenderJobRequest: {
+        /**
+         * CreateVideoPostRequest
+         * @description Clip phải đã upload xong qua `/media` trước khi gọi endpoint này.
+         */
+        CreateVideoPostRequest: {
             /**
-             * Title
-             * @default Video ngắn tự động
+             * Source Media Id
+             * Format: uuid
              */
-            title: string;
+            source_media_id: string;
             /**
-             * Target Aspect Ratio
-             * @default 9:16
+             * Caption
+             * @default
              */
-            target_aspect_ratio: string;
-            /** Edit Plan */
-            edit_plan?: {
-                [key: string]: unknown;
-            } | null;
-            /** Source Media Id */
-            source_media_id?: string | null;
-            /** @default ffmpeg */
-            renderer_engine: components["schemas"]["VideoRenderEngine"];
+            caption: string;
+            /** @default reels */
+            channel: components["schemas"]["Channel"];
         };
         /**
          * CrmMessageStatus
@@ -2443,6 +2442,14 @@ export interface components {
             published: number;
             /** Failed */
             failed: number;
+        };
+        /**
+         * EligibleChannelsResponse
+         * @description Kênh mà clip vừa upload đăng được — UI hiện ngay, không đợi tới lúc đăng.
+         */
+        EligibleChannelsResponse: {
+            /** Channels */
+            channels: components["schemas"]["Channel"][];
         };
         /** EmailLoginRequest */
         EmailLoginRequest: {
@@ -2570,32 +2577,6 @@ export interface components {
              * @description ID mục tiêu cần sinh lộ trình
              */
             goal_id: string;
-        };
-        /** GenerateVideoRequest */
-        GenerateVideoRequest: {
-            /**
-             * Target Aspect Ratio
-             * @description 9:16 | 1:1 | 16:9
-             * @default 9:16
-             */
-            target_aspect_ratio: string;
-            /** Title */
-            title?: string | null;
-        };
-        /** GenerateVideoResponse */
-        GenerateVideoResponse: {
-            /** Media Url */
-            media_url?: string | null;
-            /**
-             * Target Aspect Ratio
-             * @default 9:16
-             */
-            target_aspect_ratio: string;
-            /**
-             * Status
-             * @default completed
-             */
-            status: string;
         };
         /**
          * GoalCategory
@@ -2829,10 +2810,10 @@ export interface components {
             /** Content Item Id */
             content_item_id?: string | null;
         };
-        /** ListVideoRenderJobsResponse */
-        ListVideoRenderJobsResponse: {
+        /** ListVideoPostsResponse */
+        ListVideoPostsResponse: {
             /** Items */
-            items: components["schemas"]["VideoRenderJobResponse"][];
+            items: components["schemas"]["VideoPostResponse"][];
             /** Total */
             total: number;
             /** Limit */
@@ -3485,7 +3466,7 @@ export interface components {
         SignUpRequest: {
             /**
              * Name
-             * @example Chị Hương
+             * @example Nguyễn Thu Hương
              */
             name: string;
             /**
@@ -3714,6 +3695,11 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** UpdateVideoPostRequest */
+        UpdateVideoPostRequest: {
+            /** Caption */
+            caption: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -3727,14 +3713,8 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
-        /**
-         * VideoRenderEngine
-         * @description Engine được dùng để render video.
-         * @enum {string}
-         */
-        VideoRenderEngine: "ffmpeg" | "remotion";
-        /** VideoRenderJobResponse */
-        VideoRenderJobResponse: {
+        /** VideoPostResponse */
+        VideoPostResponse: {
             /**
              * Id
              * Format: uuid
@@ -3745,30 +3725,18 @@ export interface components {
              * Format: uuid
              */
             workspace_id: string;
-            /** Title */
-            title: string;
-            /** Target Aspect Ratio */
-            target_aspect_ratio: string;
-            status: components["schemas"]["VideoRenderStatus"];
-            /** Progress Percent */
-            progress_percent: number;
-            renderer_engine: components["schemas"]["VideoRenderEngine"];
+            /** Caption */
+            caption: string;
+            channel: components["schemas"]["Channel"];
+            status: components["schemas"]["VideoPostStatus"];
             /** Source Media Id */
             source_media_id?: string | null;
-            /** Edit Plan */
-            edit_plan?: {
-                [key: string]: unknown;
-            };
-            /** Output Media Id */
-            output_media_id?: string | null;
-            /** Output Url */
-            output_url?: string | null;
+            /** Scheduled At */
+            scheduled_at?: string | null;
             /** Error Message */
             error_message?: string | null;
-            /** Started At */
-            started_at?: string | null;
-            /** Completed At */
-            completed_at?: string | null;
+            /** Published At */
+            published_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -3776,11 +3744,25 @@ export interface components {
             created_at: string;
         };
         /**
-         * VideoRenderStatus
-         * @description Trạng thái của tác vụ render video (Phase 3 Video Pipeline).
+         * VideoPostStatus
+         * @description Đường đi của một clip đã tải lên, từ lúc nhận tới lúc Facebook xác nhận.
+         *
+         *     Mỗi trạng thái là một điều đã *xảy ra thật*, không phải một ý định:
+         *
+         *     * `READY_FOR_REVIEW` — clip đã lên storage và đã qua kiểm ràng buộc kênh
+         *       (khung hình, thời lượng, tiếng). Havi không đụng vào file.
+         *     * `APPROVED` — chủ tiệm đã xem lại và đồng ý đăng.
+         *     * `PUBLISHING` — đã gửi bytes sang Facebook, chưa biết kết quả.
+         *     * `VERIFYING` — Facebook nhận rồi, đang đọc lại để lấy `external_post_id`.
+         *     * `PUBLISHED` — đã đọc lại và xác nhận bài có thật trên Trang.
+         *
+         *     Ba nhánh lỗi tách nhau vì cách xử lý khác hẳn nhau: `FAILED` thử lại được,
+         *     `FAILED_PERMANENT` thì không (clip hỏng, kênh mất kết nối vĩnh viễn),
+         *     `PENDING_RECONCILIATION` là "đã gửi Facebook nhưng mất dấu" — tuyệt đối
+         *     không tự đăng lại, phải đi kiểm tra xem bài đã lên chưa.
          * @enum {string}
          */
-        VideoRenderStatus: "queued" | "rendering" | "completed" | "failed" | "cancelled";
+        VideoPostStatus: "ready_for_review" | "approved" | "publishing" | "verifying" | "published" | "failed" | "failed_permanent" | "pending_reconciliation" | "cancelled";
         /**
          * VoiceTTSRequest
          * @description Payload yêu cầu tạo file âm thanh giọng đọc tiếng Việt từ văn bản.
@@ -5217,10 +5199,10 @@ export interface operations {
             };
         };
     };
-    list_render_jobs_workspaces__workspace_id__video_render_jobs_get: {
+    list_video_posts_workspaces__workspace_id__video_posts_get: {
         parameters: {
             query?: {
-                status?: components["schemas"]["VideoRenderStatus"] | null;
+                status?: components["schemas"]["VideoPostStatus"] | null;
                 limit?: number;
                 offset?: number;
             };
@@ -5236,7 +5218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListVideoRenderJobsResponse"];
+                    "application/json": components["schemas"]["ListVideoPostsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5250,18 +5232,16 @@ export interface operations {
             };
         };
     };
-    create_render_job_workspaces__workspace_id__video_render_jobs_post: {
+    create_video_post_workspaces__workspace_id__video_posts_post: {
         parameters: {
             query?: never;
-            header?: {
-                "X-Request-ID"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateVideoRenderJobRequest"];
+                "application/json": components["schemas"]["CreateVideoPostRequest"];
             };
         };
         responses: {
@@ -5271,7 +5251,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                    "application/json": components["schemas"]["VideoPostResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5285,12 +5265,43 @@ export interface operations {
             };
         };
     };
-    get_render_job_workspaces__workspace_id__video_render_jobs__job_id__get: {
+    eligible_channels_for_clip_workspaces__workspace_id__video_posts_eligible_channels_get: {
+        parameters: {
+            query: {
+                source_media_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EligibleChannelsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_video_post_workspaces__workspace_id__video_posts__post_id__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                job_id: string;
+                post_id: string;
             };
             cookie?: never;
         };
@@ -5302,7 +5313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                    "application/json": components["schemas"]["VideoPostResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5316,18 +5327,57 @@ export interface operations {
             };
         };
     };
-    retry_render_job_workspaces__workspace_id__video_render_jobs__job_id__retry_post: {
+    update_video_post_workspaces__workspace_id__video_posts__post_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                post_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVideoPostRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoPostResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_video_post_workspaces__workspace_id__video_posts__post_id__approve_post: {
         parameters: {
             query?: never;
             header?: {
                 "X-Request-ID"?: string | null;
             };
             path: {
-                job_id: string;
+                post_id: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveVideoPostRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -5335,7 +5385,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VideoRenderJobResponse"];
+                    "application/json": components["schemas"]["ApproveVideoPostResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5349,12 +5399,12 @@ export interface operations {
             };
         };
     };
-    cancel_render_job_workspaces__workspace_id__video_render_jobs__job_id__cancel_post: {
+    cancel_video_post_workspaces__workspace_id__video_posts__post_id__cancel_post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                job_id: string;
+                post_id: string;
             };
             cookie?: never;
         };
@@ -5782,74 +5832,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GenerateImageResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    generate_item_video_content__content_id__generate_video_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                content_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GenerateVideoRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GenerateVideoResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    upload_rendered_video_content__content_id__upload_rendered_video_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                content_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
             /** @description Validation Error */

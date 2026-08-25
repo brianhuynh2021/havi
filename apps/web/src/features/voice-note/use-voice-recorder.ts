@@ -116,7 +116,7 @@ export function useVoiceRecorder() {
       setState("error");
       const errorObj = err as { name?: string; message?: string };
       if (errorObj?.name === "NotAllowedError" || errorObj?.name === "PermissionDeniedError") {
-        setErrorMessage("Vui lòng cấp quyền Micro trên trình duyệt để Havi nghe giọng nói của chị.");
+        setErrorMessage("Vui lòng cấp quyền Micro trên trình duyệt để Havi nghe được giọng nói.");
       } else {
         setErrorMessage(errorObj?.message || "Không thể khởi động micro.");
       }

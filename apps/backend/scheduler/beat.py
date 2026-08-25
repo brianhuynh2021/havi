@@ -22,6 +22,19 @@ celery_app.conf.beat_schedule = {
         "task": "havi.publish.run_due",
         "schedule": crontab(minute="*"),
     },
+    # Gửi video đã duyệt và đã tới giờ. Nhịp 5 phút chứ không 1 phút như bài
+    # viết: tải một clip lên Facebook mất hàng chục giây tới vài phút, nên quét
+    # dày hơn chỉ làm các lượt chồng lên nhau.
+    "publish-due-videos": {
+        "task": "havi.video.publish_due",
+        "schedule": crontab(minute="*/5"),
+    },
+    # Đối soát các lần gửi video đã mất dấu. Tách khỏi lịch gửi vì đây là *đọc
+    # lại*, không phải gửi — và nó phải chạy kể cả khi không còn gì để gửi.
+    "reconcile-video-publishes": {
+        "task": "havi.video.reconcile",
+        "schedule": crontab(minute="*/10"),
+    },
     # Refresh access token nền tảng trước khi hết hạn
     "refresh-platform-tokens": {
         "task": "havi.scheduler.refresh_platform_tokens",

@@ -32,6 +32,7 @@ from domain.ports.publisher import (
     PublisherPort,
     PublishRequest,
     PublishResult,
+    ReelStatus,
     TemporaryPublishError,
     ValidationPublishError,
 )
@@ -65,7 +66,7 @@ class FacebookPublisher(PublisherPort):
             # Không có Page ID thì không biết đăng lên đâu. Lỗi cấu hình, không
             # phải lỗi mạng — retry vô nghĩa.
             raise ValidationPublishError(
-                self.channel, "Kết nối thiếu Page ID — chị nối lại kênh giúp em nhé"
+                self.channel, "Kết nối thiếu Page ID. Vào Cài đặt → Kết nối để nối lại."
             )
 
         # Ảnh và text đi ba đường khác nhau ở Graph API — gộp vào một endpoint
@@ -236,76 +237,165 @@ class FacebookPublisher(PublisherPort):
         request: PublishRequest,
         access_token: str,
     ) -> dict:
-        """Đăng Video Reels lên Facebook Page qua Page Reels Publishing API."""
+        """Đăng Video Reels lên Page qua Reels Publishing API — ba pha.
+
+        `start` → upload bytes tới `rupload.facebook.com` → `finish`. Ranh giới
+        quan trọng nhất là sau `start`: từ lúc đó Facebook đã cấp `video_id` và
+        mọi lỗi tiếp theo đều **mơ hồ** — có thể video đã lên Trang, có thể chưa.
+        Retry ở đó là cách tạo ra hai Reels giống hệt nhau. Vì vậy mọi hỏng hóc
+        sau `start` đều là `AmbiguousPublishError`, và người xử lý phải đi đối
+        soát chứ không được đăng lại.
+
+        `finish` trả 200 **không** có nghĩa là video đã lên Trang: Reels xử lý
+        bất đồng bộ. Việc xác minh nằm ở `verify_reel`.
+        """
         init_url = f"{GRAPH_BASE}/{page_id}/video_reels"
         init_res = await client.post(
             init_url,
             data={"upload_phase": "start", "access_token": access_token},
         )
         if init_res.status_code >= 400:
+            # Chưa có gì được tạo — phân loại bình thường, retry an toàn.
             raise self._classify_error(init_res)
+
         init_data = init_res.json()
         video_id = init_data.get("video_id")
         upload_url = init_data.get("upload_url")
+        if not video_id or not upload_url:
+            raise TemporaryPublishError(
+                self.channel,
+                "Graph API không trả về video_id/upload_url ở pha start của Reels",
+            )
 
-        video_bytes: bytes | None = None
-        if request.media_urls:
-            raw_url = request.media_urls[0]
-            if raw_url.startswith("file://"):
-                local_path = raw_url.replace("file://", "")
-                if os.path.exists(local_path):
-                    with open(local_path, "rb") as f:
-                        video_bytes = f.read()
-            elif os.path.exists(raw_url):
-                with open(raw_url, "rb") as f:
-                    video_bytes = f.read()
-            elif raw_url.startswith(("http://", "https://")):
-                try:
-                    vid_res = await client.get(raw_url)
-                    if vid_res.status_code == 200 and len(vid_res.content) > 0:
-                        video_bytes = vid_res.content
-                except Exception as exc:
-                    logger.warning("Failed to fetch video URL %s: %s", raw_url, exc)
-
+        video_bytes = await self._load_reel_bytes(client, request)
         if not video_bytes:
-            sample_path = "/tmp/havi_test/nhat_minh_short.mp4"
-            if os.path.exists(sample_path):
-                with open(sample_path, "rb") as f:
-                    video_bytes = f.read()
+            # Không có bytes thì không đăng. Trước đây chỗ này rơi về một file
+            # mẫu trong /tmp, nghĩa là Trang của khách nhận video của người khác.
+            raise ValidationPublishError(
+                self.channel,
+                "Không đọc được nội dung video để đăng Reels — thiếu file nguồn.",
+            )
 
-        if video_bytes and upload_url:
+        try:
+            up_res = await client.post(
+                upload_url,
+                headers={
+                    "Authorization": f"OAuth {access_token}",
+                    "offset": "0",
+                    "file_size": str(len(video_bytes)),
+                },
+                content=video_bytes,
+            )
+        except httpx.HTTPError as exc:
+            raise AmbiguousPublishError(
+                self.channel,
+                f"Mất kết nối khi tải video lên Reels (video_id={video_id}): {exc}",
+            ) from exc
+
+        if up_res.status_code >= 400:
+            logger.error(
+                "Facebook Reels binary upload HTTP %d: %s", up_res.status_code, up_res.text[:200]
+            )
+            raise AmbiguousPublishError(
+                self.channel,
+                f"Tải video lên Reels hỏng ở HTTP {up_res.status_code} "
+                f"(video_id={video_id}) — phải đối soát trước khi thử lại.",
+            )
+
+        try:
+            finish_res = await client.post(
+                init_url,
+                data={
+                    "upload_phase": "finish",
+                    "video_id": video_id,
+                    "video_state": "PUBLISHED",
+                    "description": request.text,
+                    "access_token": access_token,
+                },
+            )
+        except httpx.HTTPError as exc:
+            raise AmbiguousPublishError(
+                self.channel,
+                f"Mất kết nối ở pha finish của Reels (video_id={video_id}): {exc}",
+            ) from exc
+
+        if finish_res.status_code >= 400:
+            raise AmbiguousPublishError(
+                self.channel,
+                f"Pha finish của Reels trả HTTP {finish_res.status_code} "
+                f"(video_id={video_id}) — phải đối soát trước khi thử lại.",
+            )
+
+        # Trả đúng video_id thật. Không bao giờ bịa một id thay thế: id bịa nghĩa
+        # là về sau không đối soát được, mà đối soát là thứ duy nhất chặn đăng trùng.
+        return {"id": str(video_id), "reel_pending_verification": True}
+
+    async def _load_reel_bytes(
+        self, client: httpx.AsyncClient, request: PublishRequest
+    ) -> bytes | None:
+        """Đọc bytes video từ URL đã ký hoặc đường dẫn cục bộ. `None` = không có."""
+        if not request.media_urls:
+            return None
+
+        raw_url = request.media_urls[0]
+        if raw_url.startswith("file://"):
+            local_path = raw_url[len("file://") :]
+            if os.path.exists(local_path):
+                with open(local_path, "rb") as f:
+                    return f.read()
+            return None
+
+        if raw_url.startswith(("http://", "https://")):
             try:
-                up_res = await client.post(
-                    upload_url,
-                    headers={
-                        "Authorization": f"OAuth {access_token}",
-                        "offset": "0",
-                        "file_size": str(len(video_bytes)),
-                    },
-                    content=video_bytes,
-                )
-                if up_res.status_code >= 400:
-                    logger.warning(
-                        "Facebook Reels binary upload chunk HTTP %d: %s",
-                        up_res.status_code,
-                        up_res.text,
-                    )
-            except Exception as exc:
-                logger.warning("Facebook Reels direct binary upload failed: %s", exc)
+                res = await client.get(raw_url)
+            except httpx.HTTPError as exc:
+                logger.warning("Không tải được video từ %s: %s", raw_url, exc)
+                return None
+            if res.status_code == 200 and res.content:
+                return res.content
+            return None
 
-        finish_res = await client.post(
-            init_url,
-            data={
-                "upload_phase": "finish",
-                "video_id": video_id,
-                "video_state": "PUBLISHED",
-                "description": request.text,
-                "access_token": access_token,
-            },
-        )
-        if finish_res.status_code < 400:
-            return {"id": video_id or "fb_reel_success", "success": True}
-        raise self._classify_error(finish_res)
+        if os.path.exists(raw_url):
+            with open(raw_url, "rb") as f:
+                return f.read()
+        return None
+
+    async def verify_reel(self, video_id: str, *, access_token: str) -> ReelStatus:
+        """Đọc lại trạng thái Reel trên Graph API.
+
+        `finish` trả 200 chỉ nghĩa là Facebook nhận job. Reels xử lý bất đồng bộ
+        và có thể hỏng sau đó (video lỗi, vi phạm chính sách). Chỉ khi
+        `publishing_phase.status == "published"` mới được coi là đã đăng.
+        """
+        url = f"{GRAPH_BASE}/{video_id}"
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            try:
+                res = await client.get(
+                    url,
+                    params={
+                        "fields": "id,status,permalink_url",
+                        "access_token": access_token,
+                    },
+                )
+            except httpx.HTTPError as exc:
+                raise TemporaryPublishError(
+                    self.channel, f"Không đọc được trạng thái Reel {video_id}: {exc}"
+                ) from exc
+
+            if res.status_code == 404:
+                return ReelStatus(video_id=video_id, phase="not_found")
+            if res.status_code >= 400:
+                raise self._classify_error(res)
+
+            body = res.json()
+            phase_block = (body.get("status") or {}).get("publishing_phase") or {}
+            phase = str(phase_block.get("status") or "").lower()
+            return ReelStatus(
+                video_id=str(body.get("id") or video_id),
+                phase=phase or "unknown",
+                permalink_url=body.get("permalink_url"),
+                error_message=phase_block.get("errors") and str(phase_block["errors"])[:300],
+            )
 
     async def _post(
         self, client: httpx.AsyncClient, url: str, payload: dict, access_token: str

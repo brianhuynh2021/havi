@@ -122,7 +122,7 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
     <div>
       {outcome?.kind === "ok" ? (
         <p className={`${styles.notice} ${styles.noticeOk}`} role="status">
-          Đã nối kênh xong — Havi đăng bài giúp chị được rồi.
+          Đã nối kênh xong — Havi đăng bài giúp bạn được rồi.
         </p>
       ) : null}
       {outcome?.kind === "error" ? (

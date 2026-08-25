@@ -68,7 +68,7 @@ export function SignupScreen() {
             name="name"
             scale="large"
             autoComplete="name"
-            placeholder={t({ vi: "Ví dụ: Chị Hương", en: "e.g., Sarah Jenkins" })}
+            placeholder={t({ vi: "Ví dụ: Nguyễn Thu Hương", en: "e.g., Sarah Jenkins" })}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required

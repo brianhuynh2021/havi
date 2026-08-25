@@ -11,7 +11,7 @@ def test_production_rejects_defaults_and_missing_real_providers():
             use_mock_llm=False,
             use_fake_publisher=False,
             disable_rate_limit=False,
-            email_provider="smtp",
+                email_provider="smtp",
             email_from="no-reply@havi.vn",
             smtp_host="smtp.havi.vn",
         )

@@ -20,7 +20,6 @@ const LEGACY_ALIASES: Record<string, string> = {
   "/reports": "/app/reports",
   "/cai-dat": "/app/settings",
   "/settings": "/app/settings",
-  "/video-studio": "/app/video-studio",
   "/billing": "/app/billing",
   "/inbox": "/app/inbox",
 };

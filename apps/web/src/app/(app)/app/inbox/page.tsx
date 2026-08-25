@@ -1,7 +1,7 @@
 import { LeadsScreen } from "@/features/leads/leads-screen";
 
 export const metadata = {
-  title: "Hộp Thư & Trực AI — Havi",
+  title: "Hộp Thư — Havi",
 };
 
 export default function InboxPage() {

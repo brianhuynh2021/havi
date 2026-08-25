@@ -5,7 +5,7 @@ import type { components } from "@/lib/api-client/schema";
 
 export type CalendarDay = components["schemas"]["CalendarDay"];
 
-const GENERIC_ERROR = "Chưa tải được lịch, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Chưa tải được lịch, thử lại giúp bạn nhé.";
 
 /** Ngày `YYYY-MM-DD` theo giờ Việt Nam.
  *
@@ -76,7 +76,7 @@ export async function rescheduleItem(
         message:
           response?.status === 409
             ? "Bài đã đăng rồi nên không đổi lịch được nữa."
-            : "Chưa đổi được lịch, thử lại giúp chị nhé.",
+            : "Chưa đổi được lịch, thử lại giúp bạn nhé.",
       };
     }
     return { ok: true, data };

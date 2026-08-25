@@ -14,7 +14,7 @@ export async function fetchDashboardSummary(): Promise<
   try {
     const { data, error } = await apiClient.GET("/analytics/dashboard");
     if (error || !data) {
-      return { ok: false, message: "Chưa tải được tổng quan, thử lại giúp chị nhé." };
+      return { ok: false, message: "Chưa tải được tổng quan, thử lại giúp bạn nhé." };
     }
     return { ok: true, data };
   } catch {

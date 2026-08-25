@@ -24,7 +24,7 @@ export interface CrmNudge {
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp bạn nhé.";
 
 export async function listInbox(): Promise<Result<InboxItem[]>> {
   try {

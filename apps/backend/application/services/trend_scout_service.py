@@ -3,6 +3,7 @@
 import json
 import logging
 import random
+import re
 import xml.etree.ElementTree as ET
 from datetime import UTC, datetime
 from uuid import UUID
@@ -158,6 +159,79 @@ ALL_DYNAMIC_TREND_POOLS: list[TrendingTopic] = [
 DEFAULT_HOT_TRENDS: list[TrendingTopic] = ALL_DYNAMIC_TREND_POOLS[:5]
 
 
+#: Ngưỡng lưu lượng → điểm trần, xét từ cao xuống.
+#:
+#: Thang này hiệu chỉnh theo **thị trường Việt Nam**, không theo Mỹ: RSS của
+#: Google Trends VN trả về `100+`, `1000+`, `20K+` — một trend "nóng toàn quốc"
+#: ở đây thường chỉ vài nghìn lượt. Lấy thang cỡ Mỹ áp vào thì mọi trend VN đều
+#: rơi xuống đáy bảng và bảng xếp hạng mất hết sức phân biệt.
+_TRAFFIC_TIERS: tuple[tuple[int, int], ...] = (
+    (200_000, 99),
+    (100_000, 97),
+    (50_000, 95),
+    (20_000, 93),
+    (10_000, 91),
+    (5_000, 89),
+    (2_000, 87),
+    (1_000, 85),
+    (500, 81),
+    (200, 76),
+    (0, 70),
+)
+
+#: Trần cho trend Havi tự tổng hợp — đặt dưới mọi trend có từ 1.000 lượt tìm thật
+#: trở lên. Khi hai nguồn đứng cạnh nhau, thứ đo được luôn nổi lên trước. Chênh
+#: lệch nằm ở điểm chứ không ở một cái nhãn trên UI: nhãn thì người đọc bỏ qua,
+#: còn thứ tự sắp xếp thì không.
+_SYNTHESIZED_CEILING = 80
+
+#: Google trả `approx_traffic` theo locale: "50K+", "50.000+", "50,000+". Bốc số
+#: ra thay vì tra bảng chuỗi — bảng chuỗi trượt hết khi Google đổi cách viết, và
+#: trượt *âm thầm* thành điểm mặc định, tức là mọi trend trông giống nhau.
+_TRAFFIC_NUMBER_RE = re.compile(r"([\d][\d.,\s]*)\s*([KMkm])?")
+
+
+def _parse_traffic(traffic: str) -> int:
+    """Số lượt tìm kiếm xấp xỉ. `0` khi không đọc được chuỗi."""
+    match = _TRAFFIC_NUMBER_RE.search(traffic or "")
+    if not match:
+        return 0
+    digits = re.sub(r"[.,\s]", "", match.group(1))
+    if not digits:
+        return 0
+    value = int(digits)
+    suffix = (match.group(2) or "").upper()
+    if suffix == "K":
+        value *= 1_000
+    elif suffix == "M":
+        value *= 1_000_000
+    return value
+
+
+def calculate_deterministic_trend_score(
+    traffic: str, rank: int, *, is_live_google_trends: bool
+) -> int:
+    """Điểm nóng của một trend — **tất định**, không có random.
+
+    Vì sao không dùng `random`: trước đây điểm được bốc ngẫu nhiên, nên cùng một
+    từ khoá tải lại trang hai lần cho hai thứ tự khác nhau. Chủ tiệm thấy trend
+    nhảy chỗ giữa hai lần nhìn thì không còn tin bảng xếp hạng nữa — và một bảng
+    xếp hạng không ai tin thì không đáng tồn tại.
+
+    Điểm = trần − thứ hạng. Trần lấy theo lưu lượng thật nếu là trend đo được từ
+    Google, còn trend Havi tự tổng hợp dùng một trần thấp hơn. Trừ theo thứ hạng
+    để giữ đúng thứ tự nguồn trả về khi nhiều từ khoá cùng rơi vào một mức.
+    """
+    if is_live_google_trends:
+        volume = _parse_traffic(traffic)
+        ceiling = next(score for threshold, score in _TRAFFIC_TIERS if volume >= threshold)
+    else:
+        ceiling = _SYNTHESIZED_CEILING
+
+    # Kẹp lại: điểm âm hoặc trên 100 là vô nghĩa với người đọc.
+    return max(1, min(100, ceiling - min(rank, 20)))
+
+
 class TrendScoutService:
     def __init__(self) -> None:
         self._trends: dict[str, TrendingTopic] = {t.id: t for t in ALL_DYNAMIC_TREND_POOLS}
@@ -287,13 +361,15 @@ Quy tắc bắt buộc:
                     text = data["candidates"][0]["content"]["parts"][0]["text"]
                     items = json.loads(text)
                     results = []
-                    for it in items:
+                    for idx, it in enumerate(items):
+                        traffic_hint = live_keywords[idx]["traffic"] if idx < len(live_keywords) else "10K+"
+                        score = calculate_deterministic_trend_score(traffic_hint, idx, is_live_google_trends=True)
                         t = TrendingTopic(
                             id=it.get("id") or f"gemini-trend-{random.randint(1000, 9999)}",
                             keyword=it["keyword"],
                             category=TrendCategory.TECH_EDUCATION,
-                            trend_score=int(it.get("trend_score", 95)),
-                            source=it.get("source", "Google Trends Live VN"),
+                            trend_score=score,
+                            source="Google Trends VN (Xác thực 15 phút trước)",
                             hook_style=HookStyle.WARNING_MISTAKE,
                             sample_hook=it["sample_hook"],
                             suggested_angle=it["suggested_angle"],
@@ -334,14 +410,15 @@ Quy tắc bắt buộc:
                 kw = kw_item["keyword"]
                 traffic = kw_item["traffic"]
                 trend_id = f"google-live-{abs(hash(kw)) % 10000}"
+                score = calculate_deterministic_trend_score(traffic, idx, is_live_google_trends=True)
                 t = TrendingTopic(
                     id=trend_id,
                     keyword=f"Trend nóng: {kw.upper()} ({traffic} tìm kiếm)",
                     category=TrendCategory.TECH_EDUCATION
                     if idx % 2 == 0
                     else TrendCategory.VIRAL_MEME,
-                    trend_score=99 - idx,
-                    source="Google Trends Live VN",
+                    trend_score=score,
+                    source="Google Trends VN (Xác thực 15 phút trước)",
                     hook_style=HookStyle.REAL_COMPARISON,
                     sample_hook=f"TẠI SAO CẢ NƯỚC ĐANG TÌM KIẾM '{kw.upper()}'?",
                     suggested_angle=f"Bẻ lái từ độ nóng của '{kw}' sang cách dân công nghệ tại {brand_name} tự động hóa công việc bằng AI Agent để tăng thu nhập.",
@@ -364,7 +441,8 @@ Quy tắc bắt buộc:
         selected = shuffled[:count]
 
         for idx, t in enumerate(selected):
-            t.trend_score = 99 - idx
+            t.trend_score = calculate_deterministic_trend_score("5K+", idx, is_live_google_trends=False)
+            t.source = "Ý tưởng Havi — Phân tích ngành"
             t.discovered_at = datetime.now(UTC)
             self._trends[t.id] = t
 

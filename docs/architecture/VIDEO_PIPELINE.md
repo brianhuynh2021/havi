@@ -1,70 +1,79 @@
-# Havi Video Pipeline Architecture (Phase 3)
+# Havi Video Pipeline
 
-> Short-form AI Video Processing, Transcript, AI Edit Planning, and Rendering Engine for Reels, TikTok, and YouTube Shorts.
+> **Havi does not render, edit, or caption video.** It accepts a clip the shop
+> owner already made and publishes it to Facebook Reels — reliably, once, and
+> with proof it actually landed.
 
 ```text
-Upload (Raw Video)
+Upload clip (chủ tiệm tự quay & tự cắt bằng CapCut)
   ↓
-Video Understanding
-  ├─ Gemini 2.5 Multimodal
-  ├─ OpenAI Vision
-  └─ Provider Router Fallback
+MediaService.complete_upload — ffprobe reads duration / dimensions / audio
   ↓
-Transcript Engine
-  ├─ Whisper / WhisperX (Word-level timestamps & VAD)
-  └─ Alternative STT APIs
+video_constraints.check_video_for_channel — 9:16? 3–90s? has audio?
+  │  ✗ rejected here, at upload time, while the owner can still reshoot
   ↓
-AI Edit Engine ⭐
+VideoPost (READY_FOR_REVIEW) — caption + channel + source clip
   ↓
-EditPlan.json (Cuts, Captions, Highlights, B-Roll, Overlays)
+human approves  ──►  APPROVED  ──►  PUBLISHING
   ↓
-Renderer
-  ├─ FFmpeg (Default headless CLI renderer)
-  ├─ Remotion (React-driven motion graphics & animated captions)
-  └─ Cloud Rendering Workers
+FacebookPublisher._post_reel — start / upload / finish
   ↓
-Final Reel / TikTok / YouTube Short
+VERIFYING — read the Page back
+  │  ✗ lost the thread → PENDING_RECONCILIATION (reconcile, never resend)
+  ↓
+PUBLISHED — confirmed present on the Page
 ```
 
----
+## Why the render engine was removed (2026-08-25)
 
-## 1. Pipeline Stages & Boundaries
+An earlier design put an AI edit engine between upload and publish: multimodal
+video understanding, a transcript engine, `EditPlan.json`, an FFmpeg renderer, a
+Remotion renderer, a safe-zone checker, and a quality gate. Roughly 5,000 lines
+of non-test Python, plus a 689-line canvas renderer in the browser.
 
-### 1. Upload & Ingestion
-- Raw video uploaded directly to object storage via presigned tickets (`MediaType.VIDEO`).
-- `FFmpegVideoProcessor` probes metadata: duration, resolution (1080x1920), FPS, aspect ratio (9:16 classification), and audio stream presence.
+It was cut for three reasons:
 
-### 2. Video Understanding & Multimodal Analysis
-- Multi-provider LLM router (`Gemini 2.5 Flash` / `OpenAI`) analyzes keyframes and visual highlights.
-- Identifies visual hooks, key product moments, facial gestures, and aesthetic scene boundaries.
+1. **It competed where Havi cannot win.** Shop owners already use CapCut daily
+   and are faster in it than any web editor Havi could ship.
+2. **It was the largest source of operational risk.** FFmpeg on the server,
+   demo/mock renderers that had to be fenced off from production, a nine-state
+   render machine, and three migrations — all upstream of the one thing that
+   actually mattered: the post landing on the Page.
+3. **Its core was never real.** `VideoAIDirector.generate_manifest` returned the
+   same rule-based manifest on both branches of its `if`; the "AI direction" was
+   a TODO wearing a class name.
 
-### 3. Transcript & Subtitle Alignment
-- Speech-to-text (`WhisperX`) generates exact word-level timecodes (`start_ms`, `end_ms`).
-- Detects speaker pauses, filler words, and sentence boundaries for tight cuts.
+The code is in git history. If the decision is reversed, recover it from the
+commit that removed it rather than rewriting from this document.
 
-### 4. AI Edit Engine & `EditPlan.json`
-- Generates a structured execution plan (`EditPlan.json`):
-  ```json
-  {
-    "target_aspect_ratio": "9:16",
-    "target_duration_seconds": 30,
-    "cuts": [
-      {"start_ms": 1200, "end_ms": 5400, "zoom_scale": 1.1},
-      {"start_ms": 6800, "end_ms": 14200, "zoom_scale": 1.0}
-    ],
-    "captions": [
-      {"text": "BÍ QUYẾT GỘI ĐẦU DƯỠNG SINH", "start_ms": 1200, "end_ms": 3500, "style": "bold_yellow_highlight"}
-    ],
-    "audio": {
-      "normalize_db": -14,
-      "bg_music_volume": 0.15
-    }
-  }
-  ```
+## What remains, and why each piece exists
 
-### 5. Video Rendering Engine
-- **FFmpeg Renderer (Default)**: Concat filters, drawtext caption rendering, crop/scale to 9:16 vertical, audio normalization.
-- **Remotion Renderer**: React component motion graphics for animated kinetic typography, lower thirds, and brand logo stings.
+| Piece | Job |
+|---|---|
+| `domain/policies/video_constraints.py` | Per-channel rules (aspect, duration, audio). Pure policy, no I/O. Checked **at upload**, not at publish — a clip rejected at 8pm on Saturday cannot be reshot. |
+| `domain/models/video_post.py` | One row per clip heading for a Page. Holds `source_object_key` so publishing needs no join. |
+| `domain/policies/video_job_state.py` | The legal transitions. `PENDING_RECONCILIATION → PUBLISHING` does not exist, and that absence is the anti-duplicate guarantee. |
+| `application/services/video_post_service.py` | Upload → validate → create. Returns *every* rejection reason at once. |
+| `application/services/video_publish_service.py` | Approve → publish → verify → reconcile. No path reaches `PUBLISHED` without reading the platform back. |
+| `adapters/persistence/video_publish_repository.py` | Partial unique index on live attempts. Duplicate prevention lives in Postgres, not in an `if`. |
+| `adapters/publishers/facebook.py` | Graph API: `/feed`, `/photos`, album, and the three-phase `video_reels` upload; plus `verify_reel`. |
 
-### 6. Channel Dispatch
-- Final `.mp4` video dispatched to Facebook Reels, TikTok API, or YouTube Shorts API via background Celery publish workers.
+## The two rules that everything else serves
+
+**1. No path to `PUBLISHED` without reading the platform back.** A 200 from the
+Reels `finish` phase means Facebook accepted the job, not that the video is on
+the Page — Reels processes asynchronously and can still fail afterwards.
+
+**2. Lost the thread? Reconcile, never resend.** Every failure *after* Facebook
+issues a `video_id` is ambiguous. Resending there is the most reliable way to
+put two identical Reels on a customer's Page, and that cannot be undone.
+
+## Tests
+
+```bash
+cd apps/backend
+uv run pytest tests/test_video_ingestion.py        # ffprobe + channel constraints (needs ffmpeg)
+uv run pytest tests/test_video_post_service.py     # upload → validate → queue
+uv run pytest tests/test_video_publish_flow.py     # approve → publish → verify → reconcile
+uv run pytest tests/test_facebook_publish_routes.py # which Graph endpoint, which post id
+```

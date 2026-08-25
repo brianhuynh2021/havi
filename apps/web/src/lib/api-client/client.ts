@@ -11,7 +11,10 @@ import type { paths } from "./schema";
 // (ROADMAP §1 nguyên tắc #6) — chỉ JWT của chính user.
 // Local dev chạy Next ở :3000 và API ở :8000. Khi production đi qua Nginx,
 // dùng same-origin để không phải hard-code localhost vào bundle trình duyệt.
-const baseUrl =
+/** Gốc của API, đã tính cả trường hợp production đi qua Nginx same-origin.
+ *  Export ra để mọi module gọi API dùng chung một giá trị — hard-code
+ *  `http://localhost:8000` ở nơi khác sẽ chạy ngon ở local rồi chết ở production. */
+export const baseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   (typeof window !== "undefined" && window.location.port !== "3000"
     ? window.location.origin

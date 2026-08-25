@@ -2026,3 +2026,328 @@
   color: #065f46;
 }
 
+
+
+/* --- Bổ sung cho bản tách PostBrief / DraftList --- */
+
+.notice {
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.generateHint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.uploadList {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.uploadRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* Danh sách kiểm — cố ý KHÔNG có điểm số. Xem `checkBrief` trong post-brief.tsx. */
+.briefChecks {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-border-soft);
+}
+
+.briefChecksTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-body);
+}
+
+.draftsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 14px;
+}
+
+.draftsTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.linkDanger {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+.linkDanger:disabled {
+  color: var(--color-muted);
+  cursor: default;
+}
+
+.channelTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.draftImage {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  object-fit: cover;
+  max-height: 260px;
+}
+
+.draftText {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--color-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bulkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.playbookIcon {
+  font-size: 22px;
+}
+
+/* --- Bước 1: rẽ nhánh loại nội dung --- */
+
+.kindSection {
+  margin-bottom: 24px;
+}
+
+.kindGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.kindCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.kindCard:hover {
+  border-color: var(--color-primary-light);
+}
+
+.kindCardActive {
+  border-color: var(--color-primary);
+  background: #eff6ff;
+}
+
+.kindIcon {
+  font-size: 26px;
+}
+
+.kindCard strong {
+  font-size: 15px;
+  color: var(--color-ink);
+}
+
+.kindCard small {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+/* --- Bước 3: xếp lịch (dùng chung cho bài viết và video) --- */
+
+.scheduleCard {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.scheduleTitle {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.scheduleModes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.scheduleMode {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.scheduleModeActive {
+  border-color: var(--color-primary);
+  background: #eff6ff;
+}
+
+.scheduleMode strong {
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.scheduleMode small {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.scheduleWarning {
+  margin: 0 0 16px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.densityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.densityLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-body);
+  margin-right: 4px;
+}
+
+.densityChip {
+  padding: 5px 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-body);
+  cursor: pointer;
+}
+
+.densityChipActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Bảng xem trước: ngày giờ bên trái, nội dung bên phải. Cột giờ rộng cố định để
+   các dòng thẳng hàng — đọc lịch là quét dọc cột ngày, không phải đọc từng dòng. */
+.schedulePreview {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.scheduleRow {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.scheduleRow:nth-child(odd) {
+  background: var(--color-border-soft);
+}
+
+.scheduleWhen {
+  color: var(--color-body);
+  white-space: nowrap;
+}
+
+.scheduleWhat {
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scheduleFootnote {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-muted);
+}
+
+@media (max-width: 560px) {
+  .scheduleRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}

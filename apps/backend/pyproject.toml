@@ -29,6 +29,12 @@ dependencies = [
     # Official PayOS SDK cho xử lý thanh toán VietQR & Webhook chuẩn xác
     "payos>=1.1.0",
     "edge-tts>=7.2.8",
+    # Rasterize chữ overlay thành PNG RGBA rồi để FFmpeg composite bằng `overlay`.
+    # Không dùng drawtext/libass vì hai lý do: (1) nhiều bản FFmpeg đóng gói
+    # thiếu freetype/libass nên filter biến mất lúc runtime chứ không phải lúc
+    # deploy, (2) chỉ có tự vẽ mới biết *chính xác* hộp pixel của chữ — mà
+    # không biết hộp thì không kiểm được safe zone, chỉ đoán được.
+    "pillow>=11.0",
 ]
 
 [project.optional-dependencies]

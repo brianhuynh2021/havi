@@ -94,167 +94,103 @@ def publish_run_due(limit: int = 20) -> int:
     return asyncio.run(_run())
 
 
-@celery_app.task(name="havi.video.render", bind=True, max_retries=1)
-def render_video_job(self, workspace_id: str, job_id: str, request_id: str | None = None) -> None:  # noqa: ANN001
-    """Thực thi pipeline render video bất đồng bộ qua hàng đợi Celery.
+@celery_app.task(name="havi.video.publish", bind=True, max_retries=0)
+def publish_video_post(self, workspace_id: str, post_id: str, request_id: str | None = None) -> None:  # noqa: ANN001
+    """Đăng một video đã duyệt lên Facebook Reels rồi xác minh.
 
-    Chạy trên hàng đợi riêng `havi.video_render` để không nghẽn các tác vụ nhẹ.
+    `max_retries=0` là chủ ý và là luật quan trọng nhất của task này. Celery
+    retry ở đây nghĩa là gửi lại một video có thể đã lên Trang — chính xác cách
+    tạo ra hai Reels giống hệt nhau. Việc thử lại do
+    `VideoPublishService` quyết định qua trạng thái `PENDING_RECONCILIATION`,
+    và ở đó nó *đối soát* chứ không gửi lại.
     """
-    import os
-    import tempfile
-
-    from core.enums import MediaStatus, MediaType
-    from worker.video_render_factory import video_render_scope
+    from application.services.video_publish_service import (
+        ChannelNotConnected,
+        VideoNotReadyForPublish,
+    )
+    from worker.video_publish_factory import video_publish_scope
 
     async def _run() -> None:
-        ws_id = UUID(workspace_id)
-        j_id = UUID(job_id)
-
-        async with video_render_scope() as ctx:
-            job = await ctx.render_repo.get(workspace_id=ws_id, job_id=j_id)
-            if not job:
-                logger.warning("VideoRenderJob %s not found", job_id)
-                return
-
-            await ctx.render_repo.set_rendering(job_id=j_id)
-
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                source_path = os.path.join(tmp_dir, "source.mp4")
-                output_path = os.path.join(tmp_dir, "rendered.mp4")
-
-                # 1. Tải source asset nếu có
-                if job.source_media_id:
-                    source_asset = await ctx.media_repo.get(
-                        workspace_id=ws_id, asset_id=job.source_media_id
-                    )
-                    if source_asset:
-                        try:
-                            video_bytes = await ctx.storage.read_object(source_asset.object_key)
-                            with open(source_path, "wb") as f:
-                                f.write(video_bytes)
-                        except Exception as exc:
-                            logger.error(
-                                "Failed to download source video %s: %s",
-                                source_asset.object_key,
-                                exc,
-                            )
-                            await ctx.render_repo.fail(
-                                job_id=j_id, error_message=f"Failed to load source video: {exc}"
-                            )
-                            return
-
-                # Nếu không có source asset, tạo clip nền 9:16 mặc định hợp lệ bằng FFmpeg
-                if not os.path.exists(source_path) or os.path.getsize(source_path) < 100:
-                    import subprocess
-
-                    subprocess.run(
-                        [
-                            "ffmpeg",
-                            "-y",
-                            "-f",
-                            "lavfi",
-                            "-i",
-                            "color=c=0x1e1b4b:s=1080x1920:d=15",
-                            "-f",
-                            "lavfi",
-                            "-i",
-                            "anullsrc=r=44100:cl=stereo",
-                            "-t",
-                            "15",
-                            "-c:v",
-                            "libx264",
-                            "-pix_fmt",
-                            "yuv420p",
-                            "-c:a",
-                            "aac",
-                            source_path,
-                        ],
-                        capture_output=True,
-                    )
-
-                # 2. Callback cập nhật tiến độ
-                async def progress_cb(pct: int) -> None:
-                    await ctx.render_repo.update_progress(job_id=j_id, progress_percent=pct)
-
-                # 3. Thực thi Render
-                try:
-                    render_result = await ctx.renderer.render(
-                        job_id=j_id,
-                        edit_plan=job.edit_plan,
-                        source_video_path=source_path,
-                        output_video_path=output_path,
-                        progress_callback=progress_cb,
-                    )
-                except Exception as exc:
-                    logger.exception("Render video job %s failed", job_id)
-                    await ctx.render_repo.fail(job_id=j_id, error_message=str(exc))
-                    return
-
-                # 4. Upload video output lên Object Storage
-                output_key = f"workspaces/{ws_id}/rendered_videos/{j_id}.mp4"
-                thumbnail_key = f"workspaces/{ws_id}/rendered_videos/{j_id}_thumb.jpg"
-
-                with open(render_result.output_file_path, "rb") as f:
-                    rendered_bytes = f.read()
-
-                await ctx.storage.put_object(
-                    object_key=output_key,
-                    data=rendered_bytes,
-                    content_type="video/mp4",
-                )
-
-                if render_result.thumbnail_file_path and os.path.exists(
-                    render_result.thumbnail_file_path
-                ):
-                    with open(render_result.thumbnail_file_path, "rb") as f:
-                        thumb_bytes = f.read()
-                    await ctx.storage.put_object(
-                        object_key=thumbnail_key,
-                        data=thumb_bytes,
-                        content_type="image/jpeg",
-                    )
-                else:
-                    thumbnail_key = None
-
-                # 5. Tạo bản ghi MediaAsset
-                media_asset = await ctx.media_repo.create(
-                    workspace_id=ws_id,
-                    object_key=output_key,
-                    filename=f"{job.title}.mp4",
-                    content_type="video/mp4",
-                    type=MediaType.VIDEO,
-                )
-                media_asset.status = MediaStatus.RAW
-                media_asset.duration_seconds = render_result.duration_seconds
-                media_asset.width = render_result.width
-                media_asset.height = render_result.height
-                media_asset.aspect_ratio = job.target_aspect_ratio
-                media_asset.has_audio = True
-                media_asset.thumbnail_object_key = thumbnail_key
-                media_asset.size_bytes = len(rendered_bytes)
-
-                # 6. Đánh dấu hoàn tất
-                public_url = ctx.storage.public_url(output_key)
-                await ctx.render_repo.complete(
-                    job_id=j_id,
-                    output_media_id=media_asset.id,
-                    output_url=public_url,
-                )
+        async with video_publish_scope() as service:
+            outcome = await service.publish(
+                workspace_id=UUID(workspace_id), post_id=UUID(post_id)
+            )
+            logger.info(
+                "Video %s sau khi đăng: %s (bài %s)",
+                post_id,
+                outcome.post.status.value,
+                outcome.external_post_id,
+            )
 
     token = set_request_id(request_id) if request_id else None
     try:
         try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop and loop.is_running():
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                pool.submit(asyncio.run, _run()).result()
-        else:
             asyncio.run(_run())
+        except (VideoNotReadyForPublish, ChannelNotConnected) as exc:
+            logger.warning("Bỏ qua lượt đăng video %s: %s", post_id, exc)
     finally:
         if token is not None:
             reset_request_id(token)
+
+
+@celery_app.task(name="havi.video.publish_due", max_retries=0)
+def publish_due_video_posts(limit: int = 20) -> int:
+    """Gửi những video đã duyệt và đã tới giờ. Trả số clip đã xử trong lượt này.
+
+    Chạy định kỳ, chọn bản ghi bằng truy vấn chứ không nhận `post_id` qua
+    message: một message bị Celery giao lại không biến thành hai lượt gửi cùng
+    một clip.
+
+    Không `raise` khi một clip hỏng — một Trang mất kết nối không được làm kẹt
+    lịch đăng của mọi workspace khác trong cùng lượt quét.
+    """
+    from application.services.video_publish_service import (
+        ChannelNotConnected,
+        VideoNotReadyForPublish,
+    )
+    from worker.video_publish_factory import video_publish_scope
+
+    async def _run() -> int:
+        sent = 0
+        async with video_publish_scope() as service:
+            for post in await service.due_posts(limit=limit):
+                try:
+                    await service.publish(
+                        workspace_id=post.workspace_id, post_id=post.id
+                    )
+                    sent += 1
+                except (VideoNotReadyForPublish, ChannelNotConnected) as exc:
+                    logger.warning("Bỏ qua video %s tới giờ: %s", post.id, exc)
+                except Exception:
+                    logger.exception("Gửi video %s hỏng", post.id)
+        return sent
+
+    return asyncio.run(_run())
+
+
+@celery_app.task(name="havi.video.reconcile", max_retries=0)
+def reconcile_video_publishes(limit: int = 20) -> int:
+    """Đối soát các lần gửi đã mất dấu. Trả số lần đã kiểm trong lượt này.
+
+    Chạy định kỳ. Không nhận `job_id` từ message: job được chọn bằng truy vấn
+    trong DB, nên một message bị Celery giao lại không biến thành hai lượt đối
+    soát cùng một bản ghi.
+    """
+    from adapters.persistence.video_publish_repository import VideoPublishRepository
+    from worker.video_publish_factory import video_publish_scope
+
+    async def _run() -> int:
+        checked = 0
+        async with video_publish_scope() as service:
+            repo: VideoPublishRepository = service._attempts  # noqa: SLF001
+            for attempt in await repo.list_needing_reconciliation(limit=limit):
+                try:
+                    await service.reconcile(
+                        workspace_id=attempt.workspace_id, attempt=attempt
+                    )
+                    checked += 1
+                except Exception:
+                    logger.exception("Đối soát attempt %s hỏng", attempt.id)
+        return checked
+
+    return asyncio.run(_run())

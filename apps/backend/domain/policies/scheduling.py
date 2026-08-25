@@ -34,3 +34,53 @@ def next_golden_hour(*, now: datetime | None = None) -> datetime:
     return tomorrow.replace(
         hour=first.hour, minute=first.minute, second=0, microsecond=0
     ).astimezone(UTC)
+
+
+def spread_over_golden_hours(
+    count: int,
+    *,
+    per_day: int = 1,
+    now: datetime | None = None,
+) -> list[datetime]:
+    """Rải `count` bài ra các khung giờ vàng, mỗi ngày `per_day` bài.
+
+    Vì sao cần hàm này thay vì gọi `next_golden_hour()` cho từng bài: nó trả về
+    cùng một mốc cho mọi lời gọi trong cùng một giây. Chủ tiệm ngồi một buổi
+    viết sáu bài rồi bấm "duyệt hết" sẽ nhận về sáu bài đăng **cùng một phút** —
+    Trang trông như bị spam, và sáu ngày sau đó im lặng. Đúng ngược lại thứ họ
+    muốn: mỗi ngày một câu chuyện.
+
+    Cách rải:
+
+    * Bài đầu tiên vào khung giờ vàng gần nhất còn ở tương lai.
+    * Mỗi ngày lấy `per_day` khung đầu tiên trong `GOLDEN_HOURS` (8h, 12h, 20h),
+      hết thì sang ngày kế tiếp.
+    * Ngày đầu chỉ dùng những khung **chưa trôi qua** — đặt lịch vào quá khứ là
+      cách để scheduler đăng dồn tất cả ngay lượt quét kế tiếp.
+
+    Trả về UTC-aware theo đúng thứ tự truyền vào, để caller ghép 1-1 với danh
+    sách bài của mình.
+    """
+    if count <= 0:
+        return []
+    per_day = max(1, min(per_day, len(GOLDEN_HOURS)))
+
+    current = (now or datetime.now(UTC)).astimezone(VIETNAM_TZ)
+    slots: list[datetime] = []
+    day_offset = 0
+
+    while len(slots) < count:
+        day = current + timedelta(days=day_offset)
+        for slot in GOLDEN_HOURS[:per_day]:
+            candidate = day.replace(
+                hour=slot.hour, minute=slot.minute, second=0, microsecond=0
+            )
+            # Ngày đầu tiên: bỏ qua khung đã trôi qua. Các ngày sau luôn hợp lệ.
+            if day_offset == 0 and candidate <= current:
+                continue
+            slots.append(candidate.astimezone(UTC))
+            if len(slots) == count:
+                break
+        day_offset += 1
+
+    return slots

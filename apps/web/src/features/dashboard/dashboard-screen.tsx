@@ -145,10 +145,7 @@ export function DashboardScreen() {
     inbox: "Inbox",
     group: "Facebook Group",
     google_business: "Google Business",
-    tiktok: "TikTok",
-    maps: "Google Maps",
-    crm: "CRM",
-    pos: "POS",
+    
   };
   const formattedRevenue = `${new Intl.NumberFormat(lang === "VN" ? "vi-VN" : "en-US", {
     maximumFractionDigits: 0,
@@ -245,7 +242,7 @@ export function DashboardScreen() {
           <section className={styles.revenueRadarCard} aria-label="Phễu tìm khách & doanh thu">
             <div className={styles.radarHeader}>
               <h2 className={styles.radarTitle}>
-                🎯 {t({ vi: "Hệ Điều Hành Tìm Khách & Doanh Thu", en: "Customer Acquisition & Revenue Radar" })}
+                🎯 {t({ vi: "Nền Tảng Quản Lý Khách Hàng & Doanh Thu", en: "Customer Acquisition & Revenue Radar" })}
 
               </h2>
               <span className={styles.radarBadge}>
@@ -549,8 +546,8 @@ export function DashboardScreen() {
                 })}
               </p>
             </div>
-            <Link href="/app/video-studio" className={styles.aiTipLink}>
-              {t({ vi: "Mở Studio Video →", en: "Open Video Studio →" })}
+            <Link href="/app/content" className={styles.aiTipLink}>
+              {t({ vi: "Tải video lên & đăng →", en: "Upload video & publish →" })}
             </Link>
           </section>
 

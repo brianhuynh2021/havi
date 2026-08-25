@@ -46,7 +46,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <main className={styles.content}>
         <header className={styles.topHeader}>
-          <div className={styles.topHeaderTitle}>{t("shell.assistant", "Trợ lý Havi")}</div>
+          <div className={styles.topHeaderTitle}>{t("shell.workspace", "Workspace")}</div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <PwaInstallModal />
             <LanguageSwitcher variant="pill" />

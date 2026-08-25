@@ -86,6 +86,35 @@ class ValidationPublishError(PublishError):
     kind = PublishFailureKind.VALIDATION_PERMANENT
 
 
+@dataclass(frozen=True)
+class ReelStatus:
+    """Trạng thái thật của một Reel đọc lại từ nền tảng.
+
+    Tồn tại vì "gửi xong" không phải "đã đăng": Reels xử lý bất đồng bộ, và một
+    video được nhận vẫn có thể hỏng sau đó. Đây cũng là thứ dùng để đối soát khi
+    worker chết giữa chừng — không có nó thì lối duy nhất còn lại là đăng lại,
+    và đăng lại là cách tạo ra bài trùng.
+    """
+
+    video_id: str
+    #: `published` | `in_progress` | `error` | `not_found` | `unknown`
+    phase: str
+    permalink_url: str | None = None
+    error_message: str | None = None
+
+    @property
+    def is_published(self) -> bool:
+        return self.phase == "published"
+
+    @property
+    def is_failed(self) -> bool:
+        return self.phase in ("error", "not_found")
+
+    @property
+    def is_pending(self) -> bool:
+        return not self.is_published and not self.is_failed
+
+
 class PublisherPort(ABC):
     """Một adapter cho một kênh."""
 

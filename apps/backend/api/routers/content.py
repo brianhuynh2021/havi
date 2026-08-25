@@ -7,21 +7,16 @@ Publish job phải có idempotency key (unique constraint + row lock) để mộ
 """
 
 import logging
-import re
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, Header, HTTPException, Query, status
 
-from adapters.persistence.media_repository import MediaRepository
 from api.deps import (
     ApprovalServiceDep,
     AuthDep,
     ContentServiceDep,
-    DbSessionDep,
-    ObjectStorageDep,
     PublishServiceDep,
-    VideoRenderServiceDep,
     WorkspaceDep,
 )
 from api.errors import transition_conflict
@@ -34,7 +29,7 @@ from application.services.publish_service import (
     PublishJobNotFound,
 )
 from core.content_state import InvalidTransitionError
-from core.enums import Channel, ContentStatus, MediaStatus, MediaType, PublishStatus
+from core.enums import Channel, ContentStatus, PublishStatus
 from core.schemas import (
     ApproveRequest,
     BulkApproveFailure,
@@ -49,8 +44,6 @@ from core.schemas import (
     ContentJobCreate,
     GenerateImageRequest,
     GenerateImageResponse,
-    GenerateVideoRequest,
-    GenerateVideoResponse,
     Page,
     PublishJob,
     TokenQuota,
@@ -294,9 +287,9 @@ async def generate_item_image(
 
     # Visual AI chất lượng cao theo ngành
     if any(
-        k in text_snippet for k in ["ai", "tech", "học", "công nghệ", "agent", "lập trình", "khóa"]
+        k in text_snippet for k in ["ai", "tech", "học", "công nghệ", "agent", "lập trình", "khóa", "robot", "scratch", "python"]
     ):
-        image_url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=85"
+        image_url = "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=85"
     elif any(k in text_snippet for k in ["spa", "da", "gội", "chăm sóc", "thư giãn"]):
         image_url = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=85"
     elif any(k in text_snippet for k in ["cafe", "quán", "món", "ẩm thực", "ăn", "uống"]):
@@ -318,144 +311,6 @@ async def generate_item_image(
     return GenerateImageResponse(media_url=image_url, prompt_used=prompt_used)
 
 
-@router.post("/{content_id}/generate-video", response_model=GenerateVideoResponse)
-async def generate_item_video(
-    content_id: UUID,
-    payload: GenerateVideoRequest,
-    auth: AuthDep,
-    workspace_id: WorkspaceDep,
-    approvals: ApprovalServiceDep,
-    video_renders: VideoRenderServiceDep,
-) -> GenerateVideoResponse:
-    """Tự động tạo job dựng video ngắn 9:16 có chuyển động và phụ đề động theo EditPlan chuẩn FFmpeg."""
-    try:
-        item = await approvals.get_item(workspace_id=workspace_id, item_id=content_id)
-    except ContentItemNotFound as exc:
-        raise _not_found() from exc
-
-    # 1. Trích xuất Hook 3 giây từ nội dung bài viết
-    hook_text = "BÍ QUYẾT TỰ HỌC THỰC CHIẾN"
-    if item.text:
-        match = re.search(r'["“]([^"”\n]{6,80})["”]', item.text)
-        if match and match.group(1):
-            hook_text = match.group(1).strip()
-        else:
-            first_line = item.text.split("\n")[0]
-            cleaned = re.sub(r"^[^:]*:\s*", "", first_line).strip()
-            if len(cleaned) > 5:
-                hook_text = cleaned[:70]
-
-    # 2. Xây dựng EditPlan.json chuẩn kiến trúc Video Pipeline
-    target_ratio = payload.target_aspect_ratio or "9:16"
-    edit_plan = {
-        "target_aspect_ratio": target_ratio,
-        "target_duration_seconds": 15,
-        "cuts": [{"start_ms": 0, "end_ms": 15000, "zoom_scale": 1.05}],
-        "captions": [
-            {
-                "text": hook_text.upper(),
-                "start_ms": 0,
-                "end_ms": 4000,
-                "style": "bold_yellow",
-            }
-        ],
-        "audio": {
-            "normalize_db": -14,
-            "bg_music_volume": 0.15,
-        },
-    }
-
-    # 3. Kích hoạt Backend Video Render Engine (FFmpeg)
-    render_job = await video_renders.create_job(
-        workspace_id=workspace_id,
-        title=hook_text,
-        target_aspect_ratio=target_ratio,
-        edit_plan=edit_plan,
-    )
-
-    if render_job.output_url:
-        video_url = render_job.output_url
-        video_status = "completed"
-        media_note = f"🎬 Video 9:16 đã dựng hoàn tất chuẩn FFmpeg: '{hook_text}'"
-    else:
-        video_url = item.media_url if (item.media_url and item.media_url.endswith(".mp4")) else None
-        video_status = "completed" if video_url else "processing"
-        media_note = f"🎬 Đang xếp hàng xử lý video 9:16: '{hook_text}'"
-
-    await approvals.update_item(
-        workspace_id=workspace_id,
-        item_id=content_id,
-        user_id=auth.user_id,
-        text=None,
-        media_note=media_note,
-        media_url=video_url,
-        scheduled_at=None,
-    )
-    return GenerateVideoResponse(
-        media_url=video_url, target_aspect_ratio=target_ratio, status=video_status
-    )
-
-
-@router.post("/{content_id}/upload-rendered-video")
-async def upload_rendered_video(
-    content_id: UUID,
-    request: Request,
-    auth: AuthDep,
-    workspace_id: WorkspaceDep,
-    approvals: ApprovalServiceDep,
-    storage: ObjectStorageDep,
-    session: DbSessionDep,
-) -> dict:
-    """Lưu file video 9:16 vừa render từ Client Canvas lên Object Storage của Havi (MinIO/S3)."""
-    content_bytes = await request.body()
-    if not content_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Thiếu dữ liệu video nhị phân",
-        )
-
-    # 1. Giới hạn dung lượng an toàn 25MB cho video ngắn
-    max_bytes = 25 * 1024 * 1024
-    if len(content_bytes) > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Kích thước video vượt quá giới hạn 25MB",
-        )
-
-    # 2. Xác thực magic header MP4 (ftyp box)
-    if len(content_bytes) < 8 or content_bytes[4:8] != b"ftyp":
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Tệp video không đúng định dạng MP4 hợp lệ",
-        )
-
-    object_key = f"rendered_videos/{workspace_id}/{content_id}.mp4"
-    await storage.put_object(object_key, data=content_bytes, content_type="video/mp4")
-    saved_url = storage.public_url(object_key)
-
-    # 3. Tạo bản ghi MediaAsset để theo dõi vòng đời dữ liệu và xoá dọn khi xoá workspace
-    media_repo = MediaRepository(session)
-    asset = await media_repo.create(
-        workspace_id=workspace_id,
-        object_key=object_key,
-        filename=f"rendered_{content_id}.mp4",
-        content_type="video/mp4",
-        type=MediaType.VIDEO,
-    )
-    asset.status = MediaStatus.RAW
-
-    await approvals.update_item(
-        workspace_id=workspace_id,
-        item_id=content_id,
-        user_id=auth.user_id,
-        text=None,
-        media_note="🎬 Video 9:16 thật đã được render và lưu trữ an toàn",
-        media_url=saved_url,
-        scheduled_at=None,
-    )
-    return {"status": "ok", "media_url": saved_url}
-
-
 @router.get("/{content_id}/versions", response_model=list[ContentItemVersion])
 async def list_versions(
     content_id: UUID, workspace_id: WorkspaceDep, approvals: ApprovalServiceDep
@@ -474,12 +329,13 @@ async def approve_all(
     workspace_id: WorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> BulkApproveResult:
-    """Nút "Duyệt & đăng hết" — publish_now=True kích hoạt đăng ngay lập tức."""
+    """Duyệt cả loạt: `publish_now=true` đăng ngay, `false` thì rải ra nhiều ngày."""
     outcome = await approvals.approve_many(
         workspace_id=workspace_id,
         item_ids=payload.content_item_ids,
         user_id=auth.user_id,
         publish_now=payload.publish_now,
+        posts_per_day=payload.posts_per_day,
     )
     try:
         from scheduler.tasks import dispatch_due_posts

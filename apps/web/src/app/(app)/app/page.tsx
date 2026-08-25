@@ -1,10 +1,9 @@
-import { TodayScreen } from "@/features/today/today-screen";
+import { DashboardScreen } from "@/features/dashboard/dashboard-screen";
 
 export const metadata = {
-  title: "Hôm Nay — Havi",
+  title: "Tổng Quan — Havi",
 };
 
 export default function Page() {
-  return <TodayScreen />;
+  return <DashboardScreen />;
 }
-

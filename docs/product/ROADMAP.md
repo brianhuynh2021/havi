@@ -278,6 +278,16 @@ cd apps/backend && uv run ruff check tests/test_e2e_core_flow.py
 > webhooks, and domain verification stay in the codebase but are out of the
 > active queue and out of the gates below until the channel is picked back up.
 
+> Video scope was cut back on 2026-08-25: **Havi accepts uploaded clips and
+> publishes them. It does not render, edit, or caption video.** Shop owners
+> already use CapCut and are better at it than anything Havi could build in a
+> browser; what they lack is a publish path they can trust. The rendering
+> subsystem (manifest, FFmpeg renderers, text overlay, quality gate, safe zone,
+> AI director) and the client-side canvas generator were deleted — recover them
+> from git history if the decision is ever reversed. What remains is
+> `video_constraints` (per-channel checks at upload time), `VideoPost`
+> (lifecycle), and `VideoPublishService` (publish → verify → reconcile).
+
 Active now — execute in this order; full acceptance criteria are in §25:
 
 1. [ ] **P0 Revenue integrity** — remove every production path that activates a

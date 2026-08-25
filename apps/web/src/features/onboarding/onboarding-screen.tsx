@@ -156,7 +156,7 @@ export function OnboardingScreen() {
       <div className={styles.panel}>
         {step === 1 ? (
           <>
-            <h1 className={styles.title}>Tiệm của chị/anh tên gì, ngành nào?</h1>
+            <h1 className={styles.title}>Cơ sở của bạn tên gì, ngành nào?</h1>
             <p className={styles.subtitle}>
               Havi sẽ dùng thông tin này để viết bài đúng giọng, đúng ngành.
             </p>

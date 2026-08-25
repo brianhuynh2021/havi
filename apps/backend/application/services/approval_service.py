@@ -24,7 +24,7 @@ from core.content_state import (
 from core.enums import ContentStatus
 from core.events import EventLogEntry
 from domain.models.content import ContentItem, ContentItemVersion
-from domain.policies.scheduling import next_golden_hour
+from domain.policies.scheduling import next_golden_hour, spread_over_golden_hours
 
 
 class ContentItemNotFound(Exception):
@@ -166,22 +166,44 @@ class ApprovalService:
         item_ids: list[UUID],
         user_id: UUID,
         publish_now: bool = False,
+        posts_per_day: int = 1,
     ) -> BulkApproveOutcome:
-        """Nút "Duyệt & đăng hết".
+        """Duyệt cả loạt. `publish_now=False` thì **rải ra nhiều ngày**.
 
-        Bài nào không duyệt được thì báo lý do riêng cho bài đó.
-        Nếu publish_now=True: đặt scheduled_at = now (UTC) để đăng ngay lập tức.
+        Đây là lý do hàm này không gọi thẳng `approve()` với `scheduled_at=None`:
+        `next_golden_hour()` trả cùng một mốc cho mọi lời gọi trong cùng một
+        giây, nên duyệt sáu bài sẽ ra sáu bài đăng cùng một phút rồi im lặng sáu
+        ngày. Chủ tiệm ngồi một buổi viết cả tuần nội dung chính là để tránh
+        điều đó.
+
+        Thứ tự bài giữ nguyên như caller truyền vào — bài đầu danh sách lên
+        trước, nên "sắp xếp câu chuyện theo ý mình" là việc của UI, không phải
+        của tầng này.
+
+        Bài nào không duyệt được thì báo lý do riêng cho bài đó, và **không**
+        tiêu mất một khung giờ: khung được cấp theo thứ tự thành công.
         """
         approved: list[UUID] = []
         failures: list[tuple[UUID, str]] = []
-        scheduled_target = datetime.now(UTC) if publish_now else None
+
+        if publish_now:
+            slots: list[datetime] = []
+            immediate: datetime | None = datetime.now(UTC)
+        else:
+            slots = spread_over_golden_hours(len(item_ids), per_day=posts_per_day)
+            immediate = None
+
         for item_id in item_ids:
+            # Cấp khung theo số bài đã duyệt thành công, không theo chỉ số vòng
+            # lặp: một bài hỏng ở giữa mà vẫn ăn mất một khung thì lịch thủng
+            # một ngày.
+            target = immediate if publish_now else slots[len(approved)]
             try:
                 await self.approve(
                     workspace_id=workspace_id,
                     item_id=item_id,
                     user_id=user_id,
-                    scheduled_at=scheduled_target,
+                    scheduled_at=target,
                 )
             except ContentItemNotFound:
                 failures.append((item_id, "Không tìm thấy bài trong workspace này"))

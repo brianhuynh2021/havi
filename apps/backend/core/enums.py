@@ -143,30 +143,51 @@ class MediaStatus(StrEnum):
     ARCHIVED = "archived"
 
 
-class VideoRenderStatus(StrEnum):
-    """Trạng thái của tác vụ render video (Phase 3 Video Pipeline)."""
+class VideoPostStatus(StrEnum):
+    """Đường đi của một clip đã tải lên, từ lúc nhận tới lúc Facebook xác nhận.
 
-    QUEUED = "queued"
-    RENDERING = "rendering"
-    COMPLETED = "completed"
+    Mỗi trạng thái là một điều đã *xảy ra thật*, không phải một ý định:
+
+    * `READY_FOR_REVIEW` — clip đã lên storage và đã qua kiểm ràng buộc kênh
+      (khung hình, thời lượng, tiếng). Havi không đụng vào file.
+    * `APPROVED` — chủ tiệm đã xem lại và đồng ý đăng.
+    * `PUBLISHING` — đã gửi bytes sang Facebook, chưa biết kết quả.
+    * `VERIFYING` — Facebook nhận rồi, đang đọc lại để lấy `external_post_id`.
+    * `PUBLISHED` — đã đọc lại và xác nhận bài có thật trên Trang.
+
+    Ba nhánh lỗi tách nhau vì cách xử lý khác hẳn nhau: `FAILED` thử lại được,
+    `FAILED_PERMANENT` thì không (clip hỏng, kênh mất kết nối vĩnh viễn),
+    `PENDING_RECONCILIATION` là "đã gửi Facebook nhưng mất dấu" — tuyệt đối
+    không tự đăng lại, phải đi kiểm tra xem bài đã lên chưa.
+    """
+
+    READY_FOR_REVIEW = "ready_for_review"
+    APPROVED = "approved"
+    PUBLISHING = "publishing"
+    VERIFYING = "verifying"
+    PUBLISHED = "published"
     FAILED = "failed"
+    FAILED_PERMANENT = "failed_permanent"
+    PENDING_RECONCILIATION = "pending_reconciliation"
     CANCELLED = "cancelled"
 
 
-class VideoRenderEngine(StrEnum):
-    """Engine được dùng để render video."""
+class VideoPublishAttemptStatus(StrEnum):
+    """Vòng đời một lần gửi video sang nền tảng.
 
-    FFMPEG = "ffmpeg"
-    REMOTION = "remotion"
+    `PENDING` là trạng thái nguy hiểm nhất và là lý do bảng này tồn tại: đã gửi
+    đi nhưng chưa biết kết quả. Ràng buộc unique ở Postgres chặn không cho tạo
+    lần gửi thứ hai khi còn một lần `PENDING` — đó là lớp chặn đăng trùng thật
+    sự, không phải cái `if` trong service.
+    """
+
+    PENDING = "pending"
+    PUBLISHED = "published"
+    FAILED = "failed"
+    #: Đã gửi, mất dấu kết quả. Phải đối soát, tuyệt đối không gửi lại.
+    AMBIGUOUS = "ambiguous"
 
 
-class VideoCaptionStyle(StrEnum):
-    """Preset kiểu chữ phụ đề động trên video."""
-
-    BOLD_YELLOW = "bold_yellow"
-    CLEAN_WHITE = "clean_white"
-    NEON_CYAN = "neon_cyan"
-    BOXED_BLACK = "boxed_black"
 
 
 class ConnectionStatus(StrEnum):

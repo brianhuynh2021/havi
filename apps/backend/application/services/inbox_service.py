@@ -59,6 +59,7 @@ class InboxService:
         reply_publishers: dict[Platform, ReplyPublisherPort] | None = None,
         telegram: TelegramNotifierPort | None = None,
         leads: LeadRepository | None = None,
+        workspaces=None,  # noqa: ANN001 — WorkspaceRepository, chỉ để lấy tên tiệm
     ) -> None:
         self._inbox = inbox
         self._profiles = profiles
@@ -69,6 +70,7 @@ class InboxService:
         self._reply_publishers = reply_publishers if reply_publishers is not None else {}
         self._telegram = telegram
         self._leads = leads
+        self._workspaces = workspaces
 
     async def list_items(
         self,
@@ -190,12 +192,20 @@ class InboxService:
                 elif platform == Platform.GOOGLE_BUSINESS:
                     platform_label = "Google Maps SEO"
 
+                # Tên tiệm thật ở tiêu đề chuông: người trực nhiều cơ sở cần
+                # biết ngay khách này của tiệm nào trước khi bấm gọi.
+                shop_name = "Tiệm của bạn"
+                if self._workspaces:
+                    workspace = await self._workspaces.get(workspace_id)
+                    if workspace and workspace.name:
+                        shop_name = workspace.name
+
                 await self._telegram.send_hot_lead_alert(
                     customer_name=author_name,
                     phone=phone_num,
                     message=content,
                     platform=platform_label,
-                    shop_name="Tiệm của bạn",
+                    shop_name=shop_name,
                 )
 
         # Không khớp FAQ -> Tạo bản nháp gợi ý, chờ người thật duyệt

@@ -122,7 +122,7 @@ export function useJobPolling(
           setState({
             status: lastStatus,
             job: lastJob,
-            error: "Havi viết lâu hơn thường lệ. Chị tải lại trang để xem đã xong chưa nhé.",
+            error: "Havi viết lâu hơn thường lệ. Bạn tải lại trang để xem đã xong chưa nhé.",
           });
           return;
         }

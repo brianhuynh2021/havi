@@ -12,13 +12,13 @@ export type OAuthReturnTarget = components["schemas"]["OAuthReturnTarget"];
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp chị nhé.";
+const GENERIC_ERROR = "Có lỗi xảy ra, thử lại giúp bạn nhé.";
 
 /** Kênh chưa có adapter thật thì backend trả 501 — UI phải nói "chưa hỗ trợ",
  * không được hiện "đã nối" cho một kênh chỉ có trên giấy (ROADMAP Tuần 7). */
 const NOT_SUPPORTED = "Havi chưa nối được kênh này — sắp có ạ.";
 const NOT_CONFIGURED =
-  "Kênh này chưa được cấu hình trên hệ thống — chị báo Havi giúp em nhé.";
+  "Kênh này chưa được cấu hình trên hệ thống — bạn báo Havi giúp nhé.";
 
 export async function listConnections(): Promise<Result<PlatformConnection[]>> {
   try {
@@ -101,7 +101,7 @@ export async function disconnect(platform: Platform): Promise<Result<null>> {
         message:
           response?.status === 404
             ? "Kênh này chưa được nối."
-            : "Chưa ngắt được kênh, thử lại giúp chị nhé.",
+            : "Chưa ngắt được kênh, thử lại giúp bạn nhé.",
       };
     }
     return { ok: true, data: null };
@@ -115,11 +115,11 @@ export async function disconnect(platform: Platform): Promise<Result<null>> {
  * Backend cố ý KHÔNG đưa `error_description` thô của nền tảng vào URL (chuỗi do
  * bên thứ ba kiểm soát), nên phía này dịch từ mã ngắn sang câu tiếng Việt. */
 const CALLBACK_ERRORS: Record<string, string> = {
-  huy: "Chị đã bấm Huỷ ở Facebook nên kênh chưa được nối.",
-  thieu_thong_tin: "Facebook trả về thiếu thông tin — chị thử nối lại nhé.",
-  het_han: "Lượt nối kênh đã hết hạn (quá 10 phút) — chị bấm nối lại nhé.",
+  huy: "Bạn đã bấm Huỷ ở Facebook nên kênh chưa được nối.",
+  thieu_thong_tin: "Facebook trả về thiếu thông tin — bạn thử nối lại nhé.",
+  het_han: "Lượt nối kênh đã hết hạn (quá 10 phút) — bạn bấm nối lại nhé.",
   chua_cau_hinh: NOT_CONFIGURED,
-  he_thong: "Havi gặp lỗi khi nối kênh — chị thử lại sau chút nhé.",
+  he_thong: "Havi gặp lỗi khi nối kênh — bạn thử lại sau chút nhé.",
 };
 
 export type CallbackOutcome =
@@ -161,13 +161,13 @@ export function statusCopy(status: ConnectionStatus): {
     case "expired":
       return {
         label: "Hết hạn",
-        hint: "Facebook đã hết hạn cấp quyền — chị nối lại để Havi đăng bài tiếp nhé.",
+        hint: "Facebook đã hết hạn cấp quyền — bạn nối lại để Havi đăng bài tiếp nhé.",
         needsReconnect: true,
       };
     case "revoked":
       return {
         label: "Mất quyền",
-        hint: "Havi không còn quyền đăng trên Page này — chị kiểm lại quyền quản trị rồi nối lại nhé.",
+        hint: "Havi không còn quyền đăng trên Page này — bạn kiểm lại quyền quản trị rồi nối lại nhé.",
         needsReconnect: true,
       };
   }

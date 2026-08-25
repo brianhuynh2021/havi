@@ -30,10 +30,15 @@ celery_app.conf.update(
         Queue("havi.default"),
         Queue("havi.content"),
         Queue("havi.publish"),
-        Queue("havi.video_render"),
+        Queue("havi.video_publish"),
     ),
     task_routes={
-        "havi.video.render": {"queue": "havi.video_render"},
+        # Video tách khỏi bài viết: đăng video là tải hàng chục MB lên Facebook
+        # rồi chờ nền tảng xử lý, có thể mất hàng phút. Chung hàng đợi với bài
+        # viết thì một clip nặng giữ chân mọi bài text đang chờ.
+        "havi.video.publish": {"queue": "havi.video_publish"},
+        "havi.video.reconcile": {"queue": "havi.video_publish"},
+        "havi.video.publish_due": {"queue": "havi.video_publish"},
         "havi.content.*": {"queue": "havi.content"},
         "havi.publish.*": {"queue": "havi.publish"},
     },

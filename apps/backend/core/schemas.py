@@ -55,7 +55,7 @@ class SignUpRequest(HaviModel):
     và chủ tiệm e dè đưa số vì spam. SĐT thêm sau trong Cài đặt, chỉ để Zalo OA.
     """
 
-    name: str = Field(min_length=1, max_length=120, examples=["Chị Hương"])
+    name: str = Field(min_length=1, max_length=120, examples=["Nguyễn Thu Hương"])
     email: EmailStr = Field(examples=["huong@spaannhien.vn"])
     password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=128)
 
@@ -243,7 +243,7 @@ class RawInput(HaviModel):
 
 
 class ContentJobCreate(HaviModel):
-    """Nút "Để Havi viết cho chị" — 1 job, 1 lần gọi LLM, nhiều đầu ra."""
+    """Nút "Để Havi viết bài" — 1 job, 1 lần gọi LLM, nhiều đầu ra."""
 
     raw_inputs: list[RawInput] = Field(min_length=1)
     target_channels: list[Channel] | None = None
@@ -300,6 +300,9 @@ class GenerateImageResponse(HaviModel):
 class GenerateVideoRequest(HaviModel):
     target_aspect_ratio: str = Field(default="9:16", description="9:16 | 1:1 | 16:9")
     title: str | None = None
+    #: Clip thật đã tải lên. Bắt buộc — bộ dựng cắt từ clip chứ không sinh hình.
+    source_media_id: UUID | None = None
+    target_duration_seconds: float | None = Field(default=None, ge=3, le=180)
 
 
 class GenerateVideoResponse(HaviModel):
@@ -323,10 +326,23 @@ class ApproveRequest(HaviModel):
 
 
 class BulkApproveRequest(HaviModel):
-    """Nút "Duyệt & đăng hết" trên thanh duyệt nhanh."""
+    """Duyệt cả loạt: đăng ngay, hoặc rải ra nhiều ngày.
+
+    `content_item_ids` giữ nguyên thứ tự — bài đầu danh sách lên trước. Đó là
+    cách chủ tiệm sắp xếp câu chuyện của tuần.
+    """
 
     content_item_ids: list[UUID] = Field(min_length=1)
-    publish_now: bool = Field(default=True, description="Đăng ngay lập tức thay vì chờ giờ vàng")
+    publish_now: bool = Field(default=True, description="Đăng ngay lập tức thay vì rải lịch")
+    posts_per_day: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        description=(
+            "Số bài mỗi ngày khi rải lịch. Chỉ dùng khi publish_now=false. "
+            "Tối đa 3 vì mỗi ngày chỉ có 3 khung giờ vàng (8h, 12h, 20h)."
+        ),
+    )
 
 
 class BulkApproveResult(HaviModel):

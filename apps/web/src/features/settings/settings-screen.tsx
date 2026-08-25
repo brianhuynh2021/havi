@@ -239,7 +239,7 @@ export function SettingsScreen() {
               value={form.tone}
               disabled={loading || saving}
               placeholder={t({
-                vi: "Ví dụ: thân thiện, gần gũi, ấm áp, xưng chị em, ngắn gọn súc tích...",
+                vi: "Ví dụ: thân thiện, gần gũi, ấm áp, xưng hô thân mật, ngắn gọn súc tích...",
                 en: "e.g., professional yet warm, concise and engaging...",
               })}
               onChange={(event) =>
@@ -289,7 +289,7 @@ export function SettingsScreen() {
               Kênh xuất bản đã kết nối
             </h2>
             <p className={styles.sectionHint}>
-              Kênh nào hết hạn hoặc mất quyền, chị kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động.
+              Kênh nào hết hạn hoặc mất quyền, bạn kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động.
             </p>
           </div>
         </div>

@@ -41,7 +41,7 @@ export async function createWorkspace(
     if (created.error || !created.data) {
       return {
         ok: false,
-        message: "Chưa tạo được tiệm, thử lại giúp chị nhé.",
+        message: "Chưa tạo được tiệm, thử lại giúp bạn nhé.",
       };
     }
 
@@ -54,7 +54,7 @@ export async function createWorkspace(
       // "tạo lại" để chủ tiệm không bấm tạo thêm tiệm thứ hai trùng tên.
       return {
         ok: false,
-        message: "Đã tạo tiệm nhưng chưa vào được, thử lại giúp chị nhé.",
+        message: "Đã tạo tiệm nhưng chưa vào được, thử lại giúp bạn nhé.",
       };
     }
 

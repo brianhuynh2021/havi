@@ -63,14 +63,6 @@ from domain.policies.video_constraints import (
     check_video_for_channel,
     eligible_channels,
 )
-from domain.policies.video_edit_plan import (
-    EditPlan,
-    VideoAudioConfig,
-    VideoCaption,
-    VideoCut,
-    default_edit_plan_for_short_form,
-    validate_edit_plan,
-)
 
 __all__ = [
     "AUTH_LOGIN",
@@ -78,7 +70,6 @@ __all__ = [
     "AllProvidersFailed",
     "CONTENT_JOB",
     "DEFAULT_RETURN_KEY",
-    "EditPlan",
     "GOLDEN_HOURS",
     "InvalidOAuthState",
     "InvalidPhoneNumber",
@@ -101,9 +92,6 @@ __all__ = [
     "TRIAL_DAYS",
     "VIDEO_REQUIREMENTS",
     "VIETNAM_TZ",
-    "VideoAudioConfig",
-    "VideoCaption",
-    "VideoCut",
     "VideoRequirement",
     "allowed_transitions",
     "assert_transition",
@@ -111,8 +99,6 @@ __all__ = [
     "check_plan_change",
     "check_video_for_channel",
     "create_oauth_state",
-    "default_edit_plan_for_short_form",
-    "derive_status",
     "eligible_channels",
     "evaluate_quota",
     "format_pos_notes",
@@ -130,6 +116,5 @@ __all__ = [
     "quota_for",
     "state_for",
     "trial_end_for",
-    "validate_edit_plan",
     "verify_oauth_state",
 ]

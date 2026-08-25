@@ -71,7 +71,7 @@ export async function fetchReports(): Promise<Result<ReportsData>> {
       attribution.error ||
       !attribution.data
     ) {
-      return { ok: false, message: "Chưa tải được báo cáo, thử lại giúp chị nhé." };
+      return { ok: false, message: "Chưa tải được báo cáo, thử lại giúp bạn nhé." };
     }
 
     const topPosts: TopPostItem[] = [];

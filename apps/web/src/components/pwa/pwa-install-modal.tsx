@@ -252,7 +252,7 @@ export function PwaInstallModal() {
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
                     <>
-                      Bấm nút <strong>&ldquo;Thêm&rdquo; (Add)</strong> ở góc trên bên phải. Icon Havi đã sẵn sàng trên màn hình chính của chị!
+                      Bấm nút <strong>&ldquo;Thêm&rdquo; (Add)</strong> ở góc trên bên phải. Icon Havi đã sẵn sàng trên màn hình chính rồi!
                     </>
                   ) : (
                     <>

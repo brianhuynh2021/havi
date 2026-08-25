@@ -8,7 +8,7 @@ import type { StoredTokens } from "@/lib/auth/token-store";
  * khác hẳn "sai mật khẩu", vì cách xử lý của chủ tiệm khác hẳn.
  */
 export const NETWORK_ERROR_MESSAGE =
-  "Không kết nối được với Havi. Kiểm tra mạng rồi thử lại giúp chị nhé.";
+  "Không kết nối được với Havi. Kiểm tra mạng rồi thử lại giúp bạn nhé.";
 
 type TokenPairBody = {
   access_token: string;
@@ -56,7 +56,7 @@ export async function login(
           ? "Email hoặc mật khẩu không đúng"
           : detailToMessage(
               (error as { detail?: unknown } | undefined)?.detail,
-              "Chưa đăng nhập được, thử lại giúp chị nhé.",
+              "Chưa đăng nhập được, thử lại giúp bạn nhé.",
             );
       return { ok: false, message };
     }
@@ -82,7 +82,7 @@ export async function signUp(
           ? "Email này đã có tài khoản — đăng nhập thay vì đăng ký nhé."
           : detailToMessage(
               (error as { detail?: unknown } | undefined)?.detail,
-              "Chưa tạo được tài khoản, thử lại giúp chị nhé.",
+              "Chưa tạo được tài khoản, thử lại giúp bạn nhé.",
             );
       return { ok: false, message };
     }

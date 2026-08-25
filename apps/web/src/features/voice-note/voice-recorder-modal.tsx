@@ -111,7 +111,7 @@ function VoiceRecorderModalContent({
 
         <h2 className={styles.title}>🎙️ Ghi âm ý tưởng bài viết</h2>
         <p className={styles.subtitle}>
-          Chị cứ nói tự nhiên — Nhân viên AI sẽ tự viết bài Facebook và kịch bản Video ngắn 9:16.
+          Bạn cứ nói tự nhiên — Havi sẽ viết thành bài đăng Facebook.
         </p>
 
         {errorMessage || transcribeError ? (
@@ -158,8 +158,8 @@ function VoiceRecorderModalContent({
           ) : (
             <p className={styles.transcriptPlaceholder}>
               {isRecording
-                ? "Đang lắng nghe lời nói của chị…"
-                : "Chưa có nội dung. Chị chạm nút Micro ở trên để nói nhé."}
+                ? "Đang lắng nghe…"
+                : "Chưa có nội dung. Bạn chạm nút Micro ở trên để nói nhé."}
             </p>
           )}
         </div>

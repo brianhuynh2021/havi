@@ -5,17 +5,12 @@ export type TranslationKey = keyof typeof translations.VN;
 export const translations = {
   VN: {
     // Navigation / Shell
-    "nav.today": "Hôm nay",
-    "nav.dashboard": "Hôm nay",
-    "nav.content": "Studio Sáng tạo",
-    "nav.videoStudio": "Studio Video",
-    "nav.calendar": "Lịch & Kế hoạch",
-    "nav.inbox": "Hộp thư & Khách hàng",
+    "nav.dashboard": "Tổng quan",
+    "nav.content": "Đăng bài",
+    "nav.calendar": "Lịch đăng",
+    "nav.inbox": "Tin nhắn",
     "nav.leads": "Khách tiềm năng",
-    "nav.reports": "Báo cáo & Doanh thu",
-    "nav.roadmap": "Lộ trình & Báo cáo",
-    "nav.evidence": "Bằng chứng & Kết quả",
-    "nav.coach": "Havi đồng hành",
+    "nav.reports": "Báo cáo",
     "nav.billing": "Gói cước",
     "nav.settings": "Cài đặt",
 
@@ -140,18 +135,13 @@ export const translations = {
   },
   EN: {
     // Navigation / Shell
-    "nav.today": "Today",
-    "nav.dashboard": "Today",
-    "nav.content": "Creative Studio",
-    "nav.videoStudio": "Video Studio",
-    "nav.calendar": "Calendar & Plans",
-    "nav.inbox": "Inbox & Customers",
-    "nav.leads": "Leads & CRM",
-    "nav.reports": "Reports & Revenue",
-    "nav.roadmap": "Roadmap & Reports",
-    "nav.evidence": "Evidence & Outcomes",
-    "nav.coach": "Havi Coach",
-    "nav.billing": "Billing & Plans",
+    "nav.dashboard": "Overview",
+    "nav.content": "Publish",
+    "nav.calendar": "Schedule",
+    "nav.inbox": "Messages",
+    "nav.leads": "Leads",
+    "nav.reports": "Reports",
+    "nav.billing": "Plan",
     "nav.settings": "Settings",
 
     "shell.assistant": "Havi Assistant",

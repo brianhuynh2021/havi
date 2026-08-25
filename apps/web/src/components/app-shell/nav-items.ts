@@ -8,18 +8,24 @@ export type NavItem = {
   count?: number;
 };
 
-// Havi Unified Execution Spaces
+/**
+ * Điều hướng chính — mỗi mục là một việc chủ tiệm thật sự làm, gọi bằng tên họ
+ * dùng khi nói chuyện.
+ *
+ * Danh sách này cố tình ngắn. Bản trước có 8 mục cho 14 route, nghĩa là một nửa
+ * số màn chỉ vào được qua link rải rác trong nội dung — người dùng không dựng
+ * nổi bản đồ trong đầu về app. Màn phụ (Lead, Lộ trình, Kết nối, Thanh toán)
+ * vào từ đúng chỗ cần chúng: Tổng quan và Cài đặt.
+ *
+ * Bài viết và video **chung một mục**. Chủ tiệm không nghĩ theo loại nội dung;
+ * họ nghĩ "tối nay ngồi chuẩn bị nội dung cho tuần sau", trong đó có cả hai xen
+ * kẽ. Việc rẽ nhánh nằm ở bước đầu của luồng, không nằm ở thanh điều hướng.
+ */
 export const navItems: NavItem[] = [
-  { key: "nav.today", label: "Hôm nay", href: "/app", icon: "⚡" },
-  { key: "nav.content", label: "Studio Sáng tạo", href: "/app/content", icon: "✨" },
-  { key: "nav.calendar", label: "Lịch & Kế hoạch", href: "/app/calendar", icon: "📅" },
-  { key: "nav.inbox", label: "Hộp thư & Khách hàng", href: "/app/inbox", icon: "💬" },
-  { key: "nav.roadmap", label: "Lộ trình chiến lược", href: "/app/roadmap", icon: "📈" },
-  { key: "nav.evidence", label: "Bằng chứng khách đến", href: "/app/evidence", icon: "🎯" },
-  { key: "nav.reports", label: "Báo cáo doanh thu", href: "/app/reports", icon: "📊" },
-  { key: "nav.coach", label: "Hướng dẫn nhanh", href: "/app/coach", icon: "💡" },
+  { key: "nav.dashboard", label: "Tổng quan", href: "/app", icon: "🏠" },
+  { key: "nav.content", label: "Đăng bài", href: "/app/content", icon: "✍️" },
+  { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar", icon: "📅" },
+  { key: "nav.inbox", label: "Tin nhắn", href: "/app/inbox", icon: "💬" },
+  { key: "nav.reports", label: "Báo cáo", href: "/app/reports", icon: "📊" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings", icon: "⚙️" },
 ];
-
-
-

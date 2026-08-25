@@ -17,7 +17,8 @@ from domain.models.media import MediaAsset
 from domain.models.publish import PublishJob
 from domain.models.roadmap import EvidenceLog, Roadmap, RoadmapReview, RoadmapTask
 from domain.models.user import OtpChallenge, RefreshSession, User
-from domain.models.video_render import VideoRenderJob
+from domain.models.video_post import VideoPost
+from domain.models.video_publish import VideoPublishAttempt
 from domain.models.workspace import (
     BrandProfile,
     Invoice,
@@ -34,7 +35,8 @@ __all__ = [
     "WorkspaceMember",
     "BrandProfile",
     "MediaAsset",
-    "VideoRenderJob",
+    "VideoPublishAttempt",
+    "VideoPost",
     "ContentJob",
     "ContentItem",
     "ContentItemVersion",

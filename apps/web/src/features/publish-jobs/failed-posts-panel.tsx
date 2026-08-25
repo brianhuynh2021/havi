@@ -102,7 +102,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
             : "Bài chưa đăng được"}
         </h2>
         <p className={styles.subtitle}>
-          Havi đã thử vài lần rồi dừng để không đăng trùng. Chị xem lý do rồi
+          Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi
           quyết định giúp em nhé.
         </p>
       </header>
