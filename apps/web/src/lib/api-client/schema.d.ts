@@ -2201,15 +2201,35 @@ export interface components {
              */
             est_cost_per_job_vnd: number;
             /**
+             * Generated Draft Count
+             * @default 0
+             */
+            generated_draft_count: number;
+            /**
              * Approved Draft Count
              * @default 0
              */
             approved_draft_count: number;
             /**
+             * Draft Usage Rate
+             * @default 0
+             */
+            draft_usage_rate: number;
+            /**
              * Est Cost Per Approved Draft Vnd
              * @default 0
              */
             est_cost_per_approved_draft_vnd: number;
+            /**
+             * Pricing As Of
+             * Format: date
+             */
+            pricing_as_of: string;
+            /**
+             * Pricing Is Stale
+             * @default false
+             */
+            pricing_is_stale: boolean;
             /** Providers */
             providers: components["schemas"]["OperationsProviderMetric"][];
             publish: components["schemas"]["OperationsPublishMetric"];
@@ -2224,6 +2244,11 @@ export interface components {
             error_count: number;
             /** Tokens Total */
             tokens_total: number;
+            /**
+             * Cost Vnd
+             * @default 0
+             */
+            cost_vnd: number;
         };
         /** OperationsPublishMetric */
         OperationsPublishMetric: {

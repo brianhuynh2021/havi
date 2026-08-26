@@ -11,6 +11,7 @@ from core.enums import Channel, ContentStatus, PublishStatus
 from core.events import EventLogEntry
 from domain.models.content import ContentItem
 from domain.models.publish import PublishJob
+from domain.policies import pricing
 
 
 async def _onboard(client: AsyncClient, *, email: str) -> dict:
@@ -300,6 +301,104 @@ async def test_event_log_query_scope_theo_workspace_va_filter_duoc(
     assert by_request.json()["items"][0]["provider"] == "gemini"
 
 
+async def test_chi_phi_moi_ban_nhap_chia_cho_so_nhap_DUOC_DUYET(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Mẫu số là nháp được duyệt, không phải số sự kiện sinh nội dung.
+
+    Bản trước lấy `approved_draft_count = số event có job_kind chứa "content"`.
+    Một job sinh nhiều nháp và người dùng chỉ dùng vài cái, nên con số đó thấp
+    hơn chi phí thật đúng bằng tỷ lệ nháp bị vứt — sai theo hướng lạc quan, tức
+    là loại sai khiến người ta giữ nguyên một bảng giá đang lỗ.
+
+    Ở đây: 1 lượt gọi LLM sinh 4 nháp, người dùng duyệt 1. Chi phí cho bài lên
+    được kênh phải là **toàn bộ** tiền của lượt gọi đó, không phải một phần tư.
+    """
+    token_pair = await _onboard(client, email="analytics-unit-econ@havi.vn")
+    workspace_id = token_pair["active_workspace_id"]
+    inside = datetime(2026, 8, 9, 7, 0, tzinfo=UTC)
+
+    await _add_event(
+        db_session,
+        workspace_id=workspace_id,
+        created_at=inside,
+        provider="gemini",
+        duration_ms=1200,
+        tokens_in=4_000,
+        tokens_out=6_000,
+    )
+
+    # 4 nháp sinh ra trong kỳ, đúng 1 được duyệt.
+    items = [
+        await _add_item(
+            db_session, workspace_id=workspace_id, status=ContentStatus.PENDING_APPROVAL
+        )
+        for _ in range(4)
+    ]
+    for item in items:
+        item.created_at = inside
+    items[0].status = ContentStatus.APPROVED
+    items[0].approved_at = inside + timedelta(minutes=5)
+    await db_session.flush()
+
+    response = await client.get(
+        "/analytics/operations",
+        params={"start": "2026-08-09", "end": "2026-08-09"},
+        headers=_headers(token_pair),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["generated_draft_count"] == 4
+    assert body["approved_draft_count"] == 1
+    assert body["draft_usage_rate"] == 0.25
+
+    content_cost = pricing.cost_vnd(
+        tokens_in=4_000, tokens_out=6_000, model=None, provider="gemini"
+    )
+    assert body["est_cost_per_approved_draft_vnd"] == round(round(content_cost) / 1)
+
+    # Chốt hướng sai: nếu ai đó đổi mẫu số về số nháp SINH RA, con số sẽ nhỏ đi
+    # bốn lần và assert này vỡ.
+    assert body["est_cost_per_approved_draft_vnd"] > round(content_cost / 4)
+
+
+async def test_khong_co_nhap_nao_duoc_duyet_thi_khong_bia_chi_phi(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Sinh nháp nhưng chưa ai duyệt → chia cho 0. Trả 0, không trả số bịa."""
+    token_pair = await _onboard(client, email="analytics-unit-econ-zero@havi.vn")
+    workspace_id = token_pair["active_workspace_id"]
+    inside = datetime(2026, 8, 9, 7, 0, tzinfo=UTC)
+
+    await _add_event(
+        db_session,
+        workspace_id=workspace_id,
+        created_at=inside,
+        provider="gemini",
+        duration_ms=800,
+        tokens_in=2_000,
+        tokens_out=3_000,
+    )
+    item = await _add_item(
+        db_session, workspace_id=workspace_id, status=ContentStatus.PENDING_APPROVAL
+    )
+    item.created_at = inside
+    await db_session.flush()
+
+    response = await client.get(
+        "/analytics/operations",
+        params={"start": "2026-08-09", "end": "2026-08-09"},
+        headers=_headers(token_pair),
+    )
+
+    body = response.json()
+    assert body["generated_draft_count"] == 1
+    assert body["approved_draft_count"] == 0
+    assert body["draft_usage_rate"] == 0
+    assert body["est_cost_per_approved_draft_vnd"] == 0
+
+
 async def test_operations_metrics_dem_log_va_publish_job_theo_workspace(
     client: AsyncClient, db_session: AsyncSession
 ):
@@ -381,15 +480,28 @@ async def test_operations_metrics_dem_log_va_publish_job_theo_workspace(
     assert body["tokens_in"] == 40
     assert body["tokens_out"] == 60
     assert body["tokens_total"] == 100
+    # Chi phí lấy từ `domain/policies/pricing.py`, không hardcode con số ở đây:
+    # bảng giá sẽ được cập nhật định kỳ, và một test vỡ mỗi lần đổi giá thì
+    # người ta sửa test cho qua chứ không đọc nó. Điều cần khoá là *wiring* —
+    # tiền được tính theo provider/model của từng dòng — chứ không phải giá
+    # hôm nay là bao nhiêu.
+    expected_cost = round(
+        pricing.cost_vnd(tokens_in=10, tokens_out=20, model=None, provider="gemini")
+        + pricing.cost_vnd(tokens_in=30, tokens_out=40, model=None, provider="gemini")
+    )
     assert body["providers"] == [
         {
             "provider": "gemini",
             "event_count": 2,
             "error_count": 1,
             "tokens_total": 100,
-            "cost_vnd": 1,
+            "cost_vnd": expected_cost,
         }
     ]
+    # Dòng không có `model` phải rơi về giá provider, và giá đó là mức ĐẮT NHẤT
+    # của nhóm — sai số nghiêng về phía thận trọng.
+    assert expected_cost > 0
+    assert body["pricing_as_of"] == pricing.AS_OF.isoformat()
     assert body["publish"] == {
         "total": 2,
         "succeeded": 1,

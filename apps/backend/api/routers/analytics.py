@@ -27,6 +27,7 @@ from core.schemas import (
 )
 from domain.models.content import ContentItem
 from domain.models.publish import PublishJob
+from domain.policies import pricing
 from domain.policies.scheduling import VIETNAM_TZ
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -117,12 +118,33 @@ async def operations(
     publish_counts = await PublishRepository(session).status_counts_for_window(
         workspace_id=workspace_id, start=range_start, end=range_end
     )
+    # Kinh tế đơn vị cần hai nguồn: tiền nằm ở event_log, còn "bao nhiêu bản
+    # nháp thật sự được dùng" chỉ có ở content_items. Ghép ở đây thay vì bắt một
+    # repository biết bảng của repository kia.
+    generated_drafts, approved_drafts = await ContentRepository(
+        session
+    ).count_drafts_generated_and_approved(
+        workspace_id=workspace_id, start=range_start, end=range_end
+    )
+    content_cost_vnd = event_metrics.pop("content_cost_vnd", 0)
     publish_total = sum(publish_counts.values())
     publish_succeeded = publish_counts.get(PublishStatus.SUCCEEDED, 0)
     publish_dead_letter = publish_counts.get(PublishStatus.DEAD_LETTER, 0)
     return OperationsMetrics(
         window_start=range_start,
         window_end=range_end,
+        generated_draft_count=generated_drafts,
+        approved_draft_count=approved_drafts,
+        draft_usage_rate=(
+            round(approved_drafts / generated_drafts, 4) if generated_drafts else 0
+        ),
+        # Chia cho số nháp ĐƯỢC DUYỆT, không phải số nháp sinh ra: token đã tiêu
+        # cho cả những bản bị vứt, nên chúng thuộc về chi phí của bản được dùng.
+        est_cost_per_approved_draft_vnd=(
+            round(content_cost_vnd / approved_drafts) if approved_drafts else 0
+        ),
+        pricing_as_of=pricing.AS_OF,
+        pricing_is_stale=pricing.is_stale(),
         publish=OperationsPublishMetric(
             total=publish_total,
             succeeded=publish_succeeded,

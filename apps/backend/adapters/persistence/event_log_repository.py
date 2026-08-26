@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.events import EventLogEntry, record_event
 from core.request_context import get_request_id
 from domain.models.audit import EventLog
+from domain.policies import pricing
 
 
 class EventLogRepository:
@@ -39,6 +40,7 @@ class EventLogRepository:
             tokens_out=effective_entry.tokens_out,
             duration_ms=effective_entry.duration_ms,
             provider=effective_entry.provider,
+            model=effective_entry.model,
             error=effective_entry.error,
         )
         self._session.add(row)
@@ -113,19 +115,14 @@ class EventLogRepository:
         Fetch các dòng trong cửa sổ rồi tính p95 ở Python để không khóa mình vào
         hàm percentile riêng của một database. Pilot chưa có volume lớn; khi có
         metrics backend thật thì adapter này sẽ được thay.
-        """
-        # Bảng giá LLM hiện tại (VND cho mỗi 1 token)
-        # Giả sử tỷ giá 25000 VND / USD
-        # gpt-4o-mini: Input $0.150 / 1M = 0.00375 VND/token; Output $0.600 / 1M = 0.015 VND/token
-        # openai mặc định dùng gpt-4o-mini, anthropic giả định dùng claude-3-5-sonnet, gemini-1.5-flash
-        # Nếu chưa rõ provider cụ thể, lấy giá mặc định an toàn.
-        PRICING_VND_PER_TOKEN = {
-            "openai": {"in": 0.00375, "out": 0.015},
-            "anthropic": {"in": 0.075, "out": 0.375}, # $3 / $15 per 1M -> x25000 / 1000000
-            "gemini": {"in": 0.001875, "out": 0.0075}, # $0.075 / $0.3 per 1M
-            "default": {"in": 0.01, "out": 0.05},
-        }
 
+        Trả về `content_cost_vnd` thô chứ **không** tự chia ra "chi phí mỗi bản
+        nháp được duyệt": số bản nháp thật sự được duyệt nằm ở bảng
+        `content_items`, không nằm trong event_log. Bản trước đếm số *sự kiện*
+        sinh nội dung rồi gọi đó là số bản nháp được duyệt — mà một job sinh ra
+        nhiều nháp và người dùng chỉ dùng vài cái, nên con số đó thấp hơn chi phí
+        thật đúng bằng tỷ lệ nháp bị vứt. Router ghép hai nguồn.
+        """
         result = await self._session.execute(
             select(EventLog).where(
                 EventLog.workspace_id == workspace_id,
@@ -141,22 +138,28 @@ class EventLogRepository:
 
         providers: dict[str, dict[str, int | float]] = {}
         total_cost_vnd = 0.0
+        content_cost_vnd = 0.0
 
         for row in rows:
             provider = row.provider or "unknown"
             bucket = providers.setdefault(
-                provider, {"event_count": 0, "error_count": 0, "tokens_total": 0, "cost_vnd": 0}
+                provider, {"event_count": 0, "error_count": 0, "tokens_total": 0, "cost_vnd": 0.0}
             )
             bucket["event_count"] += 1
             bucket["tokens_total"] += row.tokens_in + row.tokens_out
             if row.error is not None:
                 bucket["error_count"] += 1
-            
-            # Tính chi phí cho từng dòng
-            rates = PRICING_VND_PER_TOKEN.get(provider, PRICING_VND_PER_TOKEN["default"])
-            job_cost = (row.tokens_in * rates["in"]) + (row.tokens_out * rates["out"])
-            bucket["cost_vnd"] += job_cost
-            total_cost_vnd += job_cost
+
+            row_cost = pricing.cost_vnd(
+                tokens_in=row.tokens_in,
+                tokens_out=row.tokens_out,
+                model=row.model,
+                provider=row.provider,
+            )
+            bucket["cost_vnd"] += row_cost
+            total_cost_vnd += row_cost
+            if row.job_kind.startswith("content."):
+                content_cost_vnd += row_cost
 
         event_count = len(rows)
         error_count = sum(1 for row in rows if row.error is not None)
@@ -164,24 +167,7 @@ class EventLogRepository:
         tokens_out = sum(row.tokens_out for row in rows)
         tokens_total = tokens_in + tokens_out
 
-        job_ids = set(row.job_id for row in rows if row.job_id is not None)
-        job_count = len(job_ids)
-        avg_tokens_per_job = round(tokens_total / job_count) if job_count else 0
-        est_cost_per_job_vnd = round(total_cost_vnd / job_count) if job_count else 0
-
-        draft_events = sum(1 for row in rows if "content" in row.job_kind)
-        approved_draft_count = draft_events
-        # Tách riêng chi phí cho content jobs
-        content_cost_vnd = 0.0
-        for row in rows:
-            if "content" in row.job_kind:
-                provider = row.provider or "unknown"
-                rates = PRICING_VND_PER_TOKEN.get(provider, PRICING_VND_PER_TOKEN["default"])
-                content_cost_vnd += (row.tokens_in * rates["in"]) + (row.tokens_out * rates["out"])
-                
-        est_cost_per_approved_draft_vnd = (
-            round(content_cost_vnd / approved_draft_count) if approved_draft_count else 0
-        )
+        job_count = len({row.job_id for row in rows if row.job_id is not None})
 
         return {
             "event_count": event_count,
@@ -193,12 +179,17 @@ class EventLogRepository:
             "tokens_out": tokens_out,
             "tokens_total": tokens_total,
             "job_count": job_count,
-            "avg_tokens_per_job": avg_tokens_per_job,
-            "est_cost_per_job_vnd": est_cost_per_job_vnd,
-            "approved_draft_count": approved_draft_count,
-            "est_cost_per_approved_draft_vnd": est_cost_per_approved_draft_vnd,
+            "avg_tokens_per_job": round(tokens_total / job_count) if job_count else 0,
+            "est_cost_per_job_vnd": round(total_cost_vnd / job_count) if job_count else 0,
+            "content_cost_vnd": round(content_cost_vnd),
             "providers": [
-                {"provider": provider, "event_count": metrics["event_count"], "error_count": metrics["error_count"], "tokens_total": metrics["tokens_total"], "cost_vnd": round(metrics["cost_vnd"])} 
+                {
+                    "provider": provider,
+                    "event_count": metrics["event_count"],
+                    "error_count": metrics["error_count"],
+                    "tokens_total": metrics["tokens_total"],
+                    "cost_vnd": round(metrics["cost_vnd"]),
+                }
                 for provider, metrics in sorted(providers.items())
             ],
         }

@@ -1,6 +1,6 @@
 """Pydantic models dùng chung cho mọi router. Đây là contract xuất ra OpenAPI."""
 
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -579,8 +579,22 @@ class OperationsMetrics(HaviModel):
     job_count: int = 0
     avg_tokens_per_job: int = 0
     est_cost_per_job_vnd: int = 0
+    #: Nháp Havi sinh ra trong kỳ. Chi phí LLM phát sinh cho tất cả, kể cả nháp
+    #: bị xoá ngay.
+    generated_draft_count: int = 0
+    #: Nháp người dùng thật sự bấm duyệt — đếm từ `content_items.approved_at`,
+    #: KHÔNG phải từ số sự kiện sinh nội dung.
     approved_draft_count: int = 0
+    #: Tỷ lệ nháp được dùng. Thấp thì vừa tốn tiền vừa là dấu hiệu prompt kém.
+    draft_usage_rate: float = 0
+    #: Chi phí thật cho một bài đưa được lên kênh: toàn bộ tiền sinh nháp trong
+    #: kỳ chia cho số nháp được duyệt. Đây là con số dùng để định giá gói.
     est_cost_per_approved_draft_vnd: int = 0
+    #: Ngày cập nhật bảng giá LLM lần cuối, và cờ báo nó đã quá cũ để coi là số
+    #: liệu. Hiện một con số tiền mà không nói nó dựa trên bảng giá bao giờ là
+    #: mời người đọc tin vào một phỏng đoán.
+    pricing_as_of: date
+    pricing_is_stale: bool = False
     providers: list[OperationsProviderMetric]
     publish: OperationsPublishMetric
 

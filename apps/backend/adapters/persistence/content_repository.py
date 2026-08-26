@@ -208,6 +208,41 @@ class ContentRepository:
         )
         return result.scalar_one()
 
+    async def count_drafts_generated_and_approved(
+        self, *, workspace_id: UUID, start: datetime, end: datetime
+    ) -> tuple[int, int]:
+        """(số nháp Havi sinh ra, số nháp người dùng thật sự duyệt) trong cửa sổ.
+
+        Hai con số này là mẫu số của kinh tế đơn vị. Chi phí LLM phát sinh cho
+        **mọi** bản nháp được sinh ra, kể cả những bản bị xoá ngay; nhưng thứ đưa
+        được lên kênh chỉ là những bản được duyệt. Tiệm sinh 5 nháp dùng 1 thì
+        chi phí thật cho một bài lên kênh gấp 5 lần chi phí mỗi bản nháp.
+
+        Đếm theo hai mốc thời gian khác nhau, và đó là chủ ý: nháp tính theo lúc
+        được sinh (`created_at`), duyệt tính theo lúc được duyệt (`approved_at`).
+        Một bản nháp sinh cuối tháng trước và duyệt đầu tháng này thuộc về hai
+        kỳ khác nhau — đúng với dòng tiền, vì token đã tiêu ở kỳ trước.
+
+        Tỷ lệ giữa hai số cũng là chỉ số chất lượng nháp: vứt càng nhiều thì
+        prompt càng cần sửa, và biên lợi nhuận càng mỏng.
+        """
+        generated = await self._session.execute(
+            select(func.count()).where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.created_at >= start,
+                ContentItem.created_at < end,
+            )
+        )
+        approved = await self._session.execute(
+            select(func.count()).where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.approved_at.is_not(None),
+                ContentItem.approved_at >= start,
+                ContentItem.approved_at < end,
+            )
+        )
+        return generated.scalar_one(), approved.scalar_one()
+
     async def get_item_for_update(self, *, workspace_id: UUID, item_id: UUID) -> ContentItem | None:
         """Như `get_item` nhưng khoá hàng (`SELECT ... FOR UPDATE`).
 

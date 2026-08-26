@@ -28,5 +28,9 @@ class EventLog(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     # Quota KHÔNG dùng cột này: Havi chặn theo *token*, không theo tiền, nên
     # không cần đơn giá của từng provider (xem `domain/policies/quota.py`).
     provider: Mapped[str | None] = mapped_column(default=None)
+    # Model cụ thể — thứ thật sự quyết định đơn giá. Nullable cho dòng ghi
+    # trước migration c1d2e3f4a5b6; những dòng đó rơi về giá đắt nhất của
+    # provider ở `domain/policies/pricing.py`.
+    model: Mapped[str | None] = mapped_column(default=None)
     duration_ms: Mapped[int] = mapped_column(default=0)
     error: Mapped[str | None] = mapped_column(default=None)

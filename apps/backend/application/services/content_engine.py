@@ -246,6 +246,7 @@ class ContentEngine:
                 tokens_out=result.total_tokens_out,
                 duration_ms=result.response.latency_ms,
                 provider=result.served_by.value,
+                model=result.response.model,
             )
         )
         return GenerationResult(job=job, items=items)
