@@ -532,6 +532,9 @@ class DashboardContentSummary(HaviModel):
     scheduled: int
     published: int
     failed: int
+    broken_connections: int
+    unhandled_inbox: int
+    total_connections: int
 
 
 class EventLogRecord(HaviModel):

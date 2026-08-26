@@ -2,8 +2,11 @@ import { NETWORK_ERROR_MESSAGE } from "@/features/auth/auth.api";
 import { apiClient } from "@/lib/api-client/client";
 import type { components } from "@/lib/api-client/schema";
 
-export type DashboardContentSummary =
-  components["schemas"]["DashboardContentSummary"];
+export type DashboardContentSummary = components["schemas"]["DashboardContentSummary"] & {
+  broken_connections: number;
+  unhandled_inbox: number;
+  total_connections: number;
+};
 export type DashboardActivityEvent = components["schemas"]["EventLogRecord"];
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };

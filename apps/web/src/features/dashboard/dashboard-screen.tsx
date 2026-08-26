@@ -27,13 +27,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { listConnections, type PlatformConnection } from "@/features/connections/connections.api";
-import { listInbox, type InboxItem } from "@/features/inbox/inbox.api";
 import { fetchDashboardSummary, type DashboardContentSummary } from "./dashboard.api";
 import styles from "./dashboard.module.css";
-
-/** Kết nối khác trạng thái này là kênh đang có vấn đề, cần người xử lý. */
-const HEALTHY = "connected";
 
 type Tile = {
   key: string;
@@ -53,18 +48,12 @@ type Tile = {
 export function DashboardScreen() {
   const { lang, t } = useLanguage();
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
-  const [connections, setConnections] = useState<PlatformConnection[]>([]);
-  const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [summaryResult, connectionResult, inboxResult] = await Promise.all([
-      fetchDashboardSummary(),
-      listConnections(),
-      listInbox(),
-    ]);
+    const summaryResult = await fetchDashboardSummary();
 
     if (summaryResult.ok) {
       setSummary(summaryResult.data);
@@ -72,10 +61,6 @@ export function DashboardScreen() {
     } else {
       setError(summaryResult.message);
     }
-    // Kết nối và hộp thư hỏng thì coi như rỗng chứ không chặn cả màn: một API
-    // phụ chết không được làm mất luôn phần còn lại của bảng điều khiển.
-    if (connectionResult.ok) setConnections(connectionResult.data);
-    if (inboxResult.ok) setInbox(inboxResult.data);
     setLoading(false);
   }, []);
 
@@ -108,25 +93,19 @@ export function DashboardScreen() {
     return <LoadingState title={t({ vi: "Đang tải tổng quan…", en: "Loading overview…" })} />;
   }
 
-  const brokenConnections = connections.filter((item) => item.status !== HEALTHY);
-  const unhandled = inbox.filter(
-    (item) => item.status === "new" || item.status === "drafted",
-  );
-
   const tiles: Tile[] = [
     {
       key: "connections",
       question: "Các kênh có hoạt động bình thường không?",
-      count: brokenConnections.length,
+      count: summary.broken_connections,
       calm:
-        connections.length > 0
-          ? `${connections.length} kênh đang hoạt động bình thường`
+        summary.total_connections > 0
+          ? `${summary.total_connections} kênh đang hoạt động bình thường`
           : "Chưa nối kênh nào — nối Facebook để bắt đầu",
       busy: "{n} kênh cần xác thực lại",
       href: "/app/connections",
       action: "Mở Kênh kết nối",
-      // Chưa nối kênh nào cũng là việc cần làm, không phải trạng thái yên ổn.
-      needsAttention: brokenConnections.length > 0 || connections.length === 0,
+      needsAttention: summary.broken_connections > 0 || summary.total_connections === 0,
     },
     {
       key: "pending",
@@ -135,7 +114,7 @@ export function DashboardScreen() {
       calm: "Không có nội dung nào chờ duyệt",
       busy: "{n} nội dung đang chờ người duyệt",
       href: "/app/content",
-      action: "Mở Nội dung",
+      action: "Duyệt nhanh →",
       needsAttention: summary.pending_approval > 0,
     },
     {
@@ -162,12 +141,12 @@ export function DashboardScreen() {
     {
       key: "inbox",
       question: "Có hội thoại nào chưa xử lý?",
-      count: unhandled.length,
+      count: summary.unhandled_inbox,
       calm: "Không còn hội thoại nào chờ",
       busy: "{n} hội thoại chưa được trả lời",
       href: "/app/inbox",
       action: "Mở Hội thoại",
-      needsAttention: unhandled.length > 0,
+      needsAttention: summary.unhandled_inbox > 0,
     },
   ];
 

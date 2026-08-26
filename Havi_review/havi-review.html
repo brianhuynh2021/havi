@@ -1,0 +1,812 @@
+<title>Havi Teardown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F4F6F8;
+  --surface:#FFFFFF;
+  --surface-2:#EDF0F4;
+  --ink:#0E141E;
+  --body:#414B5C;
+  --muted:#78839A;
+  --rule:#DDE3EB;
+  --rule-strong:#C3CCD9;
+  --accent:#1B4FD8;
+  --crit:#B8322A;
+  --crit-bg:#FBEDEB;
+  --warn:#9A6410;
+  --warn-bg:#FBF3E4;
+  --ok:#186B4C;
+  --ok-bg:#E9F5EF;
+  --shadow:0 1px 2px rgba(14,20,30,.05), 0 8px 24px -16px rgba(14,20,30,.28);
+
+  --f-display:"Newsreader",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0B0F16;
+    --surface:#141A25;
+    --surface-2:#1B2331;
+    --ink:#E9EDF3;
+    --body:#AEB8C7;
+    --muted:#78849A;
+    --rule:#242E3D;
+    --rule-strong:#334052;
+    --accent:#7BA1FF;
+    --crit:#FF8175;
+    --crit-bg:#2A1715;
+    --warn:#E5A950;
+    --warn-bg:#2A2113;
+    --ok:#57C795;
+    --ok-bg:#12261E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0B0F16;
+  --surface:#141A25;
+  --surface-2:#1B2331;
+  --ink:#E9EDF3;
+  --body:#AEB8C7;
+  --muted:#78849A;
+  --rule:#242E3D;
+  --rule-strong:#334052;
+  --accent:#7BA1FF;
+  --crit:#FF8175;
+  --crit-bg:#2A1715;
+  --warn:#E5A950;
+  --warn-bg:#2A2113;
+  --ok:#57C795;
+  --ok-bg:#12261E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--body);
+  font-family:var(--f-body);
+  font-size:16.5px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1140px;margin:0 auto;padding:0 28px 120px}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:2px solid var(--ink);
+  padding:52px 0 22px;
+  margin-bottom:8px;
+}
+.kicker{
+  font-family:var(--f-mono);
+  font-size:11.5px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 20px;
+  margin:0 0 22px;
+}
+.kicker b{color:var(--crit);font-weight:600}
+h1.title{
+  font-family:var(--f-display);
+  font-weight:500;
+  font-size:clamp(2.6rem,6.2vw,4.4rem);
+  line-height:1.02;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  margin:0 0 18px;
+  text-wrap:balance;
+}
+h1.title em{font-style:italic;color:var(--accent)}
+.standfirst{
+  font-family:var(--f-display);
+  font-size:clamp(1.08rem,2.1vw,1.32rem);
+  line-height:1.5;
+  color:var(--body);
+  max-width:66ch;
+  margin:0;
+}
+
+/* ---------- verdict strip ---------- */
+.verdict{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:0;
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background:var(--surface);
+  margin:36px 0 64px;
+  overflow:hidden;
+}
+.vcell{padding:20px 22px;border-right:1px solid var(--rule)}
+.vcell:last-child{border-right:none}
+.vcell .lbl{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);display:block;margin-bottom:9px;
+}
+.vcell .val{
+  font-family:var(--f-display);font-size:2.1rem;line-height:1;color:var(--ink);
+  font-variant-numeric:tabular-nums;display:block;margin-bottom:6px;
+}
+.vcell .note{font-size:13px;line-height:1.45;color:var(--muted)}
+.vcell.is-crit .val{color:var(--crit)}
+.vcell.is-ok .val{color:var(--ok)}
+
+/* ---------- sections ---------- */
+section{margin:0 0 76px;scroll-margin-top:24px}
+.sechead{
+  display:flex;align-items:baseline;gap:16px;
+  border-bottom:1px solid var(--rule-strong);
+  padding-bottom:12px;margin-bottom:30px;
+}
+.secnum{
+  font-family:var(--f-mono);font-size:12px;font-weight:600;
+  color:var(--accent);letter-spacing:.08em;flex:none;
+  padding-top:6px;
+}
+h2{
+  font-family:var(--f-display);font-weight:500;
+  font-size:clamp(1.65rem,3.4vw,2.3rem);
+  line-height:1.12;letter-spacing:-.015em;color:var(--ink);
+  margin:0;text-wrap:balance;
+}
+h3{
+  font-family:var(--f-body);font-weight:600;font-size:1.02rem;
+  color:var(--ink);margin:36px 0 10px;letter-spacing:-.005em;
+}
+p{margin:0 0 16px;max-width:70ch}
+strong{color:var(--ink);font-weight:600}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.86em;
+  background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+
+ul{margin:0 0 16px;padding-left:0;list-style:none;max-width:70ch}
+ul li{position:relative;padding-left:20px;margin-bottom:9px}
+ul li::before{
+  content:"";position:absolute;left:2px;top:.66em;
+  width:5px;height:5px;background:var(--rule-strong);border-radius:50%;
+}
+ol{margin:0 0 16px;padding-left:22px;max-width:70ch}
+ol li{margin-bottom:9px}
+
+/* ---------- finding card ---------- */
+.finding{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-left:3px solid var(--rule-strong);
+  border-radius:3px;
+  padding:22px 24px;
+  margin:0 0 18px;
+  box-shadow:var(--shadow);
+}
+.finding.crit{border-left-color:var(--crit)}
+.finding.warn{border-left-color:var(--warn)}
+.finding.ok{border-left-color:var(--ok)}
+.finding .fhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.finding h4{
+  font-family:var(--f-body);font-weight:600;font-size:1.04rem;color:var(--ink);
+  margin:0;letter-spacing:-.005em;
+}
+.finding p:last-child{margin-bottom:0}
+.finding p{max-width:none}
+
+.chip{
+  font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 8px;border-radius:2px;flex:none;
+}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.plain{background:var(--surface-2);color:var(--muted)}
+
+.src{
+  font-family:var(--f-mono);font-size:11.5px;color:var(--muted);
+  display:block;margin-top:12px;padding-top:10px;border-top:1px dotted var(--rule);
+  word-break:break-all;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;margin:0 0 22px;border:1px solid var(--rule);border-radius:3px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:14.5px}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;background:var(--surface-2);
+  border-bottom:1px solid var(--rule-strong);white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.screen{font-weight:600;color:var(--ink);white-space:nowrap}
+td.score{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.s-hi{color:var(--ok)}.s-mid{color:var(--warn)}.s-lo{color:var(--crit)}
+
+/* ---------- pull quote ---------- */
+.pull{
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);
+  padding:26px 0;margin:34px 0;
+}
+.pull p{
+  font-family:var(--f-display);font-size:clamp(1.25rem,2.6vw,1.6rem);
+  line-height:1.34;color:var(--ink);margin:0;max-width:34ch;text-wrap:balance;
+}
+.pull .attrib{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-top:14px;
+}
+
+/* ---------- two col ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px}
+@media(max-width:760px){.duo{grid-template-columns:1fr}}
+.panel{
+  background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:20px 22px;
+}
+.panel h4{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  margin:0 0 14px;font-weight:600;
+}
+.panel.pro h4{color:var(--ok)}
+.panel.con h4{color:var(--crit)}
+.panel ul{margin:0}
+.panel li{font-size:14.5px;line-height:1.55}
+
+/* ---------- action list ---------- */
+.actions{counter-reset:act;list-style:none;padding:0;margin:0;max-width:none}
+.actions li{
+  counter-increment:act;position:relative;padding:0 0 0 54px;margin-bottom:22px;
+  min-height:34px;
+}
+.actions li::before{
+  content:counter(act);
+  position:absolute;left:0;top:0;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ink);color:var(--ground);
+  font-family:var(--f-mono);font-size:13px;font-weight:600;border-radius:50%;
+}
+.actions li .t{font-weight:600;color:var(--ink);display:block;margin-bottom:3px;padding-top:5px}
+.actions li .d{font-size:14.5px}
+
+footer{
+  border-top:2px solid var(--ink);padding-top:20px;margin-top:20px;
+  font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+@media(max-width:640px){
+  .page{padding:0 18px 80px}
+  .vcell{border-right:none;border-bottom:1px solid var(--rule)}
+  .vcell:last-child{border-bottom:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+</style>
+
+<div class="page">
+
+<header class="masthead">
+  <p class="kicker">
+    <span>Havi · Product &amp; Engineering Teardown</span>
+    <span>26.08.2026</span>
+    <span>branch <code style="background:none;padding:0;color:inherit">dev</code> · 209 commits</span>
+    <b>1 phát hiện chặn phát hành</b>
+  </p>
+  <h1 class="title">Kỷ luật sản phẩm tốt hơn <em>độ chín</em> của sản phẩm</h1>
+  <p class="standfirst">
+    Havi có ranh giới sản phẩm rõ ràng bậc nhất trong số các MVP tôi đọc — và một kiến trúc backend
+    vượt xa mức MVP. Nhưng bên trong repo đang có hai sản phẩm khác nhau tranh nhau, một màn hình
+    nói dối người dùng ngay ở giây thứ 30, và một dòng code âm thầm đăng ảnh stock lên Fanpage
+    thật của khách.
+  </p>
+</header>
+
+<div class="verdict">
+  <div class="vcell is-ok">
+    <span class="lbl">Kiến trúc &amp; test</span>
+    <span class="val">8.5</span>
+    <span class="note">Hexagonal, 54 file test, idempotent publish, tenant isolation</span>
+  </div>
+  <div class="vcell">
+    <span class="lbl">UI / UX</span>
+    <span class="val">6.0</span>
+    <span class="note">Dashboard xuất sắc, Inbox và Media dưới chuẩn</span>
+  </div>
+  <div class="vcell is-crit">
+    <span class="lbl">Độ kiếm tiền</span>
+    <span class="val">4.5</span>
+    <span class="note">Biên lợi nhuận LLM chưa kiểm chứng, không auto-renew</span>
+  </div>
+  <div class="vcell is-crit">
+    <span class="lbl">Vị thế cạnh tranh</span>
+    <span class="val">3.5</span>
+    <span class="note">Đang đối đầu trực diện Meta Business Suite và Pancake</span>
+  </div>
+</div>
+
+<!-- ============ 1 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">01</span><h2>Chặn phát hành: ba lỗi phải sửa trước mọi việc khác</h2></div>
+
+  <div class="finding crit">
+    <div class="fhead"><span class="chip crit">Chặn phát hành</span><h4>Havi tự đính ảnh stock vào bài của khách, không ai duyệt</h4></div>
+    <p>
+      Khi một bài đã duyệt không có ảnh đính kèm, <code>publish_service</code> gọi
+      <code>select_topic_image()</code> — hàm này so khớp từ khoá tiếng Việt rồi trả về
+      <strong>một trong sáu URL Unsplash hardcode</strong>, và ảnh đó được gửi thẳng lên Fanpage thật.
+    </p>
+    <p>Hậu quả xếp theo mức nghiêm trọng:</p>
+    <ul>
+      <li><strong>Phá vỡ nguyên tắc số 1 của chính sản phẩm.</strong> README, ROADMAP, landing page và FAQ đều cam kết “không gì lên kênh mà chưa qua mắt người”. Ảnh này người dùng chưa từng nhìn thấy ở bản nháp.</li>
+      <li><strong>Mọi khách hàng Havi dùng chung sáu tấm ảnh.</strong> Hai spa cùng thành phố sẽ đăng đúng một bức ảnh massage. Đây là thiệt hại thương hiệu trực tiếp cho khách trả tiền.</li>
+      <li><strong>Hotlink Unsplash ở quy mô sản xuất</strong> vi phạm điều khoản của họ và là một điểm chết ngoài tầm kiểm soát: Unsplash đổi URL thì toàn bộ khách mất ảnh.</li>
+      <li>Logic này còn bị <strong>nhân bản ở frontend</strong> (<code>calendar-screen.tsx: getTopicImage</code>) — nên lịch hiển thị ảnh không phải ảnh thật của bài.</li>
+    </ul>
+    <p>
+      Cách sửa đúng: bài không có media thì <em>đăng không có media</em>, hoặc chặn ở bước duyệt với
+      thông báo “bài này chưa có ảnh”. Nếu muốn giữ tính năng gợi ý ảnh, nó phải hiện trong bản nháp
+      để người dùng bấm duyệt — đúng như mọi thứ khác trong Havi.
+    </p>
+    <span class="src">apps/backend/application/services/publish_service.py:44–91, 294–297 · apps/web/src/features/calendar/calendar-screen.tsx:31–88</span>
+  </div>
+
+  <div class="finding crit">
+    <div class="fhead"><span class="chip crit">Chặn phát hành</span><h4>Thanh tiến trình “Havi đang học về tiệm của bạn” là diễn</h4></div>
+    <p>
+      Bước 3 onboarding chạy <code>setProgressPercent(25)</code> → <code>70</code> → <code>setTimeout(…, 200)</code> → <code>100</code>.
+      Ba dòng trạng thái — “đang phân tích ngành nghề”, “đang hiệu chỉnh Brand Voice”, “đã sẵn sàng 4 bản nháp
+      đầu tiên” — <strong>không tương ứng với công việc nào đang chạy</strong>, và câu cuối hứa 4 bản nháp
+      mà người dùng sẽ không thấy khi vào app.
+    </p>
+    <p>
+      Đây là màn hình thứ ba mà người dùng mới nhìn thấy, trong một sản phẩm mà toàn bộ luận điểm bán hàng là
+      <em>“trạng thái trung thực, không báo thành công khi nền tảng chưa xác nhận”</em>. Một người dùng tinh ý
+      nhận ra 800ms là quá nhanh cho “phân tích ngành nghề” sẽ nghi ngờ mọi thông báo thành công về sau —
+      kể cả những cái thật.
+    </p>
+    <span class="src">apps/web/src/features/onboarding/onboarding-screen.tsx:59–79</span>
+  </div>
+
+  <div class="finding crit">
+    <div class="fhead"><span class="chip crit">Chặn tăng trưởng</span><h4>Bước nối kênh cho phép bỏ qua bằng nút ngang hàng</h4></div>
+    <p>
+      Ở bước 2, <span class="mono">“Bỏ qua”</span> và <span class="mono">“Tiếp tục”</span> có cùng kích thước,
+      cùng độ nổi bật. Một Havi không có kênh nào được nối <strong>không làm được gì cả</strong>: không đăng,
+      không có hội thoại, không có báo cáo, dashboard toàn số 0. Người dùng sẽ vào app, thấy sản phẩm rỗng,
+      và không quay lại.
+    </p>
+    <p>
+      Đồng thời bước 1 <strong>tạo workspace thật và không có đường lùi</strong> — comment trong code đã thừa
+      nhận điều này (“bấm lại sẽ tạo tiệm thứ hai trùng tên”). Nhập sai tên tiệm ở giây thứ 10 thì phải đi
+      tìm Cài đặt để sửa. Đây là lỗi thiết kế luồng, không phải lỗi UI: workspace nên được tạo ở cuối wizard,
+      hoặc <code>createWorkspace</code> nên idempotent theo session.
+    </p>
+    <span class="src">apps/web/src/features/onboarding/onboarding-screen.tsx:104–139, 283–297</span>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">02</span><h2>Review từng màn hình</h2></div>
+
+  <p>
+    Thang điểm dưới đây chấm theo <em>mức độ hoàn chỉnh so với công việc mà màn hình đó phải gánh</em>,
+    không phải so với nhau. Một màn hình 4/10 không có nghĩa nó xấu — nghĩa là nó chưa đủ để người dùng
+    làm xong việc họ mở nó ra để làm.
+  </p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Màn hình</th><th>Điểm</th><th>Đánh giá</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="screen">Tổng quan</td><td class="score s-hi">8.5</td>
+        <td>Màn hình tốt nhất trong app, và tốt một cách bất thường. Ngoại lệ chiếm hết bề ngang, phần đang ổn nén thành dải mỏng, mọi ô đều có câu cho trạng thái 0, và dải “yên ổn” cố ý không có link. Đây là tư duy dashboard vận hành đúng nghĩa. <strong>Nhược điểm:</strong> nó chỉ điều hướng, không cho hành động tại chỗ — thấy “3 nội dung chờ duyệt” nhưng phải sang màn khác mới duyệt được.</td>
+      </tr>
+      <tr>
+        <td class="screen">Đăng bài</td><td class="score s-mid">6.5</td>
+        <td>Quyết định gộp bài viết và video vào một luồng, rẽ nhánh ở bước 1, là đúng — chủ tiệm nghĩ theo “tối nay chuẩn bị nội dung cho tuần sau”, không theo loại file. <strong>Nhưng:</strong> chỉ có nút <em>“Duyệt tất cả”</em>, không có duyệt từng bài. Người dùng có 5 nháp phải chọn: duyệt cả 5, hoặc xoá từng cái. Điều này mâu thuẫn với chính nguyên tắc “người duyệt từng bài”. Kênh đích cũng bị hardcode <code>["facebook_page"]</code> — không có bộ chọn kênh nào tồn tại trong UI.</td>
+      </tr>
+      <tr>
+        <td class="screen">Lịch đăng</td><td class="score s-mid">6.0</td>
+        <td>690 dòng, màn lớn nhất app. Chỉ có chế độ tuần, <strong>không có chế độ tháng</strong>, và đổi lịch phải mở modal rồi gõ vào <code>datetime-local</code>. Với một sản phẩm lịch đăng, kéo-thả là mức tối thiểu — Buffer, Later, Metricool đều có. Cộng thêm ảnh chủ đề giả ở mục 01.</td>
+      </tr>
+      <tr>
+        <td class="screen">Hội thoại</td><td class="score s-lo">3.5</td>
+        <td><strong>Đây là vấn đề lớn nhất về sản phẩm.</strong> 135 dòng — mỏng nhất app — cho công việc mà chủ tiệm Việt Nam làm 10 lần mỗi ngày. Không có luồng hội thoại (chỉ 1 tin + 1 ô trả lời), không lịch sử khách, không tìm kiếm, không lọc, không giao việc cho nhân viên, không đếm chưa đọc, không realtime — phải tự bấm tải lại. So sánh: Lịch đăng được đầu tư gấp 5 lần Hội thoại, trong khi Hội thoại mới là thứ tạo thói quen hằng ngày.</td>
+      </tr>
+      <tr>
+        <td class="screen">Thư viện media</td><td class="score s-lo">4.0</td>
+        <td>Được mô tả là “kho dùng lại được, không phải tải lên mỗi lần” — nhưng <strong>không thể chọn từ thư viện khi soạn bài</strong>, chỉ upload mới. Cũng không xoá được, không thư mục, không tag, không tìm kiếm. Hiện tại nó là một gallery chỉ-đọc, chưa phải thư viện.</td>
+      </tr>
+      <tr>
+        <td class="screen">Kênh kết nối</td><td class="score s-mid">7.0</td>
+        <td>Xử lý trạng thái kết nối tử tế, icon riêng từng nền tảng, có luồng xác thực lại. <strong>Nhưng</strong> hiển thị 5 nền tảng trong khi chỉ Facebook thực sự chạy — bốn ô còn lại là lời hứa. Mô tả TikTok (“video ngắn viral 9:16 có Hook 3s”) còn dùng giọng marketing mà chính README đã cấm.</td>
+      </tr>
+      <tr>
+        <td class="screen">Đội ngũ</td><td class="score s-mid">5.5</td>
+        <td>Cách gọi vai trò bằng việc làm được (“Người duyệt — duyệt nội dung để Havi đăng”) là lựa chọn đúng. Thiếu: trạng thái lời mời đang chờ, gửi lại lời mời, và <strong>đổi vai trò</strong> — muốn đổi vai phải gỡ rồi mời lại.</td>
+      </tr>
+      <tr>
+        <td class="screen">Báo cáo</td><td class="score s-mid">5.5</td>
+        <td>Số liệu trung thực (đã đăng / đã nhận / đã trả lời / thất bại) đúng tinh thần sản phẩm. Nhưng bốn con số đếm không trả lời được câu hỏi nào của người vận hành. Thiếu so sánh kỳ trước, thiếu xu hướng, thiếu “bài nào hỏng vì lý do gì”.</td>
+      </tr>
+      <tr>
+        <td class="screen">Gói cước</td><td class="score s-mid">6.5</td>
+        <td>Màn được thiết kế công phu nhất app: badge 💎 👑, “TIẾT KIỆM NHẤT”, “PHỔ BIẾN NHẤT”, tính giá theo ngày. <strong>Đó chính là vấn đề</strong> — công sức thiết kế tỉ lệ nghịch với tần suất sử dụng. Màn xem 1 lần/tháng bóng bẩy hơn màn xem 10 lần/ngày.</td>
+      </tr>
+      <tr>
+        <td class="screen">Onboarding</td><td class="score s-lo">4.0</td>
+        <td>Xem mục 01. Bản xem trước bài viết theo ngành ở bước 1 là ý tưởng hay và đúng chỗ; phần còn lại phá hỏng nó.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Điều hướng và hệ thống thiết kế</h3>
+
+  <div class="finding warn">
+    <div class="fhead"><span class="chip warn">Nghiêm trọng</span><h4>10 mục nav trên điện thoại, dàn ngang một dải cuộn</h4></div>
+    <p>
+      <code>app-nav.tsx</code> render <em>toàn bộ</em> 10 mục vào <code>.mobileNav</code>. Người dùng chính —
+      chủ tiệm cầm điện thoại — nhận một thanh 10 tab cuộn ngang. Trên mobile nên là 4–5 mục
+      (Tổng quan · Hội thoại · Đăng bài · Lịch) và phần còn lại vào “Thêm”.
+    </p>
+    <p>
+      Ngoài ra <code>NavItem.count</code> đã được khai báo nhưng <strong>không bao giờ được gán giá trị</strong> —
+      trong khi Dashboard đã tính chính xác những con số đó. Badge “3” cạnh Hội thoại là thứ kéo người dùng
+      quay lại app, và nó đang bị bỏ trống.
+    </p>
+    <span class="src">apps/web/src/components/app-shell/app-nav.tsx:45–66 · nav-items.ts:8</span>
+  </div>
+
+  <div class="finding warn">
+    <div class="fhead"><span class="chip warn">Nợ kỹ thuật</span><h4>Hệ thống thiết kế tồn tại nhưng không được dùng</h4></div>
+    <ul>
+      <li><strong>157 mã màu hex khác nhau</strong> viết cứng trong các file CSS module, dù <code>globals.css</code> đã có bộ token đầy đủ. Riêng <code>#ffffff</code> xuất hiện 203 lần.</li>
+      <li><strong>Dark mode chết.</strong> Class <code>.theme-dark</code> được định nghĩa hoàn chỉnh trong <code>globals.css</code> nhưng <em>không có dòng code nào gán nó</em>. Và kể cả có gán, 203 chỗ <code>#ffffff</code> sẽ khiến giao diện vỡ.</li>
+      <li><strong>13 breakpoint khác nhau</strong> (480, 540, 560, 600, 640, 680, 720, 768, 900, 1024, 1080, 1100, 1200px) — không có thang responsive nào, mỗi màn tự chọn.</li>
+      <li><strong>~470 chuỗi tiếng Việt nằm ngoài <code>t()</code></strong> trong khi app có nút chuyển VN/EN. Bật EN cho ra giao diện nửa Anh nửa Việt. Nặng nhất: Gói cước (63), Lịch đăng (46), Video (33), Tổng quan (32).</li>
+      <li>Dùng <code>confirm()</code> gốc của trình duyệt cho thao tác xoá ở Nội dung và Đội ngũ, trong khi đã có <code>DangerConfirmModal</code> được thiết kế riêng ở Cài đặt.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">03</span><h2>Hành vi người dùng: sản phẩm đang phục vụ ai?</h2></div>
+
+  <p>
+    Đây là phần tôi cho là quan trọng nhất của bản review, vì mọi thứ khác đều chảy ra từ nó.
+  </p>
+
+  <h3>Vòng lặp thật của chủ tiệm ≠ vòng lặp mà Havi tối ưu</h3>
+  <p>
+    Chủ một spa hay quán cà phê mở điện thoại theo nhịp này: <em>có ai nhắn không → trả lời →
+    hôm nay có gì đăng không</em>. Nhịp đó là <strong>hằng ngày, ngắn, phản ứng</strong>, và trọng tâm là
+    hộp thư.
+  </p>
+  <p>
+    Havi được tối ưu cho một nhịp khác: <em>ngồi một buổi, nạp tư liệu, để AI viết 5 bản nháp,
+    duyệt cả loạt, rải lịch cả tuần</em>. Comment trong <code>content-creation-screen.tsx</code> nói thẳng điều này
+    và nó là một giả thuyết hợp lý — nhưng đó là nhịp của <strong>một người làm marketing</strong>, không phải
+    của chủ tiệm. Chủ tiệm không có “buổi tối ngồi làm nội dung”; họ có 4 phút giữa hai lượt khách.
+  </p>
+
+  <div class="pull">
+    <p>Havi thu tiền theo tháng nhưng chỉ tạo được thói quen theo tuần.</p>
+    <div class="attrib">Rủi ro giữ chân · nghiêm trọng</div>
+  </div>
+
+  <p>
+    Điều này dẫn tới rủi ro giữ chân cụ thể: sau khi AI viết xong nháp và lịch đã rải, <strong>không có
+    gì kéo người dùng quay lại vào ngày mai</strong>. Thứ duy nhất tạo được nhịp hằng ngày là Hội thoại —
+    và Hội thoại đang là màn hình yếu nhất app. Đây không phải trùng hợp, mà là hệ quả: đội đã dồn công
+    sức vào phần mình hình dung rõ (soạn bài, lịch) thay vì phần người dùng thật sự sống trong đó.
+  </p>
+
+  <h3>Bản dùng thử đang tự bắn vào chân mình</h3>
+  <p>
+    Gói Trải Nghiệm cấp <strong>100.000 token cho 7 ngày</strong> ≈ 30 bài. Một chủ tiệm tò mò sẽ đốt hết
+    trong buổi đầu tiên khi nghịch thử, rồi có 6 ngày còn lại với một sản phẩm đã chết. Trial nên chặn theo
+    <em>thời gian và chiều sâu tính năng</em>, không nên chặn theo hạn mức dồn hết vào ngày 1. Tối thiểu:
+    hạn mức theo ngày thay vì theo kỳ.
+  </p>
+
+  <h3>Quy trình duyệt là tính năng với đội, là ma sát với cá nhân</h3>
+  <p>
+    Với một chuỗi 30 chi nhánh, “không gì lên kênh mà chưa qua mắt người” là lý do mua hàng.
+    Với chủ tiệm một mình — người vừa soạn, vừa duyệt, vừa trực chat — bước duyệt chỉ là một cú bấm thừa
+    giữa họ và việc đăng bài. Sản phẩm hiện đang bắt cả hai nhóm đi qua cùng một quy trình.
+  </p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">04</span><h2>Ý tưởng và định vị: hai sản phẩm trong một repo</h2></div>
+
+  <div class="duo">
+    <div class="panel pro">
+      <h4>Sản phẩm A — trong app</h4>
+      <ul>
+        <li>Onboarding hỏi ngành nghề, tên tiệm</li>
+        <li>AI viết bài, xem trước theo ngành</li>
+        <li>Ghi âm để AI viết hộ</li>
+        <li>Rải lịch tự động vào khung giờ vàng</li>
+        <li>1 Fanpage, 1 người dùng</li>
+        <li><strong>189.000đ/tháng · chủ tiệm</strong></li>
+      </ul>
+    </div>
+    <div class="panel con">
+      <h4>Sản phẩm B — trong tài liệu</h4>
+      <ul>
+        <li>Control plane, governance, audit trail</li>
+        <li>Tổ chức trên workspace, đa thương hiệu</li>
+        <li>Vai trò, phân quyền, phân công duyệt</li>
+        <li>Chính sách duyệt theo kênh và mức rủi ro</li>
+        <li>Enterprise identity, retention, export</li>
+        <li><strong>799.000đ+/tháng · chuỗi &amp; agency</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <p>
+    <code>ARCHITECTURE.md</code> và <code>ROADMAP.md</code> mô tả Sản phẩm B với độ chín hiếm thấy —
+    “moat không phải là nhiều AI hơn, mà là <em>operational memory và governance</em>” là một luận điểm
+    đúng và sâu. Trong khi đó toàn bộ trải nghiệm thực tế — từ onboarding tới bảng giá tới landing page —
+    bán Sản phẩm A.
+  </p>
+  <p>
+    <strong>Đây là nguyên nhân gốc của phần lớn các vấn đề ở mục 02.</strong> Hội thoại mỏng vì Sản phẩm B
+    không cần nó gấp. Lịch đăng dày vì Sản phẩm A cần nó. Quy trình duyệt gây ma sát vì nó thuộc B nhưng
+    đang áp lên người dùng của A. Sáu adapter nền tảng nửa vời tồn tại vì B hứa đa kênh trong khi A chỉ chạy
+    Facebook.
+  </p>
+
+  <h3>Bằng chứng về mức độ xoay trục</h3>
+  <p>
+    Lịch sử migration cho thấy ba lần xây rồi phá trong 209 commit:
+    <code>goals_and_roadmaps</code> tạo rồi drop, <code>crm_and_sales</code> tạo rồi drop,
+    <code>video_render_jobs</code> tạo rồi thay bằng <code>video_posts</code>. Đọc theo hướng tích cực,
+    đây là <strong>kỷ luật hiếm có</strong> — rất ít đội dám xoá tính năng đã viết, và README ghi rõ từng thứ
+    bị gỡ cùng lý do. Đọc theo hướng phải cảnh giác: đó là một lượng lớn thời gian kỹ thuật đã cháy,
+    và sự dao động chưa dừng lại vì câu hỏi <em>“bán cho ai”</em> vẫn chưa được trả lời dứt khoát.
+  </p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">05</span><h2>Độ kiếm tiền</h2></div>
+
+  <div class="finding crit">
+    <div class="fhead"><span class="chip crit">Rủi ro số 1</span><h4>Biên lợi nhuận chưa được kiểm chứng, và mô hình đang mời gọi lỗ</h4></div>
+    <p>
+      Gói Khởi Nghiệp: <strong>189.000đ ≈ 7,4 USD/tháng, kèm 500.000 token AI</strong>.
+      Nếu dùng model hạng Claude/GPT-4, chỉ riêng 500k token đã có thể tốn 2–7 USD tuỳ tỷ lệ input/output —
+      tức <strong>30–90% doanh thu bốc hơi trước khi tính hạ tầng, lưu trữ media, và chi phí hỗ trợ</strong>.
+    </p>
+    <p>
+      Nghiêm trọng hơn: <code>quota.py</code> đếm <em>tổng token</em>, không phân biệt input và output —
+      trong khi output đắt gấp 3–5 lần input. Hai workspace dùng hết 500k token có thể chênh nhau vài lần
+      về chi phí thật. Chính comment trong file đã ghi “con số cần đo lại sau pilot” — <strong>đó phải là
+      việc đo đầu tiên, không phải việc để sau</strong>. Không có nó, mỗi khách hàng mới có thể là một khoản lỗ.
+    </p>
+    <span class="src">apps/backend/domain/policies/quota.py:23–37</span>
+  </div>
+
+  <div class="finding warn">
+    <div class="fhead"><span class="chip warn">Nghiêm trọng</span><h4>VietQR không có auto-renew — mỗi tháng khách phải quyết định lại</h4></div>
+    <p>
+      Thanh toán qua VietQR/PayOS là lựa chọn <strong>đúng cho thị trường Việt Nam</strong> — tỷ lệ dùng thẻ
+      quốc tế thấp, quét QR là hành vi tự nhiên. Nhưng nó không có card-on-file, nghĩa là mỗi tháng khách hàng
+      phải <em>chủ động quyết định trả tiếp</em>. Trong SaaS, chuyển từ auto-renew sang thanh toán chủ động
+      thường làm churn tăng gấp nhiều lần.
+    </p>
+    <p>Ba đối sách, nên làm cả ba: gói năm giảm giá mạnh (đổi churn hằng tháng lấy một quyết định mỗi năm);
+      nhắc gia hạn qua Zalo trước 5 ngày; và ủy nhiệm chi tự động qua ngân hàng cho khách doanh nghiệp.</p>
+  </div>
+
+  <div class="finding warn">
+    <div class="fhead"><span class="chip warn">Định giá</span><h4>Bán theo token — đơn vị mà không khách hàng nào hiểu</h4></div>
+    <p>
+      “2.000.000 token AI mỗi tháng (Thoải mái sáng tạo)” không có nghĩa gì với một chủ tiệm. Bảng giá đã tự
+      dịch sang “~150 bài viết” — <strong>vậy hãy bán thẳng bằng đơn vị đó</strong>: số bài/tháng, số kênh,
+      số người dùng, số thương hiệu. Token là đơn vị kế toán nội bộ, không phải đơn vị bán hàng.
+    </p>
+  </div>
+
+  <div class="finding warn">
+    <div class="fhead"><span class="chip warn">Trần doanh thu</span><h4>Không có đòn bẩy mở rộng doanh thu trong tài khoản</h4></div>
+    <p>
+      Cả bốn gói đều là bậc cố định. Không tính tiền theo ghế, theo kênh, hay theo thương hiệu — dù
+      <strong>tầng organization/multi-brand đã tồn tại trong database</strong>. Nghĩa là một khách hàng
+      phát triển từ 1 lên 10 chi nhánh vẫn trả đúng 799.000đ. Net revenue retention bị chặn dưới 100%
+      ngay từ thiết kế, và đó là chỉ số quyết định giá trị của một công ty SaaS.
+    </p>
+    <p><strong>Đề xuất cụ thể:</strong> giữ giá nền theo gói, cộng phí theo <em>thương hiệu</em> và theo
+      <em>kênh đã nối</em>. Đó là hai đơn vị mà giá trị nhận được tăng tuyến tính theo số lượng, nên khách
+      hàng chấp nhận dễ.</p>
+  </div>
+
+  <h3>Cái giá của ranh giới quảng cáo</h3>
+  <p>
+    Havi cố ý không đụng vào tiền quảng cáo — chỉ deep-link sang Meta rồi đọc trạng thái read-only.
+    Về mặt nguyên tắc đây là lựa chọn đáng trọng và giảm rủi ro pháp lý đáng kể. Nhưng phải nhìn thẳng
+    vào cái giá: <strong>ở Việt Nam, tiền lớn trong social nằm ở quản lý ngân sách quảng cáo</strong>,
+    không nằm ở phí phần mềm. Giữ ranh giới này nghĩa là tự giới hạn ở doanh thu SaaS thuần, trong một thị
+    trường mà ARPU SaaS là 7–30 USD. Đó là quyết định chiến lược hoàn toàn hợp lệ — chỉ cần nó được đưa ra
+    có ý thức, kèm một kế hoạch đạt quy mô bằng số lượng khách hàng.
+  </p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">06</span><h2>Khả năng đi đường dài 5–10 năm</h2></div>
+
+  <div class="duo">
+    <div class="panel pro">
+      <h4>Nền móng vững — trên mức MVP rõ rệt</h4>
+      <ul>
+        <li>Phân tầng hexagonal thật: <code>domain/ports</code> tách khỏi <code>adapters</code>, đổi nhà cung cấp không đụng lõi</li>
+        <li>54 file test gồm pentest, tenant isolation, quota, role permissions</li>
+        <li>Publish idempotent với row locking, và <code>pending_reconciliation</code> thay vì retry mù khi timeout — rất ít MVP làm đúng chỗ này</li>
+        <li>Argon2id, token nhà cung cấp mã hoá at rest, webhook so sánh chữ ký constant-time</li>
+        <li>33 migration Alembic có lịch sử sạch, kể cả các lần drop bảng</li>
+        <li>Provider giả bị chặn ngoài môi trường local</li>
+      </ul>
+    </div>
+    <div class="panel con">
+      <h4>Trần quy mô và điểm sẽ vỡ</h4>
+      <ul>
+        <li><code>dispatch_due</code> quét mỗi 5 phút với <code>limit=20</code> — trần thông lượng cứng, cần hàng đợi tách theo nền tảng và nhận biết rate limit từng Page token</li>
+        <li>Quota chỉ theo tháng, <strong>không có giới hạn burst</strong> — một workspace có thể chiếm sạch worker pool</li>
+        <li>Dashboard tải <em>toàn bộ</em> danh sách kết nối và hội thoại rồi đếm bằng JS ở client — vỡ ở vài trăm hội thoại, và tốn 3 round-trip trên màn được mở nhiều nhất</li>
+        <li>Luật nghiệp vụ bị nhân bản FE/BE: <code>GOLDEN_HOURS</code>, <code>getTopicImage</code>, nhãn kênh. Code đã tự ghi chú rủi ro lệch nhau</li>
+        <li>Sáu adapter nền tảng nhưng chỉ một chạy thật — sáu bề mặt bảo trì sẽ mục dần theo thay đổi API</li>
+        <li>470 chuỗi ngoài <code>t()</code> khiến Phase 5 (mở rộng khu vực) là viết lại chứ không phải mở rộng</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Rủi ro 10 năm thật sự không nằm ở kỹ thuật</h3>
+  <p>
+    Nó nằm ở chỗ <strong>toàn bộ giá trị của Havi hiện phụ thuộc vào quyền truy cập API mà Meta có thể thu hồi</strong>.
+    Meta đã nhiều lần siết quyền, gỡ endpoint, và loại bỏ cả nhóm ứng dụng. Một công ty muốn sống 10 năm ở
+    lớp này phải sở hữu thứ nền tảng không lấy lại được.
+  </p>
+  <p>
+    <code>ROADMAP §1b</code> đã trả lời đúng câu này: <em>“moat là operational memory và governance —
+    ai được làm gì, cái gì đã được duyệt, cái gì đã lên kênh, cái gì hỏng”</em>. Đó là tài sản của khách hàng,
+    nằm trong database của Havi, và Meta không đụng vào được. <strong>Vấn đề là phần triển khai đang mỏng:</strong>
+    màn Lịch sử 152 dòng, audit log chưa có tìm kiếm, chưa có xuất file, chưa có lưu trữ độc lập nhà cung cấp
+    cho nội dung đã duyệt. Luận điểm 10 năm đang đúng trên giấy và yếu trong code — đó là khoảng cách cần đóng.
+  </p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">07</span><h2>Cạnh tranh: Havi đang đứng vào đúng chỗ đông người nhất</h2></div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Đối thủ</th><th>Giá</th><th>Vì sao nguy hiểm với Havi</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="screen">Meta Business Suite</td><td class="score s-lo">0đ</td>
+        <td><strong>Đây là chuẩn so sánh thật của gói 189.000đ.</strong> Lên lịch, hộp thư gộp tin nhắn và bình luận, thống kê cơ bản cho Facebook + Instagram, do chính Meta làm nên không bao giờ mất quyền API. Bất cứ thứ gì Havi làm mà MBS cũng làm thì phải hơn gấp nhiều lần, vì đối thủ có giá bằng 0.</td>
+      </tr>
+      <tr>
+        <td class="screen">Pancake.vn</td><td class="score s-lo">~200k</td>
+        <td>Thống trị mảng hộp thư/bình luận cho hộ kinh doanh Việt Nam, cộng chatbot, POS, quản lý đơn, chạy ads. Rất sâu về thị trường nội địa. <strong>Họ sở hữu đúng lớp mà Havi đang yếu nhất</strong>, và đó là lớp tạo thói quen hằng ngày.</td>
+      </tr>
+      <tr>
+        <td class="screen">Fchat · Botbanhang · Vpage</td><td class="score s-lo">100–400k</td>
+        <td>Cùng phân khúc, cùng mức giá, đã có tệp khách và mạng lưới đại lý bán hàng. Havi không có lợi thế phân phối nào so với họ.</td>
+      </tr>
+      <tr>
+        <td class="screen">Buffer · Later · Metricool</td><td class="score s-mid">$6–18</td>
+        <td>Đều mạnh hơn Havi về lịch đăng hôm nay (kéo-thả, chế độ tháng, nhiều kênh hơn hẳn), và Metricool có bản miễn phí dùng được. Havi không nên cạnh tranh ở đây.</td>
+      </tr>
+      <tr>
+        <td class="screen">ChatGPT / Gemini</td><td class="score s-lo">0đ</td>
+        <td>Cạnh tranh trực tiếp với phần “AI viết caption”. Một chủ tiệm hỏi ChatGPT một câu là có caption, miễn phí. <strong>Riêng khả năng viết nội dung không phải là lý do để trả tiền.</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="pull">
+    <p>Đừng đấu với Buffer về lịch đăng, đừng đấu với Pancake về hộp thư. Cả hai trận đó đều đã có người thắng.</p>
+    <div class="attrib">Khuyến nghị định vị</div>
+  </div>
+
+  <h3>Ba chỗ Havi thật sự có thể thắng</h3>
+  <ol>
+    <li>
+      <strong>Quản trị nội dung cho chuỗi và nhượng quyền.</strong> Một chuỗi spa hay F&amp;B 30 chi nhánh
+      có bài toán rất thật: hội sở phải kiểm soát những gì 30 fanpage chi nhánh đăng, và hiện họ đang giải
+      bằng nhóm Zalo. Havi <em>đã xây sẵn</em> đúng kiến trúc cho việc này — organization trên workspace,
+      vai trò, quy trình duyệt, audit trail. Người mua là giám đốc marketing chuỗi, có ngân sách, và
+      <strong>không có đối thủ Việt Nam nào phục vụ họ</strong>. Đây là thị trường mà Sản phẩm B đã sẵn sàng.
+    </li>
+    <li>
+      <strong>AI có rào chắn sự thật.</strong> Trường <em>“Không được hứa (Banned Claims)”</em> trong Cài đặt
+      và Business Truth Pack là ý tưởng nguyên bản và có giá trị: một AI biết những gì doanh nghiệp
+      <em>không được phép</em> hứa. Với ngành spa, thẩm mỹ, giáo dục — nơi quảng cáo sai là bị phạt thật —
+      đây là lý do mua hàng mà ChatGPT không thay thế được. Hiện nó đang bị chôn trong Cài đặt.
+      Nó nên là tuyến đầu của định vị.
+    </li>
+    <li>
+      <strong>Trạng thái xuất bản trung thực.</strong> Nguyên tắc <em>“published nghĩa là nền tảng đã trả về
+      ID thật”</em> và trạng thái <code>pending_reconciliation</code> là thứ phần lớn công cụ Việt Nam làm ẩu.
+      Đây là điểm khác biệt kỹ thuật thật, nhưng chỉ bán được cho người đã từng bị công cụ khác lừa —
+      tức là khách hàng cấp chuỗi, một lần nữa.
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 8 ============ -->
+<section>
+  <div class="sechead"><span class="secnum">08</span><h2>Việc cần làm, theo thứ tự</h2></div>
+
+  <ol class="actions">
+    <li>
+      <span class="t">Gỡ <code>select_topic_image</code> khỏi đường publish — tuần này</span>
+      <span class="d">Bài không có media thì đăng không media, hoặc chặn ở bước duyệt. Không có phiên bản nào của tính năng này được phép chạy mà người dùng chưa nhìn thấy ảnh.</span>
+    </li>
+    <li>
+      <span class="t">Thay thanh tiến trình giả bằng công việc thật, hoặc bỏ hẳn bước 3</span>
+      <span class="d">Nếu Business Truth Pack chạy trong 800ms thì đừng vẽ thanh tiến trình — chỉ cần hiện kết quả. Onboarding 2 bước tốt hơn 3 bước có 1 bước diễn.</span>
+    </li>
+    <li>
+      <span class="t">Đo chi phí LLM thật trên mỗi content job, tách input và output</span>
+      <span class="d">Cho tới khi có con số này, mọi quyết định về giá đều là đoán, và mỗi khách hàng mới có thể đang làm lỗ nặng thêm. Đây là việc một buổi chiều với dữ liệu đã có sẵn trong <code>event_log</code>.</span>
+    </li>
+    <li>
+      <span class="t">Quyết dứt điểm: bán cho chủ tiệm, hay bán cho chuỗi</span>
+      <span class="d">Đây là quyết định gỡ được phần lớn mâu thuẫn ở mục 02 và 04. Khuyến nghị của tôi là <strong>chuỗi và nhượng quyền</strong>: kiến trúc đã sẵn sàng, đối thủ vắng mặt, người mua có ngân sách, và quy trình duyệt chuyển từ ma sát thành lý do mua hàng.</span>
+    </li>
+    <li>
+      <span class="t">Nếu chọn chủ tiệm: dồn toàn lực vào Hội thoại</span>
+      <span class="d">Luồng hội thoại, lịch sử khách, tìm kiếm, giao việc, đếm chưa đọc, realtime. Đó là thứ duy nhất tạo nhịp hằng ngày. Và cần biết trước rằng trận này phải đấu với Pancake trên sân của họ.</span>
+    </li>
+    <li>
+      <span class="t">Nav mobile còn 5 mục, và nối badge đếm vào nav</span>
+      <span class="d">Dashboard đã tính sẵn các con số. Một việc nhỏ, tác động trực tiếp lên tần suất quay lại.</span>
+    </li>
+    <li>
+      <span class="t">Duyệt từng bài, không chỉ duyệt tất cả</span>
+      <span class="d">Vừa là lỗi UX, vừa là mâu thuẫn với nguyên tắc lõi của sản phẩm.</span>
+    </li>
+    <li>
+      <span class="t">Dọn nợ nền: token màu, dark mode, i18n, breakpoint</span>
+      <span class="d">Không gấp, nhưng chi phí tăng theo cấp số nhân. Làm trước khi có màn hình thứ 15, đừng làm sau.</span>
+    </li>
+  </ol>
+
+  <div class="pull">
+    <p>Phần khó nhất của Havi đã xong. Phần chưa xong là biết mình bán cho ai.</p>
+    <div class="attrib">Kết luận</div>
+  </div>
+
+  <p>
+    Backend, mô hình miền, kỷ luật test, và văn hoá viết ra lý do đằng sau từng quyết định — đó là những thứ
+    phần lớn startup không bao giờ có được, và Havi đã có. Comment trong <code>nav-items.ts</code> ghi lại
+    việc chính tác giả đã đẩy Lộ trình và Bằng chứng ra khỏi nav vì <em>“người dùng không mở app theo cách đó”</em>
+    là loại trung thực sản phẩm rất hiếm.
+  </p>
+  <p>
+    Ba lỗi ở mục 01 là lỗi thi công, sửa trong một tuần. Câu hỏi ở mục 04 mới là câu quyết định 5 năm tới —
+    và nó không nằm trong code.
+  </p>
+</section>
+
+<footer>
+  <span>Havi teardown · dev @ d29a5d0</span>
+  <span>UI/UX · hành vi · sản phẩm · doanh thu · quy mô · cạnh tranh</span>
+</footer>
+
+</div>

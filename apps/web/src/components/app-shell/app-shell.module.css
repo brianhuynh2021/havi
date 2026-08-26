@@ -470,28 +470,101 @@
     background: #090d16;
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     -webkit-overflow-scrolling: touch;
+    align-items: stretch;
   }
   .mobileNavItem {
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 48px;
-    min-width: 48px;
-    padding: 12px 18px;
+    min-width: 60px;
+    padding: 8px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #b8c0d0;
-    font-size: 14.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .mobileNavItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
   }
   .mobileNavItemActive {
-    background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%);
-    color: #ffffff;
-    box-shadow: 0 4px 16px rgba(0, 102, 255, 0.4);
+    background: rgba(0, 102, 255, 0.15);
+    color: #3b82f6;
   }
+  .mobileNavIcon {
+    position: relative;
+    font-size: 20px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobileNavBadge {
+    position: absolute;
+    top: -4px;
+    right: -10px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 9px;
+    border: 2px solid #090d16;
+  }
+  .mobileNavLabel {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  
+  .mobileMoreMenu {
+    display: flex;
+    flex-direction: column;
+    background: #111827;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    padding: 8px 16px;
+    animation: slideDown 0.2s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .mobileMoreItem {
+    display: flex;
+    align-items: center;
+    padding: 14px 12px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-bottom: 4px;
+  }
+  .mobileMoreItem:last-child {
+    margin-bottom: 0;
+  }
+  .mobileMoreItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .mobileMoreItemActive {
+    background: rgba(0, 102, 255, 0.15);
+    color: #ffffff;
+  }
+  .mobileMoreBadge {
+    margin-left: auto;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9px;
+  }
+  
   .content {
     margin-left: 0;
   }

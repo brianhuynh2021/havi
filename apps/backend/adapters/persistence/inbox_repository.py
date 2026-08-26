@@ -53,6 +53,20 @@ class InboxRepository:
         )
         return result.scalar_one()
 
+    async def count_by_statuses(
+        self,
+        *,
+        workspace_id: UUID,
+        statuses: list[InboxItemStatus],
+    ) -> int:
+        result = await self._session.execute(
+            select(func.count(InboxItem.id)).where(
+                InboxItem.workspace_id == workspace_id,
+                InboxItem.status.in_(statuses),
+            )
+        )
+        return result.scalar_one()
+
     async def get_by_external_id(
         self, *, workspace_id: UUID, platform: Platform, external_message_id: str
     ) -> InboxItem | None:

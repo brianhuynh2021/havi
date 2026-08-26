@@ -37,16 +37,32 @@ def _date_range(start: date, end: date) -> tuple[datetime, datetime]:
     return range_start, range_end
 
 
+from adapters.persistence.connection_repository import ConnectionRepository
+from core.enums import ConnectionStatus
+
 @router.get("/dashboard", response_model=DashboardContentSummary)
 async def dashboard(workspace_id: WorkspaceDep, session: DbSessionDep) -> DashboardContentSummary:
     """Số liệu thật tối thiểu cho tab Tổng quan."""
     counts = await ContentRepository(session).count_items_by_status(workspace_id=workspace_id)
+    
+    connections = await ConnectionRepository(session).list_for_workspace(workspace_id)
+    total_connections = len(connections)
+    broken_connections = sum(1 for c in connections if c.status != ConnectionStatus.CONNECTED)
+
+    unhandled_inbox = await InboxRepository(session).count_by_statuses(
+        workspace_id=workspace_id,
+        statuses=[InboxItemStatus.NEW, InboxItemStatus.DRAFTED]
+    )
+
     return DashboardContentSummary(
         drafts=counts.get(ContentStatus.DRAFT, 0),
         pending_approval=counts.get(ContentStatus.PENDING_APPROVAL, 0),
         scheduled=counts.get(ContentStatus.SCHEDULED, 0),
         published=counts.get(ContentStatus.PUBLISHED, 0),
         failed=counts.get(ContentStatus.FAILED, 0) + counts.get(ContentStatus.DEAD_LETTER, 0),
+        broken_connections=broken_connections,
+        total_connections=total_connections,
+        unhandled_inbox=unhandled_inbox,
     )
 
 
