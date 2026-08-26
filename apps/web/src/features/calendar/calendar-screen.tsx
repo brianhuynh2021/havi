@@ -28,65 +28,6 @@ const vnTime = new Intl.DateTimeFormat("vi-VN", {
   hour12: false,
 });
 
-function getTopicImage(mediaNote?: string | null, text?: string | null): string {
-  const combined = `${mediaNote || ""} ${text || ""}`.toLowerCase();
-  if (
-    combined.includes("công nghệ") ||
-    combined.includes("tech") ||
-    combined.includes("ai") ||
-    combined.includes("agent") ||
-    combined.includes("lập trình") ||
-    combined.includes("máy tính") ||
-    combined.includes("khóa học") ||
-    combined.includes("đào tạo") ||
-    combined.includes("nhật minh")
-  ) {
-    return "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=80";
-  }
-  if (
-    combined.includes("quà") ||
-    combined.includes("gift") ||
-    combined.includes("thưởng") ||
-    combined.includes("khuyến mãi") ||
-    combined.includes("ưu đãi") ||
-    combined.includes("bốc thăm") ||
-    combined.includes("voucher") ||
-    combined.includes("trò chơi") ||
-    combined.includes("game")
-  ) {
-    return "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1200&q=80";
-  }
-  if (
-    combined.includes("tóc") ||
-    combined.includes("hair") ||
-    combined.includes("gội") ||
-    combined.includes("cắt") ||
-    combined.includes("uốn") ||
-    combined.includes("nhuộm")
-  ) {
-    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80";
-  }
-  if (
-    combined.includes("cafe") ||
-    combined.includes("cà phê") ||
-    combined.includes("ăn") ||
-    combined.includes("uống")
-  ) {
-    return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80";
-  }
-  if (
-    combined.includes("da") ||
-    combined.includes("dưỡng") ||
-    combined.includes("mặt") ||
-    combined.includes("trị liệu") ||
-    combined.includes("massage") ||
-    combined.includes("facial")
-  ) {
-    return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80";
-  }
-  return "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80";
-}
-
 function dayLabel(iso: string): string {
   const [, month, day] = iso.split("-");
   return `${day}/${month}`;
@@ -501,11 +442,17 @@ export function CalendarScreen() {
                                   {item.channel.includes("facebook") ? "FB" : item.channel.includes("tiktok") ? "TikTok" : item.channel.includes("youtube") ? "YouTube" : "Kênh"}
                                 </span>
                               </div>
-                              <img
-                                src={getTopicImage(item.media_note, item.text)}
-                                alt="Thumb"
-                                className={styles.timelineThumb}
-                              />
+                              {item.media_url ? (
+                                <img
+                                  src={item.media_url}
+                                  alt="Thumb"
+                                  className={styles.timelineThumb}
+                                />
+                              ) : (
+                                <div className={styles.timelineThumb} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-sunken)', color: 'var(--text-muted)' }}>
+                                  📝
+                                </div>
+                              )}
                               <div className={styles.timelineContent}>
                                 <div className={styles.timelineSnippet}>{item.text}</div>
                                 <div className={styles.timelineRowMeta}>
@@ -586,14 +533,15 @@ export function CalendarScreen() {
 
             <div className={styles.modalBody}>{selectedItem.item.text}</div>
 
-            <div className={styles.imagePreviewBox}>
-              <img
-                src={getTopicImage(selectedItem.item.media_note, selectedItem.item.text)}
-                alt="Ảnh minh hoạ bài đăng"
-                className={styles.modalPreviewImage}
-              />
-              <span className={styles.imageBadge}>✨ Ảnh minh hoạ AI đính kèm bài đăng</span>
-            </div>
+            {selectedItem.item.media_url ? (
+              <div className={styles.imagePreviewBox}>
+                <img
+                  src={selectedItem.item.media_url}
+                  alt="Ảnh đính kèm"
+                  className={styles.modalPreviewImage}
+                />
+              </div>
+            ) : null}
 
             {selectedItem.item.media_note ? (
               <div className={styles.modalMediaNote}>

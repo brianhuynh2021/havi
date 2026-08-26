@@ -7,12 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { ConnectionList } from "@/features/connections/connection-list";
 import { useSession } from "@/lib/auth/session";
-import { readTokens, writeTokens } from "@/lib/auth/token-store";
+import { readTokens } from "@/lib/auth/token-store";
 
 import {
-  createWorkspace,
   fetchDefaultShopName,
   initializeBusinessTruthPack,
+  saveWorkspace,
 } from "./onboarding.api";
 import {
   industryOptions,
@@ -39,12 +39,13 @@ export function OnboardingScreen() {
       ? 2
       : 1,
   );
+  const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(
+    () => readTokens()?.activeWorkspaceId ?? null,
+  );
   const [shopName, setShopName] = useState("");
   const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
   const [learning, setLearning] = useState(false);
-  const [progressPercent, setProgressPercent] = useState(0);
-  const [completedStages, setCompletedStages] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,8 +54,6 @@ export function OnboardingScreen() {
   const handleStartLearning = useCallback(async () => {
     if (learning) return;
     setLearning(true);
-    setProgressPercent(25);
-    setCompletedStages([0]);
 
     // Kích hoạt Business Truth Pack: lưu Brand Voice & FAQ mẫu chuẩn ngành vào database
     try {
@@ -63,16 +62,7 @@ export function OnboardingScreen() {
       // Tiếp tục luồng ngay cả khi có cảnh báo mạng
     }
 
-    setProgressPercent(70);
-    setCompletedStages([0, 1]);
-
-    setTimeout(() => {
-      setProgressPercent(100);
-      setCompletedStages([0, 1, 2]);
-      setTimeout(() => {
-        router.replace("/app");
-      }, 400);
-    }, 200);
+    router.replace("/app");
   }, [learning, industry, shopName, router]);
 
   function handleStep2Proceed() {
@@ -99,8 +89,9 @@ export function OnboardingScreen() {
 
 
 
-  /** Tạo tiệm thật ở cuối bước 1 — từ đây trở đi user đã có workspace, nên bước
-   * 2 và 3 có hỏng thì cũng không kẹt: token mới đã hết `needs_onboarding`. */
+  /** Lưu hoặc cập nhật tiệm (Idempotent) ở cuối bước 1.
+   * Nếu user quay lại từ bước 2 để sửa tên tiệm, cập nhật tiệm hiện tại
+   * thay vì tạo tiệm thứ hai trùng tên. */
   async function submitIndustry() {
     if (!shopName.trim()) {
       setError("Nhập tên tiệm để Havi gọi đúng tên trong bài viết");
@@ -110,22 +101,18 @@ export function OnboardingScreen() {
 
     setError(null);
     setSubmitting(true);
-    const result = await createWorkspace(shopName.trim(), industry);
+    const currentWsId = createdWorkspaceId || readTokens()?.activeWorkspaceId;
+    const result = await saveWorkspace(shopName.trim(), industry, currentWsId);
     setSubmitting(false);
     if (!result.ok) {
       setError(result.message);
       return;
     }
+    if (result.tokens.activeWorkspaceId) {
+      setCreatedWorkspaceId(result.tokens.activeWorkspaceId);
+    }
     signIn(result.tokens);
     setStep(2);
-  }
-
-  function goToApp() {
-    const current = readTokens();
-    if (current) {
-      writeTokens({ ...current, needsOnboarding: false });
-    }
-    router.replace("/app");
   }
 
 
@@ -279,19 +266,30 @@ export function OnboardingScreen() {
               <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
             </div>
             <div className={styles.stepActions}>
-              {/* Không có nút quay lại bước 1: tiệm đã tạo thật rồi, bấm lại sẽ
-                  tạo tiệm thứ hai trùng tên. Đổi tên/ngành làm ở Cài đặt. */}
-              <Button variant="outline" scale="large" onClick={handleStep2Proceed}>
-                Bỏ qua
-              </Button>
               <Button
-                variant="primary"
+                variant="ghost"
                 scale="large"
-                disabled={!connected}
-                onClick={handleStep2Proceed}
+                onClick={() => setStep(1)}
               >
-                {connected ? "Tiếp tục →" : "Tiếp tục"}
+                ← Quay lại
               </Button>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className={styles.skipButton}
+                  onClick={handleStep2Proceed}
+                >
+                  Bỏ qua, tôi sẽ kết nối sau
+                </button>
+                <Button
+                  variant="primary"
+                  scale="large"
+                  disabled={!connected}
+                  onClick={handleStep2Proceed}
+                >
+                  {connected ? "Tiếp tục →" : "Tiếp tục"}
+                </Button>
+              </div>
             </div>
 
           </>
@@ -310,48 +308,10 @@ export function OnboardingScreen() {
               </div>
             ) : (
               <div className={styles.learningCard}>
-                {progressPercent < 100 ? (
-                  <span className={styles.spinner} aria-hidden="true" />
-                ) : (
-                  <div className={styles.successIconBadge}>✨</div>
-                )}
-
-                <div className={styles.progressContainer}>
-                  <div className={styles.progressBarWrapper}>
-                    <div
-                      className={styles.progressBarFill}
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <span className={styles.progressPercentText}>{progressPercent}%</span>
+                <span className={styles.spinner} aria-hidden="true" />
+                <div style={{ marginTop: "16px", color: "var(--text-muted)", fontSize: "15px" }}>
+                  Đang thiết lập không gian làm việc của bạn...
                 </div>
-
-                <div className={styles.stageList}>
-                  {[
-                    { id: 0, text: "⚡ Đang phân tích ngành nghề & dịch vụ tiệm" },
-                    { id: 1, text: "🎨 Đang hiệu chỉnh Brand Voice & văn phong thu hút" },
-                    { id: 2, text: "✨ Đã sẵn sàng kịch bản & 4 bản nháp đầu tiên!" },
-                  ].map((stg) => {
-                    const isDone = completedStages.includes(stg.id);
-                    return (
-                      <div
-                        key={stg.id}
-                        className={`${styles.stageItem} ${isDone ? styles.stageItemDone : ""}`}
-                      >
-                        <span className={styles.stageIcon}>{isDone ? "✓" : "○"}</span>
-                        <span>{stg.text}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {progressPercent === 100 ? (
-                  <div style={{ width: "100%", maxWidth: "280px", marginTop: "12px" }}>
-                    <Button variant="primary" scale="large" onClick={goToApp}>
-                      Vào app trải nghiệm 🚀
-                    </Button>
-                  </div>
-                ) : null}
               </div>
             )}
           </>

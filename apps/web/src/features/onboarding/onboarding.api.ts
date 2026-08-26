@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, toStoredTokens } from "@/features/auth/auth.api";
-import type { StoredTokens } from "@/lib/auth/token-store";
+import { readTokens, type StoredTokens } from "@/lib/auth/token-store";
 import type { IndustryOption } from "./onboarding.fixture";
 
 /** Tên đã nhập lúc đăng ký, để điền sẵn ô "Tên tiệm".
@@ -21,19 +21,35 @@ export type CreateWorkspaceResult =
   | { ok: false; message: string };
 
 /**
- * Bước 1 onboarding: tạo tiệm rồi lấy token mới.
+ * Bước 1 onboarding: tạo tiệm hoặc cập nhật tiệm (Idempotent).
  *
- * Hai lượt gọi chứ không một: `POST /workspaces` tạo tiệm và set nó thành
- * active ở phía DB, nhưng JWT đang cầm trên tay được ký từ trước đó nên vẫn
- * mang `needs_onboarding: true` và không có `active_workspace_id`. Chỉ
- * `/workspaces/{id}/activate` mới ký lại token. Bỏ bước này thì user tạo tiệm
- * xong vẫn bị route guard đá ngược về /onboarding — vòng lặp không lối ra.
+ * Nếu đã có `existingWorkspaceId` (ví dụ user quay lại từ bước 2 để sửa tên),
+ * gọi `PATCH /workspaces/{id}` để cập nhật thay vì tạo tiệm thứ 2 trùng tên.
  */
-export async function createWorkspace(
+export async function saveWorkspace(
   name: string,
   industry: IndustryOption["value"],
+  existingWorkspaceId?: string | null,
 ): Promise<CreateWorkspaceResult> {
   try {
+    if (existingWorkspaceId) {
+      const updated = await apiClient.PATCH("/workspaces/{workspace_id}", {
+        params: { path: { workspace_id: existingWorkspaceId } },
+        body: { name, industry },
+      });
+      if (updated.error || !updated.data) {
+        return {
+          ok: false,
+          message: "Chưa cập nhật được thông tin tiệm, thử lại giúp bạn nhé.",
+        };
+      }
+      const tokens = readTokens();
+      if (!tokens) {
+        return { ok: false, message: "Phiên đăng nhập không hợp lệ" };
+      }
+      return { ok: true, tokens };
+    }
+
     const created = await apiClient.POST("/workspaces", {
       body: { name, industry },
     });
@@ -49,8 +65,6 @@ export async function createWorkspace(
       { params: { path: { workspace_id: created.data.id } } },
     );
     if (activated.error || !activated.data) {
-      // Tiệm đã tạo thật, chỉ token là cũ. Nói theo hướng "thử lại" thay vì
-      // "tạo lại" để chủ tiệm không bấm tạo thêm tiệm thứ hai trùng tên.
       return {
         ok: false,
         message: "Đã tạo tiệm nhưng chưa vào được, thử lại giúp bạn nhé.",
@@ -62,6 +76,8 @@ export async function createWorkspace(
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export const createWorkspace = saveWorkspace;
 
 export async function initializeBusinessTruthPack(
   industry: IndustryOption["value"] | null,

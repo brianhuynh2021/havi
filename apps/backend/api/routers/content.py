@@ -278,38 +278,10 @@ async def generate_item_image(
     approvals: ApprovalServiceDep,
 ) -> GenerateImageResponse:
     """Tạo sinh ảnh AI mới bằng Gemini / Imagen theo ngữ cảnh bài viết."""
-    try:
-        item = await approvals.get_item(workspace_id=workspace_id, item_id=content_id)
-    except ContentItemNotFound as exc:
-        raise _not_found() from exc
-
-    text_snippet = item.text.lower()
-    prompt_used = payload.prompt or f"Professional AI studio visual for: {item.text[:150]}"
-
-    # Visual AI chất lượng cao theo ngành
-    if any(
-        k in text_snippet for k in ["ai", "tech", "học", "công nghệ", "agent", "lập trình", "khóa", "robot", "scratch", "python"]
-    ):
-        image_url = "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=85"
-    elif any(k in text_snippet for k in ["spa", "da", "gội", "chăm sóc", "thư giãn"]):
-        image_url = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=85"
-    elif any(k in text_snippet for k in ["cafe", "quán", "món", "ẩm thực", "ăn", "uống"]):
-        image_url = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&q=85"
-    elif any(k in text_snippet for k in ["nhà", "đất", "bất động sản", "căn hộ"]):
-        image_url = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=85"
-    else:
-        image_url = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=85"
-
-    await approvals.update_item(
-        workspace_id=workspace_id,
-        item_id=content_id,
-        user_id=auth.user_id,
-        text=None,
-        media_note=f"🖼️ Ảnh minh họa gợi ý ({payload.style or '3D Studio'})",
-        media_url=image_url,
-        scheduled_at=None,
+    raise HTTPException(
+        status_code=501,
+        detail="Tính năng tạo ảnh AI đang được phát triển. Tạm thời vô hiệu hoá để đảm bảo không trả về ảnh stock (fake) cho khách hàng."
     )
-    return GenerateImageResponse(media_url=image_url, prompt_used=prompt_used)
 
 
 @router.get("/{content_id}/versions", response_model=list[ContentItemVersion])

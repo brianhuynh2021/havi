@@ -226,4 +226,45 @@ describe("OnboardingScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("#MonNgonMoiNgay")).toBeInTheDocument();
   });
+
+  it("quay lại bước 1 sửa tên tiệm thì gọi PATCH cập nhật chứ không tạo thêm tiệm mới (Idempotent)", async () => {
+    const fetchSpy = mockApi();
+    renderOnboarding();
+    await waitFor(() =>
+      expect(screen.getByLabelText("Tên tiệm")).toHaveValue("Spa An Nhiên"),
+    );
+
+    const user = userEvent.setup();
+    await chonNganhVaTiepTuc();
+
+    // Đang ở bước 2
+    expect(
+      await screen.findByRole("heading", { name: /kết nối kênh của bạn/i }),
+    ).toBeInTheDocument();
+
+    // Bấm nút Quay lại về bước 1
+    const backBtn = screen.getByRole("button", { name: /quay lại/i });
+    await user.click(backBtn);
+
+    // Đã quay về bước 1
+    expect(
+      screen.getByRole("heading", { name: /cơ sở của bạn tên gì/i }),
+    ).toBeInTheDocument();
+
+    // Sửa tên tiệm
+    const nameInput = screen.getByLabelText("Tên tiệm");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Spa An Nhiên Premium");
+
+    // Bấm Tiếp tục lần 2
+    await user.click(screen.getByRole("button", { name: /^tiếp tục$/i }));
+
+    // Kiểm tra API: Lần 2 phải gọi PATCH /workspaces/w1 chứ không POST /workspaces tạo mới
+    const patchCalls = fetchSpy.mock.calls.filter(([input, init]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      const method = input instanceof Request ? input.method : init?.method;
+      return url.includes("/workspaces/w1") && method === "PATCH";
+    });
+    expect(patchCalls.length).toBe(1);
+  });
 });

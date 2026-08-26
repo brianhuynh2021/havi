@@ -31,8 +31,6 @@ type DraftListProps = {
   onSaved: (item: ContentItem) => void;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
-  onGenerateImage: (id: string) => void;
-  generatingImageId: string | null;
 };
 
 export function DraftList({
@@ -43,8 +41,6 @@ export function DraftList({
   onSaved,
   onDismiss,
   onDismissAll,
-  onGenerateImage,
-  generatingImageId,
 }: DraftListProps) {
   if (!items.length) {
     return (
@@ -98,15 +94,6 @@ export function DraftList({
                     <Button variant="outline" onClick={() => onEdit(item.id)} disabled={busy}>
                       Sửa
                     </Button>
-                    {!item.media_url ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => onGenerateImage(item.id)}
-                        disabled={busy || generatingImageId === item.id}
-                      >
-                        {generatingImageId === item.id ? "Đang tìm ảnh…" : "Thêm ảnh minh hoạ"}
-                      </Button>
-                    ) : null}
                     <button
                       type="button"
                       className={styles.linkDanger}

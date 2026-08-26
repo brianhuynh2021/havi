@@ -31,7 +31,6 @@ import {
   createJob,
   dismissAllItems,
   dismissItem,
-  generateItemImage,
   listPendingItems,
   uploadMedia,
   type ContentItem,
@@ -74,7 +73,6 @@ export function ContentCreationScreen() {
   const [quotaKey, setQuotaKey] = useState(0);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [generatingImageId, setGeneratingImageId] = useState<string | null>(null);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
@@ -331,21 +329,6 @@ export function ContentCreationScreen() {
     setItems([]);
   }
 
-  async function onGenerateImage(id: string) {
-    setGeneratingImageId(id);
-    const result = await generateItemImage(id, "3d_studio");
-    setGeneratingImageId(null);
-    if (!result.ok) {
-      addToast({ type: "error", title: "Chưa tìm được ảnh", description: result.message });
-      return;
-    }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, media_url: result.data.media_url } : item,
-      ),
-    );
-  }
-
   return (
     <>
       <header className={styles.header}>
@@ -436,8 +419,6 @@ export function ContentCreationScreen() {
                 }}
                 onDismiss={onDismiss}
                 onDismissAll={onDismissAll}
-                onGenerateImage={onGenerateImage}
-                generatingImageId={generatingImageId}
               />
 
               {/* BƯỚC 3 — chung với nhánh Video. */}
