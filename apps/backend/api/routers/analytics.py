@@ -18,6 +18,7 @@ from core.schemas import (
     ChannelAttribution,
     DashboardContentSummary,
     EventLogRecord,
+    FailedPostRecord,
     OperationsMetrics,
     OperationsPublishMetric,
     Page,
@@ -281,3 +282,42 @@ async def timeseries(
         )
         points.append({"period": _period_label(period, granularity=granularity), "value": count})
     return AnalyticsTimeseries(metric=metric, points=points)
+
+
+@router.get("/failed-posts", response_model=list[FailedPostRecord])
+async def failed_posts(
+    workspace_id: WorkspaceDep, session: DbSessionDep, start: date, end: date
+) -> list[FailedPostRecord]:
+    """Danh sách các bài đăng thất bại trong kỳ, kèm lý do."""
+    range_start, range_end = _date_range(start, end)
+    
+    from sqlalchemy import select
+    from domain.models.publish import PublishJob
+    from domain.models.content import ContentItem
+    
+    result = await session.execute(
+        select(ContentItem, PublishJob)
+        .join(PublishJob, PublishJob.content_item_id == ContentItem.id)
+        .where(
+            ContentItem.workspace_id == workspace_id,
+            PublishJob.updated_at >= range_start,
+            PublishJob.updated_at < range_end,
+            PublishJob.status.in_([PublishStatus.FAILED, PublishStatus.DEAD_LETTER])
+        )
+        .order_by(PublishJob.updated_at.desc())
+        .limit(20)
+    )
+    
+    records = []
+    for item, job in result.all():
+        records.append(
+            FailedPostRecord(
+                id=item.id,
+                channel=item.channel,
+                caption=item.text,
+                scheduled_at=item.scheduled_at or job.scheduled_at,
+                failure_kind=job.failure_kind,
+                failure_detail=job.failure_detail,
+            )
+        )
+    return records

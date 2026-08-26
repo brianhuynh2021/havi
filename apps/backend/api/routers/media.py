@@ -171,3 +171,13 @@ async def update_media(
     except MediaAssetNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy media asset") from exc
     return _to_schema(asset, media_service)
+
+
+@router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_media(
+    asset_id: UUID, workspace_id: WorkspaceDep, media_service: MediaServiceDep
+) -> None:
+    try:
+        await media_service.delete_media(workspace_id=workspace_id, asset_id=asset_id)
+    except MediaAssetNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy media asset") from exc

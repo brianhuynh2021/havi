@@ -1,13 +1,13 @@
 .title {
   font-size: 24px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   text-align: center;
 }
 
 .subtitle {
   margin-top: 8px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 14.5px;
   text-align: center;
 }
@@ -28,11 +28,11 @@
 .label {
   font-size: 13.5px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
 }
 
 .error {
-  color: #ef4444;
+  color: var(--color-red-500);
   font-size: 13px;
   font-weight: 600;
 }
@@ -42,7 +42,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: #a5b4fc;
+  color: var(--color-indigo-300);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -51,7 +51,7 @@
 }
 
 .inlineLink:hover {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .divider {
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 12px;
   margin-top: 24px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 12px;
 }
 
@@ -79,17 +79,17 @@
 }
 
 .footerBlock p {
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 14.5px;
 }
 
 .footerBlock a {
-  color: #6366f1;
+  color: var(--color-indigo-500);
   font-weight: 700;
 }
 
 .consentText {
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 12px;
   line-height: 1.5;
   text-align: center;

@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from "react";
 import styles from "./danger-confirm-modal.module.css";
 
-export type DangerActionType = "workspace" | "account";
+export type DangerActionType = "workspace" | "account" | "custom";
 
 interface DangerConfirmModalProps {
   isOpen: boolean;
   type: DangerActionType;
   targetName?: string;
   isDeleting: boolean;
+  customKeyword?: string;
+  customTitle?: string;
+  customLostItems?: string[];
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -19,12 +22,15 @@ export function DangerConfirmModal({
   type,
   targetName = "tiệm này",
   isDeleting,
+  customKeyword = "XOA",
+  customTitle = "Xác nhận xoá",
+  customLostItems = [],
   onClose,
   onConfirm,
 }: DangerConfirmModalProps) {
   const [confirmInput, setConfirmInput] = useState("");
 
-  const requiredKeyword = type === "workspace" ? "XOATIEM" : "XOATAIKHOAN";
+  const requiredKeyword = type === "workspace" ? "XOATIEM" : type === "account" ? "XOATAIKHOAN" : customKeyword;
   const isMatch = confirmInput.trim().toUpperCase() === requiredKeyword;
 
   useEffect(() => {
@@ -54,7 +60,11 @@ export function DangerConfirmModal({
           </div>
           <div className={styles.headerText}>
             <h3 className={styles.modalTitle}>
-              {type === "workspace" ? `Xác nhận xoá tiệm "${targetName}"` : "Xác nhận xoá tài khoản Havi"}
+              {type === "workspace" 
+                ? `Xác nhận xoá tiệm "${targetName}"` 
+                : type === "account" 
+                  ? "Xác nhận xoá tài khoản Havi"
+                  : customTitle}
             </h3>
             <p className={styles.modalSubtitle}>
               ⚠️ Hành động này mang tính vĩnh viễn và KHÔNG THỂ HOÀN TÁC
@@ -94,7 +104,7 @@ export function DangerConfirmModal({
                     <span>Xoá toàn bộ bản nháp, lịch đăng và kho media của thương hiệu này.</span>
                   </li>
                 </>
-              ) : (
+              ) : type === "account" ? (
                 <>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
@@ -109,6 +119,13 @@ export function DangerConfirmModal({
                     <span>Mất quyền lợi gói cước đã đăng ký và không thể khôi phục lại tài khoản.</span>
                   </li>
                 </>
+              ) : (
+                customLostItems.map((item, idx) => (
+                  <li key={idx} className={styles.lostItem}>
+                    <span className={styles.lostItemIcon}>✕</span>
+                    <span>{item}</span>
+                  </li>
+                ))
               )}
             </ul>
 
@@ -143,7 +160,7 @@ export function DangerConfirmModal({
             onClick={onClose}
             disabled={isDeleting}
           >
-            💙 {type === "workspace" ? "Giữ Lại Tiệm (Khuyên dùng)" : "Giữ Lại Tài Khoản (Khuyên dùng)"}
+            💙 {type === "workspace" ? "Giữ Lại Tiệm (Khuyên dùng)" : type === "account" ? "Giữ Lại Tài Khoản (Khuyên dùng)" : "Hủy thao tác"}
           </button>
           <button
             type="button"
@@ -151,7 +168,7 @@ export function DangerConfirmModal({
             onClick={onConfirm}
             disabled={!isMatch || isDeleting}
           >
-            {isDeleting ? "Đang xử lý xoá..." : "Xác nhận xoá vĩnh viễn"}
+            {isDeleting ? "Đang xử lý xoá..." : type === "custom" ? "Xác nhận xoá" : "Xác nhận xoá vĩnh viễn"}
           </button>
         </div>
       </div>

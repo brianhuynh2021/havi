@@ -298,6 +298,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspace_id}/members/{user_id}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Member Role */
+        put: operations["update_member_role_workspaces__workspace_id__members__user_id__role_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members/{user_id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend Invite */
+        post: operations["resend_invite_workspaces__workspace_id__members__user_id__resend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/brand-profile": {
         parameters: {
             query?: never;
@@ -400,7 +434,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Media */
+        delete: operations["delete_media_media__asset_id__delete"];
         options?: never;
         head?: never;
         /** Update Media */
@@ -1316,6 +1351,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/failed-posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Failed Posts
+         * @description Danh sách các bài đăng thất bại trong kỳ, kèm lý do.
+         */
+        get: operations["failed_posts_analytics_failed_posts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/billing/subscription": {
         parameters: {
             query?: never;
@@ -1859,6 +1914,12 @@ export interface components {
             published: number;
             /** Failed */
             failed: number;
+            /** Broken Connections */
+            broken_connections: number;
+            /** Unhandled Inbox */
+            unhandled_inbox: number;
+            /** Total Connections */
+            total_connections: number;
         };
         /**
          * EligibleChannelsResponse
@@ -1915,6 +1976,25 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** FailedPostRecord */
+        FailedPostRecord: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            channel: components["schemas"]["Channel"];
+            /** Caption */
+            caption: string;
+            /**
+             * Scheduled At
+             * Format: date-time
+             */
+            scheduled_at: string;
+            failure_kind?: components["schemas"]["PublishFailureKind"] | null;
+            /** Failure Detail */
+            failure_detail?: string | null;
         };
         /**
          * FaqEntry
@@ -2933,6 +3013,10 @@ export interface components {
          * @enum {string}
          */
         WorkspaceRole: "owner" | "marketer" | "reviewer" | "sales";
+        /** WorkspaceRoleUpdate */
+        WorkspaceRoleUpdate: {
+            role: components["schemas"]["WorkspaceRole"];
+        };
         /** WorkspaceUpdate */
         WorkspaceUpdate: {
             /** Name */
@@ -3531,6 +3615,74 @@ export interface operations {
             };
         };
     };
+    update_member_role_workspaces__workspace_id__members__user_id__role_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceRoleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceMember"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_invite_workspaces__workspace_id__members__user_id__resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceMember"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_brand_profile_brand_profile_get: {
         parameters: {
             query?: never;
@@ -3671,6 +3823,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MediaAsset"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_media_media__asset_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -5193,6 +5374,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalyticsTimeseries"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    failed_posts_analytics_failed_posts_get: {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailedPostRecord"][];
                 };
             };
             /** @description Validation Error */

@@ -9,6 +9,7 @@ import { WorkspaceName } from "./workspace-name";
 import { Logo } from "@/components/ui/logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PwaInstallModal } from "@/components/pwa/pwa-install-modal";
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -52,6 +53,7 @@ export function AppShell({ children }: AppShellProps) {
           <div />
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <PwaInstallModal />
+            <ThemeToggle />
             <LanguageSwitcher variant="pill" />
             <NotificationBell />
           </div>

@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  background-color: #090d16;
+  background-color: var(--color-slate-950);
   background-image:
     radial-gradient(circle at 50% 10%, rgba(0, 102, 255, 0.18) 0%, transparent 60%),
     radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.12) 0%, transparent 50%);
@@ -24,7 +24,7 @@
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .card {
@@ -41,7 +41,7 @@
 
 .tagline {
   margin-top: 20px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 12px;
   text-align: center;
 }

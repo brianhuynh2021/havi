@@ -105,3 +105,7 @@ class MediaRepository:
             asset.status = status
         await self._session.flush()
         return asset
+
+    async def delete(self, asset: MediaAsset) -> None:
+        await self._session.delete(asset)
+        await self._session.flush()

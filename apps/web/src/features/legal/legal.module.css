@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
-  background: #080d18;
-  color: #f8fafc;
+  background: var(--color-slate-950);
+  color: var(--color-slate-50);
 }
 
 .header {
@@ -31,18 +31,18 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .backLink {
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 14px;
   font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .backLink:hover {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .main {
@@ -55,13 +55,13 @@
   font-family: var(--font-display);
   font-size: 36px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   text-wrap: pretty;
 }
 
 .updated {
   margin-top: 8px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 13.5px;
 }
 
@@ -71,7 +71,7 @@
   border-radius: 16px;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 15.5px;
   line-height: 1.65;
   backdrop-filter: blur(12px);
@@ -85,18 +85,18 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--color-slate-50);
 }
 
 .paragraph {
   margin-top: 12px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 15.5px;
   line-height: 1.7;
 }
 
 .link {
-  color: #38bdf8;
+  color: var(--color-blue-400);
   font-weight: 600;
   text-decoration: underline;
 }
@@ -112,10 +112,10 @@
 }
 
 .crossLinks a {
-  color: #a5b4fc;
+  color: var(--color-indigo-300);
   transition: color 0.2s ease;
 }
 
 .crossLinks a:hover {
-  color: #ffffff;
+  color: var(--color-white);
 }

@@ -53,12 +53,27 @@ export function ReportsScreen() {
 
   function getStatCards(reportsData: ReportsData) {
     return [
-      { label: t("dashboard.publishedPosts", "Bài đã đăng"), value: String(reportsData.summary.published_posts) },
-      { label: t({ vi: "Hội thoại đã nhận", en: "Inbox items received" }), value: String(reportsData.summary.inbox_items) },
-      { label: t({ vi: "Phản hồi đã gửi", en: "Replies sent" }), value: String(reportsData.summary.replies_sent) },
-      { label: t({ vi: "Lượt đăng thất bại", en: "Failed publishes" }), value: String(reportsData.summary.failed_posts) },
+      {
+        label: t("dashboard.publishedPosts", "Bài đã đăng"),
+        value: String(reportsData.summary.published_posts),
+        change: reportsData.summary.change_vs_previous_period?.published_posts || 0,
+      },
+      {
+        label: t({ vi: "Hội thoại đã nhận", en: "Inbox items received" }),
+        value: String(reportsData.summary.inbox_items),
+        change: reportsData.summary.change_vs_previous_period?.inbox_items || 0,
+      },
+      {
+        label: t({ vi: "Phản hồi đã gửi", en: "Replies sent" }),
+        value: String(reportsData.summary.replies_sent),
+        change: reportsData.summary.change_vs_previous_period?.replies_sent || 0,
+      },
+      {
+        label: t({ vi: "Lượt đăng thất bại", en: "Failed publishes" }),
+        value: String(reportsData.summary.failed_posts),
+        change: reportsData.summary.change_vs_previous_period?.failed_posts || 0,
+      },
     ];
-
   }
 
   const maxPosts = Math.max(
@@ -124,12 +139,23 @@ export function ReportsScreen() {
           )}
 
           <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
-            {getStatCards(data).map((card) => (
-              <div key={card.label} className={styles.statCard}>
-                <div className={styles.statValue}>{card.value}</div>
-                <div className={styles.statLabel}>{card.label}</div>
-              </div>
-            ))}
+            {getStatCards(data).map((card) => {
+              const isPositive = card.change > 0;
+              const isZero = card.change === 0;
+              return (
+                <div key={card.label} className={styles.statCard}>
+                  <div className={styles.statValueRow}>
+                    <div className={styles.statValue}>{card.value}</div>
+                    {!isZero && (
+                      <div className={`${styles.statChange} ${isPositive ? styles.changePositive : styles.changeNegative}`}>
+                        {isPositive ? "↑" : "↓"} {Math.abs(card.change)}%
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.statLabel}>{card.label}</div>
+                </div>
+              );
+            })}
           </section>
 
           <section className={styles.chartCard} aria-label="Bài đăng theo tuần">
@@ -203,6 +229,40 @@ export function ReportsScreen() {
                       )}
                     </div>
                     <p className={styles.topPostText}>{post.caption}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className={styles.failedPostsCard} aria-label="Bài đăng gặp sự cố">
+            <h2 className={styles.sectionTitle}>
+              {t({ vi: "🚨 Bài Đăng Gặp Sự Cố", en: "Failed Posts" })}
+            </h2>
+            {!data.failedPosts || data.failedPosts.length === 0 ? (
+              <EmptyState
+                title={t({ vi: "Không có sự cố nào", en: "No failures" })}
+                body={t({ vi: "Tuyệt vời! Không có bài viết nào bị lỗi trong kỳ báo cáo này.", en: "Great! No posts failed during this reporting period." })}
+              />
+            ) : (
+              <div className={styles.failedPostsList}>
+                {data.failedPosts.map((post) => (
+                  <div key={post.id} className={styles.failedPostItem}>
+                    <div className={styles.failedPostHeader}>
+                      <span className={styles.failedPostBadge}>
+                        {channelLabels[post.channel] ?? post.channel}
+                      </span>
+                      {post.scheduled_at && (
+                        <span className={styles.failedPostDate}>
+                          📅 {new Date(post.scheduled_at).toLocaleDateString("vi-VN")}
+                        </span>
+                      )}
+                    </div>
+                    <p className={styles.failedPostText}>{post.caption}</p>
+                    <div className={styles.failedPostReason}>
+                      <strong>{t({ vi: "Lý do: ", en: "Reason: " })}</strong>
+                      {post.failure_detail || t({ vi: "Không rõ nguyên nhân.", en: "Unknown reason." })}
+                    </div>
                   </div>
                 ))}
               </div>

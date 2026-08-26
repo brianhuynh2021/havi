@@ -19,7 +19,7 @@ export async function fetchDashboardSummary(): Promise<
     if (error || !data) {
       return { ok: false, message: "Chưa tải được tổng quan, thử lại giúp bạn nhé." };
     }
-    return { ok: true, data };
+    return { ok: true, data: data as DashboardContentSummary };
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }

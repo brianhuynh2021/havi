@@ -24,6 +24,7 @@ import {
   previewSchedule,
   type SchedulePlan,
 } from "@/features/content-creation/schedule-picker";
+import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
 import {
   approveVideoPost,
   cancelVideoPost,
@@ -116,6 +117,7 @@ export function VideoBranch() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [cancellingPost, setCancellingPost] = useState<VideoPost | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -269,8 +271,14 @@ export function VideoBranch() {
     load();
   }
 
-  async function onCancel(post: VideoPost) {
-    if (!confirm("Huỷ video này khỏi hàng chờ?")) return;
+  async function onCancelRequested(post: VideoPost) {
+    setCancellingPost(post);
+  }
+
+  async function onCancel() {
+    if (!cancellingPost) return;
+    const post = cancellingPost;
+    setCancellingPost(null);
     setBusyId(post.id);
     const result = await cancelVideoPost(post.id);
     setBusyId(null);
@@ -419,7 +427,7 @@ export function VideoBranch() {
 
                   <div className={styles.postActions}>
                     {post.status === "ready_for_review" ? (
-                      <Button variant="outline" onClick={() => onCancel(post)} disabled={isBusy}>
+                      <Button variant="outline" onClick={() => onCancelRequested(post)} disabled={isBusy}>
                         Bỏ clip này
                       </Button>
                     ) : null}
@@ -447,6 +455,17 @@ export function VideoBranch() {
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
+
+      <DangerConfirmModal
+        isOpen={cancellingPost !== null}
+        type="custom"
+        isDeleting={busyId === cancellingPost?.id}
+        customKeyword="HUYVIDEO"
+        customTitle="Xác nhận huỷ video"
+        customLostItems={["Video này sẽ bị huỷ khỏi hàng chờ duyệt và không được xuất bản."]}
+        onClose={() => setCancellingPost(null)}
+        onConfirm={onCancel}
       />
     </>
   );

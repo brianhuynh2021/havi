@@ -115,7 +115,7 @@ function getPlatformDescription(platform: Platform): string {
     case "google_business":
       return "Đăng bài và cập nhật thông tin cơ sở lên hồ sơ Google Business.";
     case "tiktok":
-      return "Đăng video ngắn viral 9:16 có Hook 3s lên kênh TikTok của tiệm.";
+      return "Kết nối tài khoản TikTok để xuất bản video ngắn.";
     case "youtube":
       return "Tự động xuất bản video ngắn lên YouTube Shorts để phủ sóng tìm kiếm.";
     case "zalo_oa":

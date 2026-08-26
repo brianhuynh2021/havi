@@ -13,6 +13,7 @@ import {
   fetchCalendar,
   rescheduleItem,
   startOfVnWeek,
+  startOfVnMonthGrid,
   toVnDateString,
   type CalendarDay,
 } from "./calendar.api";
@@ -61,14 +62,14 @@ function canReschedule(status: string): boolean {
 
 export function CalendarScreen() {
   const { lang, t } = useLanguage();
-  const [weekStart, setWeekStart] = useState<string>(() => toVnDateString(startOfVnWeek(new Date())));
+  const [baseDate, setBaseDate] = useState<string>(() => toVnDateString(new Date()));
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // View switch: "week" (lưới 7 ngày) | "timeline" (danh sách dòng thời gian)
-  const [viewMode, setViewMode] = useState<"week" | "timeline">("week");
+  // View switch: "week" (lưới 7 ngày) | "month" (lưới 42 ngày) | "timeline" (danh sách dòng thời gian)
+  const [viewMode, setViewMode] = useState<"week" | "month" | "timeline">("week");
   const [channelFilter, setChannelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -95,10 +96,21 @@ export function CalendarScreen() {
     let cancelled = false;
     async function run() {
       setLoading(true);
-      const result = await fetchCalendar(
-        weekStart,
-        toVnDateString(addDays(new Date(weekStart), 6)),
-      );
+
+      let startDateStr = "";
+      let endDateStr = "";
+
+      if (viewMode === "month") {
+        const gridStart = startOfVnMonthGrid(new Date(baseDate));
+        startDateStr = toVnDateString(gridStart);
+        endDateStr = toVnDateString(addDays(gridStart, 41)); // 6 weeks = 42 days
+      } else {
+        const weekStart = startOfVnWeek(new Date(baseDate));
+        startDateStr = toVnDateString(weekStart);
+        endDateStr = toVnDateString(addDays(weekStart, 6)); // 7 days
+      }
+
+      const result = await fetchCalendar(startDateStr, endDateStr);
       if (cancelled) return;
       if (result.ok) {
         setDays(result.data);
@@ -112,7 +124,57 @@ export function CalendarScreen() {
     return () => {
       cancelled = true;
     };
-  }, [weekStart, reloadKey]);
+  }, [baseDate, viewMode, reloadKey]);
+
+  const handleDragStart = (e: React.DragEvent, item: CalendarDay["items"][number]) => {
+    e.dataTransfer.setData("application/json", JSON.stringify(item));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Necessary to allow dropping
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetDate: string) => {
+    e.preventDefault();
+    try {
+      const dataStr = e.dataTransfer.getData("application/json");
+      if (!dataStr) return;
+      const item = JSON.parse(dataStr) as CalendarDay["items"][number];
+      
+      if (!canReschedule(item.status)) {
+        alert("Chỉ có thể đổi giờ bài đang chờ đăng hoặc đã duyệt.");
+        return;
+      }
+      
+      const oldTime = item.scheduled_at ? new Date(item.scheduled_at) : null;
+      let newTargetIso = "";
+      if (oldTime) {
+        const parts = Object.fromEntries(
+          vnDateTime.formatToParts(oldTime).map((part) => [part.type, part.value]),
+        );
+        newTargetIso = `${targetDate}T${parts.hour}:${parts.minute}`;
+      } else {
+        newTargetIso = `${targetDate}T09:00`;
+      }
+      
+      const newOffsetIso = toVnOffsetIso(newTargetIso);
+      if (newOffsetIso === item.scheduled_at) return; 
+      
+      setRescheduling(true);
+      const result = await rescheduleItem(item.id, newOffsetIso);
+      setRescheduling(false);
+      
+      if (!result.ok) {
+        alert(result.message);
+      }
+      setReloadKey(k => k + 1);
+      
+    } catch (err) {
+      console.error("Drop error", err);
+    }
+  };
 
   function openDetailModal(item: CalendarDay["items"][number], date: string) {
     setSelectedItem({ item, date });
@@ -225,23 +287,23 @@ export function CalendarScreen() {
         <div className={styles.weekBar}>
           <Button
             variant="outline"
-            onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), -7)))}
+            onClick={() => setBaseDate((d) => toVnDateString(addDays(new Date(d), viewMode === "month" ? -28 : -7)))}
           >
-            ← {t({ vi: "Tuần trước", en: "Prev Week" })}
+            ← {t({ vi: "Trước", en: "Prev" })}
           </Button>
           <span className={styles.weekRange}>📅 {rangeLabel}</span>
           <div className={styles.weekActions}>
             <Button
               variant="outline"
-              onClick={() => setWeekStart(toVnDateString(startOfVnWeek(new Date())))}
+              onClick={() => setBaseDate(toVnDateString(new Date()))}
             >
-              {t({ vi: "Tuần này", en: "This Week" })}
+              {t({ vi: "Hiện tại", en: "Current" })}
             </Button>
             <Button
               variant="outline"
-              onClick={() => setWeekStart((w) => toVnDateString(addDays(new Date(w), 7)))}
+              onClick={() => setBaseDate((d) => toVnDateString(addDays(new Date(d), viewMode === "month" ? 28 : 7)))}
             >
-              {t({ vi: "Tuần sau", en: "Next Week" })} →
+              {t({ vi: "Sau", en: "Next" })} →
             </Button>
           </div>
         </div>
@@ -315,6 +377,13 @@ export function CalendarScreen() {
             </button>
             <button
               type="button"
+              className={`${styles.viewBtn} ${viewMode === "month" ? styles.viewBtnActive : ""}`}
+              onClick={() => setViewMode("month")}
+            >
+              🗓️ Lưới tháng
+            </button>
+            <button
+              type="button"
               className={`${styles.viewBtn} ${viewMode === "timeline" ? styles.viewBtnActive : ""}`}
               onClick={() => setViewMode("timeline")}
             >
@@ -337,32 +406,40 @@ export function CalendarScreen() {
         <LoadingState title={t({ vi: "Đang tải lịch…", en: "Loading calendar…" })} />
       ) : (
         <>
-          {/* CHẾ ĐỘ 1: LƯỚI TUẦN (WEEK GRID) */}
-          {viewMode === "week" ? (
-            <section className={styles.grid} aria-label={t("calendar.title", "Lịch đăng theo tuần")}>
+          {/* CHẾ ĐỘ 1 & 2: LƯỚI TUẦN / LƯỚI THÁNG */}
+          {viewMode === "week" || viewMode === "month" ? (
+            <section className={viewMode === "month" ? styles.monthGrid : styles.grid} aria-label={t("calendar.title", "Lịch đăng bài")}>
+              {/* Nếu là lưới tháng, hiển thị thêm hàng tiêu đề các thứ */}
+              {viewMode === "month" && (
+                <div className={styles.monthHeaderRow}>
+                  {fullWeekdayLabels.map((label) => (
+                    <div key={label} className={styles.monthHeaderCell}>{label}</div>
+                  ))}
+                </div>
+              )}
               {filteredDays.map((day, index) => (
                 <div
                   key={day.date}
-                  className={`${styles.dayColumn} ${
+                  className={`${viewMode === "month" ? styles.monthDayCell : styles.dayColumn} ${
                     day.date === today ? styles.dayColumnToday : ""
                   }`}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, day.date)}
                 >
                   <div className={styles.dayHeader}>
                     <div className={styles.dayHeaderTitleRow}>
-                      <span className={styles.dayLabel}>{weekdayLabels[index]}</span>
+                      {viewMode === "week" && <span className={styles.dayLabel}>{weekdayLabels[index]}</span>}
                       {day.date === today ? (
                         <span className={styles.todayPill}>Hôm nay</span>
                       ) : null}
                     </div>
-                    <span className={styles.dayDate}>{dayLabel(day.date)}</span>
+                    <span className={styles.dayDate}>{viewMode === "month" ? new Date(day.date).getDate() : dayLabel(day.date)}</span>
                   </div>
 
                   {day.items.length === 0 ? (
                     <div className={styles.emptySlot} title="Chưa có bài lên lịch cho ngày này">
                       <span className={styles.emptySlotIcon}>+</span>
-                      <span className={styles.emptySlotText}>
-                        {t({ vi: "Chưa có bài", en: "No posts" })}
-                      </span>
+                      {viewMode === "week" && <span className={styles.emptySlotText}>{t({ vi: "Chưa có bài", en: "No posts" })}</span>}
                     </div>
                   ) : (
                     <div className={styles.postList}>
@@ -370,6 +447,8 @@ export function CalendarScreen() {
                         <article
                           key={item.id}
                           className={styles.postCard}
+                          draggable={canReschedule(item.status)}
+                          onDragStart={(e) => handleDragStart(e, item)}
                           onClick={() => openDetailModal(item, day.date)}
                           title="Bấm để xem chi tiết bài đăng"
                         >
@@ -379,20 +458,24 @@ export function CalendarScreen() {
                                 ? vnTime.format(new Date(item.scheduled_at))
                                 : "--:--"}
                             </span>
-                            <Badge tone={statusTone[item.status]}>
-                              {statusLabel[item.status]}
-                            </Badge>
+                            {viewMode === "week" && (
+                              <Badge tone={statusTone[item.status]}>
+                                {statusLabel[item.status]}
+                              </Badge>
+                            )}
                           </div>
-                          <p className={styles.postTitleSnippet}>{item.text}</p>
+                          {viewMode === "week" && <p className={styles.postTitleSnippet}>{item.text}</p>}
                           <div className={styles.postFooter}>
                             <span className={styles.channelBadge}>
                               {channelLabels[
                                 item.channel as keyof typeof channelLabels
                               ] ?? item.channel}
                             </span>
-                            <span className={styles.postId}>
-                              #{item.id.slice(0, 6)}
-                            </span>
+                            {viewMode === "week" && (
+                              <span className={styles.postId}>
+                                #{item.id.slice(0, 6)}
+                              </span>
+                            )}
                           </div>
                         </article>
                       ))}

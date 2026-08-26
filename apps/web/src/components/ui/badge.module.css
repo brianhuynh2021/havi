@@ -9,21 +9,21 @@
 }
 
 .success {
-  border: 1px solid #cde3d2;
-  background: #f0f7f1;
+  border: 1px solid var(--color-slate-300);
+  background: var(--color-green-50);
   color: var(--color-success);
 }
 
 .info {
-  border: 1px solid #cddced;
-  background: #eef4fa;
+  border: 1px solid var(--color-slate-300);
+  background: var(--color-slate-100);
   color: var(--color-info);
 }
 
 .warning {
-  border: 1px solid #efd9c3;
-  background: #fbf1e6;
-  color: #b8744d;
+  border: 1px solid var(--color-red-200);
+  background: var(--color-orange-50);
+  color: var(--color-red-400);
 }
 
 .neutral {
@@ -35,5 +35,5 @@
 .primary {
   border: 1px solid transparent;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-white);
 }

@@ -18,9 +18,9 @@
   display: flex;
   flex-direction: column;
   padding: 20px 14px;
-  background: #090d16;
+  background: var(--color-slate-950);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  color: var(--color-slate-50);
   overflow-y: auto;
 }
 
@@ -43,15 +43,15 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   letter-spacing: -0.02em;
 }
 
 .brandPill {
   font-size: 9.5px;
   font-weight: 800;
-  background: linear-gradient(135deg, #0066ff, #00d2ff);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-light));
+  color: var(--color-white);
   padding: 2px 6px;
   border-radius: 6px;
   letter-spacing: 0.05em;
@@ -71,7 +71,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  color: #ffffff;
+  color: var(--color-white);
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
@@ -106,7 +106,7 @@
 .workspaceNameText {
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -114,7 +114,7 @@
 
 .workspaceSubText {
   font-size: 10.5px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-weight: 500;
 }
 
@@ -123,7 +123,7 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #111827;
+  background: var(--color-slate-900);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -138,7 +138,7 @@
 .dropdownHeader {
   font-size: 10.5px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 4px 8px 6px 8px;
@@ -154,7 +154,7 @@
   border-radius: 8px;
   background: transparent;
   border: none;
-  color: #cbd5e1;
+  color: var(--color-slate-300);
   font: inherit;
   cursor: pointer;
   text-align: left;
@@ -164,13 +164,13 @@
 
 .workspaceOption:hover {
   background: rgba(0, 102, 255, 0.18);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .workspaceOptionActive {
   background: rgba(0, 102, 255, 0.25);
   border: 1px solid rgba(0, 102, 255, 0.4);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .navSection {
@@ -195,7 +195,7 @@
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
@@ -207,13 +207,13 @@
 
 .navItem:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .navItemActive {
   background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 210, 255, 0.08) 100%);
   border-color: rgba(0, 102, 255, 0.4);
-  color: #ffffff;
+  color: var(--color-white);
   box-shadow: 0 0 16px rgba(0, 102, 255, 0.15);
 }
 
@@ -240,8 +240,8 @@
   margin-left: auto;
   padding: 2px 8px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-dark) 100%);
+  color: var(--color-white);
   font-size: 11px;
   font-weight: 700;
 }
@@ -274,7 +274,7 @@
   border-radius: 6px;
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.28);
-  color: #34d399;
+  color: var(--color-emerald-400);
   font-size: 11px;
   font-weight: 700;
   display: inline-flex;
@@ -286,8 +286,8 @@
   width: 6px;
   height: 6px;
   border-radius: 99px;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  background: var(--color-emerald-500);
+  box-shadow: 0 0 8px var(--color-emerald-500);
   display: inline-block;
   animation: pulseDot 2s infinite ease-in-out;
 }
@@ -308,7 +308,7 @@
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 11px;
   font-weight: 600;
 }
@@ -351,8 +351,8 @@
   width: 28px;
   height: 28px;
   border-radius: 99px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-blue-500), var(--color-purple-500));
+  color: var(--color-white);
   font-size: 11.5px;
   font-weight: 800;
   display: flex;
@@ -371,7 +371,7 @@
 .userEmail {
   font-size: 12px;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--color-slate-50);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -386,29 +386,29 @@
 }
 
 .tierTrial {
-  color: #34d399;
+  color: var(--color-emerald-400);
 }
 
 .tierStarter {
-  color: #38bdf8;
+  color: var(--color-blue-400);
 }
 
 .tierGrowth {
-  color: #a855f7;
+  color: var(--color-purple-500);
 }
 
 .tierEnterprise {
-  color: #f59e0b;
+  color: var(--color-amber-500);
 }
 
 .tierDefault {
-  color: #38bdf8;
+  color: var(--color-blue-400);
 }
 
 .signOutIconBtn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--color-slate-500);
   padding: 6px;
   border-radius: 6px;
   cursor: pointer;
@@ -420,7 +420,7 @@
 
 .signOutIconBtn:hover {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: var(--color-red-400);
 }
 
 .content {
@@ -467,7 +467,7 @@
     overflow-x: auto;
     gap: 10px;
     padding: 12px 16px;
-    background: #090d16;
+    background: var(--color-slate-950);
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     -webkit-overflow-scrolling: touch;
     align-items: stretch;
@@ -481,7 +481,7 @@
     padding: 8px;
     border-radius: 12px;
     background: transparent;
-    color: #94a3b8;
+    color: var(--color-slate-400);
     border: none;
     cursor: pointer;
     text-decoration: none;
@@ -489,11 +489,11 @@
   }
   .mobileNavItem:hover {
     background: rgba(255, 255, 255, 0.06);
-    color: #ffffff;
+    color: var(--color-white);
   }
   .mobileNavItemActive {
     background: rgba(0, 102, 255, 0.15);
-    color: #3b82f6;
+    color: var(--color-blue-500);
   }
   .mobileNavIcon {
     position: relative;
@@ -507,13 +507,13 @@
     position: absolute;
     top: -4px;
     right: -10px;
-    background: #ef4444;
-    color: #ffffff;
+    background: var(--color-red-500);
+    color: var(--color-white);
     font-size: 10px;
     font-weight: 700;
     padding: 1px 5px;
     border-radius: 9px;
-    border: 2px solid #090d16;
+    border: 2px solid var(--color-slate-950);
   }
   .mobileNavLabel {
     font-size: 11px;
@@ -524,7 +524,7 @@
   .mobileMoreMenu {
     display: flex;
     flex-direction: column;
-    background: #111827;
+    background: var(--color-slate-900);
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     padding: 8px 16px;
     animation: slideDown 0.2s ease-out;
@@ -538,7 +538,7 @@
     display: flex;
     align-items: center;
     padding: 14px 12px;
-    color: #cbd5e1;
+    color: var(--color-slate-300);
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
@@ -553,12 +553,12 @@
   }
   .mobileMoreItemActive {
     background: rgba(0, 102, 255, 0.15);
-    color: #ffffff;
+    color: var(--color-white);
   }
   .mobileMoreBadge {
     margin-left: auto;
-    background: #ef4444;
-    color: #ffffff;
+    background: var(--color-red-500);
+    color: var(--color-white);
     font-size: 11px;
     font-weight: 700;
     padding: 2px 8px;

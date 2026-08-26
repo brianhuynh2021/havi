@@ -11,7 +11,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
-import { listMedia, type MediaAsset, type MediaType } from "./media.api";
+import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
+import { deleteMedia, listMedia, type MediaAsset, type MediaType } from "./media.api";
 import styles from "./media.module.css";
 
 const FILTERS: Array<{ key: "all" | MediaType; label: string }> = [
@@ -58,6 +59,9 @@ export function MediaScreen() {
   const [filter, setFilter] = useState<"all" | MediaType>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,6 +79,22 @@ export function MediaScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function handleDeleteConfirm() {
+    if (!deletingId) return;
+    setIsDeleting(true);
+    const result = await deleteMedia(deletingId);
+    setIsDeleting(false);
+    
+    if (result.ok) {
+      setAssets((prev) => prev.filter(a => a.id !== deletingId));
+      setTotal((prev) => Math.max(0, prev - 1));
+      setDeletingId(null);
+    } else {
+      setError(result.message);
+      setDeletingId(null);
+    }
+  }
 
   return (
     <>
@@ -141,10 +161,33 @@ export function MediaScreen() {
                 {asset.filename}
               </p>
               <p className={styles.meta}>{describeAsset(asset) || "—"}</p>
+              
+              <button 
+                type="button"
+                className={styles.deleteButton}
+                onClick={() => setDeletingId(asset.id)}
+                aria-label={`Xoá ${asset.filename}`}
+              >
+                Xoá
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <DangerConfirmModal
+        isOpen={deletingId !== null}
+        type="custom"
+        isDeleting={isDeleting}
+        customKeyword="XOA"
+        customTitle="Xoá media khỏi thư viện"
+        customLostItems={[
+          "File này sẽ bị xóa vĩnh viễn khỏi hệ thống.",
+          "Nếu có bài viết (nháp) đang dùng file này, hình/video trong bài đó sẽ bị lỗi hiển thị.",
+        ]}
+        onClose={() => setDeletingId(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   );
 }

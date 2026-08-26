@@ -130,6 +130,7 @@ type PostBriefProps = {
   onRemoveChip: (key: string) => void;
   onPickFiles: (files: FileList | null) => void;
   onOpenVoice: () => void;
+  onOpenMediaPicker: () => void;
   onSelectPurpose: (purpose: ContentPurpose) => void;
   onGenerate: () => void;
 };
@@ -146,6 +147,7 @@ export function PostBrief({
   onRemoveChip,
   onPickFiles,
   onOpenVoice,
+  onOpenMediaPicker,
   onSelectPurpose,
   onGenerate,
 }: PostBriefProps) {
@@ -223,6 +225,9 @@ export function PostBrief({
             onClick={() => fileInputRef.current?.click()}
           >
             {uploading ? "Đang tải lên…" : "Chọn ảnh có sẵn"}
+          </Button>
+          <Button variant="outline" disabled={uploading} onClick={onOpenMediaPicker}>
+            🖼️ Thư viện
           </Button>
           <Button variant="outline" disabled={uploading} onClick={onOpenVoice} data-testid="btn-voice-modal">
             🎙️ Nói thay vì gõ

@@ -9,26 +9,26 @@
   display: flex;
   flex-direction: column;
   padding: 20px 24px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--color-slate-200);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--color-white);
   box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .row:hover {
-  border-color: #cbd5e1;
+  border-color: var(--color-slate-300);
   box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
   transform: translateY(-1px);
 }
 
 .rowConnected {
-  border-color: #bbf7d0;
-  background: #fafdfb;
+  border-color: var(--color-green-200);
+  background: var(--color-slate-50);
 }
 
 .rowConnected:hover {
-  border-color: #86efac;
+  border-color: var(--color-green-300);
 }
 
 .rowContent {
@@ -74,7 +74,7 @@
 .rowLabel {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
   white-space: nowrap;
 }
 
@@ -84,9 +84,9 @@
   gap: 4px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #0284c7;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  color: var(--color-brand-primary-dark);
+  background: var(--color-blue-50);
+  border: 1px solid var(--color-blue-200);
   padding: 3px 9px;
   border-radius: 8px;
 }
@@ -100,12 +100,12 @@
 .hint {
   font-size: 13px;
   line-height: 1.5;
-  color: #64748b;
+  color: var(--color-slate-500);
   margin: 0;
 }
 
 .hint strong {
-  color: #0284c7;
+  color: var(--color-brand-primary-dark);
   font-weight: 600;
 }
 
@@ -131,9 +131,9 @@
   margin-top: 12px;
   padding: 10px 14px;
   border-radius: 8px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  background: var(--color-red-50);
+  border: 1px solid var(--color-red-200);
+  color: var(--color-red-600);
   font-size: 13px;
   font-weight: 600;
 }
@@ -148,15 +148,15 @@
 }
 
 .noticeOk {
-  border: 1px solid #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  border: 1px solid var(--color-green-200);
+  background: var(--color-green-50);
+  color: var(--color-green-800);
 }
 
 .noticeError {
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--color-red-200);
+  background: var(--color-red-50);
+  color: var(--color-red-800);
 }
 
 @media (max-width: 640px) {

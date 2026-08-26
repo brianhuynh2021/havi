@@ -21,9 +21,9 @@ import {
 } from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2;
 
-const stepLabels = ["Chọn ngành", "Nối kênh", "Havi bắt đầu học"];
+const stepLabels = ["Chọn ngành", "Nối kênh"];
 
 export function OnboardingScreen() {
   const router = useRouter();
@@ -51,24 +51,16 @@ export function OnboardingScreen() {
 
   const previewSample = getIndustrySamplePreview(industry, shopName);
 
-  const handleStartLearning = useCallback(async () => {
-    if (learning) return;
-    setLearning(true);
-
+  const handleStep2Proceed = useCallback(async () => {
+    setSubmitting(true);
     // Kích hoạt Business Truth Pack: lưu Brand Voice & FAQ mẫu chuẩn ngành vào database
     try {
       await initializeBusinessTruthPack(industry, shopName);
     } catch {
       // Tiếp tục luồng ngay cả khi có cảnh báo mạng
     }
-
     router.replace("/app");
-  }, [learning, industry, shopName, router]);
-
-  function handleStep2Proceed() {
-    setStep(3);
-    void handleStartLearning();
-  }
+  }, [industry, shopName, router]);
 
 
   useEffect(() => {
@@ -81,11 +73,7 @@ export function OnboardingScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    if (step === 3 && !learning) {
-      void handleStartLearning();
-    }
-  }, [step, learning, handleStartLearning]);
+
 
 
 
@@ -256,7 +244,7 @@ export function OnboardingScreen() {
               </Button>
             </div>
           </>
-        ) : step === 2 ? (
+        ) : (
           <>
             <h1 className={styles.title}>Kết nối kênh của bạn</h1>
             <p className={styles.subtitle}>
@@ -278,42 +266,21 @@ export function OnboardingScreen() {
                   type="button"
                   className={styles.skipButton}
                   onClick={handleStep2Proceed}
+                  disabled={submitting}
                 >
                   Bỏ qua, tôi sẽ kết nối sau
                 </button>
                 <Button
                   variant="primary"
                   scale="large"
-                  disabled={!connected}
+                  disabled={!connected || submitting}
                   onClick={handleStep2Proceed}
                 >
-                  {connected ? "Tiếp tục →" : "Tiếp tục"}
+                  {submitting ? "Đang xử lý…" : connected ? "Bắt đầu sử dụng →" : "Bắt đầu sử dụng"}
                 </Button>
               </div>
             </div>
 
-          </>
-        ) : (
-          <>
-            <h1 className={styles.title}>Havi đang học về tiệm của bạn</h1>
-            <p className={styles.subtitle}>
-              Chỉ mất chưa đầy một phút — Havi đọc Brand Voice và chuẩn bị kịch bản, bản
-              nháp đầu tiên.
-            </p>
-            {!learning ? (
-              <div className={styles.actions}>
-                <Button variant="primary" scale="large" onClick={handleStartLearning}>
-                  Bắt đầu ngay 🚀
-                </Button>
-              </div>
-            ) : (
-              <div className={styles.learningCard}>
-                <span className={styles.spinner} aria-hidden="true" />
-                <div style={{ marginTop: "16px", color: "var(--text-muted)", fontSize: "15px" }}>
-                  Đang thiết lập không gian làm việc của bạn...
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>

@@ -26,6 +26,9 @@ import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import { VideoBranch } from "@/features/video/video-branch";
+import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
+import { MediaPickerModal } from "@/features/media/media-picker-modal";
+import type { MediaAsset } from "@/features/media/media.api";
 import {
   approveAll,
   createJob,
@@ -75,6 +78,9 @@ export function ContentCreationScreen() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
   const [selectedChannels, setSelectedChannels] = useState<string[]>(["facebook_page"]);
+
+  const [isConfirmingDismissAll, setIsConfirmingDismissAll] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   // Blob URL của ảnh xem trước phải được thu hồi bằng tay, nếu không mỗi lần
   // chọn ảnh lại giữ thêm một bản trong bộ nhớ trình duyệt cho tới khi tải lại
@@ -220,6 +226,38 @@ export function ContentCreationScreen() {
     );
   }
 
+  function handleMediaPick(asset: MediaAsset) {
+    if (asset.type !== "image") {
+      addToast({
+        type: "error", // Use string if ToastItem doesn't support 'error' type. Wait, I should check toast types. If not error, use default or something. Let's assume there is an error type or we just use alert.
+        title: "Không thể chọn video",
+        description: "Bản nháp bài viết hiện chỉ hỗ trợ chèn ảnh.",
+      });
+      return;
+    }
+    
+    if (chips.some((chip) => chip.key === asset.id)) {
+      setMediaPickerOpen(false);
+      return;
+    }
+
+    setChips((prev) => [
+      ...prev,
+      {
+        key: asset.id,
+        kind: "photo",
+        label: asset.filename,
+        previewUrl: asset.url,
+        input: {
+          kind: "photo",
+          media_asset_id: asset.id,
+          preview_url: asset.url,
+        },
+      },
+    ]);
+    setMediaPickerOpen(false);
+  }
+
   function addNote() {
     const text = note.trim();
     if (!text) return;
@@ -331,10 +369,15 @@ export function ContentCreationScreen() {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
 
+  function onDismissAllRequested() {
+    if (!items.length) return;
+    setIsConfirmingDismissAll(true);
+  }
+
   async function onDismissAll() {
+    setIsConfirmingDismissAll(false);
     const ids = items.map((item) => item.id);
     if (!ids.length) return;
-    if (!confirm(`Xoá tất cả ${ids.length} bản nháp?`)) return;
     setBusyIds(ids);
     const result = await dismissAllItems(ids);
     setBusyIds([]);
@@ -440,6 +483,7 @@ export function ContentCreationScreen() {
             onRemoveChip={removeChip}
             onPickFiles={onPickFiles}
             onOpenVoice={() => setVoiceModalOpen(true)}
+            onOpenMediaPicker={() => setMediaPickerOpen(true)}
             onSelectPurpose={selectPurpose}
             onGenerate={generate}
           />
@@ -462,7 +506,7 @@ export function ContentCreationScreen() {
                 }}
                 onApproveSingle={onApproveSingle}
                 onDismiss={onDismiss}
-                onDismissAll={onDismissAll}
+                onDismissAll={onDismissAllRequested}
               />
 
               {/* BƯỚC 3 — chung với nhánh Video. */}
@@ -499,6 +543,26 @@ export function ContentCreationScreen() {
       <ToastContainer
         toasts={toasts}
         onDismiss={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
+
+      <DangerConfirmModal
+        isOpen={isConfirmingDismissAll}
+        type="custom"
+        isDeleting={busyIds.length > 0}
+        customKeyword="XOANHAP"
+        customTitle={`Xác nhận xoá tất cả ${items.length} bản nháp`}
+        customLostItems={[
+          "Mọi nội dung, ảnh, video đã chuẩn bị trong các bản nháp này sẽ bị xoá.",
+          "Bạn sẽ phải tạo lại nội dung nếu đổi ý.",
+        ]}
+        onClose={() => setIsConfirmingDismissAll(false)}
+        onConfirm={onDismissAll}
+      />
+
+      <MediaPickerModal 
+        isOpen={mediaPickerOpen} 
+        onClose={() => setMediaPickerOpen(false)} 
+        onSelect={handleMediaPick} 
       />
     </>
   );

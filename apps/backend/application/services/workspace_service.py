@@ -218,3 +218,32 @@ class WorkspaceService:
             if owner_count <= 1:
                 raise CannotRemoveLastOwner()
         await self._members.remove(member)
+
+    async def update_member_role(
+        self, *, workspace_id: UUID, user_id: UUID, role: WorkspaceRole
+    ) -> MemberWithUser:
+        member = await self._members.get(workspace_id=workspace_id, user_id=user_id)
+        if member is None:
+            raise InviteUserNotFound()
+
+        if member.role == WorkspaceRole.OWNER and role != WorkspaceRole.OWNER:
+            owner_count = await self._members.count_owners(workspace_id)
+            if owner_count <= 1:
+                raise CannotRemoveLastOwner()
+
+        member = await self._members.update(member, role=role)
+        user = await self._users.get_by_id(user_id)
+        # user cannot be None if member exists
+        return MemberWithUser(member=member, user=user)  # type: ignore
+
+    async def resend_invite(
+        self, *, workspace_id: UUID, user_id: UUID
+    ) -> MemberWithUser:
+        member = await self._members.get(workspace_id=workspace_id, user_id=user_id)
+        if member is None:
+            raise InviteUserNotFound()
+        
+        user = await self._users.get_by_id(user_id)
+        # Hiện tại Havi tự động thêm vào workspace luôn nên resend_invite chỉ là 
+        # mock endpoint để sau này có thể gắn EmailSender vào gửi email thật.
+        return MemberWithUser(member=member, user=user)  # type: ignore

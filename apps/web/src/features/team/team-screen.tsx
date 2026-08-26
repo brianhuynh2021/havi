@@ -17,10 +17,13 @@ import {
   ROLE_LABELS,
   inviteMember,
   listMembers,
+  resendInvite,
+  updateMemberRole,
   removeMember,
   type WorkspaceMember,
   type WorkspaceRole,
 } from "./team.api";
+import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
 import styles from "./team.module.css";
 
 const INVITABLE_ROLES: WorkspaceRole[] = ["marketer", "reviewer", "sales"];
@@ -35,6 +38,7 @@ export function TeamScreen() {
   const [role, setRole] = useState<WorkspaceRole>("marketer");
   const [inviting, setInviting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [removingMember, setRemovingMember] = useState<WorkspaceMember | null>(null);
 
   const load = useCallback(async () => {
     const result = await listMembers();
@@ -67,8 +71,14 @@ export function TeamScreen() {
     load();
   }
 
-  async function onRemove(member: WorkspaceMember) {
-    if (!confirm(`Gỡ ${member.name} khỏi workspace?`)) return;
+  function onRemoveRequested(member: WorkspaceMember) {
+    setRemovingMember(member);
+  }
+
+  async function onRemove() {
+    if (!removingMember) return;
+    const member = removingMember;
+    setRemovingMember(null);
     setBusyId(member.user_id);
     const result = await removeMember(member.user_id);
     setBusyId(null);
@@ -79,6 +89,32 @@ export function TeamScreen() {
     setError(null);
     setNotice(`Đã gỡ ${member.name}.`);
     load();
+  }
+
+  async function onChangeRole(member: WorkspaceMember, newRole: WorkspaceRole) {
+    if (member.role === newRole) return;
+    setBusyId(member.user_id);
+    const result = await updateMemberRole(member.user_id, newRole);
+    setBusyId(null);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setError(null);
+    setNotice(`Đã đổi vai trò của ${member.name} thành ${ROLE_LABELS[newRole]?.name ?? newRole}.`);
+    load();
+  }
+
+  async function onResendInvite(member: WorkspaceMember) {
+    setBusyId(member.user_id);
+    const result = await resendInvite(member.user_id);
+    setBusyId(null);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setError(null);
+    setNotice(`Đã gửi lại lời mời cho ${member.name}.`);
   }
 
   return (
@@ -159,19 +195,44 @@ export function TeamScreen() {
                 <li key={member.user_id} className={styles.memberRow}>
                   <div className={styles.memberMain}>
                     <strong className={styles.memberName}>{member.name}</strong>
-                    <span className={styles.roleTag}>{info?.name ?? member.role}</span>
+                    {isOwner ? (
+                      <span className={styles.roleTag}>{info?.name ?? member.role}</span>
+                    ) : (
+                      <select
+                        className={styles.roleSelectInline}
+                        value={member.role}
+                        onChange={(e) => onChangeRole(member, e.target.value as WorkspaceRole)}
+                        disabled={busyId === member.user_id}
+                        aria-label="Đổi vai trò"
+                      >
+                        {INVITABLE_ROLES.map((value) => (
+                          <option key={value} value={value}>
+                            {ROLE_LABELS[value]?.name ?? value}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <p className={styles.roleCan}>{info?.can}</p>
                   </div>
                   {/* Chủ workspace không gỡ được: gỡ hết chủ là workspace không
                       còn ai mời lại được ai. */}
                   {isOwner ? null : (
-                    <Button
-                      variant="outline"
-                      onClick={() => onRemove(member)}
-                      disabled={busyId === member.user_id}
-                    >
-                      Gỡ
-                    </Button>
+                    <div className={styles.memberActions}>
+                      <Button
+                        variant="outline"
+                        onClick={() => onResendInvite(member)}
+                        disabled={busyId === member.user_id}
+                      >
+                        Gửi lại
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => onRemoveRequested(member)}
+                        disabled={busyId === member.user_id}
+                      >
+                        Gỡ
+                      </Button>
+                    </div>
                   )}
                 </li>
               );
@@ -179,6 +240,20 @@ export function TeamScreen() {
           </ul>
         )}
       </section>
+
+      <DangerConfirmModal
+        isOpen={removingMember !== null}
+        type="custom"
+        isDeleting={busyId === removingMember?.user_id}
+        customKeyword="GOTHANHVIEN"
+        customTitle={`Xác nhận gỡ ${removingMember?.name || "thành viên"}`}
+        customLostItems={[
+          `${removingMember?.name || "Người này"} sẽ bị mất quyền truy cập vào workspace này ngay lập tức.`,
+          "Bạn sẽ phải mời lại từ đầu nếu đổi ý.",
+        ]}
+        onClose={() => setRemovingMember(null)}
+        onConfirm={onRemove}
+      />
     </>
   );
 }

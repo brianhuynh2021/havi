@@ -21,6 +21,7 @@ from core.schemas import (
     WorkspaceCreate,
     WorkspaceMember,
     WorkspaceMemberInvite,
+    WorkspaceRoleUpdate,
     WorkspaceUpdate,
 )
 
@@ -142,6 +143,39 @@ async def remove_member(
         raise HTTPException(
             status.HTTP_409_CONFLICT, "Không thể xoá owner duy nhất của workspace"
         ) from exc
+
+
+@router.put("/{workspace_id}/members/{user_id}/role", response_model=WorkspaceMember)
+async def update_member_role(
+    workspace_id: PathWorkspaceOwnerDep,
+    user_id: UUID,
+    payload: WorkspaceRoleUpdate,
+    workspace_service: WorkspaceServiceDep,
+) -> WorkspaceMember:
+    try:
+        row = await workspace_service.update_member_role(
+            workspace_id=workspace_id, user_id=user_id, role=payload.role
+        )
+    except InviteUserNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy thành viên") from exc
+    except CannotRemoveLastOwner as exc:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "Không thể xoá quyền owner của người duy nhất"
+        ) from exc
+    return WorkspaceMember(user_id=row.user.id, name=row.user.name, role=row.member.role)
+
+
+@router.post("/{workspace_id}/members/{user_id}/resend", response_model=WorkspaceMember)
+async def resend_invite(
+    workspace_id: PathWorkspaceOwnerDep,
+    user_id: UUID,
+    workspace_service: WorkspaceServiceDep,
+) -> WorkspaceMember:
+    try:
+        row = await workspace_service.resend_invite(workspace_id=workspace_id, user_id=user_id)
+    except InviteUserNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy thành viên") from exc
+    return WorkspaceMember(user_id=row.user.id, name=row.user.name, role=row.member.role)
 
 
 @router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)

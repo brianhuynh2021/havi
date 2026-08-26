@@ -187,6 +187,10 @@ class WorkspaceMemberInvite(HaviModel):
     role: WorkspaceRole = WorkspaceRole.MARKETER
 
 
+class WorkspaceRoleUpdate(HaviModel):
+    role: WorkspaceRole
+
+
 # --- Brand profile ----------------------------------------------------------
 
 
@@ -602,6 +606,15 @@ class ChannelAttribution(HaviModel):
 class TimeseriesPoint(HaviModel):
     period: str = Field(examples=["2026-W31"])
     value: int
+
+
+class FailedPostRecord(HaviModel):
+    id: UUID
+    channel: Channel
+    caption: str
+    scheduled_at: datetime
+    failure_kind: PublishFailureKind | None = None
+    failure_detail: str | None = None
 
 
 class AnalyticsTimeseries(HaviModel):

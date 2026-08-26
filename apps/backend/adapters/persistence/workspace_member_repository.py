@@ -42,6 +42,13 @@ class WorkspaceMemberRepository:
         await self._session.delete(member)
         await self._session.flush()
 
+    async def update(
+        self, member: WorkspaceMember, *, role: WorkspaceRole
+    ) -> WorkspaceMember:
+        member.role = role
+        await self._session.flush()
+        return member
+
     async def count_owners(self, workspace_id: UUID) -> int:
         result = await self._session.execute(
             select(func.count()).where(

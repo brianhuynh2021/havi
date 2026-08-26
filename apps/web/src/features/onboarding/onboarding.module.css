@@ -5,12 +5,12 @@
   align-items: center;
   gap: 28px;
   padding: 48px 24px 64px;
-  background-color: #090d16;
+  background-color: var(--color-slate-950);
   background-image:
     radial-gradient(circle at 50% 0%, rgba(0, 102, 255, 0.22) 0%, transparent 60%),
     radial-gradient(circle at 85% 65%, rgba(0, 210, 255, 0.12) 0%, transparent 50%),
     radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-  color: #f8fafc;
+  color: var(--color-slate-50);
 }
 
 .brand {
@@ -30,7 +30,7 @@
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #ffffff 40%, #79c0ff 100%);
+  background: linear-gradient(135deg, var(--color-white) 40%, var(--color-blue-300) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -51,18 +51,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 13.5px;
   font-weight: 600;
   transition: color 0.2s ease;
 }
 
 .stepActive {
-  color: #79c0ff;
+  color: var(--color-blue-300);
 }
 
 .stepDone {
-  color: #34d399;
+  color: var(--color-emerald-400);
 }
 
 .stepDot {
@@ -72,7 +72,7 @@
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 11.5px;
   font-weight: 700;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -80,15 +80,15 @@
 }
 
 .stepActive .stepDot {
-  background: #0066ff;
-  color: #ffffff;
+  background: var(--color-brand-primary);
+  color: var(--color-white);
   border-color: rgba(0, 210, 255, 0.8);
   box-shadow: 0 0 16px rgba(0, 102, 255, 0.6), 0 0 8px rgba(0, 210, 255, 0.4);
 }
 
 .stepDone .stepDot {
-  background: #10b981;
-  color: #ffffff;
+  background: var(--color-emerald-500);
+  color: var(--color-white);
   border-color: rgba(52, 211, 153, 0.6);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
@@ -124,14 +124,14 @@
   font-family: var(--font-display, "Plus Jakarta Sans", sans-serif);
   font-size: 26px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   text-align: center;
   letter-spacing: -0.3px;
 }
 
 .subtitle {
   margin-top: 8px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-size: 14.5px;
   line-height: 1.55;
   text-align: center;
@@ -149,7 +149,7 @@
   margin-bottom: 8px;
   font-size: 13.5px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
   letter-spacing: 0.1px;
 }
 
@@ -178,7 +178,7 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #ffffff;
+  color: var(--color-white);
   font: inherit;
   width: 100%;
 }
@@ -192,7 +192,7 @@
 
 .industryCardActive {
   background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 210, 255, 0.08) 100%);
-  border-color: #00d2ff !important;
+  border-color: var(--color-brand-primary-light) !important;
   box-shadow:
     0 0 24px rgba(0, 210, 255, 0.25),
     0 8px 24px -4px rgba(0, 0, 0, 0.4),
@@ -241,21 +241,21 @@
 .cardTitle {
   font-size: 14.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-white);
   line-height: 1.3;
 }
 
 .cardDesc {
   font-size: 12px;
   font-weight: 400;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   margin-top: 8px;
   line-height: 1.45;
   transition: color 0.2s ease;
 }
 
 .industryCardActive .cardDesc {
-  color: #cbd5e1;
+  color: var(--color-slate-300);
 }
 
 .recommendedTag {
@@ -266,7 +266,7 @@
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.18);
   border: 1px solid rgba(52, 211, 153, 0.4);
-  color: #34d399;
+  color: var(--color-emerald-400);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -280,8 +280,8 @@
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: #00d2ff;
-  color: #090d16;
+  background: var(--color-brand-primary-light);
+  color: var(--color-slate-950);
   display: grid;
   place-items: center;
   box-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
@@ -329,34 +329,34 @@
 }
 
 .connectionListWrapper [class*="rowLabel"] {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .connectionListWrapper [class*="hint"] {
-  color: #94a3b8;
+  color: var(--color-slate-400);
 }
 
 .connectionListWrapper [class*="hint"] strong {
-  color: #38bdf8;
+  color: var(--color-blue-400);
 }
 
 .connectionListWrapper [class*="accountName"] {
   background: rgba(0, 102, 255, 0.15);
   border: 1px solid rgba(0, 210, 255, 0.35);
-  color: #38bdf8;
+  color: var(--color-blue-400);
 }
 
 .connectionListWrapper [class*="rowRight"] button[class*="outline"] {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #f1f5f9;
+  color: var(--color-slate-100);
   box-shadow: none;
 }
 
 .connectionListWrapper [class*="rowRight"] button[class*="outline"]:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
+  color: var(--color-red-300);
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
 }
 
@@ -371,7 +371,7 @@
 .skipButton {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
@@ -382,7 +382,7 @@
 }
 
 .skipButton:hover {
-  color: #94a3b8;
+  color: var(--color-slate-400);
 }
 
 .error {
@@ -391,7 +391,7 @@
   border-radius: 12px;
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fca5a5;
+  color: var(--color-red-300);
   font-size: 13.5px;
   font-weight: 600;
   text-align: center;
@@ -424,8 +424,8 @@
   height: 44px;
   border-radius: 50%;
   border: 3px solid rgba(0, 102, 255, 0.2);
-  border-top-color: #00d2ff;
-  border-right-color: #0066ff;
+  border-top-color: var(--color-brand-primary-light);
+  border-right-color: var(--color-brand-primary);
   animation: spin 0.8s linear infinite;
   box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
 }
@@ -435,7 +435,7 @@
   height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%);
-  border: 1.5px solid #34d399;
+  border: 1.5px solid var(--color-emerald-400);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -463,7 +463,7 @@
 .progressBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #0066ff 0%, #00d2ff 100%);
+  background: linear-gradient(90deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
   box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -471,7 +471,7 @@
 .progressPercentText {
   font-size: 13px;
   font-weight: 800;
-  color: #00d2ff;
+  color: var(--color-brand-primary-light);
   min-width: 36px;
   text-align: right;
   font-family: monospace;
@@ -491,7 +491,7 @@
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--color-slate-500);
   padding: 8px 12px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
@@ -500,7 +500,7 @@
 }
 
 .stageItemDone {
-  color: #f1f5f9;
+  color: var(--color-slate-100);
   background: rgba(16, 185, 129, 0.06);
   border-color: rgba(52, 211, 153, 0.25);
 }
@@ -508,7 +508,7 @@
 .stageIcon {
   font-weight: 800;
   font-size: 13px;
-  color: #34d399;
+  color: var(--color-emerald-400);
   width: 16px;
   display: inline-block;
   text-align: center;
@@ -579,7 +579,7 @@
 .magicPreviewTitle {
   font-size: 14px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -587,8 +587,8 @@
 }
 
 .magicBadge {
-  background: linear-gradient(135deg, #8b5cf6, #00d2ff);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-purple-500), var(--color-brand-primary-light));
+  color: var(--color-white);
   font-size: 11px;
   font-weight: 800;
   padding: 3px 10px;
@@ -616,8 +616,8 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0066ff, #00d2ff);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-primary-light));
+  color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -628,19 +628,19 @@
 .mockupName {
   font-size: 13.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-white);
   margin: 0;
 }
 
 .mockupMeta {
   font-size: 11.5px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   margin: 2px 0 0 0;
 }
 
 .mockupText {
   font-size: 13px;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
   line-height: 1.5;
   margin: 0;
 }
@@ -651,7 +651,7 @@
   flex-wrap: wrap;
   gap: 6px 12px;
   font-size: 12px;
-  color: #38bdf8;
+  color: var(--color-blue-400);
   font-weight: 600;
   margin-top: 4px;
 }

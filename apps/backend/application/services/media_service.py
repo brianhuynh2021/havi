@@ -227,6 +227,17 @@ class MediaService:
         asset = await self._require_asset(workspace_id=workspace_id, asset_id=asset_id)
         return await self._media.update(asset, tags=tags, status=status)
 
+    async def delete_media(self, *, workspace_id: UUID, asset_id: UUID) -> None:
+        asset = await self._require_asset(workspace_id=workspace_id, asset_id=asset_id)
+        await self._media.delete(asset)
+        
+        # Xóa file chính
+        await self._storage.delete_object(asset.object_key)
+        
+        # Xóa ảnh bìa nếu có
+        if asset.thumbnail_object_key:
+            await self._storage.delete_object(asset.thumbnail_object_key)
+
     def public_url(self, asset: MediaAsset) -> str:
         return self._storage.public_url(asset.object_key)
 

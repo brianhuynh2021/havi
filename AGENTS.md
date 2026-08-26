@@ -122,9 +122,9 @@ paying workspaces. Telemetry — not product philosophy.
 * **Comments explain why**, especially why an obvious-looking alternative is wrong.
 
 **Channel priority:** Facebook (Page, Reels, Messenger) done properly before any
-second channel → YouTube Shorts and TikTok, whichever provider audit clears
-first → Google Business Profile. Email is decided separately, not queued as a
-channel. Zalo OA deferred.
+second channel → TikTok → YouTube Shorts → Google Business Profile. Email is
+decided separately, not queued as a channel. Zalo OA deferred. Provider audits
+are applied for in parallel, ahead of their implementation slot.
 
 ## Working agreements
 

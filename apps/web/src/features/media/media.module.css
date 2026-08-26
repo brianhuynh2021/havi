@@ -10,7 +10,7 @@
   background: var(--color-surface); font-size: 13px; font-weight: 600;
   color: var(--color-body); cursor: pointer;
 }
-.filterChipActive { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.filterChipActive { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-white); }
 .countHint { margin-left: auto; font-size: 13px; color: var(--color-muted); }
 
 .grid {
@@ -23,6 +23,7 @@
   border: 1px solid var(--color-border); border-radius: 12px;
   background: var(--color-surface); overflow: hidden;
   display: flex; flex-direction: column;
+  position: relative;
 }
 
 .thumbWrap { position: relative; aspect-ratio: 1; background: var(--color-border-soft); }
@@ -36,7 +37,7 @@
 .typeTag {
   position: absolute; top: 8px; left: 8px;
   padding: 2px 9px; border-radius: 999px;
-  background: rgba(15, 23, 42, 0.78); color: #fff;
+  background: rgba(15, 23, 42, 0.78); color: var(--color-white);
   font-size: 11px; font-weight: 700;
 }
 
@@ -45,3 +46,26 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .meta { margin: 0 10px 10px; font-size: 12px; color: var(--color-muted); }
+
+.deleteButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.card:hover .deleteButton {
+  opacity: 1;
+}
+
+.deleteButton:hover {
+  background-color: var(--color-red-700);
+}

@@ -16,9 +16,9 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: 999px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
+  background: var(--color-blue-50);
+  border: 1px solid var(--color-blue-200);
+  color: var(--color-blue-700);
   font-size: 12.5px;
   font-weight: 700;
   margin-bottom: 12px;
@@ -28,7 +28,7 @@
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: 900;
-  color: #0f172a;
+  color: var(--color-slate-900);
   letter-spacing: -0.02em;
 }
 
@@ -37,21 +37,21 @@
   max-width: 640px;
   font-size: 14px;
   line-height: 1.6;
-  color: #64748b;
+  color: var(--color-slate-500);
 }
 
 /* Card container cho từng phần cài đặt */
 .sectionCard {
   padding: 28px 32px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--color-slate-200);
   border-radius: 20px;
-  background: #ffffff;
+  background: var(--color-white);
   box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sectionCard:hover {
-  border-color: #cbd5e1;
+  border-color: var(--color-slate-300);
   box-shadow: 0 8px 30px -6px rgba(15, 23, 42, 0.08);
 }
 
@@ -70,8 +70,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: #eff6ff;
-  color: #0066ff;
+  background: var(--color-blue-50);
+  color: var(--color-brand-primary);
 }
 
 .cardHeaderText {
@@ -83,14 +83,14 @@
 .sectionTitle {
   font-size: 18px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-slate-900);
   letter-spacing: -0.01em;
 }
 
 .sectionHint {
   font-size: 13.5px;
   line-height: 1.55;
-  color: #64748b;
+  color: var(--color-slate-500);
 }
 
 .form {
@@ -112,16 +112,16 @@
 .label {
   font-size: 13.5px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-slate-800);
 }
 
 .select {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--color-slate-300);
   border-radius: 12px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--color-white);
+  color: var(--color-slate-900);
   font: inherit;
   font-size: 14px;
   line-height: 1.5;
@@ -131,14 +131,14 @@
 
 .select:focus {
   outline: none;
-  border-color: #0066ff;
+  border-color: var(--color-brand-primary);
   box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12);
 }
 
 .select:disabled {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-  color: #94a3b8;
+  background: var(--color-slate-100);
+  border-color: var(--color-slate-200);
+  color: var(--color-slate-400);
   cursor: not-allowed;
 }
 
@@ -148,25 +148,25 @@
   gap: 16px;
   margin-top: 8px;
   padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-slate-100);
 }
 
 .status {
   font-size: 13.5px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-weight: 600;
 }
 
 .success {
-  color: #16a34a;
+  color: var(--color-green-600);
 }
 
 .alert {
   padding: 14px 18px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-red-200);
   border-radius: 12px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--color-red-50);
+  color: var(--color-red-700);
   font-size: 13.5px;
   font-weight: 600;
   line-height: 1.5;
@@ -174,17 +174,17 @@
 
 /* Vùng nguy hiểm */
 .dangerCardContainer {
-  border-color: #fee2e2;
-  background: #fffafa;
+  border-color: var(--color-red-100);
+  background: var(--color-white);
 }
 
 .dangerCardContainer:hover {
-  border-color: #fca5a5;
+  border-color: var(--color-red-300);
 }
 
 .dangerIcon {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--color-red-100);
+  color: var(--color-red-600);
 }
 
 .dangerGrid {
@@ -195,9 +195,9 @@
 
 .dangerSubCard {
   padding: 20px 24px;
-  border: 1.5px solid #fecaca;
+  border: 1.5px solid var(--color-red-200);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -213,21 +213,21 @@
 .dangerTitle {
   font-size: 15px;
   font-weight: 800;
-  color: #991b1b;
+  color: var(--color-red-800);
 }
 
 .dangerText {
   font-size: 13px;
   line-height: 1.5;
-  color: #7f1d1d;
+  color: var(--color-red-900);
 }
 
 .dangerButton {
   padding: 10px 18px;
-  border: 1.5px solid #dc2626;
+  border: 1.5px solid var(--color-red-600);
   border-radius: 10px;
-  background: #dc2626;
-  color: #ffffff;
+  background: var(--color-red-600);
+  color: var(--color-white);
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -236,8 +236,8 @@
 }
 
 .dangerButton:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
+  background: var(--color-red-700);
+  border-color: var(--color-red-700);
 }
 
 .dangerButton:disabled {
@@ -247,10 +247,10 @@
 
 .dangerButtonOutline {
   padding: 10px 18px;
-  border: 1.5px solid #ef4444;
+  border: 1.5px solid var(--color-red-500);
   border-radius: 10px;
-  background: #ffffff;
-  color: #dc2626;
+  background: var(--color-white);
+  color: var(--color-red-600);
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -259,8 +259,8 @@
 }
 
 .dangerButtonOutline:hover {
-  background: #fef2f2;
-  border-color: #dc2626;
+  background: var(--color-red-50);
+  border-color: var(--color-red-600);
 }
 
 .dangerButtonOutline:disabled {

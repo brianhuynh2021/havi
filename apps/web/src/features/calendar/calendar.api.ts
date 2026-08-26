@@ -41,6 +41,15 @@ export function addDays(date: Date, days: number): Date {
   return next;
 }
 
+/** 
+ * Ngày thứ Hai của tuần chứa ngày mùng 1 của tháng hiện tại.
+ * Dùng để vẽ lưới lịch 42 ô (6 tuần). 
+ */
+export function startOfVnMonthGrid(date: Date): Date {
+  const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  return startOfVnWeek(firstDayOfMonth);
+}
+
 export async function fetchCalendar(
   start: string,
   end: string,

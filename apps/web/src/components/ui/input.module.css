@@ -1,10 +1,10 @@
 .field {
   width: 100%;
   padding: 12px 16px;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid var(--color-slate-300);
   border-radius: 12px;
-  background: var(--color-surface, #ffffff);
-  color: var(--color-ink, #0f172a);
+  background: var(--color-surface, var(--color-white));
+  color: var(--color-ink, var(--color-slate-900));
   font: inherit;
   font-size: 14px;
   line-height: 1.5;
@@ -13,24 +13,24 @@
 }
 
 .field:hover {
-  border-color: #94a3b8;
+  border-color: var(--color-slate-400);
 }
 
 .field:focus {
   outline: none;
-  border-color: var(--color-primary, #0066ff);
+  border-color: var(--color-primary, var(--color-brand-primary));
   box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12), 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .field:disabled {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-  color: #94a3b8;
+  background: var(--color-slate-100);
+  border-color: var(--color-slate-200);
+  color: var(--color-slate-400);
   cursor: not-allowed;
 }
 
 .field::placeholder {
-  color: var(--color-placeholder, #94a3b8);
+  color: var(--color-placeholder, var(--color-slate-400));
 }
 
 .large {
@@ -39,8 +39,8 @@
   border-color: rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   font-size: 16px;
-  background: #131a29;
-  color: #ffffff;
+  background: var(--color-slate-900);
+  color: var(--color-white);
 }
 
 .large:hover {
@@ -49,9 +49,9 @@
 
 .large:focus {
   outline: none;
-  background: #182235;
-  border-color: #00d2ff;
-  color: #ffffff;
+  background: var(--color-slate-800);
+  border-color: var(--color-brand-primary-light);
+  color: var(--color-white);
   box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.18), 0 0 16px rgba(0, 210, 255, 0.2);
 }
 
@@ -59,9 +59,9 @@
 .large:-webkit-autofill:hover,
 .large:-webkit-autofill:focus,
 .large:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #131a29 inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--color-slate-900) inset !important;
+  -webkit-text-fill-color: var(--color-white) !important;
+  caret-color: var(--color-white) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 

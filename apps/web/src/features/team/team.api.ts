@@ -82,3 +82,40 @@ export async function removeMember(userId: string): Promise<Result<null>> {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export async function updateMemberRole(userId: string, role: WorkspaceRole): Promise<Result<WorkspaceMember>> {
+  const id = workspaceId();
+  if (!id) return { ok: false, message: NO_WORKSPACE };
+  try {
+    const { data, error } = await apiClient.PUT(
+      "/workspaces/{workspace_id}/members/{user_id}/role",
+      {
+        params: { path: { workspace_id: id, user_id: userId } },
+        body: { role },
+      },
+    );
+    if (error || !data) {
+      return { ok: false, message: detailToMessage(error, "Không đổi được vai trò") };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function resendInvite(userId: string): Promise<Result<WorkspaceMember>> {
+  const id = workspaceId();
+  if (!id) return { ok: false, message: NO_WORKSPACE };
+  try {
+    const { data, error } = await apiClient.POST(
+      "/workspaces/{workspace_id}/members/{user_id}/resend",
+      { params: { path: { workspace_id: id, user_id: userId } } },
+    );
+    if (error || !data) {
+      return { ok: false, message: detailToMessage(error, "Không gửi lại được lời mời") };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}

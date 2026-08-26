@@ -3,6 +3,7 @@ import { Inter, Merriweather } from "next/font/google";
 import { SessionProvider } from "@/lib/auth/session";
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { PwaRegistrar } from "@/components/pwa/pwa-registrar";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -57,12 +58,15 @@ export default function RootLayout({
     <html
       lang="vi"
       className={`${inter.variable} ${merriweather.variable}`}
+      suppressHydrationWarning
     >
       <body>
-        <SessionProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </SessionProvider>
-        <PwaRegistrar />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SessionProvider>
+            <LanguageProvider>{children}</LanguageProvider>
+          </SessionProvider>
+          <PwaRegistrar />
+        </ThemeProvider>
       </body>
     </html>
   );

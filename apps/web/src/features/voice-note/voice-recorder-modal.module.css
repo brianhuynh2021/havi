@@ -14,7 +14,7 @@
 .modal {
   width: 100%;
   max-width: 520px;
-  background: #0d131f;
+  background: var(--color-slate-900);
   border: 1px solid rgba(0, 102, 255, 0.3);
   border-radius: 24px;
   padding: 32px 28px;
@@ -32,7 +32,7 @@
   right: 18px;
   background: rgba(255, 255, 255, 0.08);
   border: 0;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -46,19 +46,19 @@
 
 .closeButton:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .title {
   font-size: 22px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-white);
   margin: 0 0 6px;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   margin: 0 0 24px;
 }
 
@@ -97,8 +97,8 @@
   height: 88px;
   border-radius: 50%;
   border: 0;
-  background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-dark) 100%);
+  color: var(--color-white);
   font-size: 36px;
   display: flex;
   align-items: center;
@@ -114,26 +114,26 @@
 }
 
 .micButtonRecording {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, var(--color-red-500) 0%, var(--color-red-600) 100%);
   box-shadow: 0 8px 32px rgba(239, 68, 68, 0.55);
 }
 
 .timer {
   font-size: 18px;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--color-blue-400);
   font-variant-numeric: tabular-nums;
   margin-bottom: 16px;
 }
 
 .timerRecording {
-  color: #f87171;
+  color: var(--color-red-400);
   animation: blink 1.5s ease-in-out infinite;
 }
 
 .transcriptBox {
   width: 100%;
-  background: #131a29;
+  background: var(--color-slate-900);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 16px;
@@ -146,7 +146,7 @@
 .transcriptLabel {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--color-slate-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -154,14 +154,14 @@
 
 .transcriptText {
   font-size: 14.5px;
-  color: #e2e8f0;
+  color: var(--color-slate-200);
   line-height: 1.5;
   margin: 0;
 }
 
 .transcriptPlaceholder {
   font-size: 13.5px;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-style: italic;
   margin: 0;
 }
@@ -179,13 +179,13 @@
 .suggestionTitle {
   font-size: 11.5px;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--color-blue-400);
   margin: 0 0 4px;
 }
 
 .suggestionItem {
   font-size: 12.5px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   margin: 0;
   line-height: 1.4;
 }
@@ -203,7 +203,7 @@
   border: 1px solid rgba(239, 68, 68, 0.35);
   border-radius: 12px;
   padding: 10px 14px;
-  color: #fca5a5;
+  color: var(--color-red-300);
   font-size: 13px;
   margin-bottom: 16px;
 }

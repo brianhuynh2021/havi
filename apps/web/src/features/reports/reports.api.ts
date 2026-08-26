@@ -13,11 +13,14 @@ export type TopPostItem = {
   published_at?: string | null;
 };
 
+export type FailedPostRecord = components["schemas"]["FailedPostRecord"];
+
 export type ReportsData = {
   summary: AnalyticsSummary;
   timeseries: AnalyticsTimeseries;
   attribution: ChannelAttribution[];
   topPosts: TopPostItem[];
+  failedPosts: FailedPostRecord[];
 };
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
@@ -50,7 +53,7 @@ function monthRange(): { start: string; end: string } {
 export async function fetchReports(): Promise<Result<ReportsData>> {
   const range = monthRange();
   try {
-    const [summary, timeseries, attribution, calendarData] = await Promise.all([
+    const [summary, timeseries, attribution, calendarData, failedPostsReq] = await Promise.all([
       apiClient.GET("/analytics/summary", { params: { query: range } }),
       apiClient.GET("/analytics/timeseries", {
         params: { query: { metric: "published_posts", granularity: "week" } },
@@ -59,6 +62,7 @@ export async function fetchReports(): Promise<Result<ReportsData>> {
       apiClient.GET("/calendar", {
         params: { query: range },
       }),
+      apiClient.GET("/analytics/failed-posts", { params: { query: range } }),
     ]);
 
     if (
@@ -67,7 +71,9 @@ export async function fetchReports(): Promise<Result<ReportsData>> {
       timeseries.error ||
       !timeseries.data ||
       attribution.error ||
-      !attribution.data
+      !attribution.data ||
+      failedPostsReq.error ||
+      !failedPostsReq.data
     ) {
       return { ok: false, message: "Chưa tải được báo cáo, thử lại giúp bạn nhé." };
     }
@@ -95,6 +101,7 @@ export async function fetchReports(): Promise<Result<ReportsData>> {
         timeseries: timeseries.data,
         attribution: attribution.data,
         topPosts,
+        failedPosts: failedPostsReq.data,
       },
     };
   } catch {

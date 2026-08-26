@@ -69,18 +69,20 @@ critical integration tests passing.
 
 ### Phase C — Additional organic channels
 
-Expand only after the previous channel is operationally complete. Provider
-approval, not implementation, sets the schedule: every channel's review is
-applied for in parallel, and channels ship in whatever order approvals land.
+Expand only after the previous channel is operationally complete. Implementation
+is not the long pole; provider approval is. Every channel's review is applied
+for in parallel, well before its implementation slot comes up.
 
-1. YouTube Shorts and TikTok. Both take a finished vertical clip through the
-   same Havi path, so whichever audit clears first ships first. TikTok reaches
-   more Vietnamese small businesses; an unaudited TikTok app can only post
-   privately, and YouTube upload quota needs an increase request.
-2. Google Business Profile, deferred behind the video channels. Beyond enabling
-   the API it requires a separate access application, the slowest approval in
-   the set.
-3. Email is not a channel decision. It needs list management, unsubscribe and
+1. TikTok. The second channel, because it reaches more Vietnamese small
+   businesses than any other after Facebook. An unaudited TikTok app can only
+   post privately, so its audit is applied for during the Facebook pilot — it is
+   the slowest approval in the set and sits on the critical path from day one.
+2. YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
+   published and confirmed, so the second video channel is mostly adapter work.
+   Upload quota needs an increase request against the default daily limit.
+3. Google Business Profile, deferred behind the video channels. Beyond enabling
+   the API it requires a separate access application.
+4. Email is not a channel decision. It needs list management, unsubscribe and
    consent handling that social operations does not have, and is decided
    separately rather than queued behind the channels above.
 
