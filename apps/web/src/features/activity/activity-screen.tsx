@@ -12,6 +12,7 @@
  * đọc chi tiết, và giấu nó đi thì người trực không biết phải xử lý gì.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -51,6 +52,10 @@ const timeFormatter = new Intl.DateTimeFormat("vi-VN", {
 });
 
 export function ActivityScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [errorOnly, setErrorOnly] = useState(false);
@@ -77,44 +82,37 @@ export function ActivityScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Lịch sử hoạt động</h1>
-        <p className={styles.subtitle}>
-          Mọi việc đã xảy ra trong workspace này — ai làm, lúc nào, và cái gì
-          hỏng. Dùng để đối chiếu khi có gì đó không như mong đợi.
-        </p>
+        <h1 className={styles.title}>{t("Lịch sử hoạt động")}</h1>
+        <p className={styles.subtitle}>{t(
+          "Mọi việc đã xảy ra trong workspace này — ai làm, lúc nào, và cái gì\n          hỏng. Dùng để đối chiếu khi có gì đó không như mong đợi."
+        )}</p>
       </header>
 
-      <div className={styles.filterRow} role="group" aria-label="Lọc lịch sử">
+      <div className={styles.filterRow} role="group" aria-label={t("Lọc lịch sử")}>
         <button
           type="button"
           aria-pressed={!errorOnly}
           className={`${styles.filterChip} ${!errorOnly ? styles.filterChipActive : ""}`}
           onClick={() => setErrorOnly(false)}
-        >
-          Tất cả
-        </button>
+        >{t("Tất cả")}</button>
         <button
           type="button"
           aria-pressed={errorOnly}
           className={`${styles.filterChip} ${errorOnly ? styles.filterChipActive : ""}`}
           onClick={() => setErrorOnly(true)}
-        >
-          Chỉ việc hỏng
-        </button>
-        {!loading && !error ? <span className={styles.countHint}>{total} mục</span> : null}
+        >{t("Chỉ việc hỏng")}</button>
+        {!loading && !error ? <span className={styles.countHint}>{total}{" "}{t("mục")}</span> : null}
       </div>
 
       {error ? (
         <ErrorState
           title={error}
           action={
-            <Button variant="outline" onClick={load}>
-              Thử lại
-            </Button>
+            <Button variant="outline" onClick={load}>{t("Thử lại")}</Button>
           }
         />
       ) : loading ? (
-        <LoadingState title="Đang tải lịch sử…" />
+        <LoadingState title={t("Đang tải lịch sử…")} />
       ) : events.length === 0 ? (
         <EmptyState
           title={errorOnly ? "Không có việc nào hỏng" : "Chưa có hoạt động nào"}

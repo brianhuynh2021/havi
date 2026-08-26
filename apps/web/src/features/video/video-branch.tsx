@@ -13,6 +13,7 @@
  * duy nhất — loại nội dung chỉ đổi cách *nhập vào*, không đổi cách *lên lịch*.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -103,6 +104,10 @@ function describeClip(asset: MediaAsset): string {
 }
 
 export function VideoBranch() {
+  const {
+    t
+  } = useLanguage();
+
   const [posts, setPosts] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -303,9 +308,7 @@ export function VideoBranch() {
       {error ? <ErrorState title={error} /> : null}
 
       <section className={styles.uploadCard} aria-labelledby="video-upload-title">
-        <h2 id="video-upload-title" className={styles.sectionTitle}>
-          Tải clip lên
-        </h2>
+        <h2 id="video-upload-title" className={styles.sectionTitle}>{t("Tải clip lên")}</h2>
 
         <input
           ref={fileInputRef}
@@ -317,10 +320,9 @@ export function VideoBranch() {
 
         {!draft ? (
           <div className={styles.dropzone}>
-            <p className={styles.dropzoneHint}>
-              Clip dọc 9:16, từ 3 đến 90 giây. Havi kiểm ngay khi tải lên để bạn còn
-              kịp quay lại nếu có gì chưa hợp.
-            </p>
+            <p className={styles.dropzoneHint}>{t(
+              "Clip dọc 9:16, từ 3 đến 90 giây. Havi kiểm ngay khi tải lên để bạn còn\n              kịp quay lại nếu có gì chưa hợp."
+            )}</p>
             <Button
               variant="primary"
               onClick={() => fileInputRef.current?.click()}
@@ -336,7 +338,7 @@ export function VideoBranch() {
               src={draft.previewUrl}
               controls
               playsInline
-              aria-label="Xem lại clip vừa tải lên"
+              aria-label={t("Xem lại clip vừa tải lên")}
             />
 
             <div className={styles.draftForm}>
@@ -354,14 +356,12 @@ export function VideoBranch() {
                 })}
               </ul>
 
-              <label className={styles.label} htmlFor="video-caption">
-                Nội dung đăng kèm
-              </label>
+              <label className={styles.label} htmlFor="video-caption">{t("Nội dung đăng kèm")}</label>
               <Textarea
                 id="video-caption"
                 value={caption}
                 onChange={(event) => setCaption(event.target.value)}
-                placeholder="Viết vài dòng giới thiệu clip này…"
+                placeholder={t("Viết vài dòng giới thiệu clip này…")}
                 rows={4}
               />
 
@@ -369,14 +369,12 @@ export function VideoBranch() {
                 <Button variant="primary" onClick={onSubmit} disabled={submitting}>
                   {submitting ? "Đang lưu…" : "Đưa vào hàng chờ duyệt"}
                 </Button>
-                <Button variant="outline" onClick={resetDraft} disabled={submitting}>
-                  Chọn clip khác
-                </Button>
+                <Button variant="outline" onClick={resetDraft} disabled={submitting}>{t("Chọn clip khác")}</Button>
               </div>
 
               {blockReasons.length ? (
                 <div className={styles.blockReason} role="alert">
-                  <strong>Clip này chưa đăng được:</strong>
+                  <strong>{t("Clip này chưa đăng được:")}</strong>
                   <ul>
                     {blockReasons.map((reason) => (
                       <li key={reason}>{reason}</li>
@@ -390,16 +388,14 @@ export function VideoBranch() {
       </section>
 
       <section aria-labelledby="video-list-title">
-        <h2 id="video-list-title" className={styles.sectionTitle}>
-          Video của bạn
-        </h2>
+        <h2 id="video-list-title" className={styles.sectionTitle}>{t("Video của bạn")}</h2>
 
         {loading ? (
-          <LoadingState title="Đang tải danh sách video…" />
+          <LoadingState title={t("Đang tải danh sách video…")} />
         ) : posts.length === 0 ? (
           <EmptyState
-            title="Chưa có video nào"
-            body="Tải một clip lên để bắt đầu."
+            title={t("Chưa có video nào")}
+            body={t("Tải một clip lên để bắt đầu.")}
           />
         ) : (
           <ul className={styles.postList}>
@@ -413,11 +409,10 @@ export function VideoBranch() {
                       {status.text}
                     </span>
                     <p className={styles.postCaption}>
-                      {post.caption || <em>Chưa có nội dung đăng kèm</em>}
+                      {post.caption || <em>{t("Chưa có nội dung đăng kèm")}</em>}
                     </p>
                     {post.scheduled_at ? (
-                      <p className={styles.postSchedule}>
-                        Sẽ đăng {scheduleFormatter.format(new Date(post.scheduled_at))}
+                      <p className={styles.postSchedule}>{t("Sẽ đăng")}{" "}{scheduleFormatter.format(new Date(post.scheduled_at))}
                       </p>
                     ) : null}
                     {post.error_message ? (
@@ -427,9 +422,7 @@ export function VideoBranch() {
 
                   <div className={styles.postActions}>
                     {post.status === "ready_for_review" ? (
-                      <Button variant="outline" onClick={() => onCancelRequested(post)} disabled={isBusy}>
-                        Bỏ clip này
-                      </Button>
+                      <Button variant="outline" onClick={() => onCancelRequested(post)} disabled={isBusy}>{t("Bỏ clip này")}</Button>
                     ) : null}
                   </div>
                 </li>
@@ -462,7 +455,7 @@ export function VideoBranch() {
         type="custom"
         isDeleting={busyId === cancellingPost?.id}
         customKeyword="HUYVIDEO"
-        customTitle="Xác nhận huỷ video"
+        customTitle={t("Xác nhận huỷ video")}
         customLostItems={["Video này sẽ bị huỷ khỏi hàng chờ duyệt và không được xuất bản."]}
         onClose={() => setCancellingPost(null)}
         onConfirm={onCancel}

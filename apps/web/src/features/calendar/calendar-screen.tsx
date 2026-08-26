@@ -64,7 +64,7 @@ function canReschedule(status: string): boolean {
 }
 
 export function CalendarScreen() {
-  const { lang, t } = useLanguage();
+const { lang, t } = useLanguage();
   const [baseDate, setBaseDate] = useState<string>(() => toVnDateString(new Date()));
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,7 +254,7 @@ export function CalendarScreen() {
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <h1 className={styles.title}>{t("calendar.title", "Lịch Đăng Bài")}</h1>
-          <Badge tone="success">✨ Múi giờ Asia/Ho_Chi_Minh (UTC+7)</Badge>
+          <Badge tone="success">{t("✨ Múi giờ Asia/Ho_Chi_Minh (UTC+7)")}</Badge>
         </div>
         <p className={styles.subtitle}>
           {t({
@@ -266,18 +266,18 @@ export function CalendarScreen() {
         {/* Dashboard Thống Kê Tổng Quan */}
         <div className={styles.metricsBar}>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>📅 Tổng bài lên lịch</span>
-            <span className={styles.metricValue}>{totalItems} bài</span>
-            <span className={styles.metricSubtext}>Tuần đang hiển thị</span>
+            <span className={styles.metricLabel}>{t("📅 Tổng bài lên lịch")}</span>
+            <span className={styles.metricValue}>{totalItems}{" "}{t("bài")}</span>
+            <span className={styles.metricSubtext}>{t("Tuần đang hiển thị")}</span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>📢 Kênh kết nối</span>
-            <span className={styles.metricValue}>{uniqueChannels.length || 0} kênh</span>
+            <span className={styles.metricLabel}>{t("📢 Kênh kết nối")}</span>
+            <span className={styles.metricValue}>{uniqueChannels.length || 0}{" "}{t("kênh")}</span>
             <span className={styles.metricSubtext}>Facebook, TikTok, YouTube</span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>⚡ Tự động đăng</span>
-            <span className={styles.metricValue}>Giờ Vàng VN</span>
+            <span className={styles.metricLabel}>{t("⚡ Tự động đăng")}</span>
+            <span className={styles.metricValue}>{t("Giờ Vàng VN")}</span>
             <span className={styles.metricSubtext}>08:00 • 12:00 • 20:00 ICT</span>
           </div>
         </div>
@@ -313,14 +313,12 @@ export function CalendarScreen() {
 
         <div className={styles.filterBar}>
           <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Kênh:</span>
+            <span className={styles.filterLabel}>{t("Kênh:")}</span>
             <button
               type="button"
               className={`${styles.filterChip} ${channelFilter === "all" ? styles.filterChipActive : ""}`}
               onClick={() => setChannelFilter("all")}
-            >
-              Tất cả
-            </button>
+            >{t("Tất cả")}</button>
             {CHANNEL_FILTERS.map((filter) => (
               <button
                 key={filter.key}
@@ -334,28 +332,22 @@ export function CalendarScreen() {
           </div>
 
           <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Trạng thái:</span>
+            <span className={styles.filterLabel}>{t("Trạng thái:")}</span>
             <button
               type="button"
               className={`${styles.filterChip} ${statusFilter === "all" ? styles.filterChipActive : ""}`}
               onClick={() => setStatusFilter("all")}
-            >
-              Tất cả
-            </button>
+            >{t("Tất cả")}</button>
             <button
               type="button"
               className={`${styles.filterChip} ${statusFilter === "scheduled" ? styles.filterChipActive : ""}`}
               onClick={() => setStatusFilter("scheduled")}
-            >
-              Chờ đăng
-            </button>
+            >{t("Chờ đăng")}</button>
             <button
               type="button"
               className={`${styles.filterChip} ${statusFilter === "published" ? styles.filterChipActive : ""}`}
               onClick={() => setStatusFilter("published")}
-            >
-              Đã đăng
-            </button>
+            >{t("Đã đăng")}</button>
           </div>
 
           {/* View Mode Switcher */}
@@ -364,23 +356,17 @@ export function CalendarScreen() {
               type="button"
               className={`${styles.viewBtn} ${viewMode === "week" ? styles.viewBtnActive : ""}`}
               onClick={() => setViewMode("week")}
-            >
-              📊 Lưới tuần
-            </button>
+            >{t("📊 Lưới tuần")}</button>
             <button
               type="button"
               className={`${styles.viewBtn} ${viewMode === "month" ? styles.viewBtnActive : ""}`}
               onClick={() => setViewMode("month")}
-            >
-              🗓️ Lưới tháng
-            </button>
+            >{t("🗓️ Lưới tháng")}</button>
             <button
               type="button"
               className={`${styles.viewBtn} ${viewMode === "timeline" ? styles.viewBtnActive : ""}`}
               onClick={() => setViewMode("timeline")}
-            >
-              📋 Dòng thời gian
-            </button>
+            >{t("📋 Dòng thời gian")}</button>
           </div>
         </div>
       </div>
@@ -422,14 +408,14 @@ export function CalendarScreen() {
                     <div className={styles.dayHeaderTitleRow}>
                       {viewMode === "week" && <span className={styles.dayLabel}>{weekdayLabels[index]}</span>}
                       {day.date === today ? (
-                        <span className={styles.todayPill}>Hôm nay</span>
+                        <span className={styles.todayPill}>{t("Hôm nay")}</span>
                       ) : null}
                     </div>
                     <span className={styles.dayDate}>{viewMode === "month" ? new Date(day.date).getDate() : dayLabel(day.date)}</span>
                   </div>
 
                   {day.items.length === 0 ? (
-                    <div className={styles.emptySlot} title="Chưa có bài lên lịch cho ngày này">
+                    <div className={styles.emptySlot} title={t("Chưa có bài lên lịch cho ngày này")}>
                       <span className={styles.emptySlotIcon}>+</span>
                       {viewMode === "week" && <span className={styles.emptySlotText}>{t({ vi: "Chưa có bài", en: "No posts" })}</span>}
                     </div>
@@ -442,7 +428,7 @@ export function CalendarScreen() {
                           draggable={canReschedule(item.status)}
                           onDragStart={(e) => handleDragStart(e, item)}
                           onClick={() => openDetailModal(item, day.date)}
-                          title="Bấm để xem chi tiết bài đăng"
+                          title={t("Bấm để xem chi tiết bài đăng")}
                         >
                           <div className={styles.postMeta}>
                             <span className={styles.postTime}>
@@ -478,11 +464,11 @@ export function CalendarScreen() {
             </section>
           ) : (
             /* CHẾ ĐỘ 2: DÒNG THỜI GIAN CHI TIẾT (TIMELINE / DEBUG LIST VIEW) */
-            <section className={styles.timelineContainer} aria-label="Dòng thời gian bài đăng">
+            <section className={styles.timelineContainer} aria-label={t("Dòng thời gian bài đăng")}>
               {filteredDays.filter((d) => d.items.length > 0).length === 0 ? (
                 <EmptyState
-                  title="Không có bài nào khớp với bộ lọc"
-                  body="Hãy chọn 'Tất cả' hoặc duyệt bài mới để xem dòng thời gian bài đăng."
+                  title={t("Không có bài nào khớp với bộ lọc")}
+                  body={t("Hãy chọn 'Tất cả' hoặc duyệt bài mới để xem dòng thời gian bài đăng.")}
                 />
               ) : (
                 filteredDays
@@ -493,10 +479,10 @@ export function CalendarScreen() {
                         <div className={styles.timelineDayTitle}>
                           <span>📅 {fullWeekdayLabels[dIdx % 7]}, {dayLabel(day.date)}</span>
                           {day.date === today ? (
-                            <span className={styles.todayPill}>Hôm nay</span>
+                            <span className={styles.todayPill}>{t("Hôm nay")}</span>
                           ) : null}
                         </div>
-                        <span className={styles.timelineDayCount}>{day.items.length} bài đăng</span>
+                        <span className={styles.timelineDayCount}>{day.items.length}{" "}{t("bài đăng")}</span>
                       </div>
 
                       <div className={styles.timelineList}>
@@ -542,9 +528,7 @@ export function CalendarScreen() {
                               <Badge tone={statusTone[item.status]}>
                                 {statusLabel[item.status]}
                               </Badge>
-                              <Button variant="outline">
-                                Xem & Đổi giờ
-                              </Button>
+                              <Button variant="outline">{t("Xem & Đổi giờ")}</Button>
                             </div>
                           </div>
                         ))}
@@ -557,8 +541,8 @@ export function CalendarScreen() {
 
           {empty ? (
             <EmptyState
-              title="Chưa có bài nào được lên lịch tuần này"
-              body="Duyệt một bản nháp ở tab Tạo nội dung để thấy bài xuất hiện ở đây."
+              title={t("Chưa có bài nào được lên lịch tuần này")}
+              body={t("Duyệt một bản nháp ở tab Tạo nội dung để thấy bài xuất hiện ở đây.")}
             />
           ) : null}
         </>
@@ -585,21 +569,19 @@ export function CalendarScreen() {
               <Button
                 variant="ghost"
                 onClick={() => setSelectedItem(null)}
-              >
-                ✕ Đóng
-              </Button>
+              >{t("✕ Đóng")}</Button>
             </div>
 
             <div className={styles.postMeta}>
               <span>
-                ⏰ <strong>Giờ đăng:</strong>{" "}
+                ⏰ <strong>{t("Giờ đăng:")}</strong>{" "}
                 {selectedItem.item.scheduled_at
                   ? vnTime.format(new Date(selectedItem.item.scheduled_at)) +
                     " (Giờ VN)"
                   : "Chưa chọn giờ"}
               </span>
               <span>
-                📌 <strong>Kênh:</strong>{" "}
+                📌 <strong>{t("Kênh:")}</strong>{" "}
                 {channelLabels[
                   selectedItem.item.channel as keyof typeof channelLabels
                 ] ?? selectedItem.item.channel}
@@ -612,7 +594,7 @@ export function CalendarScreen() {
               <div className={styles.imagePreviewBox}>
                 <img
                   src={selectedItem.item.media_url}
-                  alt="Ảnh đính kèm"
+                  alt={t("Ảnh đính kèm")}
                   className={styles.modalPreviewImage}
                 />
               </div>
@@ -620,13 +602,13 @@ export function CalendarScreen() {
 
             {selectedItem.item.media_note ? (
               <div className={styles.modalMediaNote}>
-                💡 <strong>Gợi ý ảnh/video:</strong> {selectedItem.item.media_note}
+                💡 <strong>{t("Gợi ý ảnh/video:")}</strong> {selectedItem.item.media_note}
               </div>
             ) : null}
 
             {canReschedule(selectedItem.item.status) ? (
               <div className={styles.rescheduleSection}>
-                <h4 className={styles.rescheduleTitle}>📅 Đổi ngày giờ đăng (Giờ vàng ICT)</h4>
+                <h4 className={styles.rescheduleTitle}>{t("📅 Đổi ngày giờ đăng (Giờ vàng ICT)")}</h4>
 
                 {/* Quick Presets for Shop Owners */}
                 <div className={styles.presetGrid}>
@@ -634,30 +616,22 @@ export function CalendarScreen() {
                     type="button"
                     className={styles.presetBtn}
                     onClick={() => applyPresetTime("08:00")}
-                  >
-                    🌅 Sáng (08:00)
-                  </button>
+                  >{t("🌅 Sáng (08:00)")}</button>
                   <button
                     type="button"
                     className={styles.presetBtn}
                     onClick={() => applyPresetTime("12:00")}
-                  >
-                    ☀️ Trưa (12:00)
-                  </button>
+                  >{t("☀️ Trưa (12:00)")}</button>
                   <button
                     type="button"
                     className={styles.presetBtn}
                     onClick={() => applyPresetTime("20:00")}
-                  >
-                    🌆 Tối (20:00)
-                  </button>
+                  >{t("🌆 Tối (20:00)")}</button>
                   <button
                     type="button"
                     className={styles.presetBtn}
                     onClick={() => applyPresetTime("21:30")}
-                  >
-                    🌙 Đêm (21:30)
-                  </button>
+                  >{t("🌙 Đêm (21:30)")}</button>
                 </div>
 
                 <form
@@ -671,7 +645,7 @@ export function CalendarScreen() {
                     type="datetime-local"
                     value={targetIso}
                     onChange={(e) => setTargetIso(e.target.value)}
-                    aria-label="Giờ đăng mới"
+                    aria-label={t("Giờ đăng mới")}
                   />
                   {rescheduleError ? (
                     <p className={styles.inlineError} role="alert">
@@ -692,9 +666,7 @@ export function CalendarScreen() {
                       type="button"
                       variant="ghost"
                       onClick={() => setSelectedItem(null)}
-                    >
-                      Đóng
-                    </Button>
+                    >{t("Đóng")}</Button>
                     <Button
                       type="submit"
                       disabled={rescheduling}

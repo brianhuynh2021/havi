@@ -31,6 +31,21 @@ function metrics(overrides: Record<string, unknown> = {}) {
     tokens_in: 1000,
     tokens_out: 250,
     tokens_total: 1250,
+    job_count: 4,
+    avg_tokens_per_job: 312,
+    est_cost_per_job_vnd: 900,
+    // 20 nháp sinh ra, 2 được duyệt → chi phí mỗi bài lên kênh gấp 10 lần chi
+    // phí mỗi nháp. Đây là con số dùng để định giá gói.
+    //
+    // Tỷ lệ chọn 10% chứ không 25% là có lý do: `error_rate` ở trên cũng ra 25%,
+    // và hai chỉ số khác nhau hiển thị cùng một chuỗi thì `getByText` không phân
+    // biệt được — test vỡ vì trùng chuỗi, không vì lỗi thật.
+    generated_draft_count: 20,
+    approved_draft_count: 2,
+    draft_usage_rate: 0.1,
+    est_cost_per_approved_draft_vnd: 9000,
+    pricing_as_of: "2026-08-26",
+    pricing_is_stale: false,
     providers: [
       {
         provider: "openai",

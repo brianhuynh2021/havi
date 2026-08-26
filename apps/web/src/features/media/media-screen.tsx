@@ -8,6 +8,7 @@
  * việc soạn bài nằm ở mục Nội dung.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -54,12 +55,16 @@ function describeAsset(asset: MediaAsset): string {
 }
 
 export function MediaScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState<"all" | MediaType>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -99,14 +104,13 @@ export function MediaScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Thư viện media</h1>
-        <p className={styles.subtitle}>
-          Mọi ảnh và clip đã tải lên workspace. Dùng lại khi soạn bài thay vì tải
-          lên từ đầu mỗi lần.
-        </p>
+        <h1 className={styles.title}>{t("Thư viện media")}</h1>
+        <p className={styles.subtitle}>{t(
+          "Mọi ảnh và clip đã tải lên workspace. Dùng lại khi soạn bài thay vì tải\n          lên từ đầu mỗi lần."
+        )}</p>
       </header>
 
-      <div className={styles.filterRow} role="group" aria-label="Lọc theo loại">
+      <div className={styles.filterRow} role="group" aria-label={t("Lọc theo loại")}>
         {FILTERS.map((item) => (
           <button
             key={item.key}
@@ -119,18 +123,18 @@ export function MediaScreen() {
           </button>
         ))}
         {!loading && !error ? (
-          <span className={styles.countHint}>{total} mục</span>
+          <span className={styles.countHint}>{total}{" "}{t("mục")}</span>
         ) : null}
       </div>
 
       {error ? (
-        <ErrorState title={error} action={<Button variant="outline" onClick={load}>Thử lại</Button>} />
+        <ErrorState title={error} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />
       ) : loading ? (
-        <LoadingState title="Đang tải thư viện…" />
+        <LoadingState title={t("Đang tải thư viện…")} />
       ) : assets.length === 0 ? (
         <EmptyState
-          title="Thư viện còn trống"
-          body="Ảnh và clip bạn tải lên khi soạn bài sẽ tự động nằm ở đây."
+          title={t("Thư viện còn trống")}
+          body={t("Ảnh và clip bạn tải lên khi soạn bài sẽ tự động nằm ở đây.")}
         />
       ) : (
         <ul className={styles.grid}>
@@ -167,9 +171,7 @@ export function MediaScreen() {
                 className={styles.deleteButton}
                 onClick={() => setDeletingId(asset.id)}
                 aria-label={`Xoá ${asset.filename}`}
-              >
-                Xoá
-              </button>
+              >{t("Xoá")}</button>
             </li>
           ))}
         </ul>
@@ -180,7 +182,7 @@ export function MediaScreen() {
         type="custom"
         isDeleting={isDeleting}
         customKeyword="XOA"
-        customTitle="Xoá media khỏi thư viện"
+        customTitle={t("Xoá media khỏi thư viện")}
         customLostItems={[
           "File này sẽ bị xóa vĩnh viễn khỏi hệ thống.",
           "Nếu có bài viết (nháp) đang dùng file này, hình/video trong bài đó sẽ bị lỗi hiển thị.",

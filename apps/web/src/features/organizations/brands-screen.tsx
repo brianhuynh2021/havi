@@ -9,6 +9,7 @@
  * nội dung ở nhầm chi nhánh rồi mới phát hiện lúc bài đã lên.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,10 @@ const INDUSTRIES: Array<{ value: Industry; label: string }> = [
 ];
 
 export function BrandsScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const { can } = usePermissions();
   // Mở thương hiệu mới là quyền cấp tổ chức, nhưng ở đây dùng chung cổng với
   // quản trị thành viên: cả hai đều là việc của người đứng đầu.
@@ -83,17 +88,15 @@ export function BrandsScreen() {
     load();
   }
 
-  if (loading) return <LoadingState title="Đang tải danh sách thương hiệu…" />;
+  if (loading) return <LoadingState title={t("Đang tải danh sách thương hiệu…")} />;
 
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Thương hiệu &amp; chi nhánh</h1>
-        <p className={styles.subtitle}>
-          Mỗi thương hiệu là một không gian làm việc riêng biệt: kênh, nội dung,
-          kho media và thành viên đều tách rời. Dữ liệu không dùng chung giữa các
-          thương hiệu.
-        </p>
+        <h1 className={styles.title}>{t("Thương hiệu & chi nhánh")}</h1>
+        <p className={styles.subtitle}>{t(
+          "Mỗi thương hiệu là một không gian làm việc riêng biệt: kênh, nội dung,\n          kho media và thành viên đều tách rời. Dữ liệu không dùng chung giữa các\n          thương hiệu."
+        )}</p>
       </header>
 
       {error ? <ErrorState title={error} /> : null}
@@ -122,14 +125,14 @@ export function BrandsScreen() {
             <div className={styles.createRow}>
               <Input
                 value={name}
-                placeholder="Tên chi nhánh mới, ví dụ: An Nhiên Quận 7"
-                aria-label="Tên thương hiệu mới"
+                placeholder={t("Tên chi nhánh mới, ví dụ: An Nhiên Quận 7")}
+                aria-label={t("Tên thương hiệu mới")}
                 onChange={(event) => setName(event.target.value)}
               />
               <select
                 className={styles.industrySelect}
                 value={industry}
-                aria-label="Ngành"
+                aria-label={t("Ngành")}
                 onChange={(event) => setIndustry(event.target.value as Industry)}
               >
                 {INDUSTRIES.map((item) => (
@@ -147,9 +150,7 @@ export function BrandsScreen() {
               </Button>
             </div>
           ) : (
-            <p className={styles.blocked}>
-              Chỉ chủ tổ chức mở được thương hiệu mới.
-            </p>
+            <p className={styles.blocked}>{t("Chỉ chủ tổ chức mở được thương hiệu mới.")}</p>
           )}
         </section>
       ))}

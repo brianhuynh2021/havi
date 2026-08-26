@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -25,6 +26,10 @@ type Step = 1 | 2;
 const stepLabels = ["Khai báo thương hiệu", "Nối kênh"];
 
 export function OnboardingScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const router = useRouter();
   const { signIn } = useSession();
   // Quay về từ Facebook là một page load MỚI (backend redirect tới
@@ -110,7 +115,7 @@ export function OnboardingScreen() {
         <div className={styles.brandText}>Havi</div>
       </div>
 
-      <ol className={styles.steps} aria-label="Các bước onboarding">
+      <ol className={styles.steps} aria-label={t("Các bước onboarding")}>
         {stepLabels.map((label, index) => {
           const stepNumber = (index + 1) as Step;
           return (
@@ -130,27 +135,24 @@ export function OnboardingScreen() {
       <div className={styles.panel}>
         {step === 1 ? (
           <>
-            <h1 className={styles.title}>Thương hiệu bạn quản trị tên gì?</h1>
-            <p className={styles.subtitle}>
-              Havi dùng tên và ngành để đặt giọng thương hiệu và bộ quy tắc nội
-              dung cho workspace này.
-            </p>
+            <h1 className={styles.title}>{t("Thương hiệu bạn quản trị tên gì?")}</h1>
+            <p className={styles.subtitle}>{t(
+              "Havi dùng tên và ngành để đặt giọng thương hiệu và bộ quy tắc nội\n              dung cho workspace này."
+            )}</p>
 
             <div className={styles.inputSection}>
-              <label className={styles.label} htmlFor="shop-name">
-                Tên thương hiệu
-              </label>
+              <label className={styles.label} htmlFor="shop-name">{t("Tên thương hiệu")}</label>
               <Input
                 id="shop-name"
                 scale="large"
-                placeholder="Ví dụ: Spa An Nhiên, Cà Phê 1985, Nhật Minh…"
+                placeholder={t("Ví dụ: Spa An Nhiên, Cà Phê 1985, Nhật Minh…")}
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
               />
             </div>
 
             <div className={styles.industrySection}>
-              <label className={styles.label}>Ngành của thương hiệu</label>
+              <label className={styles.label}>{t("Ngành của thương hiệu")}</label>
               <div className={styles.industryGrid}>
                 {industryOptions.map((option) => {
                   const isSelected = industry === option.value;
@@ -170,7 +172,7 @@ export function OnboardingScreen() {
                           <span className={styles.cardTitle}>{option.label}</span>
                         </div>
                         {option.recommended ? (
-                          <span className={styles.recommendedTag}>★ Đề xuất pilot</span>
+                          <span className={styles.recommendedTag}>{t("★ Đề xuất pilot")}</span>
                         ) : null}
                       </div>
                       <div className={styles.cardDesc}>
@@ -218,12 +220,10 @@ export function OnboardingScreen() {
           </>
         ) : (
           <>
-            <h1 className={styles.title}>Kết nối kênh của bạn</h1>
-            <p className={styles.subtitle}>
-              Nối Facebook bằng API chính thức để Havi thấy được Trang, Reels và
-              Messenger của bạn. TikTok là kênh kế tiếp, sau đó YouTube Shorts rồi
-              Google Business Profile — mỗi kênh chỉ bật sau khi nền tảng duyệt.
-            </p>
+            <h1 className={styles.title}>{t("Kết nối kênh của bạn")}</h1>
+            <p className={styles.subtitle}>{t(
+              "Nối Facebook bằng API chính thức để Havi thấy được Trang, Reels và\n              Messenger của bạn. TikTok là kênh kế tiếp, sau đó YouTube Shorts rồi\n              Google Business Profile — mỗi kênh chỉ bật sau khi nền tảng duyệt."
+            )}</p>
             <div className={styles.connectionListWrapper}>
               <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />
             </div>
@@ -232,17 +232,13 @@ export function OnboardingScreen() {
                 variant="ghost"
                 scale="large"
                 onClick={() => setStep(1)}
-              >
-                ← Quay lại
-              </Button>
+              >{t("← Quay lại")}</Button>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                 <Button
                   variant="ghost"
                   onClick={handleStep2Proceed}
                   disabled={submitting}
-                >
-                  Bỏ qua, kết nối sau
-                </Button>
+                >{t("Bỏ qua, kết nối sau")}</Button>
                 <Button
                   variant="primary"
                   scale="large"

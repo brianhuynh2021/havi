@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import React, { useEffect, useState, useCallback } from "react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -38,6 +39,10 @@ function describeAsset(asset: MediaAsset): string {
 }
 
 export function MediaPickerModal({ isOpen, onClose, onSelect }: MediaPickerModalProps) {
+  const {
+    t
+  } = useLanguage();
+
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,21 +80,21 @@ export function MediaPickerModal({ isOpen, onClose, onSelect }: MediaPickerModal
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3 className={styles.title}>Chọn ảnh/video từ thư viện</h3>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Đóng">
+          <h3 className={styles.title}>{t("Chọn ảnh/video từ thư viện")}</h3>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("Đóng")}>
             ✕
           </button>
         </div>
 
         <div className={styles.body}>
           {error ? (
-            <ErrorState title={error} action={<button onClick={load}>Thử lại</button>} />
+            <ErrorState title={error} action={<button onClick={load}>{t("Thử lại")}</button>} />
           ) : loading ? (
-            <LoadingState title="Đang tải thư viện…" />
+            <LoadingState title={t("Đang tải thư viện…")} />
           ) : assets.length === 0 ? (
             <EmptyState
-              title="Thư viện còn trống"
-              body="Hãy tải ảnh hoặc clip lên khi soạn bài để lưu vào thư viện."
+              title={t("Thư viện còn trống")}
+              body={t("Hãy tải ảnh hoặc clip lên khi soạn bài để lưu vào thư viện.")}
             />
           ) : (
             <ul className={styles.grid}>

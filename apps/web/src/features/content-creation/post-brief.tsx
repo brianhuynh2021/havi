@@ -8,6 +8,7 @@
  * duyệt bài), nên để chung một file là bảo đảm mỗi lần sửa đều phải đọc cả hai.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -100,6 +101,10 @@ export function PostBrief({
   onOpenMediaPicker,
   onGenerate,
 }: PostBriefProps) {
+  const {
+    t
+  } = useLanguage();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -114,7 +119,7 @@ export function PostBrief({
       <section className={styles.rawSection} aria-labelledby="brief-title">
         <div className={styles.stepTitle}>
           <span className={styles.stepNumber}>2</span>
-          <span id="brief-title">Kể cho Havi nghe</span>
+          <span id="brief-title">{t("Kể cho Havi nghe")}</span>
         </div>
 
         <input
@@ -141,9 +146,7 @@ export function PostBrief({
             variant="primary"
             disabled={uploading}
             onClick={() => cameraInputRef.current?.click()}
-          >
-            📸 Chụp ảnh
-          </Button>
+          >{t("📸 Chụp ảnh")}</Button>
           <Button
             variant="outline"
             disabled={uploading}
@@ -151,28 +154,20 @@ export function PostBrief({
           >
             {uploading ? "Đang tải lên…" : "Chọn ảnh có sẵn"}
           </Button>
-          <Button variant="outline" disabled={uploading} onClick={onOpenMediaPicker}>
-            🖼️ Thư viện
-          </Button>
-          <Button variant="outline" disabled={uploading} onClick={onOpenVoice} data-testid="btn-voice-modal">
-            🎙️ Nói thay vì gõ
-          </Button>
+          <Button variant="outline" disabled={uploading} onClick={onOpenMediaPicker}>{t("🖼️ Thư viện")}</Button>
+          <Button variant="outline" disabled={uploading} onClick={onOpenVoice} data-testid="btn-voice-modal">{t("🎙️ Nói thay vì gõ")}</Button>
         </div>
 
         <div className={styles.noteBox}>
-          <label className={styles.noteLabel} htmlFor="raw-note">
-            Muốn Havi viết về điều gì?
-          </label>
+          <label className={styles.noteLabel} htmlFor="raw-note">{t("Muốn Havi viết về điều gì?")}</label>
           <Textarea
             id="raw-note"
             rows={3}
-            placeholder="Tuần này giảm 20% gói gội đầu thảo dược cho khách quen"
+            placeholder={t("Tuần này giảm 20% gói gội đầu thảo dược cho khách quen")}
             value={note}
             onChange={(event) => onNoteChange(event.target.value)}
           />
-          <Button variant="outline" onClick={onAddNote} disabled={!note.trim()}>
-            Thêm ghi chú
-          </Button>
+          <Button variant="outline" onClick={onAddNote} disabled={!note.trim()}>{t("Thêm ghi chú")}</Button>
         </div>
 
         {uploads.some((upload) => upload.status === "uploading") ? (
@@ -208,8 +203,8 @@ export function PostBrief({
         ) : null}
 
         {showChecks ? (
-          <div className={styles.briefChecks} aria-label="Bài viết còn thiếu gì">
-            <p className={styles.briefChecksTitle}>Havi sẽ viết tốt hơn nếu có thêm:</p>
+          <div className={styles.briefChecks} aria-label={t("Bài viết còn thiếu gì")}>
+            <p className={styles.briefChecksTitle}>{t("Havi sẽ viết tốt hơn nếu có thêm:")}</p>
             <ul className={styles.criteriaGrid}>
               {checks.map((check) => (
                 <li
@@ -237,9 +232,7 @@ export function PostBrief({
         >
           {generating ? "Havi đang viết…" : "Để Havi viết bài"}
         </Button>
-        <p className={styles.generateHint}>
-          Havi viết bản nháp. Không bài nào lên Trang khi bạn chưa duyệt.
-        </p>
+        <p className={styles.generateHint}>{t("Havi viết bản nháp. Không bài nào lên Trang khi bạn chưa duyệt.")}</p>
       </div>
     </>
   );

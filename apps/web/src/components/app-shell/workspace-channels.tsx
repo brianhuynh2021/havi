@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 import {
@@ -28,6 +29,10 @@ const PLATFORM_LABELS: Record<string, string> = {
  * chấm xanh trong lúc bài đang hỏng là thông tin sai ở đúng chỗ nguy hiểm nhất.
  */
 export function WorkspaceChannels() {
+  const {
+    t
+  } = useLanguage();
+
   const [connections, setConnections] = useState<PlatformConnection[] | null>(null);
 
   useEffect(() => {
@@ -49,9 +54,7 @@ export function WorkspaceChannels() {
   if (usable.length === 0) {
     return (
       <div className={styles.workspaceChips}>
-        <span className={styles.workspaceChipUnconnected}>
-          ⚪ Chưa kết nối Fanpage
-        </span>
+        <span className={styles.workspaceChipUnconnected}>{t("⚪ Chưa kết nối Fanpage")}</span>
       </div>
     );
   }

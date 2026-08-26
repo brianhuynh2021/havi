@@ -16,6 +16,7 @@
  * Nếu lần sau cần đổi, giữ nguyên bất biến: một nghĩa, hai phạm vi.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/state-views";
 import { PERMISSIONS, usePermissions } from "@/lib/auth/use-permissions";
@@ -54,14 +55,18 @@ export function DraftList({
   onDismiss,
   onDismissAll,
 }: DraftListProps) {
+  const {
+    t
+  } = useLanguage();
+
   const { can } = usePermissions();
   const mayApprove = can(PERMISSIONS.approveContent);
 
   if (!items.length) {
     return (
       <EmptyState
-        title="Chưa có bản nháp nào"
-        body="Kể cho Havi vài dòng hoặc nạp một tấm ảnh, rồi bấm “Để Havi viết bài”."
+        title={t("Chưa có bản nháp nào")}
+        body={t("Kể cho Havi vài dòng hoặc nạp một tấm ảnh, rồi bấm “Để Havi viết bài”.")}
       />
     );
   }
@@ -72,11 +77,8 @@ export function DraftList({
     <section aria-labelledby="drafts-title">
       <div className={styles.draftsHeader}>
         <h2 id="drafts-title" className={styles.draftsTitle}>
-          {items.length} bản nháp chờ bạn duyệt
-        </h2>
-        <button type="button" className={styles.linkDanger} onClick={onDismissAll} disabled={anyBusy}>
-          Xoá hết
-        </button>
+          {items.length}{" "}{t("bản nháp chờ bạn duyệt")}</h2>
+        <button type="button" className={styles.linkDanger} onClick={onDismissAll} disabled={anyBusy}>{t("Xoá hết")}</button>
       </div>
 
       <div className={styles.draftsGrid}>
@@ -106,9 +108,7 @@ export function DraftList({
                   <p className={styles.draftText}>{item.text}</p>
 
                   <div className={styles.draftActions}>
-                    <Button variant="outline" onClick={() => onEdit(item.id)} disabled={busy}>
-                      Sửa
-                    </Button>
+                    <Button variant="outline" onClick={() => onEdit(item.id)} disabled={busy}>{t("Sửa")}</Button>
                     {mayApprove ? (
                       <Button
                         variant="primary"
@@ -123,9 +123,7 @@ export function DraftList({
                       className={styles.linkDanger}
                       onClick={() => onDismiss(item.id)}
                       disabled={busy}
-                    >
-                      Bỏ bài này
-                    </button>
+                    >{t("Bỏ bài này")}</button>
                   </div>
                 </>
               )}

@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,10 @@ function VoiceRecorderModalContent({
   onInsertNote,
   onDirectGenerate,
 }: Omit<VoiceRecorderModalProps, "isOpen">) {
+  const {
+    t
+  } = useLanguage();
+
   const {
     state,
     recordingTime,
@@ -105,14 +110,12 @@ function VoiceRecorderModalContent({
   return (
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.closeButton} onClick={onClose} aria-label="Đóng">
+        <button className={styles.closeButton} onClick={onClose} aria-label={t("Đóng")}>
           ✕
         </button>
 
-        <h2 className={styles.title}>🎙️ Ghi âm ý tưởng bài viết</h2>
-        <p className={styles.subtitle}>
-          Bạn cứ nói tự nhiên — Havi sẽ viết thành bài đăng Facebook.
-        </p>
+        <h2 className={styles.title}>{t("🎙️ Ghi âm ý tưởng bài viết")}</h2>
+        <p className={styles.subtitle}>{t("Bạn cứ nói tự nhiên — Havi sẽ viết thành bài đăng Facebook.")}</p>
 
         {errorMessage || transcribeError ? (
           <div className={styles.errorBanner} role="alert">
@@ -150,7 +153,7 @@ function VoiceRecorderModalContent({
         </div>
 
         <div className={styles.transcriptBox}>
-          <div className={styles.transcriptLabel}>Nội dung đã nhận diện</div>
+          <div className={styles.transcriptLabel}>{t("Nội dung đã nhận diện")}</div>
           {transcribedText || liveTranscript ? (
             <p className={styles.transcriptText} data-testid="transcript-text">
               {transcribedText || liveTranscript}
@@ -166,10 +169,10 @@ function VoiceRecorderModalContent({
 
         {!hasText && !isRecording ? (
           <div className={styles.suggestions}>
-            <p className={styles.suggestionTitle}>💡 Câu nói mẫu gợi ý:</p>
-            <p className={styles.suggestionItem}>
-              &ldquo;Hôm nay tiệm em giảm 30% uốn nhuộm phục hồi nhân dịp 2/9, tặng kèm hấp dầu collagen cho khách đặt lịch sớm.&rdquo;
-            </p>
+            <p className={styles.suggestionTitle}>{t("💡 Câu nói mẫu gợi ý:")}</p>
+            <p className={styles.suggestionItem}>{t(
+              "“Hôm nay tiệm em giảm 30% uốn nhuộm phục hồi nhân dịp 2/9, tặng kèm hấp dầu collagen cho khách đặt lịch sớm.”"
+            )}</p>
           </div>
         ) : null}
 
@@ -188,16 +191,12 @@ function VoiceRecorderModalContent({
               disabled={isGenerating || isTranscribing}
               onClick={handleInsert}
               data-testid="btn-voice-insert"
-            >
-              ✍️ Chèn vào ô ghi chú
-            </Button>
+            >{t("✍️ Chèn vào ô ghi chú")}</Button>
             <Button
               variant="ghost"
               disabled={isGenerating || isTranscribing}
               onClick={handleToggleRecording}
-            >
-              🔄 Ghi âm lại câu khác
-            </Button>
+            >{t("🔄 Ghi âm lại câu khác")}</Button>
           </div>
         ) : null}
       </div>
@@ -209,6 +208,8 @@ export function VoiceRecorderModal({
   isOpen,
   ...props
 }: VoiceRecorderModalProps) {
+  // Không gọi `useLanguage` ở đây: wrapper này chỉ gác `isOpen`, mọi chữ nằm
+  // trong `VoiceRecorderModalContent`.
   if (!isOpen) return null;
   return <VoiceRecorderModalContent {...props} />;
 }

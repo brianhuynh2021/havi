@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,10 @@ type Props = {
 };
 
 export function DraftEditor({ item, onSaved, onClose }: Props) {
+  const {
+    t
+  } = useLanguage();
+
   const [text, setText] = useState(item.text);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +70,7 @@ export function DraftEditor({ item, onSaved, onClose }: Props) {
   return (
     <div className={styles.editor}>
       <Textarea
-        aria-label="Nội dung bài"
+        aria-label={t("Nội dung bài")}
         rows={6}
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -81,27 +86,24 @@ export function DraftEditor({ item, onSaved, onClose }: Props) {
         <Button variant="primary" onClick={save} disabled={!dirty || saving}>
           {saving ? "Đang lưu…" : "Lưu bản sửa"}
         </Button>
-        <Button variant="outline" onClick={onClose}>
-          Đóng
-        </Button>
+        <Button variant="outline" onClick={onClose}>{t("Đóng")}</Button>
         <Button variant="outline" onClick={toggleVersions}>
           {versions ? "Ẩn lịch sử" : `Lịch sử (bản ${item.version_no})`}
         </Button>
       </div>
 
       {loadingVersions ? (
-        <p className={styles.editorHint}>Đang tải lịch sử…</p>
+        <p className={styles.editorHint}>{t("Đang tải lịch sử…")}</p>
       ) : null}
 
       {versions ? (
         versions.length === 0 ? (
-          <p className={styles.editorHint}>Bài này chưa từng được sửa.</p>
+          <p className={styles.editorHint}>{t("Bài này chưa từng được sửa.")}</p>
         ) : (
           <ol className={styles.versionList}>
             {versions.map((v) => (
               <li key={v.version_no} className={styles.versionItem}>
-                <div className={styles.versionMeta}>
-                  Bản {v.version_no} · {vnDateTime.format(new Date(v.edited_at))}
+                <div className={styles.versionMeta}>{t("Bản")}{" "}{v.version_no} · {vnDateTime.format(new Date(v.edited_at))}
                 </div>
                 <p className={styles.versionText}>{v.text}</p>
               </li>

@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,25 @@ function percent(value: number): string {
 
 function number(value: number): string {
   return new Intl.NumberFormat("vi-VN").format(value);
+}
+
+function vnd(value: number): string {
+  return `${new Intl.NumberFormat("vi-VN").format(value)}đ`;
+}
+
+const dayOnly = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+
+/**
+ * Ngày của bảng giá, hoặc `null` nếu backend không gửi được ngày dùng được.
+ *
+ * `Intl.format` **ném RangeError** với Invalid Date, và nó ném ở giữa lúc render
+ * nên cả màn trắng — một chú thích nhỏ dưới khối chi phí đánh sập trang debug,
+ * đúng lúc người ta mở trang debug ra để xem có gì hỏng.
+ */
+function pricingDay(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : dayOnly.format(parsed);
 }
 
 const vnDateTime = new Intl.DateTimeFormat("vi-VN", {
@@ -51,6 +71,10 @@ function hasNoOperationalData(data: OperationsMetrics): boolean {
 }
 
 export function OperationsScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [data, setData] = useState<OperationsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,39 +104,37 @@ export function OperationsScreen() {
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Internal pilot</p>
-          <h1 className={styles.title}>Vận hành</h1>
+          <h1 className={styles.title}>{t("Vận hành")}</h1>
         </div>
-        <p className={styles.subtitle}>
-          Debug job, token và publish health bằng dữ liệu aggregate trong workspace.
-        </p>
+        <p className={styles.subtitle}>{t(
+          "Debug job, token và publish health bằng dữ liệu aggregate trong workspace."
+        )}</p>
       </header>
 
       {error ? (
         <ErrorState
           title={error}
           action={
-            <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-              Thử lại
-            </Button>
+            <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>{t("Thử lại")}</Button>
           }
         />
       ) : loading || !data ? (
-        <LoadingState title="Đang tải vận hành…" />
+        <LoadingState title={t("Đang tải vận hành…")} />
       ) : (
         <>
-          <section className={styles.windowNote}>
-            Cửa sổ: {vnDateTime.format(new Date(data.window_start))} -{" "}
-            {vnDateTime.format(new Date(data.window_end))} giờ VN
-          </section>
+          <section className={styles.windowNote}>{t("Cửa sổ:")}{" "}{vnDateTime.format(new Date(data.window_start))} -{" "}
+            {vnDateTime.format(new Date(data.window_end))}{" "}{t("giờ VN")}</section>
 
           {hasNoOperationalData(data) ? (
             <EmptyState
-              title="Chưa có dữ liệu vận hành"
-              body="Khi worker tạo nội dung hoặc publish job chạy, số liệu debug sẽ hiện ở đây."
+              title={t("Chưa có dữ liệu vận hành")}
+              body={t(
+                "Khi worker tạo nội dung hoặc publish job chạy, số liệu debug sẽ hiện ở đây."
+              )}
             />
           ) : null}
 
-          <section className={styles.statsGrid} aria-label="Số liệu job nội bộ">
+          <section className={styles.statsGrid} aria-label={t("Số liệu job nội bộ")}>
             {metricCards(data).map((item) => (
               <div key={item.label} className={styles.statCard}>
                 <p className={styles.statLabel}>{item.label}</p>
@@ -122,16 +144,70 @@ export function OperationsScreen() {
             ))}
           </section>
 
+          {/*
+            Kinh tế đơn vị — khối duy nhất trên màn này trả lời một câu hỏi kinh
+            doanh chứ không phải câu hỏi kỹ thuật: một bài đưa được lên kênh tốn
+            bao nhiêu, so với giá gói đang thu.
+
+            Ba con số này đã được API trả về từ trước nhưng không hiện ở đâu cả.
+            Một chỉ số tính đúng mà không ai thấy thì bằng không có.
+          */}
+          <section className={styles.statsGrid} aria-label={t("Kinh tế đơn vị")}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>{t("Chi phí mỗi bài lên kênh")}</p>
+              <p className={styles.statValue}>
+                {data.approved_draft_count > 0
+                  ? vnd(data.est_cost_per_approved_draft_vnd)
+                  : "—"}
+              </p>
+              <p className={styles.statDetail}>
+                {data.approved_draft_count > 0
+                  ? t("Gồm cả token của nháp đã bị xoá")
+                  : t("Chưa có nháp nào được duyệt trong kỳ")}
+              </p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>{t("Nháp dùng được")}</p>
+              <p className={styles.statValue}>
+                {data.generated_draft_count > 0 ? percent(data.draft_usage_rate) : "—"}
+              </p>
+              <p className={styles.statDetail}>
+                {number(data.approved_draft_count)}/{number(data.generated_draft_count)}{" "}
+                {t("nháp được duyệt")}
+              </p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>{t("Chi phí mỗi job")}</p>
+              <p className={styles.statValue}>
+                {data.job_count > 0 ? vnd(data.est_cost_per_job_vnd) : "—"}
+              </p>
+              <p className={styles.statDetail}>
+                {number(data.avg_tokens_per_job)} {t("token/job")}
+              </p>
+            </div>
+          </section>
+
+          {/* Bảng giá LLM và tỷ giá đều trôi. Một con số tiền không kèm ngày là
+              phỏng đoán trông như số liệu, nên nói thẳng nó dựa trên bảng giá
+              nào — và cảnh báo khi bảng đó đã quá cũ. */}
+          <p className={data.pricing_is_stale ? styles.pricingStale : styles.pricingNote}>
+            {data.pricing_is_stale
+              ? t("Bảng giá LLM đã quá cũ — mọi con số tiền ở trên chỉ là phỏng đoán. Cập nhật domain/policies/pricing.py.")
+              : pricingDay(data.pricing_as_of)
+                ? `${t("Tiền quy đổi theo bảng giá ngày")} ${pricingDay(data.pricing_as_of)}`
+                : t("Không đọc được ngày của bảng giá — coi con số tiền ở trên là phỏng đoán.")}
+          </p>
+
           <section className={styles.splitGrid}>
             <article className={styles.panel}>
               <h2 className={styles.panelTitle}>Publish health</h2>
               <div className={styles.publishGrid}>
                 <div>
-                  <p className={styles.miniLabel}>Tổng job</p>
+                  <p className={styles.miniLabel}>{t("Tổng job")}</p>
                   <p className={styles.miniValue}>{number(data.publish.total)}</p>
                 </div>
                 <div>
-                  <p className={styles.miniLabel}>Thành công</p>
+                  <p className={styles.miniLabel}>{t("Thành công")}</p>
                   <p className={styles.miniValue}>{number(data.publish.succeeded)}</p>
                 </div>
                 <div>
@@ -155,8 +231,8 @@ export function OperationsScreen() {
               <h2 className={styles.panelTitle}>Provider breakdown</h2>
               {data.providers.length === 0 ? (
                 <EmptyState
-                  title="Chưa có provider nào"
-                  body="Provider sẽ xuất hiện sau khi LLM hoặc publisher ghi event."
+                  title={t("Chưa có provider nào")}
+                  body={t("Provider sẽ xuất hiện sau khi LLM hoặc publisher ghi event.")}
                 />
               ) : (
                 <div className={styles.providerList}>
@@ -165,7 +241,7 @@ export function OperationsScreen() {
                       <span className={styles.providerName}>{provider.provider}</span>
                       <span>{number(provider.event_count)} event</span>
                       <span>{number(provider.tokens_total)} token</span>
-                      <strong>{providerErrorRate(provider)} lỗi</strong>
+                      <strong>{providerErrorRate(provider)}{" "}{t("lỗi")}</strong>
                     </div>
                   ))}
                 </div>

@@ -17,6 +17,7 @@
  * cảnh, thay vì một dòng chữ nhỏ.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./product-walkthrough.module.css";
 
@@ -53,6 +54,10 @@ const SCENES: Scene[] = [
 const SCENE_MS = [4200, 4200, 5200, 6000];
 
 export function ProductWalkthrough() {
+  const {
+    t
+  } = useLanguage();
+
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,7 +111,7 @@ export function ProductWalkthrough() {
           {SCENES[active].caption}
         </p>
 
-        <div className={styles.steps} role="tablist" aria-label="Các bước trong luồng">
+        <div className={styles.steps} role="tablist" aria-label={t("Các bước trong luồng")}>
           {SCENES.map((scene, index) => (
             <button
               key={scene.id}
@@ -139,50 +144,59 @@ export function ProductWalkthrough() {
    tự, cùng những gì được nhấn mạnh. Một demo nói khác app là một lời hứa sai. */
 
 function Scene1({ active }: { active: boolean }) {
+  const {
+    t
+  } = useLanguage();
+
   return (
     <div className={`${styles.scene} ${active ? styles.sceneActive : ""}`} aria-hidden={!active}>
-      <p className={styles.sceneHint}>Mục Nội dung</p>
+      <p className={styles.sceneHint}>{t("Mục Nội dung")}</p>
       <div className={styles.chipRow}>
         <span className={styles.chip}>
           <span aria-hidden="true">🖼️</span> anh-tiem-goc-trai.jpg
         </span>
         <span className={styles.chip}>
-          <span aria-hidden="true">✍️</span> Tuần này giảm 20% gói gội đầu thảo dược
-        </span>
+          <span aria-hidden="true">✍️</span>{t("Tuần này giảm 20% gói gội đầu thảo dược")}</span>
       </div>
       <div className={styles.composeBox}>
         <span className={styles.caret} aria-hidden="true" />
       </div>
-      <div className={styles.primaryAction}>Để Havi viết bài</div>
+      <div className={styles.primaryAction}>{t("Để Havi viết bài")}</div>
     </div>
   );
 }
 
 function Scene2({ active }: { active: boolean }) {
+  const {
+    t
+  } = useLanguage();
+
   return (
     <div className={`${styles.scene} ${active ? styles.sceneActive : ""}`} aria-hidden={!active}>
-      <p className={styles.sceneHint}>1 bản nháp chờ bạn duyệt</p>
+      <p className={styles.sceneHint}>{t("1 bản nháp chờ bạn duyệt")}</p>
       <article className={styles.draftCard}>
         <span className={styles.channelTag}>
           <span aria-hidden="true">📘</span> Facebook Page
         </span>
-        <p className={styles.draftText}>
-          Cuối tuần này tiệm có ưu đãi gội đầu thảo dược giảm 20% cho khách quen.
-          Chị em nhắn tin để giữ giờ trước nhé, tiệm mở tới 20h30.
-        </p>
+        <p className={styles.draftText}>{t(
+          "Cuối tuần này tiệm có ưu đãi gội đầu thảo dược giảm 20% cho khách quen.\n          Chị em nhắn tin để giữ giờ trước nhé, tiệm mở tới 20h30."
+        )}</p>
         <div className={styles.draftActions}>
-          <span className={styles.ghostBtn}>Sửa</span>
-          <span className={styles.ghostBtn}>Thêm ảnh minh hoạ</span>
+          <span className={styles.ghostBtn}>{t("Sửa")}</span>
+          <span className={styles.ghostBtn}>{t("Thêm ảnh minh hoạ")}</span>
         </div>
       </article>
       <p className={styles.assurance}>
-        <span aria-hidden="true">🔒</span> Chưa có gì lên Trang. Havi không tự đăng.
-      </p>
+        <span aria-hidden="true">🔒</span>{t("Chưa có gì lên Trang. Havi không tự đăng.")}</p>
     </div>
   );
 }
 
 function Scene3({ active }: { active: boolean }) {
+  const {
+    t
+  } = useLanguage();
+
   const rows = [
     { when: "T4 27/08", time: "08:00", what: "Ưu đãi gội đầu thảo dược" },
     { when: "T5 28/08", time: "08:00", what: "Khách quen tuần này nói gì" },
@@ -190,7 +204,7 @@ function Scene3({ active }: { active: boolean }) {
   ];
   return (
     <div className={`${styles.scene} ${active ? styles.sceneActive : ""}`} aria-hidden={!active}>
-      <p className={styles.sceneHint}>Rải nhiều ngày · 1 bài/ngày</p>
+      <p className={styles.sceneHint}>{t("Rải nhiều ngày · 1 bài/ngày")}</p>
       <ol className={styles.scheduleList}>
         {rows.map((row, index) => (
           <li
@@ -206,38 +220,37 @@ function Scene3({ active }: { active: boolean }) {
         ))}
       </ol>
       <p className={styles.assurance}>
-        <span aria-hidden="true">📅</span> Kín nội dung tới T6 29/08. Đổi giờ bất
-        cứ lúc nào trước khi bài lên.
-      </p>
+        <span aria-hidden="true">📅</span>{t(
+        "Kín nội dung tới T6 29/08. Đổi giờ bất\n        cứ lúc nào trước khi bài lên."
+      )}</p>
     </div>
   );
 }
 
 function Scene4({ active }: { active: boolean }) {
+  const {
+    t
+  } = useLanguage();
+
   return (
     <div className={`${styles.scene} ${active ? styles.sceneActive : ""}`} aria-hidden={!active}>
-      <p className={styles.sceneHint}>Sau khi gửi lên Facebook</p>
+      <p className={styles.sceneHint}>{t("Sau khi gửi lên Facebook")}</p>
       <ol className={styles.verifyList}>
         <li className={styles.verifyDone}>
-          <span className={styles.verifyMark} aria-hidden="true">✓</span>
-          Đã gửi bài sang Facebook
-        </li>
+          <span className={styles.verifyMark} aria-hidden="true">✓</span>{t("Đã gửi bài sang Facebook")}</li>
         <li className={styles.verifyDone} style={{ animationDelay: "500ms" }}>
-          <span className={styles.verifyMark} aria-hidden="true">✓</span>
-          Đọc lại Trang để kiểm tra
-        </li>
+          <span className={styles.verifyMark} aria-hidden="true">✓</span>{t("Đọc lại Trang để kiểm tra")}</li>
         <li className={styles.verifyFinal} style={{ animationDelay: "1100ms" }}>
           <span className={styles.verifyMarkFinal} aria-hidden="true">✓</span>
           <span>
-            <b>Đã lên Trang</b>
-            <em className={styles.verifyNote}>Xác nhận bằng dữ liệu Facebook trả về</em>
+            <b>{t("Đã lên Trang")}</b>
+            <em className={styles.verifyNote}>{t("Xác nhận bằng dữ liệu Facebook trả về")}</em>
           </span>
         </li>
       </ol>
-      <p className={styles.assuranceStrong}>
-        Nhiều công cụ báo “đã đăng” ngay khi gửi đi. Havi đợi tới lúc nhìn thấy
-        bài trên Trang mới dám nói vậy.
-      </p>
+      <p className={styles.assuranceStrong}>{t(
+        "Nhiều công cụ báo “đã đăng” ngay khi gửi đi. Havi đợi tới lúc nhìn thấy\n        bài trên Trang mới dám nói vậy."
+      )}</p>
     </div>
   );
 }

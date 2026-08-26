@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -38,6 +39,10 @@ type Props = {
  * làm nhiễu màn hình mà chẳng nói thêm gì.
  */
 export function FailedPostsPanel({ onPublished }: Props) {
+  const {
+    t
+  } = useLanguage();
+
   const [jobs, setJobs] = useState<PublishJob[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -94,17 +99,16 @@ export function FailedPostsPanel({ onPublished }: Props) {
   if (jobs.length === 0 && !error) return null;
 
   return (
-    <section className={styles.panel} aria-label="Bài đăng chưa thành công">
+    <section className={styles.panel} aria-label={t("Bài đăng chưa thành công")}>
       <header className={styles.header}>
         <h2 className={styles.title}>
           {jobs.length > 0
             ? `${jobs.length} bài chưa đăng được`
             : "Bài chưa đăng được"}
         </h2>
-        <p className={styles.subtitle}>
-          Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi
-          quyết định giúp em nhé.
-        </p>
+        <p className={styles.subtitle}>{t(
+          "Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi\n          quyết định giúp em nhé."
+        )}</p>
       </header>
 
       {error ? (
@@ -124,8 +128,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
                   {channelLabels[job.channel as keyof typeof channelLabels] ??
                     job.channel}
                 </span>
-                <span className={styles.when}>
-                  Lịch đăng {vnDateTime.format(new Date(job.scheduled_at))}
+                <span className={styles.when}>{t("Lịch đăng")}{" "}{vnDateTime.format(new Date(job.scheduled_at))}
                 </span>
               </div>
 
@@ -136,7 +139,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
                   nó trong luồng bình thường. */}
               {job.failure_detail ? (
                 <details className={styles.details}>
-                  <summary className={styles.summary}>Chi tiết lỗi</summary>
+                  <summary className={styles.summary}>{t("Chi tiết lỗi")}</summary>
                   <p className={styles.detailText}>{job.failure_detail}</p>
                 </details>
               ) : null}
@@ -152,13 +155,9 @@ export function FailedPostsPanel({ onPublished }: Props) {
                   </Button>
                 ) : null}
                 {copy.needsReconnect ? (
-                  <Link className={styles.reconnect} href="/app/settings">
-                    Nối lại kênh
-                  </Link>
+                  <Link className={styles.reconnect} href="/app/settings">{t("Nối lại kênh")}</Link>
                 ) : null}
-                <span className={styles.attempts}>
-                  Đã thử {job.attempt_count} lần
-                </span>
+                <span className={styles.attempts}>{t("Đã thử")}{" "}{job.attempt_count}{" "}{t("lần")}</span>
               </div>
             </li>
           );

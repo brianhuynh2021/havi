@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import React, { useState, useEffect } from "react";
 import styles from "./danger-confirm-modal.module.css";
@@ -28,6 +29,10 @@ export function DangerConfirmModal({
   onClose,
   onConfirm,
 }: DangerConfirmModalProps) {
+  const {
+    t
+  } = useLanguage();
+
   const [confirmInput, setConfirmInput] = useState("");
 
   const requiredKeyword = type === "workspace" ? "XOATIEM" : type === "account" ? "XOATAIKHOAN" : customKeyword;
@@ -66,16 +71,14 @@ export function DangerConfirmModal({
                   ? "Xác nhận xoá tài khoản Havi"
                   : customTitle}
             </h3>
-            <p className={styles.modalSubtitle}>
-              ⚠️ Hành động này mang tính vĩnh viễn và KHÔNG THỂ HOÀN TÁC
-            </p>
+            <p className={styles.modalSubtitle}>{t("⚠️ Hành động này mang tính vĩnh viễn và KHÔNG THỂ HOÀN TÁC")}</p>
           </div>
           <button
             type="button"
             className={styles.closeBtn}
             onClick={onClose}
             disabled={isDeleting}
-            aria-label="Đóng"
+            aria-label={t("Đóng")}
           >
             ✕
           </button>
@@ -86,37 +89,37 @@ export function DangerConfirmModal({
           {/* Retention Heuristic Box - Stanford HCI */}
           <div className={styles.retentionBox}>
             <div className={styles.retentionHeading}>
-              <span>🛡️ Bạn sẽ mất các quyền lợi sau nếu thực hiện xoá:</span>
+              <span>{t("🛡️ Bạn sẽ mất các quyền lợi sau nếu thực hiện xoá:")}</span>
             </div>
             <ul className={styles.lostItemsList}>
               {type === "workspace" ? (
                 <>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Mất toàn bộ cấu hình giọng văn tiệm &amp; bộ từ khóa cấm đã huấn luyện.</span>
+                    <span>{t("Mất toàn bộ cấu hình giọng văn tiệm & bộ từ khóa cấm đã huấn luyện.")}</span>
                   </li>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Ngắt kết nối các kênh xuất bản tự động (Facebook, TikTok, Google Maps).</span>
+                    <span>{t("Ngắt kết nối các kênh xuất bản tự động (Facebook, TikTok, Google Maps).")}</span>
                   </li>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Xoá toàn bộ bản nháp, lịch đăng và kho media của thương hiệu này.</span>
+                    <span>{t("Xoá toàn bộ bản nháp, lịch đăng và kho media của thương hiệu này.")}</span>
                   </li>
                 </>
               ) : type === "account" ? (
                 <>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Thu hồi mọi phiên đăng nhập và xoá vĩnh viễn tài khoản khỏi hệ thống.</span>
+                    <span>{t("Thu hồi mọi phiên đăng nhập và xoá vĩnh viễn tài khoản khỏi hệ thống.")}</span>
                   </li>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Mất tất cả các tiệm kinh doanh và dữ liệu trợ lý AI đã thiết lập.</span>
+                    <span>{t("Mất tất cả các tiệm kinh doanh và dữ liệu trợ lý AI đã thiết lập.")}</span>
                   </li>
                   <li className={styles.lostItem}>
                     <span className={styles.lostItemIcon}>✕</span>
-                    <span>Mất quyền lợi gói cước đã đăng ký và không thể khôi phục lại tài khoản.</span>
+                    <span>{t("Mất quyền lợi gói cước đã đăng ký và không thể khôi phục lại tài khoản.")}</span>
                   </li>
                 </>
               ) : (
@@ -129,16 +132,15 @@ export function DangerConfirmModal({
               )}
             </ul>
 
-            <div className={styles.supportCallout}>
-              💬 Gặp khó khăn khi vận hành? Đội ngũ Founder luôn hỗ trợ 1 kèm 1 qua Zalo: <strong>0984 883 750</strong>
+            <div className={styles.supportCallout}>{t(
+              "💬 Gặp khó khăn khi vận hành? Đội ngũ Founder luôn hỗ trợ 1 kèm 1 qua Zalo:"
+            )}<strong>0984 883 750</strong>
             </div>
           </div>
 
           {/* Type-to-confirm input - MIT Security Safeguard */}
           <div className={styles.confirmInputBox}>
-            <label htmlFor="confirm-delete-input" className={styles.confirmLabel}>
-              Nhập chính xác chữ <span className={styles.confirmKeyword}>{requiredKeyword}</span> vào ô bên dưới để mở khóa nút xóa:
-            </label>
+            <label htmlFor="confirm-delete-input" className={styles.confirmLabel}>{t("Nhập chính xác chữ")}<span className={styles.confirmKeyword}>{requiredKeyword}</span>{t("vào ô bên dưới để mở khóa nút xóa:")}</label>
             <input
               id="confirm-delete-input"
               type="text"

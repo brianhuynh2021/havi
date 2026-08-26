@@ -46,7 +46,7 @@ type Tile = {
 };
 
 export function DashboardScreen() {
-  const { lang, t } = useLanguage();
+const { lang, t } = useLanguage();
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,8 +166,7 @@ export function DashboardScreen() {
       </header>
 
       {error ? (
-        <p className={styles.partialError} role="status">
-          Một phần số liệu chưa tải được: {error}
+        <p className={styles.partialError} role="status">{t("Một phần số liệu chưa tải được:")}{" "}{error}
         </p>
       ) : null}
 
@@ -182,7 +181,7 @@ export function DashboardScreen() {
         là thông tin, nhưng không giành chỗ của việc cần làm.
       */}
       {attention.length > 0 ? (
-        <section className={styles.attentionList} aria-label="Việc cần xử lý">
+        <section className={styles.attentionList} aria-label={t("Việc cần xử lý")}>
           {attention.map((tile) => (
             <article key={tile.key} className={styles.attentionCard}>
               <div className={styles.attentionBody}>
@@ -200,14 +199,13 @@ export function DashboardScreen() {
           ))}
         </section>
       ) : (
-        <section className={styles.allClear} aria-label="Tình trạng vận hành">
+        <section className={styles.allClear} aria-label={t("Tình trạng vận hành")}>
           <span className={styles.allClearMark} aria-hidden="true">✓</span>
           <div>
-            <p className={styles.allClearTitle}>Không có việc nào cần xử lý</p>
-            <p className={styles.allClearBody}>
-              Kênh đang hoạt động, không có bài nào thất bại, và mọi hội thoại
-              đều đã được trả lời.
-            </p>
+            <p className={styles.allClearTitle}>{t("Không có việc nào cần xử lý")}</p>
+            <p className={styles.allClearBody}>{t(
+              "Kênh đang hoạt động, không có bài nào thất bại, và mọi hội thoại\n              đều đã được trả lời."
+            )}</p>
           </div>
         </section>
       )}
@@ -216,7 +214,7 @@ export function DashboardScreen() {
           bại" dẫn tới danh sách rỗng; một link luôn hiện dạy người dùng rằng bấm
           vào cũng chẳng để làm gì, rồi họ bỏ qua cả lúc nó thật sự cần bấm. */}
       {calm.length > 0 ? (
-        <section className={styles.calmStrip} aria-label="Đang bình thường">
+        <section className={styles.calmStrip} aria-label={t("Đang bình thường")}>
           {calm.map((tile) => (
             <div key={tile.key} className={styles.calmRow}>
               <span className={styles.calmMark} aria-hidden="true">✓</span>

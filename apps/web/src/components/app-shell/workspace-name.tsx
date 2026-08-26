@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/lib/api-client/client";
@@ -38,6 +39,10 @@ function getIndustryIcon(industry?: string) {
 type BrandGroup = { organizationName: string; brands: WorkspaceItem[] };
 
 export function WorkspaceName() {
+  const {
+    t
+  } = useLanguage();
+
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
   /** Thương hiệu gom theo tổ chức — để chuỗi nhiều chi nhánh không thành một
    *  danh sách phẳng dài dằng dặc không biết cái nào thuộc công ty nào. */
@@ -122,7 +127,7 @@ export function WorkspaceName() {
         type="button"
         className={styles.workspaceSwitcherBtn}
         onClick={() => setIsOpen(!isOpen)}
-        title="Bấm để đổi tiệm / không gian làm việc"
+        title={t("Bấm để đổi tiệm / không gian làm việc")}
         disabled={isSwitching}
       >
         <div className={styles.workspaceAvatar}>

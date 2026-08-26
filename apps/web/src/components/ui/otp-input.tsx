@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useRef } from "react";
 import styles from "./otp-input.module.css";
@@ -11,6 +12,10 @@ type OtpInputProps = {
 };
 
 export function OtpInput({ length = 6, value, onChange, disabled }: OtpInputProps) {
+  const {
+    t
+  } = useLanguage();
+
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? "");
 
@@ -44,7 +49,7 @@ export function OtpInput({ length = 6, value, onChange, disabled }: OtpInputProp
   }
 
   return (
-    <div className={styles.row} role="group" aria-label="Mã OTP 6 số">
+    <div className={styles.row} role="group" aria-label={t("Mã OTP 6 số")}>
       {digits.map((digit, index) => (
         <input
           key={index}

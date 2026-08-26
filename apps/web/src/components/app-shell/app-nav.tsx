@@ -14,7 +14,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export function AppNav() {
-  const pathname = usePathname();
+const pathname = usePathname();
   const { t } = useLanguage();
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -41,14 +41,14 @@ export function AppNav() {
   const mobileMainItems = itemsWithCounts.filter((i) =>
     ["/app", "/app/content", "/app/calendar", "/app/inbox"].includes(i.href)
   );
-  
+
   const mobileMoreItems = itemsWithCounts.filter(
     (i) => !["/app", "/app/content", "/app/calendar", "/app/inbox"].includes(i.href)
   );
 
   return (
     <>
-      <nav className={styles.nav} aria-label="Điều hướng chính">
+      <nav className={styles.nav} aria-label={t("Điều hướng chính")}>
         {itemsWithCounts.map((item) => {
           const active = isActive(pathname, item.href);
           return (
@@ -68,7 +68,7 @@ export function AppNav() {
         })}
       </nav>
 
-      <div className={styles.mobileNav} aria-label="Điều hướng mobile">
+      <div className={styles.mobileNav} aria-label={t("Điều hướng mobile")}>
         {mobileMainItems.map((item) => {
           const active = isActive(pathname, item.href);
           return (

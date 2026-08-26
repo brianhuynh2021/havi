@@ -1,10 +1,15 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./notification-bell.module.css";
 import { useNotifications } from "./notification-store";
 
 export function NotificationBell() {
+  const {
+    t
+  } = useLanguage();
+
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -36,17 +41,15 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <div className={styles.popover} role="dialog" aria-label="Trung tâm thông báo">
+        <div className={styles.popover} role="dialog" aria-label={t("Trung tâm thông báo")}>
           <div className={styles.popoverHeader}>
-            <h3 className={styles.popoverTitle}>🔔 Thông báo Havi</h3>
+            <h3 className={styles.popoverTitle}>{t("🔔 Thông báo Havi")}</h3>
             {unreadCount > 0 ? (
               <button
                 type="button"
                 className={styles.markAllRead}
                 onClick={markAllAsRead}
-              >
-                Đánh dấu đã đọc
-              </button>
+              >{t("Đánh dấu đã đọc")}</button>
             ) : null}
           </div>
 
@@ -76,7 +79,7 @@ export function NotificationBell() {
                 </div>
               ))
             ) : (
-              <div className={styles.emptyState}>Chưa có thông báo mới nào</div>
+              <div className={styles.emptyState}>{t("Chưa có thông báo mới nào")}</div>
             )}
           </div>
         </div>

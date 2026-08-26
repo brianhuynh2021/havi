@@ -68,7 +68,7 @@ function getServerBannerSnapshot() {
 }
 
 export function PwaInstallModal() {
-  const { lang, t } = useLanguage();
+const { lang, t } = useLanguage();
   const mounted = useSyncExternalStore(subscribeMount, getMountSnapshot, getServerMountSnapshot);
   const detectedPlatform = useSyncExternalStore(subscribePlatform, getPlatformSnapshot, getServerPlatformSnapshot);
   const bannerStored = useSyncExternalStore(subscribeBanner, getBannerSnapshot, getServerBannerSnapshot);
@@ -163,7 +163,7 @@ export function PwaInstallModal() {
             type="button"
             className={styles.closeBtn}
             onClick={() => setIsOpen(false)}
-            aria-label="Đóng"
+            aria-label={t("Đóng")}
           >
             ✕
           </button>
@@ -209,7 +209,7 @@ export function PwaInstallModal() {
             onClick={() => setSelectedTab("desktop")}
           >
             <span>💻</span>
-            <span>Quét Mã QR</span>
+            <span>{t("Quét Mã QR")}</span>
           </button>
         </div>
 
@@ -221,10 +221,8 @@ export function PwaInstallModal() {
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
-                    <>
-                      Mở Havi trên trình duyệt <strong>Safari</strong>, bấm vào nút{" "}
-                      <strong>Chia sẻ (Share ⎋)</strong> ở thanh công cụ dưới cùng.
-                    </>
+                    <>{t("Mở Havi trên trình duyệt")}<strong>Safari</strong>{t(", bấm vào nút")}{" "}{" "}
+                      <strong>{t("Chia sẻ (Share ⎋)")}</strong>{t("ở thanh công cụ dưới cùng.")}</>
                   ) : (
                     <>
                       Open in <strong>Safari</strong>, tap the <strong>Share (⎋)</strong> button on the bottom bar.
@@ -236,9 +234,8 @@ export function PwaInstallModal() {
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
-                    <>
-                      Cuộn xuống danh sách menu và chọn{" "}
-                      <strong>&ldquo;Thêm vào Màn hình chính&rdquo; (Add to Home Screen ➕)</strong>.
+                    <>{t("Cuộn xuống danh sách menu và chọn")}{" "}{" "}
+                      <strong>{t("“Thêm vào Màn hình chính” (Add to Home Screen ➕)")}</strong>.
                     </>
                   ) : (
                     <>
@@ -251,9 +248,7 @@ export function PwaInstallModal() {
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepText}>
                   {lang === "VN" ? (
-                    <>
-                      Bấm nút <strong>&ldquo;Thêm&rdquo; (Add)</strong> ở góc trên bên phải. Icon Havi đã sẵn sàng trên màn hình chính rồi!
-                    </>
+                    <>{t("Bấm nút")}<strong>{t("“Thêm” (Add)")}</strong>{t("ở góc trên bên phải. Icon Havi đã sẵn sàng trên màn hình chính rồi!")}</>
                   ) : (
                     <>
                       Tap <strong>&ldquo;Add&rdquo;</strong> at the top right. Havi icon is now on your home screen!
@@ -289,9 +284,7 @@ export function PwaInstallModal() {
                   <div className={styles.stepNumber}>1</div>
                   <div className={styles.stepText}>
                     {lang === "VN" ? (
-                      <>
-                        Bấm vào biểu tượng <strong>Menu 3 chấm (⋮)</strong> ở góc trên bên phải trình duyệt Chrome.
-                      </>
+                      <>{t("Bấm vào biểu tượng")}<strong>{t("Menu 3 chấm (⋮)")}</strong>{t("ở góc trên bên phải trình duyệt Chrome.")}</>
                     ) : (
                       <>
                         Tap the <strong>3 dots Menu (⋮)</strong> on the top right of Chrome.
@@ -303,8 +296,7 @@ export function PwaInstallModal() {
                   <div className={styles.stepNumber}>2</div>
                   <div className={styles.stepText}>
                     {lang === "VN" ? (
-                      <>
-                        Chọn <strong>&ldquo;Cài đặt ứng dụng&rdquo;</strong> hoặc <strong>&ldquo;Thêm vào Màn hình chính&rdquo;</strong>.
+                      <>{t("Chọn")}<strong>{t("“Cài đặt ứng dụng”")}</strong>{t("hoặc")}<strong>{t("“Thêm vào Màn hình chính”")}</strong>.
                       </>
                     ) : (
                       <>
@@ -317,9 +309,7 @@ export function PwaInstallModal() {
                   <div className={styles.stepNumber}>3</div>
                   <div className={styles.stepText}>
                     {lang === "VN" ? (
-                      <>
-                        Xác nhận <strong>Cài đặt</strong>. Ứng dụng Havi sẽ xuất hiện trong danh sách App của điện thoại.
-                      </>
+                      <>{t("Xác nhận")}<strong>{t("Cài đặt")}</strong>{t(". Ứng dụng Havi sẽ xuất hiện trong danh sách App của điện thoại.")}</>
                     ) : (
                       <>
                         Confirm <strong>Install</strong>. Havi will be added to your app drawer.
@@ -340,7 +330,7 @@ export function PwaInstallModal() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrUrl}
-                  alt="QR Cài Havi lên điện thoại"
+                  alt={t("QR Cài Havi lên điện thoại")}
                   className={styles.qrImage}
                 />
               </div>
@@ -394,7 +384,7 @@ export function PwaInstallModal() {
         <aside
           className={styles.smartFloatingBanner}
           role="region"
-          aria-label="Cài đặt Havi ra màn hình chính"
+          aria-label={t("Cài đặt Havi ra màn hình chính")}
         >
           <div className={styles.bannerLeft}>
             <div className={styles.bannerIcon}>
@@ -424,8 +414,8 @@ export function PwaInstallModal() {
               type="button"
               className={styles.bannerCloseBtn}
               onClick={handleDismissBanner}
-              title="Đóng thông báo"
-              aria-label="Đóng"
+              title={t("Đóng thông báo")}
+              aria-label={t("Đóng")}
             >
               ✕
             </button>

@@ -64,7 +64,7 @@ function toFormState(data: SettingsData): FormState {
 }
 
 export function SettingsScreen() {
-  const { t } = useLanguage();
+const { t } = useLanguage();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -163,7 +163,7 @@ export function SettingsScreen() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerBadge}>⚙️ Thiết lập hệ thống</div>
+        <div className={styles.headerBadge}>{t("⚙️ Thiết lập hệ thống")}</div>
         <h1 className={styles.title}>{t("settings.title", "Cài Đặt Hệ Thống")}</h1>
         <p className={styles.subtitle}>
           {t("settings.subtitle", "Quản lý hồ sơ thương hiệu, phong cách viết bài của AI và các kênh xuất bản")}
@@ -249,7 +249,7 @@ export function SettingsScreen() {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Không được hứa (Banned Claims)</span>
+            <span className={styles.label}>{t("Không được hứa (Banned Claims)")}</span>
             <Textarea
               value={form.bannedClaimsText}
               disabled={loading || saving}
@@ -267,7 +267,7 @@ export function SettingsScreen() {
             <Button type="submit" disabled={!canSave}>
               {saving ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>
-            {loading ? <span className={styles.status}>Đang tải...</span> : null}
+            {loading ? <span className={styles.status}>{t("Đang tải...")}</span> : null}
             {success ? (
               <span className={`${styles.status} ${styles.success}`}>{success}</span>
             ) : null}
@@ -285,12 +285,10 @@ export function SettingsScreen() {
             </svg>
           </div>
           <div className={styles.cardHeaderText}>
-            <h2 className={styles.sectionTitle} id="connections-title">
-              Kênh xuất bản đã kết nối
-            </h2>
-            <p className={styles.sectionHint}>
-              Kênh nào hết hạn hoặc mất quyền, bạn kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động.
-            </p>
+            <h2 className={styles.sectionTitle} id="connections-title">{t("Kênh xuất bản đã kết nối")}</h2>
+            <p className={styles.sectionHint}>{t(
+              "Kênh nào hết hạn hoặc mất quyền, bạn kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động."
+            )}</p>
           </div>
         </div>
         <ConnectionList returnTo="settings" />
@@ -307,22 +305,20 @@ export function SettingsScreen() {
             </svg>
           </div>
           <div className={styles.cardHeaderText}>
-            <h2 className={styles.sectionTitle} id="danger-title">
-              Vùng nguy hiểm
-            </h2>
-            <p className={styles.sectionHint}>
-              Chỉ xoá dữ liệu và ngắt kết nối bên trong ứng dụng Havi. Fanpage, kênh TikTok/YouTube và các bài đã đăng trên mạng xã hội của bạn KHÔNG bị ảnh hưởng.
-            </p>
+            <h2 className={styles.sectionTitle} id="danger-title">{t("Vùng nguy hiểm")}</h2>
+            <p className={styles.sectionHint}>{t(
+              "Chỉ xoá dữ liệu và ngắt kết nối bên trong ứng dụng Havi. Fanpage, kênh TikTok/YouTube và các bài đã đăng trên mạng xã hội của bạn KHÔNG bị ảnh hưởng."
+            )}</p>
           </div>
         </div>
 
         <div className={styles.dangerGrid}>
           <div className={styles.dangerSubCard}>
             <div className={styles.dangerSubInfo}>
-              <div className={styles.dangerTitle}>Xoá tiệm trên Havi</div>
-              <div className={styles.dangerText}>
-                Xoá toàn bộ bài nháp, ngắt kết nối các kênh và xoá cài đặt của tiệm này trên Havi. Thao tác không xoá Fanpage hoặc tài khoản mạng xã hội tại nền tảng bên ngoài.
-              </div>
+              <div className={styles.dangerTitle}>{t("Xoá tiệm trên Havi")}</div>
+              <div className={styles.dangerText}>{t(
+                "Xoá toàn bộ bài nháp, ngắt kết nối các kênh và xoá cài đặt của tiệm này trên Havi. Thao tác không xoá Fanpage hoặc tài khoản mạng xã hội tại nền tảng bên ngoài."
+              )}</div>
             </div>
             <button
               type="button"
@@ -336,10 +332,10 @@ export function SettingsScreen() {
 
           <div className={styles.dangerSubCard}>
             <div className={styles.dangerSubInfo}>
-              <div className={styles.dangerTitle}>Xoá tài khoản Havi</div>
-              <div className={styles.dangerText}>
-                Xoá vĩnh viễn tài khoản đăng nhập Havi của bạn và thu hồi mọi phiên đăng nhập trên hệ thống Havi.
-              </div>
+              <div className={styles.dangerTitle}>{t("Xoá tài khoản Havi")}</div>
+              <div className={styles.dangerText}>{t(
+                "Xoá vĩnh viễn tài khoản đăng nhập Havi của bạn và thu hồi mọi phiên đăng nhập trên hệ thống Havi."
+              )}</div>
             </div>
             <button
               type="button"

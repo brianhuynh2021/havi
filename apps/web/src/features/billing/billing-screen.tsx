@@ -97,7 +97,7 @@ const PLAN_DETAILS: Record<
 };
 
 export function BillingScreen() {
-  const { t } = useLanguage();
+const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sub, setSub] = useState<Subscription | null>(null);
@@ -213,7 +213,7 @@ export function BillingScreen() {
   }
 
   if (loading) {
-    return <LoadingState title="Đang tải thông tin gói cước…" />;
+    return <LoadingState title={t("Đang tải thông tin gói cước…")} />;
   }
 
   if (error || !sub) {
@@ -221,9 +221,7 @@ export function BillingScreen() {
       <ErrorState
         title={error ?? "Không thể tải gói cước"}
         action={
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Thử lại
-          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>{t("Thử lại")}</Button>
         }
       />
     );
@@ -241,13 +239,12 @@ export function BillingScreen() {
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <h1 className={styles.title}>{t("nav.billing", "Gói Cước & Thanh Toán")}</h1>
-          <Badge tone={sub.status === "active" ? "success" : "warning"}>
-            Trạng thái: {sub.status === "active" ? "Đang hoạt động" : sub.status}
+          <Badge tone={sub.status === "active" ? "success" : "warning"}>{t("Trạng thái:")}{" "}{sub.status === "active" ? "Đang hoạt động" : sub.status}
           </Badge>
         </div>
-        <p className={styles.subtitle}>
-          Quản lý gói dịch vụ, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR.
-        </p>
+        <p className={styles.subtitle}>{t(
+          "Quản lý gói dịch vụ, theo dõi số lượt bài đăng và lịch sử thanh toán VietQR."
+        )}</p>
       </header>
 
       {checkoutError && (
@@ -261,18 +258,17 @@ export function BillingScreen() {
         <div className={styles.statusTop}>
           <div className={styles.statusPlanName}>
             <span>{PLAN_DETAILS[currentPlan]?.title ?? sub.plan}</span>
-            <Badge tone="primary">Gói hiện tại</Badge>
+            <Badge tone="primary">{t("Gói hiện tại")}</Badge>
           </div>
           {sub.current_period_end ? (
-            <span className={styles.periodDate}>
-              📅 Hạn chu kỳ: {new Date(sub.current_period_end).toLocaleDateString("vi-VN")}
+            <span className={styles.periodDate}>{t("📅 Hạn chu kỳ:")}{" "}{new Date(sub.current_period_end).toLocaleDateString("vi-VN")}
             </span>
           ) : null}
         </div>
 
         <div className={styles.quotaBarContainer}>
           <div className={styles.quotaLabels}>
-            <span>Hạn mức token AI tháng này:</span>
+            <span>{t("Hạn mức token AI tháng này:")}</span>
             <span className={styles.quotaValue}>
               {sub.token_quota_used.toLocaleString("vi-VN")} /{" "}
               {sub.token_quota_limit.toLocaleString("vi-VN")} token ({quotaPercent}%)
@@ -288,7 +284,7 @@ export function BillingScreen() {
       </section>
 
       {/* Pricing Grid */}
-      <section className={styles.plansGrid} aria-label="Bảng giá các gói cước">
+      <section className={styles.plansGrid} aria-label={t("Bảng giá các gói cước")}>
         {(Object.keys(PLAN_DETAILS) as Plan[]).map((planKey) => {
           const plan = PLAN_DETAILS[planKey as keyof typeof PLAN_DETAILS];
           if (!plan) return null;
@@ -339,9 +335,7 @@ export function BillingScreen() {
 
               <div>
                 {isCurrent ? (
-                  <button type="button" className={`${styles.planButton} ${styles.currentPlanBtn}`} disabled>
-                    ✓ Đang sử dụng
-                  </button>
+                  <button type="button" className={`${styles.planButton} ${styles.currentPlanBtn}`} disabled>{t("✓ Đang sử dụng")}</button>
                 ) : (
                   <button
                     type="button"
@@ -358,28 +352,30 @@ export function BillingScreen() {
         })}
       </section>
 
-      <p className={styles.billingDisclaimer} style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "13px", margin: "16px 0 28px" }}>
-        * Gói cước cung cấp công cụ quản trị và vận hành social media; không bao gồm ngân sách quảng cáo hoặc dịch vụ vận hành thuê ngoài.
-      </p>
+      <p className={styles.billingDisclaimer} style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "13px", margin: "16px 0 28px" }}>{t(
+        "* Gói cước cung cấp công cụ quản trị và vận hành social media; không bao gồm ngân sách quảng cáo hoặc dịch vụ vận hành thuê ngoài."
+      )}</p>
 
       {/* Invoices History */}
       <section className={styles.invoicesSection}>
-        <h2 className={styles.invoicesTitle}>📜 Lịch sử hóa đơn & Thanh toán VietQR</h2>
+        <h2 className={styles.invoicesTitle}>{t("📜 Lịch sử hóa đơn & Thanh toán VietQR")}</h2>
         {invoices.length === 0 ? (
           <EmptyState
-            title="Chưa có hóa đơn nào phát sinh"
-            body="Khi bạn đăng ký hoặc nâng cấp gói cước, hóa đơn điện tử và mã giao dịch sẽ hiển thị tại đây."
+            title={t("Chưa có hóa đơn nào phát sinh")}
+            body={t(
+              "Khi bạn đăng ký hoặc nâng cấp gói cước, hóa đơn điện tử và mã giao dịch sẽ hiển thị tại đây."
+            )}
           />
         ) : (
           <div className={styles.invoicesCard}>
             <table className={styles.invoicesTable}>
               <thead>
                 <tr>
-                  <th>Mã hóa đơn</th>
-                  <th>Gói cước</th>
-                  <th>Số tiền</th>
-                  <th>Ngày tạo</th>
-                  <th>Trạng thái</th>
+                  <th>{t("Mã hóa đơn")}</th>
+                  <th>{t("Gói cước")}</th>
+                  <th>{t("Số tiền")}</th>
+                  <th>{t("Ngày tạo")}</th>
+                  <th>{t("Trạng thái")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,7 +383,7 @@ export function BillingScreen() {
                   <tr key={inv.id}>
                     <td><code>#{inv.id.slice(0, 8)}</code></td>
                     <td><strong>{PLAN_DETAILS[inv.plan as keyof typeof PLAN_DETAILS]?.title ?? inv.plan}</strong></td>
-                    <td>{inv.amount_vnd.toLocaleString("vi-VN")} đ</td>
+                    <td>{inv.amount_vnd.toLocaleString("vi-VN")}{t("đ")}</td>
                     <td>{new Date(inv.issued_at).toLocaleDateString("vi-VN")}</td>
                     <td>
                       <Badge tone={inv.status === "paid" ? "success" : "info"}>
@@ -414,21 +410,16 @@ export function BillingScreen() {
             {paymentSuccess ? (
               <div style={{ textAlign: "center", padding: "24px 0" }}>
                 <div style={{ fontSize: 54 }}>🎉</div>
-                <h3 style={{ fontSize: 22, fontWeight: 800, color: "#10b981", marginTop: 12 }}>
-                  Thanh Toán Thành Công!
-                </h3>
-                <p style={{ color: "#64748b", marginTop: 8 }}>
-                  Tài khoản của bạn đã được tự động nâng cấp. Đang chuyển hướng…
-                </p>
+                <h3 style={{ fontSize: 22, fontWeight: 800, color: "#10b981", marginTop: 12 }}>{t("Thanh Toán Thành Công!")}</h3>
+                <p style={{ color: "#64748b", marginTop: 8 }}>{t("Tài khoản của bạn đã được tự động nâng cấp. Đang chuyển hướng…")}</p>
               </div>
             ) : (
               <>
-                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
-                  Quét mã VietQR để nâng cấp {PLAN_DETAILS[checkoutData.plan]?.title}
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>{t("Quét mã VietQR để nâng cấp")}{" "}{PLAN_DETAILS[checkoutData.plan]?.title}
                 </h3>
-                <p style={{ fontSize: 13.5, color: "#64748b" }}>
-                  Mở ứng dụng ngân hàng và quét mã QR. Gói chỉ được kích hoạt sau khi Havi nhận và xác minh webhook thanh toán.
-                </p>
+                <p style={{ fontSize: 13.5, color: "#64748b" }}>{t(
+                  "Mở ứng dụng ngân hàng và quét mã QR. Gói chỉ được kích hoạt sau khi Havi nhận và xác minh webhook thanh toán."
+                )}</p>
 
                 <div className={styles.qrBox}>
                   <img
@@ -438,11 +429,11 @@ export function BillingScreen() {
                   />
                   <div className={styles.transferDetails}>
                     <div className={styles.transferRow}>
-                      <span>Ngân hàng:</span>
+                      <span>{t("Ngân hàng:")}</span>
                       <strong>{checkoutData.bank_id}</strong>
                     </div>
                     <div className={styles.transferRow}>
-                      <span>Số tài khoản:</span>
+                      <span>{t("Số tài khoản:")}</span>
                       <div className={styles.valueWithCopy}>
                         <strong>{checkoutData.account_no}</strong>
                         <button
@@ -455,15 +446,14 @@ export function BillingScreen() {
                       </div>
                     </div>
                     <div className={styles.transferRow}>
-                      <span>Chủ tài khoản:</span>
+                      <span>{t("Chủ tài khoản:")}</span>
                       <span>{checkoutData.account_name}</span>
                     </div>
                     <div className={styles.transferRow}>
-                      <span>Số tiền:</span>
+                      <span>{t("Số tiền:")}</span>
                       <div className={styles.valueWithCopy}>
                         <strong style={{ color: "#0284c7" }}>
-                          {(checkoutData.amount_vnd ?? 0).toLocaleString("vi-VN")} đ
-                        </strong>
+                          {(checkoutData.amount_vnd ?? 0).toLocaleString("vi-VN")}{t("đ")}</strong>
                         <button
                           type="button"
                           className={`${styles.copyBtn} ${copiedKey === "amount" ? styles.copyBtnSuccess : ""}`}
@@ -474,7 +464,7 @@ export function BillingScreen() {
                       </div>
                     </div>
                     <div className={styles.transferRow}>
-                      <span>Nội dung CK:</span>
+                      <span>{t("Nội dung CK:")}</span>
                       <div className={styles.valueWithCopy}>
                         <strong style={{ color: "#d97706" }}>{checkoutData.transfer_content}</strong>
                         <button
@@ -495,14 +485,11 @@ export function BillingScreen() {
                   </div>
                 )}
 
-                <div style={{ marginTop: 12, fontSize: "12.5px", color: "var(--color-muted)", textAlign: "center" }}>
-                  Cần hỗ trợ thanh toán hoặc kích hoạt gấp? Hotline / Zalo Founder: <a href="tel:0984883750" style={{ color: "#0066ff", fontWeight: 700 }}>0984 883 750</a>
+                <div style={{ marginTop: 12, fontSize: "12.5px", color: "var(--color-muted)", textAlign: "center" }}>{t("Cần hỗ trợ thanh toán hoặc kích hoạt gấp? Hotline / Zalo Founder:")}<a href="tel:0984883750" style={{ color: "#0066ff", fontWeight: 700 }}>0984 883 750</a>
                 </div>
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 16 }}>
-                  <Button variant="ghost" onClick={() => setCheckoutData(null)}>
-                    Đóng
-                  </Button>
+                  <Button variant="ghost" onClick={() => setCheckoutData(null)}>{t("Đóng")}</Button>
                   <Button
                     variant="primary"
                     disabled={upgrading}

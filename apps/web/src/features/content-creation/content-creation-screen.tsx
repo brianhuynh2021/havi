@@ -20,6 +20,7 @@
  * hai nhánh, và đó là lý do `SchedulePicker` dùng chung.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
@@ -58,6 +59,10 @@ function makeKey(prefix: string): string {
 }
 
 export function ContentCreationScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [kind, setKind] = useState<ContentKind>("post");
 
   const [chips, setChips] = useState<RawChip[]>([]);
@@ -396,11 +401,10 @@ export function ContentCreationScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Đăng bài</h1>
-        <p className={styles.subtitle}>
-          Chuẩn bị nội dung cho cả tuần trong một lần ngồi, rồi để Havi đăng đều
-          mỗi ngày.
-        </p>
+        <h1 className={styles.title}>{t("Đăng bài")}</h1>
+        <p className={styles.subtitle}>{t(
+          "Chuẩn bị nội dung cho cả tuần trong một lần ngồi, rồi để Havi đăng đều\n          mỗi ngày."
+        )}</p>
       </header>
 
       <QuotaBanner reloadKey={quotaKey} />
@@ -417,11 +421,11 @@ export function ContentCreationScreen() {
       <section className={styles.kindSection} aria-labelledby="kind-title">
         <div className={styles.stepTitle}>
           <span className={styles.stepNumber}>1</span>
-          <span id="kind-title">Bạn muốn đăng gì?</span>
+          <span id="kind-title">{t("Bạn muốn đăng gì?")}</span>
         </div>
         
         <div style={{ marginBottom: 16 }}>
-          <strong style={{ display: "block", marginBottom: 8, fontSize: "0.875rem" }}>Đăng lên kênh nào?</strong>
+          <strong style={{ display: "block", marginBottom: 8, fontSize: "0.875rem" }}>{t("Đăng lên kênh nào?")}</strong>
           <div style={{ display: "flex", gap: 12 }}>
             {[
               { id: "facebook_page", label: "Facebook Page" },
@@ -446,7 +450,7 @@ export function ContentCreationScreen() {
           </div>
         </div>
 
-        <div className={styles.kindGrid} role="tablist" aria-label="Loại nội dung">
+        <div className={styles.kindGrid} role="tablist" aria-label={t("Loại nội dung")}>
           <button
             type="button"
             role="tab"
@@ -455,8 +459,8 @@ export function ContentCreationScreen() {
             onClick={() => setKind("post")}
           >
             <span className={styles.kindIcon}>📝</span>
-            <strong>Bài viết</strong>
-            <small>Kể vài dòng hoặc nạp ảnh — Havi viết bài cho Trang.</small>
+            <strong>{t("Bài viết")}</strong>
+            <small>{t("Kể vài dòng hoặc nạp ảnh — Havi viết bài cho Trang.")}</small>
           </button>
           <button
             type="button"
@@ -467,7 +471,7 @@ export function ContentCreationScreen() {
           >
             <span className={styles.kindIcon}>🎬</span>
             <strong>Video</strong>
-            <small>Bạn quay và cắt sẵn, Havi đăng lên Reels và xác nhận đã lên.</small>
+            <small>{t("Bạn quay và cắt sẵn, Havi đăng lên Reels và xác nhận đã lên.")}</small>
           </button>
         </div>
       </section>
@@ -492,7 +496,7 @@ export function ContentCreationScreen() {
           />
 
           {loading ? (
-            <LoadingState title="Đang tải bản nháp…" />
+            <LoadingState title={t("Đang tải bản nháp…")} />
           ) : (
             <>
               <DraftList
@@ -516,7 +520,7 @@ export function ContentCreationScreen() {
               {/* BƯỚC 3 — chung với nhánh Video. */}
               {items.length ? (
                 <SchedulePicker
-                  noun="bài"
+                  noun={t("bài")}
                   labels={items.map((item, index) =>
                     shortLabel(item.text) || `Bài ${index + 1}`,
                   )}

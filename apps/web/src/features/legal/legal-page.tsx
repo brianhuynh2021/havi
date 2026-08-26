@@ -1,3 +1,6 @@
+"use client";
+
+import { useLanguage } from "@/lib/i18n/language-context";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { CONTACT_EMAIL, LAST_UPDATED, type Section } from "./legal.content";
@@ -10,6 +13,10 @@ type Props = {
 };
 
 export function LegalPage({ title, intro, sections }: Props) {
+  const {
+    t
+  } = useLanguage();
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -18,15 +25,13 @@ export function LegalPage({ title, intro, sections }: Props) {
             <Logo size={34} />
             <span className={styles.brandText}>Havi</span>
           </Link>
-          <Link href="/" className={styles.backLink}>
-            ← Về trang chủ
-          </Link>
+          <Link href="/" className={styles.backLink}>{t("← Về trang chủ")}</Link>
         </div>
       </header>
 
       <main className={styles.main}>
         <h1 className={styles.title}>{title}</h1>
-        <p className={styles.updated}>Cập nhật lần cuối: {LAST_UPDATED}</p>
+        <p className={styles.updated}>{t("Cập nhật lần cuối:")}{" "}{LAST_UPDATED}</p>
         <p className={styles.intro}>{intro}</p>
 
         {sections.map((section) => (
@@ -41,10 +46,10 @@ export function LegalPage({ title, intro, sections }: Props) {
         ))}
 
         <section className={styles.section}>
-          <h2 className={styles.heading}>Liên hệ</h2>
-          <p className={styles.paragraph}>
-            Có câu hỏi về dữ liệu của bạn, hoặc muốn xoá tài khoản? Gửi email
-            tới{" "}
+          <h2 className={styles.heading}>{t("Liên hệ")}</h2>
+          <p className={styles.paragraph}>{t(
+            "Có câu hỏi về dữ liệu của bạn, hoặc muốn xoá tài khoản? Gửi email\n            tới"
+          )}{" "}
             <a href={`mailto:${CONTACT_EMAIL}`} className={styles.link}>
               {CONTACT_EMAIL}
             </a>
@@ -52,11 +57,11 @@ export function LegalPage({ title, intro, sections }: Props) {
           </p>
         </section>
 
-        <nav className={styles.crossLinks} aria-label="Trang pháp lý khác">
-          <Link href="/about">Về Havi</Link>
-          <Link href="/terms">Điều khoản sử dụng</Link>
-          <Link href="/privacy">Chính sách bảo mật</Link>
-          <Link href="/data-deletion">Hướng dẫn xóa dữ liệu</Link>
+        <nav className={styles.crossLinks} aria-label={t("Trang pháp lý khác")}>
+          <Link href="/about">{t("Về Havi")}</Link>
+          <Link href="/terms">{t("Điều khoản sử dụng")}</Link>
+          <Link href="/privacy">{t("Chính sách bảo mật")}</Link>
+          <Link href="/data-deletion">{t("Hướng dẫn xóa dữ liệu")}</Link>
         </nav>
       </main>
     </div>

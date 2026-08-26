@@ -26,7 +26,7 @@ function attributionPercent(item: ChannelAttribution): number {
 }
 
 export function ReportsScreen() {
-  const { t } = useLanguage();
+const { t } = useLanguage();
   const [data, setData] = useState<ReportsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -115,26 +115,25 @@ export function ReportsScreen() {
             thì mọi con số còn lại cũng mất giá trị theo.
           */}
           {data.summary.published_posts > 0 || data.summary.inbox_items > 0 ? (
-            <section className={styles.peaceOfMindCard} aria-label="Việc Havi đã làm">
-              <div className={styles.peaceOfMindBadge}>VIỆC HAVI ĐÃ LÀM</div>
+            <section className={styles.peaceOfMindCard} aria-label={t("Việc Havi đã làm")}>
+              <div className={styles.peaceOfMindBadge}>{t("VIỆC HAVI ĐÃ LÀM")}</div>
               <div className={styles.peaceOfMindGrid}>
                 <div className={styles.peaceOfMindItem}>
                   <span className={styles.peaceOfMindVal}>{data.summary.published_posts}</span>
-                  <span className={styles.peaceOfMindLbl}>Bài đã lên Trang</span>
+                  <span className={styles.peaceOfMindLbl}>{t("Bài đã lên Trang")}</span>
                 </div>
                 <div className={styles.peaceOfMindItem}>
                   <span className={styles.peaceOfMindVal}>{data.summary.inbox_items}</span>
-                  <span className={styles.peaceOfMindLbl}>Hội thoại đã nhận</span>
+                  <span className={styles.peaceOfMindLbl}>{t("Hội thoại đã nhận")}</span>
                 </div>
               </div>
             </section>
           ) : (
-            <section className={styles.peaceOfMindCard} aria-label="Chưa đủ dữ liệu">
-              <div className={styles.peaceOfMindBadge}>CHƯA ĐỦ DỮ LIỆU</div>
-              <p className={styles.emptyHint}>
-                Báo cáo hiện lên sau khi có bài đầu tiên được đăng hoặc khách đầu
-                tiên nhắn tin. Havi không hiện số liệu mẫu.
-              </p>
+            <section className={styles.peaceOfMindCard} aria-label={t("Chưa đủ dữ liệu")}>
+              <div className={styles.peaceOfMindBadge}>{t("CHƯA ĐỦ DỮ LIỆU")}</div>
+              <p className={styles.emptyHint}>{t(
+                "Báo cáo hiện lên sau khi có bài đầu tiên được đăng hoặc khách đầu\n                tiên nhắn tin. Havi không hiện số liệu mẫu."
+              )}</p>
             </section>
           )}
 
@@ -158,7 +157,7 @@ export function ReportsScreen() {
             })}
           </section>
 
-          <section className={styles.chartCard} aria-label="Bài đăng theo tuần">
+          <section className={styles.chartCard} aria-label={t("Bài đăng theo tuần")}>
             <h2 className={styles.sectionTitle}>{t({ vi: "Bài đăng theo tuần", en: "Weekly Posts" })}</h2>
             <div className={styles.chartBars}>
               {data.timeseries.points.map((point) => (
@@ -175,7 +174,7 @@ export function ReportsScreen() {
             </div>
           </section>
 
-          <section className={styles.attributionCard} aria-label="Bài đã đăng theo kênh">
+          <section className={styles.attributionCard} aria-label={t("Bài đã đăng theo kênh")}>
             <h2 className={styles.sectionTitle}>{t({ vi: "Bài đã đăng theo kênh", en: "Posts by Channel" })}</h2>
             {data.attribution.length === 0 ? (
               <EmptyState
@@ -205,7 +204,7 @@ export function ReportsScreen() {
             )}
           </section>
 
-          <section className={styles.topPostsCard} aria-label="Bài viết Facebook gần đây">
+          <section className={styles.topPostsCard} aria-label={t("Bài viết Facebook gần đây")}>
             <h2 className={styles.sectionTitle}>
               {t({ vi: "📘 Bài Viết Fanpage Facebook Đã Đăng Gần Đây", en: "Recent Published Facebook Posts" })}
             </h2>
@@ -235,7 +234,7 @@ export function ReportsScreen() {
             )}
           </section>
 
-          <section className={styles.failedPostsCard} aria-label="Bài đăng gặp sự cố">
+          <section className={styles.failedPostsCard} aria-label={t("Bài đăng gặp sự cố")}>
             <h2 className={styles.sectionTitle}>
               {t({ vi: "🚨 Bài Đăng Gặp Sự Cố", en: "Failed Posts" })}
             </h2>

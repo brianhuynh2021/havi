@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import styles from "./toast.module.css";
 
@@ -16,6 +17,10 @@ type ToastContainerProps = {
 };
 
 export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
+  const {
+    t
+  } = useLanguage();
+
   if (!toasts.length) return null;
 
   return (
@@ -40,7 +45,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
           <button
             type="button"
             className={styles.closeButton}
-            aria-label="Đóng thông báo"
+            aria-label={t("Đóng thông báo")}
             onClick={() => onDismiss(toast.id)}
           >
             ×

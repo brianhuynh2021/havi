@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionCard } from "./connection-card";
@@ -29,6 +30,10 @@ type Props = {
  * `useState` trước đó đã mất. Nối thành công hay không chỉ đọc được từ backend.
  */
 export function ConnectionList({ returnTo, onUsableChange }: Props) {
+  const {
+    t
+  } = useLanguage();
+
   const [connections, setConnections] = useState<PlatformConnection[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const onUsableChangeRef = useRef(onUsableChange);
@@ -121,9 +126,7 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
   return (
     <div>
       {outcome?.kind === "ok" ? (
-        <p className={`${styles.notice} ${styles.noticeOk}`} role="status">
-          Đã nối kênh xong — Havi đăng bài giúp bạn được rồi.
-        </p>
+        <p className={`${styles.notice} ${styles.noticeOk}`} role="status">{t("Đã nối kênh xong — Havi đăng bài giúp bạn được rồi.")}</p>
       ) : null}
       {outcome?.kind === "error" ? (
         <p className={`${styles.notice} ${styles.noticeError}`} role="alert">

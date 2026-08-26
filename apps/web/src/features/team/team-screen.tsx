@@ -8,6 +8,7 @@
  * đang phải chọn vai cho nhân viên mới.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,10 @@ import styles from "./team.module.css";
 const INVITABLE_ROLES: WorkspaceRole[] = ["marketer", "reviewer", "sales"];
 
 export function TeamScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,11 +125,10 @@ export function TeamScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>Đội ngũ</h1>
-        <p className={styles.subtitle}>
-          Ai đang ở trong workspace và mỗi người làm được gì. Người soạn và người
-          duyệt nên là hai người khác nhau — đó là điểm khiến bước duyệt có nghĩa.
-        </p>
+        <h1 className={styles.title}>{t("Đội ngũ")}</h1>
+        <p className={styles.subtitle}>{t(
+          "Ai đang ở trong workspace và mỗi người làm được gì. Người soạn và người\n          duyệt nên là hai người khác nhau — đó là điểm khiến bước duyệt có nghĩa."
+        )}</p>
       </header>
 
       {error ? <ErrorState title={error} /> : null}
@@ -136,32 +140,29 @@ export function TeamScreen() {
 
       {/* Tổ chức nhiều thương hiệu: mỗi thương hiệu có danh sách thành viên
           riêng, nên phải nói rõ màn này chỉ quản trị thương hiệu đang mở. */}
-      <p className={styles.scopeNote}>
-        Danh sách này thuộc về thương hiệu đang mở. Mỗi thương hiệu có đội ngũ
-        riêng — xem và mở thêm thương hiệu ở{" "}
-        <Link href="/app/brands">Thương hiệu &amp; chi nhánh</Link>.
+      <p className={styles.scopeNote}>{t(
+        "Danh sách này thuộc về thương hiệu đang mở. Mỗi thương hiệu có đội ngũ\n        riêng — xem và mở thêm thương hiệu ở"
+      )}{" "}
+        <Link href="/app/brands">{t("Thương hiệu & chi nhánh")}</Link>.
       </p>
 
       <section className={styles.inviteCard} aria-labelledby="invite-title">
-        <h2 id="invite-title" className={styles.sectionTitle}>
-          Thêm thành viên
-        </h2>
-        <p className={styles.inviteHint}>
-          Người được mời phải có tài khoản Havi trước. Havi không tự tạo tài khoản
-          hộ ai.
-        </p>
+        <h2 id="invite-title" className={styles.sectionTitle}>{t("Thêm thành viên")}</h2>
+        <p className={styles.inviteHint}>{t(
+          "Người được mời phải có tài khoản Havi trước. Havi không tự tạo tài khoản\n          hộ ai."
+        )}</p>
         <div className={styles.inviteRow}>
           <Input
             type="email"
             value={email}
             placeholder="email@congty.vn"
-            aria-label="Email người muốn thêm"
+            aria-label={t("Email người muốn thêm")}
             onChange={(event) => setEmail(event.target.value)}
           />
           <select
             className={styles.roleSelect}
             value={role}
-            aria-label="Vai trò"
+            aria-label={t("Vai trò")}
             onChange={(event) => setRole(event.target.value as WorkspaceRole)}
           >
             {INVITABLE_ROLES.map((value) => (
@@ -178,14 +179,12 @@ export function TeamScreen() {
       </section>
 
       <section aria-labelledby="members-title">
-        <h2 id="members-title" className={styles.sectionTitle}>
-          Thành viên hiện tại
-        </h2>
+        <h2 id="members-title" className={styles.sectionTitle}>{t("Thành viên hiện tại")}</h2>
 
         {loading ? (
-          <LoadingState title="Đang tải danh sách…" />
+          <LoadingState title={t("Đang tải danh sách…")} />
         ) : members.length === 0 ? (
-          <EmptyState title="Chưa có thành viên nào" body="Thêm người vào workspace ở trên." />
+          <EmptyState title={t("Chưa có thành viên nào")} body={t("Thêm người vào workspace ở trên.")} />
         ) : (
           <ul className={styles.memberList}>
             {members.map((member) => {
@@ -203,7 +202,7 @@ export function TeamScreen() {
                         value={member.role}
                         onChange={(e) => onChangeRole(member, e.target.value as WorkspaceRole)}
                         disabled={busyId === member.user_id}
-                        aria-label="Đổi vai trò"
+                        aria-label={t("Đổi vai trò")}
                       >
                         {INVITABLE_ROLES.map((value) => (
                           <option key={value} value={value}>
@@ -222,16 +221,12 @@ export function TeamScreen() {
                         variant="outline"
                         onClick={() => onResendInvite(member)}
                         disabled={busyId === member.user_id}
-                      >
-                        Gửi lại
-                      </Button>
+                      >{t("Gửi lại")}</Button>
                       <Button
                         variant="outline"
                         onClick={() => onRemoveRequested(member)}
                         disabled={busyId === member.user_id}
-                      >
-                        Gỡ
-                      </Button>
+                      >{t("Gỡ")}</Button>
                     </div>
                   )}
                 </li>

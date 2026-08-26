@@ -11,6 +11,7 @@
  * trừu tượng và chủ tiệm chỉ biết Havi đã chọn giờ nào sau khi bài đã lên.
  */
 
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Button } from "@/components/ui/button";
 import { PERMISSIONS, usePermissions } from "@/lib/auth/use-permissions";
 import styles from "./content-creation.module.css";
@@ -96,6 +97,10 @@ export function SchedulePicker({
   busy,
   noun,
 }: SchedulePickerProps) {
+  const {
+    t
+  } = useLanguage();
+
   const { can, role } = usePermissions();
   const mayApprove = can(PERMISSIONS.approveContent);
 
@@ -109,13 +114,10 @@ export function SchedulePicker({
     return (
       <section className={styles.scheduleCard} aria-labelledby="schedule-title">
         <h3 id="schedule-title" className={styles.scheduleTitle}>
-          {count} {noun} này đang chờ duyệt
-        </h3>
-        <p className={styles.approveBlocked}>
-          Vai của bạn{role ? ` (${ROLE_NAMES[role] ?? role})` : ""} soạn được nhưng
-          không duyệt được. Nhờ Người duyệt hoặc Chủ workspace bấm duyệt giúp —
-          đó là điểm khiến bước duyệt có nghĩa.
-        </p>
+          {count} {noun}{" "}{t("này đang chờ duyệt")}</h3>
+        <p className={styles.approveBlocked}>{t("Vai của bạn")}{role ? ` (${ROLE_NAMES[role] ?? role})` : ""}{t(
+          "soạn được nhưng\n          không duyệt được. Nhờ Người duyệt hoặc Chủ workspace bấm duyệt giúp —\n          đó là điểm khiến bước duyệt có nghĩa."
+        )}</p>
         <ol className={styles.schedulePreview}>
           {labels.map((label, index) => (
             <li key={`${label}-${index}`} className={styles.scheduleRow}>
@@ -130,19 +132,17 @@ export function SchedulePicker({
 
   return (
     <section className={styles.scheduleCard} aria-labelledby="schedule-title">
-      <h3 id="schedule-title" className={styles.scheduleTitle}>
-        Đưa {count} {noun} này lên Trang thế nào?
-      </h3>
+      <h3 id="schedule-title" className={styles.scheduleTitle}>{t("Đưa")}{" "}{count} {noun}{" "}{t("này lên Trang thế nào?")}</h3>
 
-      <div className={styles.scheduleModes} role="group" aria-label="Cách đăng">
+      <div className={styles.scheduleModes} role="group" aria-label={t("Cách đăng")}>
         <button
           type="button"
           aria-pressed={!plan.publishNow}
           className={`${styles.scheduleMode} ${!plan.publishNow ? styles.scheduleModeActive : ""}`}
           onClick={() => onPlanChange({ ...plan, publishNow: false })}
         >
-          <strong>Rải nhiều ngày</strong>
-          <small>Mỗi ngày một câu chuyện, đăng vào khung giờ đông người xem.</small>
+          <strong>{t("Rải nhiều ngày")}</strong>
+          <small>{t("Mỗi ngày một câu chuyện, đăng vào khung giờ đông người xem.")}</small>
         </button>
         <button
           type="button"
@@ -150,22 +150,22 @@ export function SchedulePicker({
           className={`${styles.scheduleMode} ${plan.publishNow ? styles.scheduleModeActive : ""}`}
           onClick={() => onPlanChange({ ...plan, publishNow: true })}
         >
-          <strong>Đăng hết ngay</strong>
-          <small>Tất cả lên Trang trong vài phút tới.</small>
+          <strong>{t("Đăng hết ngay")}</strong>
+          <small>{t("Tất cả lên Trang trong vài phút tới.")}</small>
         </button>
       </div>
 
       {plan.publishNow ? (
         count > 1 ? (
           <p className={styles.scheduleWarning} role="status">
-            {count} {noun} sẽ lên Trang gần như cùng lúc. Người theo dõi thường
-            thấy điều này giống spam hơn là chăm chỉ.
-          </p>
+            {count} {noun}{t(
+            "sẽ lên Trang gần như cùng lúc. Người theo dõi thường\n            thấy điều này giống spam hơn là chăm chỉ."
+          )}</p>
         ) : null
       ) : (
         <>
           <div className={styles.densityRow}>
-            <span className={styles.densityLabel}>Mật độ</span>
+            <span className={styles.densityLabel}>{t("Mật độ")}</span>
             {[1, 2, 3].map((perDay) => (
               <button
                 key={perDay}
@@ -176,8 +176,7 @@ export function SchedulePicker({
                 }`}
                 onClick={() => onPlanChange({ ...plan, postsPerDay: perDay })}
               >
-                {perDay} {noun}/ngày
-              </button>
+                {perDay} {noun}{t("/ngày")}</button>
             ))}
           </div>
 
@@ -202,10 +201,9 @@ export function SchedulePicker({
           </ol>
 
           {lastDay ? (
-            <p className={styles.scheduleFootnote}>
-              Kín nội dung tới {dayFormatter.format(lastDay)}. Sửa hoặc đổi giờ
-              từng bài ở mục Lịch đăng bất cứ lúc nào trước giờ lên.
-            </p>
+            <p className={styles.scheduleFootnote}>{t("Kín nội dung tới")}{" "}{dayFormatter.format(lastDay)}{t(
+              ". Sửa hoặc đổi giờ\n              từng bài ở mục Lịch đăng bất cứ lúc nào trước giờ lên."
+            )}</p>
           ) : null}
         </>
       )}

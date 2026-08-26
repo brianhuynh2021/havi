@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 
@@ -8,6 +9,10 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export function PwaRegistrar() {
+  const {
+    t
+  } = useLanguage();
+
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosPrompt, setShowIosPrompt] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -104,7 +109,7 @@ export function PwaRegistrar() {
         📱
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>Cài đặt Havi lên điện thoại</div>
+        <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{t("Cài đặt Havi lên điện thoại")}</div>
         <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
           {showIosPrompt && !installPrompt
             ? "Bấm nút Chia sẻ 📤 rồi chọn 'Thêm vào MH chính'"
@@ -126,9 +131,7 @@ export function PwaRegistrar() {
             cursor: "pointer",
             whiteSpace: "nowrap",
           }}
-        >
-          Cài đặt ngay
-        </button>
+        >{t("Cài đặt ngay")}</button>
       ) : (
         <span
           style={{
@@ -140,9 +143,7 @@ export function PwaRegistrar() {
             padding: "6px 10px",
             borderRadius: "8px",
           }}
-        >
-          📤 Thêm MH chính
-        </span>
+        >{t("📤 Thêm MH chính")}</span>
       )}
       <button
         type="button"
@@ -155,7 +156,7 @@ export function PwaRegistrar() {
           cursor: "pointer",
           padding: "4px",
         }}
-        aria-label="Đóng"
+        aria-label={t("Đóng")}
       >
         ×
       </button>

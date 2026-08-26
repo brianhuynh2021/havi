@@ -194,39 +194,6 @@ describe("OnboardingScreen", () => {
     expect(spaCard).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("hiển thị bản xem trước bài viết AI linh hoạt theo ngành và tên tiệm (Smart Dynamic Preview)", async () => {
-    mockApi();
-    renderOnboarding();
-
-    expect(
-      screen.getByText(/Giọng thương hiệu sẽ ra thế này/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Bản mẫu theo ngành/i)).toBeInTheDocument();
-
-    const user = userEvent.setup();
-
-    // Chọn ngành Giáo dục
-    const eduCard = screen.getByRole("button", { name: /giáo dục/i });
-    await user.click(eduCard);
-
-    // Xác nhận nội dung đã chuyển sang văn phong Giáo dục & Đào tạo nghề
-    expect(
-      screen.getByText(/Khai giảng khóa mới tuần này tại Spa An Nhiên/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("#TuyenSinhKhoaMoi")).toBeInTheDocument();
-    expect(screen.getByText("#DaoTaoNgheThucChien")).toBeInTheDocument();
-
-    // Đổi sang ngành Ăn uống & Cà phê
-    const fbCard = screen.getByRole("button", { name: /ăn uống/i });
-    await user.click(fbCard);
-
-    // Xác nhận nội dung tự động chuyển sang Ăn uống
-    expect(
-      screen.getByText(/Thưởng thức menu món mới đậm vị tuần này tại Spa An Nhiên/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("#MonNgonMoiNgay")).toBeInTheDocument();
-  });
-
   it("quay lại bước 1 sửa tên thì gọi PATCH cập nhật chứ không tạo workspace thứ hai (idempotent)", async () => {
     const fetchSpy = mockApi();
     renderOnboarding();

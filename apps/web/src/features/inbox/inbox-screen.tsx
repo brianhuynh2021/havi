@@ -1,4 +1,5 @@
 "use client";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,10 @@ function threadKey(item: InboxItem): string {
 }
 
 export function InboxScreen() {
+  const {
+    t
+  } = useLanguage();
+
   const [items, setItems] = useState<InboxItem[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -165,16 +170,16 @@ export function InboxScreen() {
     setBusyId(null);
   }
 
-  if (loading) return <LoadingState title="Đang tải hội thoại…" />;
+  if (loading) return <LoadingState title={t("Đang tải hội thoại…")} />;
   if (error && items.length === 0) {
-    return <ErrorState title={error} action={<Button variant="outline" onClick={load}>Thử lại</Button>} />;
+    return <ErrorState title={error} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />;
   }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Hội thoại</h1>
-        <p>Phản hồi khách hàng từ tất cả các kênh tại một nơi.</p>
+        <h1>{t("Hội thoại")}</h1>
+        <p>{t("Phản hồi khách hàng từ tất cả các kênh tại một nơi.")}</p>
       </header>
 
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
@@ -189,8 +194,8 @@ export function InboxScreen() {
       */}
       {items.length === 0 ? (
         <EmptyState
-          title="Chưa có hội thoại"
-          body="Hội thoại mới từ các kênh đã kết nối sẽ xuất hiện tại đây."
+          title={t("Chưa có hội thoại")}
+          body={t("Hội thoại mới từ các kênh đã kết nối sẽ xuất hiện tại đây.")}
         />
       ) : (
       <div className={styles.workspace}>
@@ -200,23 +205,21 @@ export function InboxScreen() {
             <div className={styles.searchBar}>
               <input 
                 type="search" 
-                placeholder="Tìm khách hàng hoặc tin nhắn..." 
+                placeholder={t("Tìm khách hàng hoặc tin nhắn...")} 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="unread">Cần trả lời</option>
-                <option value="resolved">Đã xong</option>
+                <option value="all">{t("Tất cả")}</option>
+                <option value="unread">{t("Cần trả lời")}</option>
+                <option value="resolved">{t("Đã xong")}</option>
               </select>
             </div>
           </div>
           
           <div className={styles.threadList}>
             {filteredThreads.length === 0 ? (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-muted)", fontSize: "14px" }}>
-                Không tìm thấy hội thoại nào
-              </div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-muted)", fontSize: "14px" }}>{t("Không tìm thấy hội thoại nào")}</div>
             ) : (
               filteredThreads.map(thread => {
                 const latestItem = thread.items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
@@ -270,17 +273,14 @@ export function InboxScreen() {
 
                       {/* System/Dismissed Notice */}
                       {item.status === "dismissed" && (
-                        <div className={styles.systemMessage}>
-                          Đã bỏ qua tin nhắn này
-                        </div>
+                        <div className={styles.systemMessage}>{t("Đã bỏ qua tin nhắn này")}</div>
                       )}
                       
                       {/* Shop Reply */}
                       {item.status === "sent" && item.ai_suggested_reply && (
                         <div className={`${styles.bubbleWrapper} ${styles.bubbleOutgoing}`}>
                           <div className={styles.bubbleContent}>{item.ai_suggested_reply}</div>
-                          <span className={styles.bubbleMeta}>
-                            Havi gửi • {new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                          <span className={styles.bubbleMeta}>{t("Havi gửi •")}{" "}{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       )}
@@ -290,20 +290,17 @@ export function InboxScreen() {
 
               {pendingItem && (
                 <div className={styles.composer}>
-                  <label htmlFor={`reply-${pendingItem.id}`}>
-                    Trả lời {activeThread.author_name}
+                  <label htmlFor={`reply-${pendingItem.id}`}>{t("Trả lời")}{" "}{activeThread.author_name}
                   </label>
                   <textarea
                     id={`reply-${pendingItem.id}`}
-                    placeholder="Nhập câu trả lời của bạn..."
+                    placeholder={t("Nhập câu trả lời của bạn...")}
                     value={drafts[pendingItem.id] ?? ""}
                     onChange={(event) => setDrafts((current) => ({ ...current, [pendingItem.id]: event.target.value }))}
                     rows={3}
                   />
                   <div className={styles.composerActions}>
-                    <Button variant="outline" onClick={() => void dismiss(pendingItem)} disabled={busyId === pendingItem.id}>
-                      Bỏ qua
-                    </Button>
+                    <Button variant="outline" onClick={() => void dismiss(pendingItem)} disabled={busyId === pendingItem.id}>{t("Bỏ qua")}</Button>
                     <Button onClick={() => void send(pendingItem)} disabled={busyId === pendingItem.id || !(drafts[pendingItem.id] ?? "").trim()}>
                       {busyId === pendingItem.id ? "Đang xử lý…" : "Gửi trả lời"}
                     </Button>
@@ -312,9 +309,7 @@ export function InboxScreen() {
               )}
             </>
           ) : (
-            <div className={styles.chatEmpty}>
-              Chọn một hội thoại ở danh sách bên trái để bắt đầu
-            </div>
+            <div className={styles.chatEmpty}>{t("Chọn một hội thoại ở danh sách bên trái để bắt đầu")}</div>
           )}
         </main>
       </div>
