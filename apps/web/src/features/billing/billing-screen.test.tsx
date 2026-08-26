@@ -118,4 +118,75 @@ describe("BillingScreen", () => {
     expect(await screen.findByText(/Quét mã VietQR để nâng cấp Gói Khởi Nghiệp/i)).toBeInTheDocument();
     expect(screen.getByText(/TRUNG TAM CONG NGHE NHAT MINH/i)).toBeInTheDocument();
   });
+  /** Gói cước với trần và hạn kỳ tuỳ biến — phần §05 của bảng giá. */
+  function mockSubscription(overrides: Record<string, unknown> = {}) {
+    return vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const url = new URL(input instanceof Request ? input.url : String(input));
+        if (url.pathname.includes("/billing/subscription")) {
+          return jsonResponse({
+            workspace_id: "w1",
+            plan: "tiem_nho",
+            status: "active",
+            current_period_end: "2026-09-15T00:00:00Z",
+            token_quota_used: 50000,
+            token_quota_limit: 250000,
+            seats_used: 2,
+            seats_limit: 3,
+            channels_used: 1,
+            channels_limit: 3,
+            days_until_due: 20,
+            ...overrides,
+          });
+        }
+        return jsonResponse([]);
+      },
+    );
+  }
+
+  it("hiện trần đang được cưỡng chế, không chỉ hạn mức token", async () => {
+    // Trước đó quota token là gate DUY NHẤT theo gói: phân quyền, báo cáo, nhiều
+    // thương hiệu đều có ở mọi gói. Thang giá thực chất là một thang token.
+    mockSubscription();
+    renderBilling();
+
+    expect(await screen.findByText("2 / 3")).toBeInTheDocument();
+    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+  });
+
+  it("kênh không giới hạn thì nói bằng chữ, không in con số 1.000.000", async () => {
+    mockSubscription({ channels_limit: 1_000_000, channels_used: 4 });
+    renderBilling();
+
+    // Bảng giá gói Chuỗi cũng có chữ "không giới hạn", nên tìm trong ô trần
+    // đang được cưỡng chế chứ không tìm khắp trang.
+    const label = await screen.findByText("Kênh đã nối");
+    expect(label.parentElement?.textContent).toMatch(/4 \/ không giới hạn/i);
+    expect(document.body.textContent).not.toContain("1.000.000");
+  });
+
+  it("sắp hết kỳ thì nhắc, vì VietQR không tự trừ tiền", async () => {
+    // Mỗi tháng khách phải CHỦ ĐỘNG quyết định trả tiếp — nhắc trước là cơ chế
+    // chống churn duy nhất đang có.
+    mockSubscription({ days_until_due: 3 });
+    renderBilling();
+
+    expect(await screen.findByText(/Còn 3 ngày là hết kỳ/)).toBeInTheDocument();
+    expect(screen.getByText(/không tự trừ tiền/)).toBeInTheDocument();
+  });
+
+  it("còn xa hạn thì KHÔNG nhắc — nhắc mỗi ngày thì người ta thôi đọc", async () => {
+    mockSubscription({ days_until_due: 20 });
+    renderBilling();
+
+    await screen.findByText("2 / 3");
+    expect(screen.queryByText(/hết kỳ/)).toBeNull();
+  });
+
+  it("quá hạn thì nói rõ là đã hết hạn, ở mức cảnh báo khác", async () => {
+    mockSubscription({ days_until_due: -2 });
+    renderBilling();
+
+    expect(await screen.findByText(/Gói đã hết hạn/)).toBeInTheDocument();
+  });
 });

@@ -424,3 +424,59 @@
   color: var(--color-green-700) !important;
   border-color: var(--color-green-300) !important;
 }
+
+/* --- Trần đang được cưỡng chế --- */
+
+.limitRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.limitItem {
+  flex: 1 1 140px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.limitLabel {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.limitValue {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Nhắc gia hạn ---
+   Hai mức khác nhau hẳn về màu: "còn 5 ngày" là thông tin, "đã hết hạn" là việc
+   phải làm ngay. Cùng một sắc thì mắt bỏ qua cả hai. */
+
+.renewalSoon {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-info) 8%, transparent);
+  font-size: 13px;
+  color: var(--color-info);
+}
+
+.renewalOverdue {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-danger);
+}

@@ -24,6 +24,7 @@ from core.schemas import (
     WorkspaceRoleUpdate,
     WorkspaceUpdate,
 )
+from domain.policies.plan_limits import PlanLimitExceeded
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -128,6 +129,11 @@ async def invite_member(
         ) from exc
     except AlreadyMember as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, "Đã là thành viên workspace này") from exc
+    except PlanLimitExceeded as exc:
+        # 402 chứ không 429: trần ghế **không** tự hết khi sang tháng như quota
+        # token. Muốn thêm người thì phải nâng gói — đó đúng nghĩa "payment
+        # required", và câu lỗi đã nói rõ gói nào cho mấy người.
+        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, str(exc)) from exc
     return WorkspaceMember(user_id=row.user.id, name=row.user.name, role=row.member.role)
 
 

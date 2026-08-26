@@ -27,6 +27,7 @@ from core.enums import OAuthReturnTarget, Platform
 from core.oauth_state import InvalidOAuthState
 from core.schemas import OAuthStartResponse, PlatformConnection
 from core.token_crypto import TokenEncryptionUnavailable
+from domain.policies.plan_limits import PlanLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +189,11 @@ async def oauth_callback(
         return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=het_han", status_code=302)
     except (PlatformNotSupported, PlatformNotConfigured, TokenEncryptionUnavailable):
         return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=chua_cau_hinh", status_code=302)
+    except PlanLimitExceeded:
+        # Đụng trần kênh của gói. Lý do riêng chứ không gộp vào `he_thong`: người
+        # dùng vừa bấm cho phép trên Facebook xong, nên câu "lỗi hệ thống" sẽ đẩy
+        # họ đi thử lại mãi trong khi việc cần làm là nâng gói.
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=het_han_muc", status_code=302)
     except Exception:  # noqa: BLE001 — callback không được trả 500 vào mặt user
         logger.exception("OAuth callback %s unexpected error", platform.value)
         return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=he_thong", status_code=302)

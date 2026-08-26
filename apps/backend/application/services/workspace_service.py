@@ -16,6 +16,7 @@ from core.enums import Industry, PublishMode, WorkspaceRole
 from core.events import EventLogEntry
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
+from domain.policies import plan_limits
 
 if TYPE_CHECKING:
     from application.services.media_service import MediaService
@@ -205,6 +206,16 @@ class WorkspaceService:
             raise InviteUserNotFound()
         if await self._members.is_member(workspace_id=workspace_id, user_id=user.id):
             raise AlreadyMember()
+
+        # Trần ghế theo gói. Kiểm **sau** `AlreadyMember`: mời lại người đã ở
+        # trong workspace không thêm ghế nào, nên báo "hết ghế" ở đó là nói sai
+        # nguyên nhân và đẩy người dùng đi nâng gói mà không cần.
+        workspace = await self._workspaces.get(workspace_id)
+        if workspace is not None:
+            plan_limits.check_seats(
+                plan=workspace.plan,
+                current=await self._members.count_members(workspace_id),
+            )
 
         member = await self._members.add(workspace_id=workspace_id, user_id=user.id, role=role)
         return MemberWithUser(member=member, user=user)

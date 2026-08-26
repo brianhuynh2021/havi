@@ -78,3 +78,23 @@
   line-height: 1.55;
 }
 .scopeNote a { color: var(--color-primary); font-weight: 700; }
+
+/* Trần ghế của gói. Hai mức: còn chỗ là thông tin xám, hết chỗ là việc phải làm. */
+
+.seatsNote {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.seatsFull {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-action);
+  background: color-mix(in srgb, var(--color-action) 8%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-action);
+}

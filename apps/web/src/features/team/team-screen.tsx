@@ -25,6 +25,7 @@ import {
   type WorkspaceRole,
 } from "./team.api";
 import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
+import { fetchSubscription } from "@/features/billing/billing.api";
 import styles from "./team.module.css";
 
 const INVITABLE_ROLES: WorkspaceRole[] = ["marketer", "reviewer", "sales"];
@@ -38,6 +39,7 @@ export function TeamScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [seats, setSeats] = useState<{ used: number; limit: number } | null>(null);
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<WorkspaceRole>("marketer");
@@ -58,6 +60,11 @@ export function TeamScreen() {
 
   useEffect(() => {
     load();
+    // Trần ghế đọc từ backend, không hardcode: người dùng phải thấy "2/3 người"
+    // TRƯỚC khi mời người thứ tư rồi nhận 402.
+    void fetchSubscription().then((res) => {
+      if (res.ok) setSeats({ used: res.data.seats_used, limit: res.data.seats_limit });
+    });
   }, [load]);
 
   async function onInvite() {
@@ -130,6 +137,14 @@ export function TeamScreen() {
           "Ai đang ở trong workspace và mỗi người làm được gì. Người soạn và người\n          duyệt nên là hai người khác nhau — đó là điểm khiến bước duyệt có nghĩa."
         )}</p>
       </header>
+
+      {seats ? (
+        <p className={seats.used >= seats.limit ? styles.seatsFull : styles.seatsNote}>
+          {seats.used >= seats.limit
+            ? `Đã dùng hết ${seats.limit} chỗ của gói hiện tại. Nâng gói ở mục Gói cước để thêm người.`
+            : `${seats.used}/${seats.limit} chỗ của gói hiện tại`}
+        </p>
+      ) : null}
 
       {error ? <ErrorState title={error} /> : null}
       {notice ? (

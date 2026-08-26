@@ -40,7 +40,7 @@ const PLAN_DETAILS: Record<
     desc: "Chạy thử toàn bộ vòng vận hành: nối kênh, soạn, duyệt, đăng và trả lời.",
     features: [
       "7 ngày dùng đầy đủ, không cần thẻ",
-      "1 thương hiệu, 1 kênh Facebook",
+      "2 người dùng · 2 kênh nối",
       "Quy trình soạn → duyệt → đăng có ràng buộc",
       "Hộp thư Messenger gộp về một nơi",
       "Hạn mức AI dùng thử ~30 bài",
@@ -55,7 +55,7 @@ const PLAN_DETAILS: Record<
     badgeTone: null,
     desc: "Một thương hiệu, một người vận hành, mọi thứ trong tầm kiểm soát.",
     features: [
-      "1 thương hiệu · kênh Facebook không giới hạn Trang",
+      "3 người dùng · 3 kênh nối",
       "Lịch đăng, thư viện media và kho nội dung dùng chung",
       "Hộp thư Messenger kèm trạng thái đã xử lý hay chưa",
       "Lịch sử hoạt động: ai làm gì, lúc nào, kết quả ra sao",
@@ -71,6 +71,7 @@ const PLAN_DETAILS: Record<
     badgeTone: null,
     desc: "Dành cho đội nhiều người: ai được soạn, ai được duyệt, ai trực hội thoại.",
     features: [
+      "10 người dùng · 8 kênh nối",
       "Phân quyền theo vai: chủ, người soạn, người duyệt, trực hội thoại",
       "Người soạn không đăng được — quyền kiểm ở máy chủ, không chỉ ẩn nút",
       "Đăng Reels kèm xác nhận bài đã thật sự lên Trang",
@@ -85,10 +86,10 @@ const PLAN_DETAILS: Record<
     dailyNote: "Chỉ ~26.000 đ/ngày",
     badge: null,
     badgeTone: null,
-    desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị và một dấu vết chung.",
+    desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị và một dấu vết chung. Mỗi thương hiệu tính gói riêng.",
     features: [
-      "Nhiều thương hiệu, mỗi thương hiệu một workspace tách bạch",
-      "Tầng doanh nghiệp trên workspace: nhìn được sức khoẻ mọi kênh",
+      "50 người dùng · kênh không giới hạn",
+      "Tầng doanh nghiệp: gom nhiều thương hiệu, nhìn chéo sức khoẻ mọi kênh",
       "Giọng thương hiệu và danh sách điều không được hứa, theo từng đơn vị",
       "Hỗ trợ triển khai trực tiếp cùng Founder và đội ngũ",
       "Hạn mức AI cao nhất · xuất hoá đơn VAT điện tử",
@@ -265,6 +266,39 @@ const { t } = useLanguage();
             </span>
           ) : null}
         </div>
+
+        {/* Trần đang được cưỡng chế, đọc từ backend chứ không hardcode: người
+            dùng thấy "3 người" trong bảng giá rồi bị chặn ở người thứ ba là lỗi
+            tệ nhất trong nhóm này. */}
+        <div className={styles.limitRow}>
+          <div className={styles.limitItem}>
+            <span className={styles.limitLabel}>{t("Người dùng")}</span>
+            <span className={styles.limitValue}>
+              {sub.seats_used} / {sub.seats_limit}
+            </span>
+          </div>
+          <div className={styles.limitItem}>
+            <span className={styles.limitLabel}>{t("Kênh đã nối")}</span>
+            <span className={styles.limitValue}>
+              {sub.channels_used} /{" "}
+              {sub.channels_limit >= 1_000_000 ? t("không giới hạn") : sub.channels_limit}
+            </span>
+          </div>
+        </div>
+
+        {/* Nhắc gia hạn. VietQR không có auto-renew: mỗi tháng khách phải CHỦ
+            ĐỘNG quyết định trả tiếp, nên một dòng nhắc trước là cơ chế chống
+            churn duy nhất đang có. Chỉ hiện khi sắp tới hạn — nhắc mỗi ngày thì
+            người ta thôi đọc. */}
+        {typeof sub.days_until_due === "number" && sub.days_until_due <= 7 ? (
+          <p className={sub.days_until_due < 0 ? styles.renewalOverdue : styles.renewalSoon}>
+            {sub.days_until_due < 0
+              ? t("Gói đã hết hạn. Quét VietQR bên dưới để dùng tiếp — Havi không tự trừ tiền.")
+              : sub.days_until_due === 0
+                ? t("Gói hết hạn hôm nay. Quét VietQR bên dưới để dùng tiếp.")
+                : `Còn ${sub.days_until_due} ngày là hết kỳ. Havi không tự trừ tiền — quét VietQR bên dưới khi cần dùng tiếp.`}
+          </p>
+        ) : null}
 
         <div className={styles.quotaBarContainer}>
           <div className={styles.quotaLabels}>

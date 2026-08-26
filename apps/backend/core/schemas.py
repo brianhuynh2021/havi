@@ -644,6 +644,18 @@ class Subscription(HaviModel):
     current_period_end: datetime | None = None
     token_quota_used: int = 0
     token_quota_limit: int = 0
+    #: Trần theo gói, lấy từ `domain/policies/plan_limits.py`. Trả kèm subscription
+    #: để bảng giá và màn Đội ngũ nói **đúng con số đang được cưỡng chế** thay vì
+    #: một câu chữ hardcode ở frontend rồi lệch khỏi backend.
+    seats_used: int = 0
+    seats_limit: int = 0
+    channels_used: int = 0
+    channels_limit: int = 0
+    #: Số ngày còn lại của kỳ. Âm nghĩa là đã quá hạn.
+    #:
+    #: Thanh toán VietQR không có auto-renew: mỗi tháng khách phải **chủ động**
+    #: quyết định trả tiếp, nên nhắc trước là cơ chế chống churn duy nhất hiện có.
+    days_until_due: int | None = None
 
 
 class ChangePlanRequest(HaviModel):

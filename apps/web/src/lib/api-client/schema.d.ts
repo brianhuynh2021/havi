@@ -2747,6 +2747,28 @@ export interface components {
              * @default 0
              */
             token_quota_limit: number;
+            /**
+             * Seats Used
+             * @default 0
+             */
+            seats_used: number;
+            /**
+             * Seats Limit
+             * @default 0
+             */
+            seats_limit: number;
+            /**
+             * Channels Used
+             * @default 0
+             */
+            channels_used: number;
+            /**
+             * Channels Limit
+             * @default 0
+             */
+            channels_limit: number;
+            /** Days Until Due */
+            days_until_due?: number | null;
         };
         /**
          * SubscriptionStatus

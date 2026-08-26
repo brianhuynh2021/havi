@@ -3,15 +3,20 @@
 Tích hợp cổng thanh toán VN (VNPay/Momo) qua backend; frontend không thấy secret nào.
 """
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
 from adapters.payment.payos_gateway import PaymentGatewayError
+from adapters.persistence.connection_repository import ConnectionRepository
+from adapters.persistence.db import DbSessionDep
+from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from api.deps import BillingServiceDep, SettingsDep, WorkspaceDep
 from core.enums import Plan
 from core.schemas import ChangePlanRequest, Invoice, Subscription
+from domain.policies import plan_limits
 from domain.policies.subscription import PlanChangeNotAllowed
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -19,9 +24,27 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 
 @router.get("/subscription", response_model=Subscription)
 async def get_subscription(
-    workspace_id: WorkspaceDep, billing_service: BillingServiceDep
+    workspace_id: WorkspaceDep,
+    billing_service: BillingServiceDep,
+    session: DbSessionDep,
 ) -> Subscription:
     state, quota = await billing_service.subscription_state(workspace_id=workspace_id)
+    limits = plan_limits.limits_for(state.plan)
+
+    # Đếm thật thay vì để frontend đoán: bảng giá và màn Đội ngũ phải hiện đúng
+    # con số đang được cưỡng chế ở backend, nếu không người dùng đọc "3 người" rồi
+    # bị chặn ở người thứ ba.
+    seats_used = await WorkspaceMemberRepository(session).count_members(workspace_id)
+    channels_used = len(await ConnectionRepository(session).list_for_workspace(workspace_id))
+
+    days_until_due: int | None = None
+    if state.current_period_end is not None:
+        delta = state.current_period_end - datetime.now(UTC)
+        # Làm tròn xuống: còn 1,9 ngày thì nói "1 ngày" chứ không "2 ngày" — nhắc
+        # sớm hơn thực tế thì vô hại, nhắc muộn hơn thì khách mất quyền giữa lúc
+        # đang trực khách.
+        days_until_due = delta.days
+
     return Subscription(
         workspace_id=workspace_id,
         plan=state.plan,
@@ -29,6 +52,11 @@ async def get_subscription(
         current_period_end=state.current_period_end,
         token_quota_used=quota.used,
         token_quota_limit=quota.limit,
+        seats_used=seats_used,
+        seats_limit=limits.max_seats,
+        channels_used=channels_used,
+        channels_limit=limits.max_channels,
+        days_until_due=days_until_due,
     )
 
 

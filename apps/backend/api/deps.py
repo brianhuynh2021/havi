@@ -259,6 +259,7 @@ def get_connection_service(session: DbSessionDep, settings: SettingsDep) -> Conn
         oauth_clients=_oauth_clients(),
         settings=settings,
         events=EventLogRepository(session),
+        workspaces=WorkspaceRepository(session),
     )
 
 

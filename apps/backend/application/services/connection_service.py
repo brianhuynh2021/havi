@@ -19,6 +19,7 @@ from adapters.oauth.base import OAuthClientPort, OAuthError
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from core.config import Settings
 from core.enums import Platform
 from core.events import EventLogEntry
@@ -32,6 +33,7 @@ from core.oauth_state import (
 from core.schemas import PlatformConnection as PlatformConnectionSchema
 from core.token_crypto import TokenEncryptionUnavailable
 from domain.models.connection import PlatformConnection
+from domain.policies import plan_limits
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +71,11 @@ class ConnectionService:
         oauth_clients: dict[Platform, OAuthClientPort],
         settings: Settings,
         events: EventLogRepository | None = None,
+        workspaces: WorkspaceRepository | None = None,
     ) -> None:
         self._connections = connections
         self._members = members
+        self._workspaces = workspaces
         self._oauth_clients = oauth_clients
         self._settings = settings
         self._events = events
@@ -150,6 +154,21 @@ class ConnectionService:
             raise NotWorkspaceMember(
                 "Tài khoản này không còn quyền trên workspace — đăng nhập lại rồi nối kênh"
             )
+
+        # Trần kênh theo gói, kiểm **trước** khi đổi code: nối thêm một kênh là
+        # thêm một đường Havi phải canh, và đó là chỗ chi phí lẫn giá trị cùng
+        # tăng. Nối lại kênh đã có không tính là kênh mới — `upsert` ghi lên bản
+        # ghi cũ, nên `existing` phải được kiểm trước.
+        existing = await self._connections.get(
+            workspace_id=payload.workspace_id, platform=platform
+        )
+        if existing is None and self._workspaces is not None:
+            workspace = await self._workspaces.get(payload.workspace_id)
+            if workspace is not None:
+                current = len(
+                    await self._connections.list_for_workspace(payload.workspace_id)
+                )
+                plan_limits.check_channels(plan=workspace.plan, current=current)
 
         try:
             account = await client.exchange_code(code, state=state)
