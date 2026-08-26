@@ -11,6 +11,20 @@
 > business social media operations*. Chi tiết 5–10 năm ở
 > [ROADMAP §1b](docs/product/ROADMAP.md).
 
+## Havi là chỗ ngồi làm việc của người trực kênh
+
+Người mở Havi mỗi ngày thường **không phải chủ**. Đó là nhân viên trực page, con
+chủ tiệm, nhân viên resort được giao Facebook và TikTok. Chủ trả tiền để có quyền
+kiểm soát và dấu vết; nhân viên dùng để có **một màn hình thay vì năm**.
+
+Vì vậy màn chính của Havi là **một hàng đợi việc**: tin nhắn, bình luận, hỏi giá,
+nháp chờ duyệt, bài đăng lỗi, kênh mất quyền — bốn nguồn, một danh sách, xếp theo
+thiệt hại khi bỏ sót chứ không theo thời gian.
+
+Mỗi việc có hai đường đi ra và **cả hai đều đúng**: xử lý trong Havi, hoặc bấm
+sang thẳng nền tảng. Thứ tốn thời gian không phải lúc trả lời — mà là lúc đi tìm
+xem có gì cần trả lời.
+
 Havi quản trị **hệ thống social của bạn** — không quản trị mục tiêu kinh doanh
 của bạn. Cụ thể là chín thứ:
 

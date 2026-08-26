@@ -18,6 +18,22 @@ businesses, freelancers and teams. It provides one place to control:
 AI may draft or summarize. It is not the product promise and does not make
 business decisions.
 
+### The daily user is staff, not the owner
+
+Whoever opens Havi every day is usually not the person who pays for it: it is the
+employee who mans the page, the owner's child, the resort's front-of-house staff
+who was handed Facebook and TikTok. The owner buys control and traceability; the
+staff member gets one screen instead of five.
+
+That is why the main surface is a single work queue rather than a dashboard of
+counts. Approval stops being friction the moment the writer and the accountable
+person are different people — it is the owner's peace of mind, and the audit trail
+is how they verify without standing over anyone.
+
+Every item offers two exits and both are correct: handle it inside Havi, or deep
+link straight to the platform. The expensive part of the job is not answering —
+it is hunting across five sites for what needs answering.
+
 ### Retired product concepts
 
 The following are intentionally outside Havi: goal/roadmap/evidence operating

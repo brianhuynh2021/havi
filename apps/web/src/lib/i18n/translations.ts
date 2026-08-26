@@ -5,7 +5,7 @@ export type TranslationKey = keyof typeof translations.VN;
 export const translations = {
   VN: {
     // Navigation / Shell
-    "nav.dashboard": "Tổng quan",
+    "nav.dashboard": "Việc cần làm",
     "nav.content": "Nội dung",
     "nav.media": "Thư viện media",
     "nav.connections": "Kênh kết nối",
@@ -124,7 +124,7 @@ export const translations = {
   },
   EN: {
     // Navigation / Shell
-    "nav.dashboard": "Overview",
+    "nav.dashboard": "Work queue",
     "nav.content": "Content",
     "nav.media": "Media library",
     "nav.connections": "Channels",

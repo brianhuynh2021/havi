@@ -1,9 +1,9 @@
-import { DashboardScreen } from "@/features/dashboard/dashboard-screen";
+import { WorkQueueScreen } from "@/features/queue/work-queue-screen";
 
 export const metadata = {
-  title: "Tổng Quan — Havi",
+  title: "Việc cần làm — Havi",
 };
 
 export default function Page() {
-  return <DashboardScreen />;
+  return <WorkQueueScreen />;
 }

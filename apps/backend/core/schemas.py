@@ -164,7 +164,16 @@ class Workspace(HaviModel):
 
 class WorkspaceCreate(HaviModel):
     name: str = Field(min_length=1, max_length=160)
-    industry: Industry
+    #: Không bắt buộc nữa. Onboarding từng có một bước chọn ngành, nhưng ngành chỉ
+    #: được copy sang brand profile rồi không ai đọc — và sản phẩm giờ là một hàng
+    #: đợi việc, thứ mà ngành nghề không ảnh hưởng gì tới. Ai cần đặt giọng thương
+    #: hiệu thì đặt ở Cài đặt, nơi nó vốn đã nằm.
+    #:
+    #: Giữ lại field (không xoá cột) vì `OTHER` là mặc định vô hại, và một ngày
+    #: nào đó ngành có thể quay lại với đúng một việc: seed danh sách "không được
+    #: hứa" theo mức rủi ro pháp lý — y tế, giáo dục, bất động sản bị quản rất
+    #: khác nhau. Đó mới là lý do đáng để hỏi người dùng một câu.
+    industry: Industry = Industry.OTHER
 
 
 class WorkspaceUpdate(HaviModel):
@@ -652,3 +661,67 @@ class Invoice(HaviModel):
 
 BrandProfile.model_rebuild()
 BulkApproveResult.model_rebuild()
+
+
+# --- Hàng đợi việc -------------------------------------------------------------
+
+
+class WorkItem(HaviModel):
+    """Một việc trong hàng đợi, bất kể nó đến từ nguồn nào.
+
+    Bốn nguồn (hộp thư, nháp chờ duyệt, bài đăng lỗi, kênh mất quyền) được quy về
+    **một hình dạng** ở đây. Đó là toàn bộ ý nghĩa của sản phẩm: người trực kênh
+    nhìn một danh sách, không phải bốn màn hình.
+    """
+
+    kind: str
+    #: Id của bản ghi gốc — dùng để gọi API xử lý đúng loại việc.
+    id: UUID
+    title: str
+    detail: str
+    #: Kênh/nền tảng liên quan, để hiện nhãn. `None` với việc không thuộc kênh nào.
+    channel: str | None = None
+    #: Loại việc trong hộp thư (`price`/`booking`/`complaint`/`info`/`other`).
+    category: str | None = None
+    #: Số nhỏ nổi lên trước — xem `domain/policies/work_queue.py`.
+    priority: int
+    #: Từ lúc nào việc này chờ. Frontend tự tính "chờ bao lâu" theo giờ hiện tại.
+    waiting_since: datetime
+    assigned_to_user_id: UUID | None = None
+    assigned_to_name: str | None = None
+    #: Link mở đúng chỗ trên nền tảng, hoặc `None` khi không dựng được link đúng.
+    #: `None` nghĩa là **ẩn nút**, không phải hiện nút dẫn đi đâu cũng được.
+    platform_url: str | None = None
+    #: Đường trong app để xử lý việc này.
+    href: str
+
+
+class WorkQueue(HaviModel):
+    items: list[WorkItem]
+    #: Tổng số việc đang mở, kể cả phần bị cắt bởi `limit`.
+    total: int
+
+
+class AssignRequest(HaviModel):
+    #: `None` = trả việc lại hàng đợi.
+    user_id: UUID | None = None
+
+
+class ResponseMetrics(HaviModel):
+    """Tổn thất tránh được — chỉ số bán được hàng và gia hạn được.
+
+    Cố ý **không** có chỉ số nào về doanh thu hay khách đến: Havi báo cáo việc nó
+    đã làm, kết quả kinh doanh thuộc về doanh nghiệp.
+    """
+
+    window_start: datetime
+    window_end: datetime
+    replied_count: int
+    avg_response_seconds: int
+    p95_response_seconds: int
+    #: Đếm theo hiện tại, không theo cửa sổ: "đang có N tin chờ quá X giờ".
+    waiting_over_1h: int
+    waiting_over_4h: int
+    #: Tin thuộc nhóm tốn tiền (hỏi giá / đặt lịch / khiếu nại) chưa từng được
+    #: trả lời sau hơn một ngày. Con số đắt nhất trong bảng này.
+    missed_costly: int

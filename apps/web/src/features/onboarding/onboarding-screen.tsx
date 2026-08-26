@@ -15,15 +15,11 @@ import {
   initializeBusinessTruthPack,
   saveWorkspace,
 } from "./onboarding.api";
-import {
-  industryOptions,
-  type IndustryOption,
-} from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
 
 type Step = 1 | 2;
 
-const stepLabels = ["Khai báo thương hiệu", "Nối kênh"];
+const stepLabels = ["Đặt tên thương hiệu", "Nối kênh"];
 
 export function OnboardingScreen() {
   const {
@@ -47,7 +43,6 @@ export function OnboardingScreen() {
     () => readTokens()?.activeWorkspaceId ?? null,
   );
   const [shopName, setShopName] = useState("");
-  const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,12 +53,12 @@ export function OnboardingScreen() {
     setSubmitting(true);
     // Kích hoạt Business Truth Pack: lưu Brand Voice & FAQ mẫu chuẩn ngành vào database
     try {
-      await initializeBusinessTruthPack(industry, shopName);
+      await initializeBusinessTruthPack(shopName);
     } catch {
       // Tiếp tục luồng ngay cả khi có cảnh báo mạng
     }
     router.replace("/app");
-  }, [industry, shopName, router]);
+  }, [shopName, router]);
 
 
   useEffect(() => {
@@ -84,17 +79,16 @@ export function OnboardingScreen() {
    *
    * Quay lại bước 1 để sửa tên thì cập nhật workspace hiện tại, không tạo
    * workspace thứ hai trùng tên. */
-  async function submitIndustry() {
+  async function submitBrandName() {
     if (!shopName.trim()) {
       setError("Nhập tên thương hiệu để Havi gọi đúng tên trên mọi kênh");
       return;
     }
-    if (!industry) return;
 
     setError(null);
     setSubmitting(true);
     const currentWsId = createdWorkspaceId || readTokens()?.activeWorkspaceId;
-    const result = await saveWorkspace(shopName.trim(), industry, currentWsId);
+    const result = await saveWorkspace(shopName.trim(), currentWsId);
     setSubmitting(false);
     if (!result.ok) {
       setError(result.message);
@@ -137,7 +131,7 @@ export function OnboardingScreen() {
           <>
             <h1 className={styles.title}>{t("Thương hiệu bạn quản trị tên gì?")}</h1>
             <p className={styles.subtitle}>{t(
-              "Havi dùng tên và ngành để đặt giọng thương hiệu và bộ quy tắc nội\n              dung cho workspace này."
+              "Havi gọi đúng tên này trên mọi kênh. Giọng thương hiệu và danh sách điều không được hứa đặt sau, ở Cài đặt."
             )}</p>
 
             <div className={styles.inputSection}>
@@ -151,56 +145,6 @@ export function OnboardingScreen() {
               />
             </div>
 
-            <div className={styles.industrySection}>
-              <label className={styles.label}>{t("Ngành của thương hiệu")}</label>
-              <div className={styles.industryGrid}>
-                {industryOptions.map((option) => {
-                  const isSelected = industry === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={isSelected}
-                      className={`${styles.industryCard} ${
-                        isSelected ? styles.industryCardActive : ""
-                      }`}
-                      onClick={() => setIndustry(option.value)}
-                    >
-                      <div className={styles.cardHeader}>
-                        <div className={styles.cardTitleWrapper}>
-                          <span className={styles.cardIcon}>{option.icon}</span>
-                          <span className={styles.cardTitle}>{option.label}</span>
-                        </div>
-                        {option.recommended ? (
-                          <span className={styles.recommendedTag}>{t("★ Đề xuất pilot")}</span>
-                        ) : null}
-                      </div>
-                      <div className={styles.cardDesc}>
-                        {option.desc}
-                      </div>
-                      {isSelected ? (
-                        <div className={styles.checkBadge}>
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </div>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-
             {error ? (
               <p className={styles.error} role="alert">
                 {error}
@@ -211,10 +155,10 @@ export function OnboardingScreen() {
               <Button
                 variant="primary"
                 scale="large"
-                disabled={!industry || submitting}
-                onClick={submitIndustry}
+                disabled={!shopName.trim() || submitting}
+                onClick={submitBrandName}
               >
-                {submitting ? "Đang tạo tiệm…" : "Tiếp tục"}
+                {submitting ? t("Đang lưu…") : t("Tiếp tục")}
               </Button>
             </div>
           </>

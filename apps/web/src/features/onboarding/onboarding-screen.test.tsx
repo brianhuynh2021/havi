@@ -73,9 +73,9 @@ function renderOnboarding() {
   );
 }
 
-async function chonNganhVaTiepTuc() {
+/** Onboarding còn hai bước, và bước 1 chỉ có một trường: tên thương hiệu. */
+async function tiepTuc() {
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: /spa/i }));
   await user.click(screen.getByRole("button", { name: /^tiếp tục$/i }));
 }
 
@@ -99,14 +99,14 @@ describe("OnboardingScreen", () => {
     );
   });
 
-  it("chọn ngành xong thì tạo tiệm thật và token hết needs_onboarding", async () => {
+  it("nhập tên xong thì tạo workspace thật và token hết needs_onboarding", async () => {
     const fetchSpy = mockApi();
     renderOnboarding();
     await waitFor(() =>
       expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
 
-    await chonNganhVaTiepTuc();
+    await tiepTuc();
 
     await waitFor(() => expect(readTokens()?.accessToken).toBe("moi"));
     // Điểm chính của cả bước này: thiếu nó thì route guard đá ngược về
@@ -125,7 +125,7 @@ describe("OnboardingScreen", () => {
     ).toBeInTheDocument();
   });
 
-  it("tạo tiệm lỗi thì báo lỗi, giữ nguyên bước 1 và không đổi token", async () => {
+  it("tạo workspace lỗi thì báo lỗi, giữ nguyên bước 1 và không đổi token", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(
       async (input: RequestInfo | URL) => {
         const url = input instanceof Request ? input.url : String(input);
@@ -139,15 +139,16 @@ describe("OnboardingScreen", () => {
     renderOnboarding();
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Tên thương hiệu"), "Spa An Nhiên");
-    await chonNganhVaTiepTuc();
+    await tiepTuc();
 
     expect(await screen.findByRole("alert")).toBeInTheDocument();
     expect(readTokens()?.accessToken).toBe("cu");
     expect(readTokens()?.needsOnboarding).toBe(true);
   });
 
-  it("chưa nhập tên tiệm thì chặn tại chỗ, không tạo workspace", async () => {
-    // `/auth/me` trả tên rỗng — tài khoản đăng ký bằng tên trống.
+  it("chưa nhập tên thì nút Tiếp tục bị chặn, không gọi API nào", async () => {
+    // Chặn trước thay vì cho bấm rồi báo lỗi: người dùng không phải đọc một câu
+    // mắng để biết mình thiếu gì — trường trống ngay trên nút là đủ rõ.
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async () =>
@@ -155,9 +156,12 @@ describe("OnboardingScreen", () => {
       );
 
     renderOnboarding();
-    await chonNganhVaTiepTuc();
 
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue(""),
+    );
+    expect(screen.getByRole("button", { name: /^tiếp tục$/i })).toBeDisabled();
+
     const calledUrls = fetchSpy.mock.calls.map(([input]) =>
       input instanceof Request ? input.url : String(input),
     );
@@ -170,7 +174,7 @@ describe("OnboardingScreen", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
-    await chonNganhVaTiepTuc();
+    await tiepTuc();
 
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: /bỏ qua/i }));
@@ -179,19 +183,18 @@ describe("OnboardingScreen", () => {
 
   });
 
-  it("hiển thị badge đề xuất pilot và cập nhật trạng thái chọn aria-pressed", async () => {
+  it("KHÔNG còn bước chọn ngành", async () => {
+    // Ngành từng là bước 1 của onboarding, nhưng nó chỉ được copy sang brand
+    // profile rồi không ai đọc — và sản phẩm là một hàng đợi việc, thứ mà ngành
+    // nghề không ảnh hưởng gì tới. Giọng thương hiệu đặt ở Cài đặt.
     mockApi();
     renderOnboarding();
 
-    expect(screen.getByText("★ Đề xuất pilot")).toBeInTheDocument();
-
-    const spaCard = screen.getByRole("button", { name: /spa/i });
-    expect(spaCard).toHaveAttribute("aria-pressed", "false");
-
-    const user = userEvent.setup();
-    await user.click(spaCard);
-
-    expect(spaCard).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: /spa/i })).toBeNull();
+    expect(screen.queryByText("★ Đề xuất pilot")).toBeNull();
+    expect(screen.queryByText(/ngành/i)).toBeNull();
+    // Bước 1 chỉ còn đúng một trường.
+    expect(screen.getByLabelText("Tên thương hiệu")).toBeInTheDocument();
   });
 
   it("quay lại bước 1 sửa tên thì gọi PATCH cập nhật chứ không tạo workspace thứ hai (idempotent)", async () => {
@@ -202,7 +205,7 @@ describe("OnboardingScreen", () => {
     );
 
     const user = userEvent.setup();
-    await chonNganhVaTiepTuc();
+    await tiepTuc();
 
     // Đang ở bước 2
     expect(

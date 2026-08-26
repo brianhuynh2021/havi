@@ -515,6 +515,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Work Queue
+         * @description Mọi việc đang mở, xếp theo thiệt hại khi bỏ sót rồi tới thời gian chờ.
+         */
+        get: operations["work_queue_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/queue/inbox/{item_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign Inbox Item
+         * @description Nhận việc, hoặc trả lại hàng đợi khi `user_id` là `null`.
+         *
+         *     Không kiểm "người này có trong workspace không" ở đây vì `assigned_to_user_id`
+         *     có khoá ngoại `ON DELETE SET NULL` sang `users`, và giá trị chỉ dùng để hiện
+         *     tên — gán sai thì hậu quả là một cái tên lạ trên thẻ việc, không phải một lỗ
+         *     quyền. Ai được nhận việc gì là câu hỏi của lần sau.
+         */
+        post: operations["assign_inbox_item_queue_inbox__item_id__assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/queue/response-metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Response Metrics
+         * @description Tổn thất tránh được trong kỳ — thời gian phản hồi và việc bị bỏ sót.
+         */
+        get: operations["response_metrics_queue_response_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/video/posts": {
         parameters: {
             query?: never;
@@ -1481,6 +1546,11 @@ export interface components {
             post: components["schemas"]["VideoPostResponse"];
             /** Queued For Publish */
             queued_for_publish: boolean;
+        };
+        /** AssignRequest */
+        AssignRequest: {
+            /** User Id */
+            user_id?: string | null;
         };
         /**
          * Base64VoiceRequest
@@ -2604,6 +2674,37 @@ export interface components {
             scheduled_at: string;
         };
         /**
+         * ResponseMetrics
+         * @description Tổn thất tránh được — chỉ số bán được hàng và gia hạn được.
+         *
+         *     Cố ý **không** có chỉ số nào về doanh thu hay khách đến: Havi báo cáo việc nó
+         *     đã làm, kết quả kinh doanh thuộc về doanh nghiệp.
+         */
+        ResponseMetrics: {
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /** Replied Count */
+            replied_count: number;
+            /** Avg Response Seconds */
+            avg_response_seconds: number;
+            /** P95 Response Seconds */
+            p95_response_seconds: number;
+            /** Waiting Over 1H */
+            waiting_over_1h: number;
+            /** Waiting Over 4H */
+            waiting_over_4h: number;
+            /** Missed Costly */
+            missed_costly: number;
+        };
+        /**
          * SignUpRequest
          * @description Email + mật khẩu là kênh duy nhất để tạo tài khoản.
          *
@@ -2828,6 +2929,53 @@ export interface components {
             /** Detected Intent */
             detected_intent: string;
         };
+        /**
+         * WorkItem
+         * @description Một việc trong hàng đợi, bất kể nó đến từ nguồn nào.
+         *
+         *     Bốn nguồn (hộp thư, nháp chờ duyệt, bài đăng lỗi, kênh mất quyền) được quy về
+         *     **một hình dạng** ở đây. Đó là toàn bộ ý nghĩa của sản phẩm: người trực kênh
+         *     nhìn một danh sách, không phải bốn màn hình.
+         */
+        WorkItem: {
+            /** Kind */
+            kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Channel */
+            channel?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Priority */
+            priority: number;
+            /**
+             * Waiting Since
+             * Format: date-time
+             */
+            waiting_since: string;
+            /** Assigned To User Id */
+            assigned_to_user_id?: string | null;
+            /** Assigned To Name */
+            assigned_to_name?: string | null;
+            /** Platform Url */
+            platform_url?: string | null;
+            /** Href */
+            href: string;
+        };
+        /** WorkQueue */
+        WorkQueue: {
+            /** Items */
+            items: components["schemas"]["WorkItem"][];
+            /** Total */
+            total: number;
+        };
         /** Workspace */
         Workspace: {
             /**
@@ -2850,6 +2998,7 @@ export interface components {
         WorkspaceCreate: {
             /** Name */
             name: string;
+            /** @default other */
             industry: components["schemas"]["Industry"];
         };
         /** WorkspaceMember */
@@ -3877,6 +4026,93 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    work_queue_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkQueue"];
+                };
+            };
+        };
+    };
+    assign_inbox_item_queue_inbox__item_id__assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    response_metrics_queue_response_metrics_get: {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseMetrics"];
+                };
             };
             /** @description Validation Error */
             422: {

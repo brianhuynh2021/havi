@@ -19,7 +19,7 @@ export type NavItem = {
  * một dấu hiệu rõ ràng rằng người dùng không mở app theo cách đó.
  */
 export const navItems: NavItem[] = [
-  { key: "nav.dashboard", label: "Tổng quan", href: "/app", icon: "🏠" },
+  { key: "nav.dashboard", label: "Việc cần làm", href: "/app", icon: "✅" },
   { key: "nav.content", label: "Nội dung", href: "/app/content", icon: "✍️" },
   { key: "nav.media", label: "Thư viện media", href: "/app/media", icon: "🖼️" },
   { key: "nav.calendar", label: "Lịch đăng", href: "/app/calendar", icon: "📅" },

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { fetchResponseMetrics, type ResponseMetrics } from "@/features/queue/queue.api";
 import {
   fetchReports,
   type ChannelAttribution,
@@ -21,6 +22,16 @@ const channelLabels: Record<string, string> = {
   zalo_oa: "Zalo OA (Lưu trữ)",
 };
 
+/** "8 phút", "3 giờ 20 phút" — giây thô không nói được gì cho người đọc. */
+function formatWait(seconds: number): string {
+  if (seconds < 60) return `${seconds} giây`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} phút`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+}
+
 function attributionPercent(item: ChannelAttribution): number {
   return Math.max(0, Math.min(100, Math.round(item.share * 100)));
 }
@@ -31,10 +42,20 @@ const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [loss, setLoss] = useState<ResponseMetrics | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function run() {
+      // Cửa sổ 30 ngày gần nhất. `waiting_over_*` và `missed_costly` tính theo
+      // hiện tại chứ không theo cửa sổ — xem `InboxRepository.response_metrics`.
+      const today = new Date();
+      const from = new Date(today.getTime() - 29 * 86_400_000);
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      void fetchResponseMetrics(iso(from), iso(today)).then((res) => {
+        if (!cancelled && res.ok) setLoss(res.data);
+      });
+
       const result = await fetchReports();
       if (cancelled) return;
       if (result.ok) {
@@ -136,6 +157,47 @@ const { t } = useLanguage();
               )}</p>
             </section>
           )}
+
+          {/*
+            Tổn thất tránh được — khối duy nhất trên màn này bán được hàng.
+
+            Bốn con số dưới nó ("bài đã đăng", "hội thoại đã nhận"…) là *đếm hoạt
+            động*: chúng nói Havi có chạy, không nói Havi có giá trị. Còn "tuần
+            trước bạn sót 12 tin hỏi giá" thì kiểm chứng được, và đó là câu khiến
+            người ta gia hạn.
+
+            Cố ý không có chỉ số nào về doanh thu hay khách đến: Havi báo cáo việc
+            nó đã làm, kết quả kinh doanh thuộc về doanh nghiệp.
+          */}
+          {loss ? (
+            <section className={styles.statsGrid} aria-label={t("Tổn thất tránh được")}>
+              <div className={styles.statCard}>
+                <p className={styles.statLabel}>{t("Thời gian trả lời khách")}</p>
+                <p className={styles.statValue}>
+                  {loss.replied_count > 0 ? formatWait(loss.avg_response_seconds) : "—"}
+                </p>
+                <p className={styles.statDetail}>
+                  {loss.replied_count > 0
+                    ? `${loss.replied_count} tin đã trả lời · chậm nhất ${formatWait(loss.p95_response_seconds)}`
+                    : t("Chưa có tin nào được trả lời trong kỳ")}
+                </p>
+              </div>
+              <div className={styles.statCard}>
+                <p className={styles.statLabel}>{t("Đang chờ quá 4 giờ")}</p>
+                <p className={styles.statValue}>{loss.waiting_over_4h}</p>
+                <p className={styles.statDetail}>
+                  {loss.waiting_over_1h} {t("tin chờ quá 1 giờ")}
+                </p>
+              </div>
+              <div className={styles.statCard}>
+                <p className={styles.statLabel}>{t("Tin hỏi giá bị bỏ sót")}</p>
+                <p className={styles.statValue}>{loss.missed_costly}</p>
+                <p className={styles.statDetail}>
+                  {t("Hỏi giá, đặt lịch hoặc khiếu nại chưa từng được trả lời sau hơn một ngày")}
+                </p>
+              </div>
+            </section>
+          ) : null}
 
           <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
             {getStatCards(data).map((card) => {

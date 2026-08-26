@@ -1,0 +1,288 @@
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.partialError {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+/* --- Bộ lọc --- */
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-body);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.filterChip:hover {
+  border-color: var(--color-primary);
+}
+
+.filterChipActive {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.filterCount {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Danh sách việc --- */
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  /* Dải màu bên trái là kênh báo mức gấp: mắt quét dọc một danh sách dài thì
+     thấy màu trước khi đọc chữ. */
+  border-left: 3px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.cardOverdue {
+  border-left-color: var(--color-danger);
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.kindTag,
+.categoryTag,
+.channelTag {
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.kindTag {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.categoryTag {
+  background: color-mix(in srgb, var(--color-action) 14%, transparent);
+  color: var(--color-action);
+}
+
+.channelTag {
+  background: color-mix(in srgb, var(--color-ink) 7%, transparent);
+  color: var(--color-muted);
+}
+
+.waited,
+.waitedLong {
+  margin-left: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.waited {
+  color: var(--color-muted);
+}
+
+.waitedLong {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.cardTitle {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cardDetail {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-body);
+}
+
+.assignedNote {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-info);
+}
+
+/* --- Hành động --- */
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.primaryAction,
+.secondaryAction,
+.assignButton,
+.assignedButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.primaryAction {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.secondaryAction {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-body);
+}
+
+.secondaryAction:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.assignButton {
+  margin-left: auto;
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-body);
+}
+
+.assignButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.assignedButton {
+  margin-left: auto;
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+}
+
+.assignButton:disabled,
+.assignedButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --- Hết việc --- */
+
+.allClear {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.allClearMark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+  font-weight: 800;
+}
+
+.allClearTitle {
+  margin: 4px 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.allClearBody {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-muted);
+  max-width: 62ch;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 14px;
+  }
+
+  /* Trên điện thoại "chờ 3 giờ" phải xuống dòng riêng, không bị nhãn kênh đẩy
+     tràn ra khỏi thẻ. */
+  .waited,
+  .waitedLong {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .assignButton,
+  .assignedButton {
+    margin-left: 0;
+  }
+}

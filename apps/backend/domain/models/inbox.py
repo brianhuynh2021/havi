@@ -1,8 +1,9 @@
 """SQLAlchemy model cho InboxItem — xem docs/architecture/TECHNICAL_SPEC.md §8."""
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Text, UniqueConstraint
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import InboxItemStatus, InboxItemType, Platform
@@ -23,6 +24,8 @@ class InboxItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
             "external_message_id",
             name="uq_inbox_items_external_message",
         ),
+        # Truy vấn nóng nhất của sản phẩm: màn làm việc đọc hàng đợi mỗi lần mở.
+        Index("ix_inbox_items_workspace_status", "workspace_id", "status"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
@@ -44,3 +47,22 @@ class InboxItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     status: Mapped[InboxItemStatus] = mapped_column(
         Enum(InboxItemStatus, native_enum=False), default=InboxItemStatus.NEW
     )
+    #: Mốc phản hồi **đầu tiên gửi thành công**. Không dùng `updated_at` chung:
+    #: sửa bản nháp hay gán lại người xử lý cũng đổi `updated_at`, và lúc đó
+    #: "thời gian phản hồi" sẽ giảm dần mỗi lần có ai chạm vào tin — một chỉ số
+    #: tự đẹp lên khi không ai làm gì cả.
+    replied_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    #: Ai đang xử lý việc này. Vuông góc với `status`: một việc có người nhận vẫn
+    #: đang ở `new` cho tới khi phản hồi được gửi.
+    assigned_to_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None
+    )
+    assigned_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+    #: Loại việc do `domain/policies/inbox_triage.py` phân. Chuỗi tự do chứ không
+    #: enum: bộ phân loại còn sửa nhiều, và enum trong Postgres đổi giá trị thì
+    #: cần thêm một migration mỗi lần.
+    category: Mapped[str | None] = mapped_column(default=None)
