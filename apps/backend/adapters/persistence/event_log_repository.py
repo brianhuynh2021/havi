@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.events import EventLogEntry, record_event
 from core.request_context import get_request_id
 from domain.models.audit import EventLog
-from domain.policies import pricing
+from domain.policies import pricing, quota
 
 
 class EventLogRepository:
@@ -48,21 +48,33 @@ class EventLogRepository:
         return row
 
     async def tokens_used_since(self, *, workspace_id: UUID, since: datetime) -> int:
-        """Tổng token (in + out) của workspace từ `since`.
+        """Token đã dùng của workspace từ `since`, **tính trọng số theo chi phí**.
 
-        Cộng gộp `tokens_in` và `tokens_out` thành một số vì quota tính theo
-        token, không theo tiền — không cần biết đơn giá của provider nào, và số
-        token là sự thật tuyệt đối trong `event_log` chứ không phụ thuộc bảng giá
-        có thể lạc hậu.
+        Bản trước cộng thẳng `tokens_in + tokens_out` với lý do "quota tính theo
+        token, không theo tiền". Lý do đó nghe đúng nhưng để lại một lỗ: token
+        output đắt gấp 4–5 lần input ở mọi provider, nên hai workspace cùng đụng
+        trần 500k token có thể chênh nhau **vài lần** chi phí thật. Quota lúc đó
+        chặn *khối lượng*, không chặn *chi phí* — mà chặn chi phí mới là việc nó
+        tồn tại để làm.
+
+        Giờ output được nhân `quota.OUTPUT_WEIGHT`. Đơn vị vẫn là "token" và vẫn
+        không phụ thuộc bảng giá của provider nào (một tỷ lệ, không phải một mức
+        giá), nhưng nó phản ánh chi phí thật. Trần trong `MONTHLY_TOKEN_QUOTA` đã
+        được điều chỉnh theo cùng lúc nên khối lượng dùng được không đổi.
 
         Đếm cả dòng có `error`: provider trả lỗi vẫn tốn token đã gửi. Bỏ chúng ra
         là mở đường cho một workspace liên tục gửi prompt lỗi mà không tính vào
         quota.
         """
         result = await self._session.execute(
-            select(func.coalesce(func.sum(EventLog.tokens_in + EventLog.tokens_out), 0)).where(
-                EventLog.workspace_id == workspace_id, EventLog.created_at >= since
-            )
+            select(
+                func.coalesce(
+                    func.sum(
+                        EventLog.tokens_in + EventLog.tokens_out * quota.OUTPUT_WEIGHT
+                    ),
+                    0,
+                )
+            ).where(EventLog.workspace_id == workspace_id, EventLog.created_at >= since)
         )
         return int(result.scalar() or 0)
 
@@ -106,6 +118,39 @@ class EventLogRepository:
             .offset(offset)
         )
         return list(rows.scalars().all()), total.scalar_one()
+
+    async def avg_weighted_tokens_per_content_job(
+        self, *, workspace_id: UUID, since: datetime
+    ) -> int | None:
+        """Token (đã trọng số) trung bình cho một content job của workspace này.
+
+        Trả `None` khi chưa đủ mẫu — xem `quota.MIN_SAMPLES_FOR_MEASURED_RATE`.
+        `None` nghĩa là "chưa đo được", và chỗ dùng phải nói ra điều đó chứ không
+        được lặng lẽ thay bằng một hằng số: một con số ước lượng trình bày như số
+        đo là cùng loại sai với việc bịa chỉ số.
+
+        Đếm theo `job_id` chứ không theo dòng log: một job có thể thử nhiều
+        provider và ghi nhiều dòng, nhưng với người dùng nó vẫn là một lần "Havi
+        viết bài".
+        """
+        result = await self._session.execute(
+            select(
+                func.count(func.distinct(EventLog.job_id)),
+                func.coalesce(
+                    func.sum(EventLog.tokens_in + EventLog.tokens_out * quota.OUTPUT_WEIGHT),
+                    0,
+                ),
+            ).where(
+                EventLog.workspace_id == workspace_id,
+                EventLog.created_at >= since,
+                EventLog.job_id.is_not(None),
+                EventLog.job_kind.startswith("content."),
+            )
+        )
+        jobs, weighted = result.one()
+        if not jobs or jobs < quota.MIN_SAMPLES_FOR_MEASURED_RATE:
+            return None
+        return int(weighted // jobs) or None
 
     async def operations_metrics(
         self, *, workspace_id: UUID, start: datetime, end: datetime

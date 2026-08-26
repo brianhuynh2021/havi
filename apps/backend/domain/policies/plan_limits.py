@@ -120,15 +120,40 @@ class PlanLimitExceeded(Exception):
         self.limit = limit
 
 
-def check_seats(*, plan: Plan, current: int) -> None:
+def effective_limits(
+    *, plan: Plan, extra_seats: int = 0, extra_channels: int = 0
+) -> PlanLimits:
+    """Trần **hiệu dụng**: trần gói cộng phần đã mua thêm.
+
+    Mọi chỗ kiểm quyền phải dùng hàm này, không dùng `limits_for` trực tiếp — nếu
+    không thì khách trả tiền cho ghế thứ tư vẫn bị chặn ở ghế thứ tư, và đó là lỗi
+    tệ nhất trong nhóm này: thu tiền rồi không cấp.
+
+    `UNLIMITED` cộng thêm vẫn là `UNLIMITED` về mặt thực tế; không cần nhánh riêng
+    vì con số đã lớn hơn mọi quy mô thật.
+    """
+    base = limits_for(plan)
+    return PlanLimits(
+        max_seats=base.max_seats + max(0, extra_seats),
+        max_channels=base.max_channels + max(0, extra_channels),
+        intended_brands=base.intended_brands,
+        label=base.label,
+    )
+
+
+def check_seats(
+    *, plan: Plan, current: int, extra_seats: int = 0
+) -> None:
     """Gọi **trước** khi thêm thành viên. `current` là số thành viên đang có."""
-    limit = limits_for(plan).max_seats
+    limit = effective_limits(plan=plan, extra_seats=extra_seats).max_seats
     if current >= limit:
         raise PlanLimitExceeded(plan=plan, resource="người dùng", used=current, limit=limit)
 
 
-def check_channels(*, plan: Plan, current: int) -> None:
+def check_channels(
+    *, plan: Plan, current: int, extra_channels: int = 0
+) -> None:
     """Gọi **trước** khi nối kênh mới. `current` là số kênh đã nối."""
-    limit = limits_for(plan).max_channels
+    limit = effective_limits(plan=plan, extra_channels=extra_channels).max_channels
     if current >= limit:
         raise PlanLimitExceeded(plan=plan, resource="kênh", used=current, limit=limit)

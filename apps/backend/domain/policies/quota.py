@@ -19,21 +19,54 @@ from core.enums import Plan
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
-#: Trần token mỗi tháng theo gói.
+#: Token output nặng gấp mấy lần token input khi tính vào quota.
+#:
+#: Ở mọi provider, output đắt hơn input 4–5 lần (xem `MODEL_RATES` ở
+#: `pricing.py`). Cộng thẳng hai chiều thành một số thì hai workspace cùng đụng
+#: trần có thể chênh nhau vài lần chi phí thật — quota lúc đó chặn *khối lượng*,
+#: không chặn *chi phí*, mà chặn chi phí mới là việc nó tồn tại để làm.
+#:
+#: Là một **tỷ lệ**, không phải một mức giá: nó không lạc hậu khi provider đổi
+#: bảng giá, chỉ cần sửa nếu tỷ lệ input/output thay đổi về bản chất. Đó là lý do
+#: quota vẫn tính bằng "token" chứ không bằng tiền.
+OUTPUT_WEIGHT = 4
+
+#: Trần token mỗi tháng theo gói, tính theo **token đã trọng số**
+#: (`tokens_in + tokens_out × OUTPUT_WEIGHT`).
 #:
 #: Con số dựng từ ước lượng vận hành, không phải từ bảng giá provider: một content
-#: job (prompt + brand profile + 3 draft) tốn cỡ 3–6 nghìn token, nên 500k token
-#: ≈ 80–150 job/tháng cho gói Tiệm Nhỏ — vượt xa nhịp một tiệm đăng 2 bài/ngày.
-#: Trial thấp hơn nhiều để một tài khoản dùng thử không đốt hết ngân sách tháng.
+#: job (prompt + brand profile + 3 draft) tốn cỡ 3–6 nghìn token thô, trong đó
+#: output chiếm phần lớn — nên sau trọng số nó vào khoảng 10–20 nghìn. 2 triệu
+#: token trọng số ≈ 100–200 job/tháng cho gói Khởi Nghiệp, vượt xa nhịp một cơ sở
+#: đăng 2 bài/ngày.
+#:
+#: Trần đã được nhân lên cùng lúc với việc áp trọng số, nên **khối lượng dùng
+#: được không đổi** so với bản trước — thay đổi duy nhất là workspace tiêu nhiều
+#: output giờ chạm trần sớm hơn workspace tiêu nhiều input, đúng như chi phí thật.
 #:
 #: Đây là số cần đo lại sau pilot (ROADMAP §9 Economics), không phải hằng số
 #: vĩnh viễn — sửa ở đúng một chỗ này.
 MONTHLY_TOKEN_QUOTA: dict[Plan, int] = {
-    Plan.TRIAL: 100_000,
-    Plan.TIEM_NHO: 500_000,
-    Plan.TOAN_DIEN: 2_000_000,
-    Plan.DOANH_NGHIEP: 5_000_000,
+    Plan.TRIAL: 400_000,
+    Plan.TIEM_NHO: 2_000_000,
+    Plan.TOAN_DIEN: 8_000_000,
+    Plan.DOANH_NGHIEP: 20_000_000,
 }
+
+#: Token (đã trọng số) cho một bài, dùng khi workspace **chưa đủ dữ liệu** để đo.
+#:
+#: Tồn tại vì "hạn mức 2.000.000 token" không có nghĩa gì với một chủ cơ sở, còn
+#: "còn khoảng 130 bài" thì có. Nhưng quy đổi bằng một hằng số ẩn là bịa: hai
+#: workspace có prompt và brand profile khác nhau tiêu token khác nhau rõ rệt.
+#:
+#: Nên cách dùng đúng là: **đo từ chính workspace đó** khi đã có đủ mẫu, và chỉ
+#: rơi về hằng số này khi chưa có — kèm nói rõ trên màn hình rằng đang dùng ước
+#: lượng mặc định. Người dùng thấy được giả định thì họ tự hiệu chỉnh kỳ vọng.
+ASSUMED_TOKENS_PER_POST = 15_000
+
+#: Cần bao nhiêu bài đã sinh mới coi là đủ mẫu để đo. Dưới mức này thì trung bình
+#: dao động quá mạnh — một job lỗi dài dòng cũng đủ làm lệch con số.
+MIN_SAMPLES_FOR_MEASURED_RATE = 5
 
 #: Ngưỡng cảnh báo — vượt mức này thì UI nên nói trước, đừng để chủ tiệm chỉ
 #: biết khi đã bị chặn giữa lúc đang cần đăng bài.

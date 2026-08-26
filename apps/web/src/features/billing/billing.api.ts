@@ -42,10 +42,27 @@ export async function fetchInvoices(): Promise<Result<Invoice[]>> {
   }
 }
 
-export async function changePlan(plan: Plan): Promise<Result<Subscription>> {
+export type CheckoutOptions = {
+  /** `annual` thu 10 tháng cho 12 tháng dùng. */
+  cycle?: "monthly" | "annual";
+  extraSeats?: number;
+  extraChannels?: number;
+};
+
+export async function changePlan(
+  plan: Plan,
+  options: CheckoutOptions = {},
+): Promise<Result<Subscription>> {
   try {
     const { data, error } = await apiClient.POST("/billing/plan", {
-      body: { plan },
+      // `openapi-typescript` coi field có `default` là bắt buộc trong request
+      // body, nên truyền thẳng cả ba dù backend đã có mặc định.
+      body: {
+        plan,
+        cycle: options.cycle ?? "monthly",
+        extra_seats: options.extraSeats ?? 0,
+        extra_channels: options.extraChannels ?? 0,
+      },
     });
     if (error || !data) return { ok: false, message: GENERIC_ERROR };
     return { ok: true, data };
@@ -54,7 +71,10 @@ export async function changePlan(plan: Plan): Promise<Result<Subscription>> {
   }
 }
 
-export async function createCheckout(plan: Plan): Promise<Result<CheckoutData>> {
+export async function createCheckout(
+  plan: Plan,
+  options: CheckoutOptions = {},
+): Promise<Result<CheckoutData>> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
     const tokens = readTokens();
@@ -64,7 +84,12 @@ export async function createCheckout(plan: Plan): Promise<Result<CheckoutData>> 
         "Content-Type": "application/json",
         Authorization: `Bearer ${tokens?.accessToken}`,
       },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({
+        plan,
+        cycle: options.cycle ?? "monthly",
+        extra_seats: options.extraSeats ?? 0,
+        extra_channels: options.extraChannels ?? 0,
+      }),
     });
     if (!res.ok) {
       return { ok: false, message: "Không thể tạo mã VietQR lúc này." };

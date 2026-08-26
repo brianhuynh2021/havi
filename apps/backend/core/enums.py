@@ -42,6 +42,18 @@ class WorkspaceRole(StrEnum):
     SALES = "sales"
 
 
+class BillingCycle(StrEnum):
+    """Chu kỳ thanh toán.
+
+    Gói năm tồn tại vì VietQR không có auto-renew: mỗi tháng khách phải chủ động
+    quyết định trả tiếp. Gói năm đổi mười hai quyết định thành một — đối sách
+    chống churn mạnh nhất làm được mà không cần card-on-file.
+    """
+
+    MONTHLY = "monthly"
+    ANNUAL = "annual"
+
+
 class Plan(StrEnum):
     """Bảng giá: 0đ 7 ngày / Khởi Nghiệp 189K / Chuyên Nghiệp 369K / Chuỗi Doanh Nghiệp 799K."""
 

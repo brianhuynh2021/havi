@@ -1594,6 +1594,16 @@ export interface components {
             mime_type: string;
         };
         /**
+         * BillingCycle
+         * @description Chu kỳ thanh toán.
+         *
+         *     Gói năm tồn tại vì VietQR không có auto-renew: mỗi tháng khách phải chủ động
+         *     quyết định trả tiếp. Gói năm đổi mười hai quyết định thành một — đối sách
+         *     chống churn mạnh nhất làm được mà không cần card-on-file.
+         * @enum {string}
+         */
+        BillingCycle: "monthly" | "annual";
+        /**
          * BrandCreate
          * @description Mở thêm một thương hiệu / chi nhánh trong tổ chức đang có.
          */
@@ -1765,6 +1775,18 @@ export interface components {
         /** ChangePlanRequest */
         ChangePlanRequest: {
             plan: components["schemas"]["Plan"];
+            /** @default monthly */
+            cycle: components["schemas"]["BillingCycle"];
+            /**
+             * Extra Seats
+             * @default 0
+             */
+            extra_seats: number;
+            /**
+             * Extra Channels
+             * @default 0
+             */
+            extra_channels: number;
         };
         /**
          * Channel
@@ -2863,6 +2885,33 @@ export interface components {
              * @default 0
              */
             channels_limit: number;
+            /** @default monthly */
+            billing_cycle: components["schemas"]["BillingCycle"];
+            /**
+             * Extra Seats
+             * @default 0
+             */
+            extra_seats: number;
+            /**
+             * Extra Channels
+             * @default 0
+             */
+            extra_channels: number;
+            /**
+             * Posts Remaining Estimate
+             * @default 0
+             */
+            posts_remaining_estimate: number;
+            /**
+             * Tokens Per Post
+             * @default 0
+             */
+            tokens_per_post: number;
+            /**
+             * Tokens Per Post Measured
+             * @default false
+             */
+            tokens_per_post_measured: boolean;
             /** Days Until Due */
             days_until_due?: number | null;
         };

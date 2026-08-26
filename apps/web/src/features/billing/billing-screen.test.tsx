@@ -50,6 +50,17 @@ describe("BillingScreen", () => {
           current_period_end: "2026-09-15T00:00:00Z",
           token_quota_used: 50000,
           token_quota_limit: 250000,
+          seats_used: 2,
+          seats_limit: 3,
+          channels_used: 1,
+          channels_limit: 3,
+          billing_cycle: "monthly",
+          extra_seats: 0,
+          extra_channels: 0,
+          posts_remaining_estimate: 130,
+          tokens_per_post: 15000,
+          tokens_per_post_measured: false,
+          days_until_due: 20,
         });
       }
       if (url.pathname.includes("/billing/invoices")) {
@@ -71,7 +82,11 @@ describe("BillingScreen", () => {
 
     const planTitles = await screen.findAllByText(/Gói Khởi Nghiệp/i);
     expect(planTitles.length).toBeGreaterThan(0);
-    expect(screen.getByText(/50.000 \/ 250.000/i)).toBeInTheDocument();
+    // Hạn mức nói bằng **bài**, không bằng token: "250.000 token" không có nghĩa
+    // gì với chủ cơ sở. Xem `quota.ASSUMED_TOKENS_PER_POST`.
+    expect(screen.getByText(/khoảng/i)).toBeInTheDocument();
+    expect(screen.getByText(/130/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("250.000 token");
     const prices = screen.getAllByText(/189.000/i);
     expect(prices.length).toBeGreaterThan(0);
   });
@@ -135,6 +150,12 @@ describe("BillingScreen", () => {
             seats_limit: 3,
             channels_used: 1,
             channels_limit: 3,
+            billing_cycle: "monthly",
+            extra_seats: 0,
+            extra_channels: 0,
+            posts_remaining_estimate: 130,
+            tokens_per_post: 15000,
+            tokens_per_post_measured: false,
             days_until_due: 20,
             ...overrides,
           });
@@ -171,8 +192,10 @@ describe("BillingScreen", () => {
     mockSubscription({ days_until_due: 3 });
     renderBilling();
 
-    expect(await screen.findByText(/Còn 3 ngày là hết kỳ/)).toBeInTheDocument();
-    expect(screen.getByText(/không tự trừ tiền/)).toBeInTheDocument();
+    // Câu "không tự trừ tiền" xuất hiện cả ở khối chọn chu kỳ, nên tìm trong
+    // đúng dòng nhắc gia hạn.
+    const reminder = await screen.findByText(/Còn 3 ngày là hết kỳ/);
+    expect(reminder.textContent).toMatch(/không tự trừ tiền/);
   });
 
   it("còn xa hạn thì KHÔNG nhắc — nhắc mỗi ngày thì người ta thôi đọc", async () => {

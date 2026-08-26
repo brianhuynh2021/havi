@@ -17,7 +17,7 @@ from adapters.persistence.billing_repository import BillingRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from core.config import Settings
-from core.enums import InvoiceStatus, Plan
+from core.enums import BillingCycle, InvoiceStatus, Plan
 from core.events import EventLogEntry
 from domain.models.workspace import Invoice
 from domain.policies import quota, subscription
@@ -80,7 +80,14 @@ class BillingService:
         return state, quota.evaluate(plan=workspace.plan, used=used, now=now)
 
     async def change_plan(
-        self, *, workspace_id: UUID, target: Plan, now: datetime | None = None
+        self,
+        *,
+        workspace_id: UUID,
+        target: Plan,
+        cycle: BillingCycle = BillingCycle.MONTHLY,
+        extra_seats: int = 0,
+        extra_channels: int = 0,
+        now: datetime | None = None,
     ) -> tuple[subscription.SubscriptionState, Invoice]:
         """Yêu cầu đổi gói và phát hành hoá đơn `PENDING`.
 
@@ -96,13 +103,21 @@ class BillingService:
         current = workspace.plan
         subscription.check_plan_change(current=current, target=target)
 
-        amount = subscription.price_for(target)
+        amount = subscription.invoice_amount(
+            plan=target,
+            cycle=cycle,
+            extra_seats=extra_seats,
+            extra_channels=extra_channels,
+        )
         invoice = await self._billing.create_invoice(
             workspace_id=workspace_id,
             plan=target,
             amount_vnd=amount,
             issued_at=now,
             status=InvoiceStatus.PENDING,
+            billing_cycle=cycle,
+            extra_seats=extra_seats,
+            extra_channels=extra_channels,
         )
 
         # Ghi nhận yêu cầu đổi gói vào audit log
@@ -112,7 +127,9 @@ class BillingService:
                 job_kind="billing.plan_change_requested",
                 input_summary=f"{current.value} -> {target.value}",
                 output_summary=(
-                    f"invoice:{invoice.id} amount_vnd:{amount} status:{invoice.status.value}"
+                    f"invoice:{invoice.id} amount_vnd:{amount} "
+                    f"cycle:{cycle.value} seats:+{extra_seats} channels:+{extra_channels} "
+                    f"status:{invoice.status.value}"
                 ),
             )
         )
@@ -142,18 +159,25 @@ class BillingService:
         workspace_id: UUID,
         target: Plan,
         settings: Settings,
+        cycle: BillingCycle = BillingCycle.MONTHLY,
+        extra_seats: int = 0,
+        extra_channels: int = 0,
         now: datetime | None = None,
     ) -> tuple[Invoice, VietQRCheckout]:
-        """Tạo hoá đơn PENDING và mã VietQR thanh toán cho gói mong muốn."""
+        """Tạo hoá đơn PENDING và mã VietQR cho gói, chu kỳ và phụ phí mong muốn."""
         now = now or datetime.now(UTC)
         workspace = await self._workspaces.get_by_id(workspace_id)
         if workspace is None:
             raise WorkspaceNotFound()
 
         subscription.check_plan_change(current=workspace.plan, target=target)
-        amount = subscription.price_for(target)
+        amount = subscription.invoice_amount(
+            plan=target, cycle=cycle, extra_seats=extra_seats, extra_channels=extra_channels
+        )
 
-        # Kiểm tra xem đã có hoá đơn PENDING cho gói này chưa, nếu có thì dùng lại
+        # Dùng lại hoá đơn PENDING **chỉ khi số tiền khớp**. Đổi chu kỳ hay đổi số
+        # ghế ra một số tiền khác, nên hoá đơn cũ không còn mô tả đúng thứ khách
+        # đang mua — và mã VietQR gắn với số tiền đó sẽ thu sai.
         pending = await self._billing.get_pending_invoice(workspace_id=workspace_id, plan=target)
         if pending is None or pending.amount_vnd != amount:
             pending = await self._billing.create_invoice(
@@ -162,6 +186,9 @@ class BillingService:
                 amount_vnd=amount,
                 issued_at=now,
                 status=InvoiceStatus.PENDING,
+                billing_cycle=cycle,
+                extra_seats=extra_seats,
+                extra_channels=extra_channels,
             )
 
         checkout = await create_payos_payment_link(
@@ -240,9 +267,20 @@ class BillingService:
 
         current_paid = _as_utc(workspace.paid_until)
         base_time = current_paid if current_paid and current_paid > now else now
-        new_paid_until = base_time + timedelta(days=BILLING_PERIOD_DAYS)
+        # Kéo hạn theo số tháng **được dùng**, không theo số tháng thu tiền: gói
+        # năm thu 10 tháng nhưng phục vụ 12. Lấy nhầm con số kia là bán 12 tháng
+        # rồi chỉ cấp 10.
+        served = subscription.months_served(invoice.billing_cycle)
+        new_paid_until = base_time + timedelta(days=BILLING_PERIOD_DAYS * served)
 
-        await self._billing.set_plan(workspace, plan=invoice.plan, paid_until=new_paid_until)
+        await self._billing.set_plan(
+            workspace,
+            plan=invoice.plan,
+            paid_until=new_paid_until,
+            billing_cycle=invoice.billing_cycle,
+            extra_seats=invoice.extra_seats,
+            extra_channels=invoice.extra_channels,
+        )
         updated_invoice = await self._billing.mark_invoice_paid(
             invoice, gateway_reference=normalized_reference
         )

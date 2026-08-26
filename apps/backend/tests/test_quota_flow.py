@@ -40,6 +40,16 @@ async def _workspace(session: AsyncSession, *, plan: Plan = Plan.TRIAL) -> Works
     return ws
 
 
+def weighted(tokens_raw: int) -> int:
+    """Token thô chia đôi in/out → token đã trọng số, đúng như `_burn` ghi.
+
+    Có hàm này để test không phải nhắc lại phép nhân ở mỗi chỗ, và để đổi
+    `OUTPUT_WEIGHT` không phải sửa từng con số.
+    """
+    half = tokens_raw // 2
+    return half + (tokens_raw - half) * quota.OUTPUT_WEIGHT
+
+
 async def _burn(
     session: AsyncSession,
     workspace_id: uuid.UUID,
@@ -47,7 +57,7 @@ async def _burn(
     tokens: int,
     error: str | None = None,
 ) -> None:
-    """Ghi một lượt dùng token vào event_log."""
+    """Ghi một lượt dùng token vào event_log. `tokens` là token **thô**."""
     await EventLogRepository(session).record(
         EventLogEntry(
             workspace_id=workspace_id,
@@ -114,18 +124,21 @@ class TestTranTheoGoi:
 
 class TestNguongCanhBao:
     def test_qua_80_phan_tram_thi_canh_bao_nhung_chua_chan(self):
-        status = quota.evaluate(plan=Plan.TIEM_NHO, used=int(500_000 * 0.85))
+        limit = quota.quota_for(Plan.TIEM_NHO)
+        status = quota.evaluate(plan=Plan.TIEM_NHO, used=int(limit * 0.85))
         assert status.near_limit is True
         assert status.exceeded is False
 
     def test_duoi_nguong_thi_khong_canh_bao(self):
-        status = quota.evaluate(plan=Plan.TIEM_NHO, used=int(500_000 * 0.5))
+        limit = quota.quota_for(Plan.TIEM_NHO)
+        status = quota.evaluate(plan=Plan.TIEM_NHO, used=int(limit * 0.5))
         assert status.near_limit is False
 
     def test_da_vuot_tran_thi_khong_con_la_canh_bao_ma_la_chan(self):
         """`near_limit` và `exceeded` loại trừ nhau — UI hiện một thông báo, không
         hiện cả 'gần hết' lẫn 'đã hết' cùng lúc."""
-        status = quota.evaluate(plan=Plan.TIEM_NHO, used=600_000)
+        limit = quota.quota_for(Plan.TIEM_NHO)
+        status = quota.evaluate(plan=Plan.TIEM_NHO, used=limit + 1)
         assert status.exceeded is True
         assert status.near_limit is False
 
@@ -135,7 +148,10 @@ class TestNguongCanhBao:
 
 
 class TestDemTokenTuEventLog:
-    async def test_cong_ca_tokens_in_va_out(self, db_session: AsyncSession):
+    async def test_output_nang_hon_input_khi_tinh_vao_quota(self, db_session: AsyncSession):
+        """Output đắt gấp 4–5 lần input ở mọi provider. Cộng thẳng hai chiều thì
+        hai workspace cùng đụng trần có thể chênh nhau vài lần chi phí thật —
+        quota lúc đó chặn khối lượng, không chặn chi phí."""
         ws = await _workspace(db_session)
         await _burn(db_session, ws.id, tokens=1000)
         await _burn(db_session, ws.id, tokens=500)
@@ -143,7 +159,42 @@ class TestDemTokenTuEventLog:
         used = await EventLogRepository(db_session).tokens_used_since(
             workspace_id=ws.id, since=datetime.now(UTC) - timedelta(hours=1)
         )
-        assert used == 1500
+        # `_burn` chia đôi in/out, nên 1500 token thô = 750 in + 750 out.
+        assert used == 750 + 750 * quota.OUTPUT_WEIGHT
+
+    async def test_cung_luong_token_tho_nhung_nhieu_output_thi_ton_quota_hon(
+        self, db_session: AsyncSession
+    ):
+        """Đây là lỗ mà trọng số bịt: trước đó hai workspace này tiêu quota
+        bằng nhau dù chi phí thật chênh nhau nhiều lần."""
+        heavy_input = await _workspace(db_session)
+        heavy_output = await _workspace(db_session)
+        repo = EventLogRepository(db_session)
+
+        await repo.record(
+            EventLogEntry(
+                workspace_id=heavy_input.id,
+                job_kind="content.generate_drafts",
+                tokens_in=9_000,
+                tokens_out=1_000,
+                provider="gemini",
+            )
+        )
+        await repo.record(
+            EventLogEntry(
+                workspace_id=heavy_output.id,
+                job_kind="content.generate_drafts",
+                tokens_in=1_000,
+                tokens_out=9_000,
+                provider="gemini",
+            )
+        )
+
+        since = datetime.now(UTC) - timedelta(hours=1)
+        input_used = await repo.tokens_used_since(workspace_id=heavy_input.id, since=since)
+        output_used = await repo.tokens_used_since(workspace_id=heavy_output.id, since=since)
+
+        assert output_used > input_used
 
     async def test_dem_ca_luot_bi_loi(self, db_session: AsyncSession):
         """Provider trả lỗi vẫn tốn token đã gửi. Bỏ ra là mở đường cho một
@@ -154,7 +205,7 @@ class TestDemTokenTuEventLog:
         used = await EventLogRepository(db_session).tokens_used_since(
             workspace_id=ws.id, since=datetime.now(UTC) - timedelta(hours=1)
         )
-        assert used == 800
+        assert used == 400 + 400 * quota.OUTPUT_WEIGHT
 
     async def test_khong_dem_token_cua_workspace_khac(self, db_session: AsyncSession):
         """Tenant isolation: tiệm này tiêu token không được ăn vào quota tiệm kia."""
@@ -235,7 +286,8 @@ class TestChanTruocKhiTonTien:
 
         token = await _onboard(client, email="quota0001@havi.vn")
         # Workspace mới là gói Trial (100k). Đốt hết.
-        await _burn(db_session, _workspace_id(token), tokens=150_000)
+        # Đốt vượt trần gói dùng thử — dẫn từ chính sách, không hardcode.
+        await _burn(db_session, _workspace_id(token), tokens=quota.quota_for(Plan.TRIAL))
         caplog.set_level(logging.ERROR, logger="havi.alert")
 
         response = await client.post(
@@ -260,7 +312,8 @@ class TestChanTruocKhiTonTien:
         """Chủ tiệm cần biết đã dùng bao nhiêu và bao giờ có lại — không phải chỉ
         một chữ 'hết quota'."""
         token = await _onboard(client, email="quota0002@havi.vn")
-        await _burn(db_session, _workspace_id(token), tokens=150_000)
+        # Đốt vượt trần gói dùng thử — dẫn từ chính sách, không hardcode.
+        await _burn(db_session, _workspace_id(token), tokens=quota.quota_for(Plan.TRIAL))
 
         response = await client.post(
             "/content/jobs",
@@ -271,7 +324,9 @@ class TestChanTruocKhiTonTien:
         assert response.status_code == 429
         assert int(response.headers["Retry-After"]) > 0
         detail = response.json()["detail"]
-        assert "100,000" in detail  # trần Trial, có dấu phân cách cho dễ đọc
+        # Trần Trial, có dấu phân cách cho dễ đọc. Dẫn từ chính sách để đổi
+        # trần không phải sửa test.
+        assert f"{quota.quota_for(Plan.TRIAL):,}" in detail
         assert "quota mở lại" in detail
 
     async def test_con_quota_thi_tao_job_binh_thuong(
@@ -302,13 +357,14 @@ class TestQuotaEndpoint:
     async def test_tra_so_lieu_that(self, client: AsyncClient, db_session: AsyncSession):
         token = await _onboard(client, email="quota0010@havi.vn")
         await _burn(db_session, _workspace_id(token), tokens=30_000)
+        expected_used = weighted(30_000)
 
         response = await client.get("/content/quota", headers=_headers(token))
         assert response.status_code == 200, response.text
         body = response.json()
-        assert body["used"] == 30_000
-        assert body["limit"] == 100_000
-        assert body["remaining"] == 70_000
+        assert body["used"] == expected_used
+        assert body["limit"] == quota.quota_for(Plan.TRIAL)
+        assert body["remaining"] == quota.quota_for(Plan.TRIAL) - expected_used
         assert body["exceeded"] is False
 
     async def test_route_khong_bi_doc_nhu_uuid(self, client: AsyncClient):

@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from core.enums import (
+    BillingCycle,
     Channel,
     ConnectionStatus,
     ContentJobStatus,
@@ -651,6 +652,18 @@ class Subscription(HaviModel):
     seats_limit: int = 0
     channels_used: int = 0
     channels_limit: int = 0
+    #: Hạn mức quy về đơn vị người dùng hiểu. "2.000.000 token" không có nghĩa
+    #: gì với chủ cơ sở; "còn khoảng 130 bài" thì có.
+    billing_cycle: BillingCycle = BillingCycle.MONTHLY
+    #: Ghế và kênh đã mua thêm. `seats_limit` / `channels_limit` đã cộng chúng vào.
+    extra_seats: int = 0
+    extra_channels: int = 0
+    posts_remaining_estimate: int = 0
+    #: Token/bài dùng để quy đổi, và nó **đo được hay là mặc định**. Hiện cả hai
+    #: ra màn hình: một ước lượng trình bày như số đo là cùng loại sai với bịa chỉ
+    #: số.
+    tokens_per_post: int = 0
+    tokens_per_post_measured: bool = False
     #: Số ngày còn lại của kỳ. Âm nghĩa là đã quá hạn.
     #:
     #: Thanh toán VietQR không có auto-renew: mỗi tháng khách phải **chủ động**
@@ -660,6 +673,13 @@ class Subscription(HaviModel):
 
 class ChangePlanRequest(HaviModel):
     plan: Plan
+    #: Gói năm thu 10 tháng cho 12 tháng dùng — đối sách chống churn khi thanh
+    #: toán VietQR không có auto-renew.
+    cycle: BillingCycle = BillingCycle.MONTHLY
+    #: Ghế và kênh mua thêm ngoài trần gói. Có phụ phí thì khách cần người thứ tư
+    #: trả thêm một ghế, không phải nhảy hẳn một bậc giá.
+    extra_seats: int = Field(default=0, ge=0, le=200)
+    extra_channels: int = Field(default=0, ge=0, le=50)
 
 
 class Invoice(HaviModel):

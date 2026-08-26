@@ -215,6 +215,7 @@ class WorkspaceService:
             plan_limits.check_seats(
                 plan=workspace.plan,
                 current=await self._members.count_members(workspace_id),
+                extra_seats=workspace.extra_seats,
             )
 
         member = await self._members.add(workspace_id=workspace_id, user_id=user.id, role=role)

@@ -7,7 +7,14 @@ from sqlalchemy import Enum, ForeignKey, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.enums import Industry, InvoiceStatus, Plan, PublishMode, WorkspaceRole
+from core.enums import (
+    BillingCycle,
+    Industry,
+    InvoiceStatus,
+    Plan,
+    PublishMode,
+    WorkspaceRole,
+)
 from domain.models.base import Base, CreatedAtMixin, UpdatedAtMixin, UUIDPrimaryKeyMixin
 
 
@@ -17,6 +24,13 @@ class Workspace(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     name: Mapped[str]
     industry: Mapped[Industry] = mapped_column(Enum(Industry, native_enum=False))
     plan: Mapped[Plan] = mapped_column(Enum(Plan, native_enum=False), default=Plan.TRIAL)
+    billing_cycle: Mapped[BillingCycle] = mapped_column(
+        Enum(BillingCycle, native_enum=False), default=BillingCycle.MONTHLY
+    )
+    #: Ghế và kênh mua thêm ngoài trần của gói. Trần hiệu dụng = trần gói + số này
+    #: — xem `domain/policies/plan_limits.effective_limits`.
+    extra_seats: Mapped[int] = mapped_column(default=0)
+    extra_channels: Mapped[int] = mapped_column(default=0)
     publish_mode: Mapped[PublishMode] = mapped_column(
         Enum(PublishMode, native_enum=False), default=PublishMode.REVIEW_FIRST
     )
@@ -78,6 +92,13 @@ class Invoice(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )
     plan: Mapped[Plan] = mapped_column(Enum(Plan, native_enum=False))
+    #: Hoá đơn ghi lại **nó gồm những gì**, không chỉ tổng tiền: một dòng
+    #: "238.000đ" thì sau này không dựng lại được nó là gói gì cộng mấy ghế.
+    billing_cycle: Mapped[BillingCycle] = mapped_column(
+        Enum(BillingCycle, native_enum=False), default=BillingCycle.MONTHLY
+    )
+    extra_seats: Mapped[int] = mapped_column(default=0)
+    extra_channels: Mapped[int] = mapped_column(default=0)
     amount_vnd: Mapped[int]
     status: Mapped[InvoiceStatus] = mapped_column(
         Enum(InvoiceStatus, native_enum=False), default=InvoiceStatus.PENDING

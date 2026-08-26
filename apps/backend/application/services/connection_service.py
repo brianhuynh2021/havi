@@ -168,7 +168,11 @@ class ConnectionService:
                 current = len(
                     await self._connections.list_for_workspace(payload.workspace_id)
                 )
-                plan_limits.check_channels(plan=workspace.plan, current=current)
+                plan_limits.check_channels(
+                    plan=workspace.plan,
+                    current=current,
+                    extra_channels=workspace.extra_channels,
+                )
 
         try:
             account = await client.exchange_code(code, state=state)

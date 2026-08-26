@@ -110,6 +110,9 @@ const { t } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
+  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const [extraSeats, setExtraSeats] = useState(0);
+  const [extraChannels, setExtraChannels] = useState(0);
 
   const handleCopy = (key: string, value: string) => {
     try {
@@ -182,7 +185,11 @@ const { t } = useLanguage();
     setCheckoutError(null);
     setVerifyNotice(null);
     setIsGeneratingCheckout(true);
-    const res = await createCheckout(plan);
+    const res = await createCheckout(plan, {
+      cycle,
+      extraSeats,
+      extraChannels,
+    });
     setIsGeneratingCheckout(false);
     if (res.ok) {
       setCheckoutData(res.data);
@@ -300,12 +307,16 @@ const { t } = useLanguage();
           </p>
         ) : null}
 
+        {/* Hạn mức nói bằng **bài**, không bằng token.
+            "2.000.000 token" không có nghĩa gì với chủ cơ sở. Quy đổi thì đo từ
+            chính workspace này; chưa đủ mẫu thì dùng ước lượng mặc định và nói ra
+            là mặc định — một ước lượng trình bày như số đo là cùng loại sai với
+            bịa chỉ số. */}
         <div className={styles.quotaBarContainer}>
           <div className={styles.quotaLabels}>
-            <span>{t("Hạn mức token AI tháng này:")}</span>
+            <span>{t("Còn lại tháng này:")}</span>
             <span className={styles.quotaValue}>
-              {sub.token_quota_used.toLocaleString("vi-VN")} /{" "}
-              {sub.token_quota_limit.toLocaleString("vi-VN")} token ({quotaPercent}%)
+              {t("khoảng")} {(sub.posts_remaining_estimate ?? 0).toLocaleString("vi-VN")} {t("bài")}
             </span>
           </div>
           <div className={styles.progressBarBg}>
@@ -314,7 +325,75 @@ const { t } = useLanguage();
               style={{ width: `${quotaPercent}%` }}
             />
           </div>
+          <p className={styles.quotaAssumption}>
+            {sub.tokens_per_post_measured
+              ? `Đã dùng ${quotaPercent}% hạn mức. Quy đổi theo ${(sub.tokens_per_post ?? 0).toLocaleString("vi-VN")} token/bài, đo từ chính workspace của bạn.`
+              : `Đã dùng ${quotaPercent}% hạn mức. Quy đổi theo ước lượng mặc định ${(sub.tokens_per_post ?? 0).toLocaleString("vi-VN")} token/bài — sẽ chính xác hơn sau vài bài đầu.`}
+          </p>
         </div>
+      </section>
+
+      {/* Chu kỳ và phụ phí — hai đòn bẩy đặt NGAY TRÊN bảng giá, vì chúng đổi
+          con số trên từng thẻ. Để dưới thì khách đọc giá tháng rồi mới phát hiện
+          có lựa chọn khác. */}
+      <section className={styles.cycleSection} aria-label={t("Chu kỳ và phụ phí")}>
+        <div className={styles.cycleToggle} role="group" aria-label={t("Chu kỳ thanh toán")}>
+          <button
+            type="button"
+            aria-pressed={cycle === "monthly"}
+            className={`${styles.cycleBtn} ${cycle === "monthly" ? styles.cycleBtnActive : ""}`}
+            onClick={() => setCycle("monthly")}
+          >
+            {t("Trả theo tháng")}
+          </button>
+          <button
+            type="button"
+            aria-pressed={cycle === "annual"}
+            className={`${styles.cycleBtn} ${cycle === "annual" ? styles.cycleBtnActive : ""}`}
+            onClick={() => setCycle("annual")}
+          >
+            {t("Trả theo năm")}
+            <span className={styles.cycleSave}>{t("tặng 2 tháng")}</span>
+          </button>
+        </div>
+
+        {/* Nói "trả 10 tháng dùng 12" chứ không "giảm 16,7%": câu thứ nhất đọc là
+            hiểu, câu thứ hai phải nhân chia. Cùng một con số. */}
+        <p className={styles.cycleNote}>
+          {cycle === "annual"
+            ? t("Trả 10 tháng, dùng 12 tháng. Havi không tự trừ tiền — một lần quét cho cả năm.")
+            : t("Havi không tự trừ tiền. Trả theo năm thì mỗi năm chỉ quét một lần.")}
+        </p>
+
+        <div className={styles.addonRow}>
+          <label className={styles.addonItem}>
+            <span className={styles.addonLabel}>{t("Ghế thêm")}</span>
+            <input
+              type="number"
+              min={0}
+              max={200}
+              value={extraSeats}
+              onChange={(event) => setExtraSeats(Math.max(0, Number(event.target.value) || 0))}
+            />
+            <span className={styles.addonPrice}>+49.000đ/ghế/tháng</span>
+          </label>
+          <label className={styles.addonItem}>
+            <span className={styles.addonLabel}>{t("Kênh thêm")}</span>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              value={extraChannels}
+              onChange={(event) => setExtraChannels(Math.max(0, Number(event.target.value) || 0))}
+            />
+            <span className={styles.addonPrice}>+99.000đ/kênh/tháng</span>
+          </label>
+        </div>
+        <p className={styles.cycleNote}>
+          {t(
+            "Cần thêm một hai người thì mua ghế rẻ hơn nhảy bậc. Cần nhiều thì nâng gói lại rẻ hơn — bảng giá tự nói ra điều đó.",
+          )}
+        </p>
       </section>
 
       {/* Pricing Grid */}

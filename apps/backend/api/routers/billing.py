@@ -3,7 +3,7 @@
 Tích hợp cổng thanh toán VN (VNPay/Momo) qua backend; frontend không thấy secret nào.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -12,11 +12,14 @@ from pydantic import BaseModel
 from adapters.payment.payos_gateway import PaymentGatewayError
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
+from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
+from adapters.persistence.workspace_repository import WorkspaceRepository
 from api.deps import BillingServiceDep, SettingsDep, WorkspaceDep
-from core.enums import Plan
+from core.enums import BillingCycle, Plan
 from core.schemas import ChangePlanRequest, Invoice, Subscription
 from domain.policies import plan_limits
+from domain.policies import quota as quota_policy
 from domain.policies.subscription import PlanChangeNotAllowed
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -29,13 +32,28 @@ async def get_subscription(
     session: DbSessionDep,
 ) -> Subscription:
     state, quota = await billing_service.subscription_state(workspace_id=workspace_id)
-    limits = plan_limits.limits_for(state.plan)
+    # Trần **hiệu dụng**: gói cộng phần đã mua thêm. Đọc `limits_for` trực tiếp
+    # là chặn khách ở đúng cái ghế họ vừa trả tiền.
+    workspace = await WorkspaceRepository(session).get_by_id(workspace_id)
+    extra_seats = workspace.extra_seats if workspace else 0
+    extra_channels = workspace.extra_channels if workspace else 0
+    limits = plan_limits.effective_limits(
+        plan=state.plan, extra_seats=extra_seats, extra_channels=extra_channels
+    )
 
     # Đếm thật thay vì để frontend đoán: bảng giá và màn Đội ngũ phải hiện đúng
     # con số đang được cưỡng chế ở backend, nếu không người dùng đọc "3 người" rồi
     # bị chặn ở người thứ ba.
     seats_used = await WorkspaceMemberRepository(session).count_members(workspace_id)
     channels_used = len(await ConnectionRepository(session).list_for_workspace(workspace_id))
+
+    # Quy hạn mức về "còn khoảng bao nhiêu bài". Đo từ chính workspace này trong
+    # 90 ngày; chưa đủ mẫu thì dùng ước lượng mặc định và **nói ra** là mặc định.
+    measured = await EventLogRepository(session).avg_weighted_tokens_per_content_job(
+        workspace_id=workspace_id, since=datetime.now(UTC) - timedelta(days=90)
+    )
+    tokens_per_post = measured or quota_policy.ASSUMED_TOKENS_PER_POST
+    posts_remaining = max(0, (quota.limit - quota.used)) // max(1, tokens_per_post)
 
     days_until_due: int | None = None
     if state.current_period_end is not None:
@@ -52,10 +70,18 @@ async def get_subscription(
         current_period_end=state.current_period_end,
         token_quota_used=quota.used,
         token_quota_limit=quota.limit,
+        billing_cycle=(
+            workspace.billing_cycle if workspace else BillingCycle.MONTHLY
+        ),
+        extra_seats=extra_seats,
+        extra_channels=extra_channels,
         seats_used=seats_used,
         seats_limit=limits.max_seats,
         channels_used=channels_used,
         channels_limit=limits.max_channels,
+        posts_remaining_estimate=posts_remaining,
+        tokens_per_post=tokens_per_post,
+        tokens_per_post_measured=measured is not None,
         days_until_due=days_until_due,
     )
 
@@ -93,7 +119,13 @@ async def change_plan(
     if not settings.is_local:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     try:
-        state, _ = await billing_service.change_plan(workspace_id=workspace_id, target=body.plan)
+        state, _ = await billing_service.change_plan(
+            workspace_id=workspace_id,
+            target=body.plan,
+            cycle=body.cycle,
+            extra_seats=body.extra_seats,
+            extra_channels=body.extra_channels,
+        )
     except PlanChangeNotAllowed as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -135,6 +167,9 @@ async def create_checkout(
             workspace_id=workspace_id,
             target=body.plan,
             settings=settings,
+            cycle=body.cycle,
+            extra_seats=body.extra_seats,
+            extra_channels=body.extra_channels,
         )
     except PlanChangeNotAllowed as exc:
         raise HTTPException(

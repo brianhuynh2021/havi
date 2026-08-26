@@ -153,6 +153,40 @@ A proposed feature belongs in Havi only if it materially improves at least one:
 If it primarily promises business outcomes or duplicates a specialist tool, it
 does not belong in the product.
 
+## 3b. Commercial model
+
+Plans sell **operating scale**, not AI tokens. What grows with a business is the
+number of people manning channels, the number of channels connected, and the
+number of brands. Those are where both value and cost increase, so those are the
+ladder. Token quota is a cost guard, not a price lever.
+
+Brands bill per workspace: `plan` lives on the workspace, so a second brand is a
+second subscription. That is the expansion lever, and it needs no new mechanism.
+
+Seats and channels bill as add-ons on top of a plan. Without them, a customer on
+the 189k plan who needs a fourth person must jump to 369k — a staircase, not a
+lever. The add-on price is set so a small need costs a small step, and a large
+need makes the next tier genuinely cheaper. The pricing page then argues for the
+upgrade on its own.
+
+Annual billing exists because VietQR has no card-on-file: every month the
+customer must actively decide to pay again, and active renewal churns far worse
+than automatic renewal. An annual term trades twelve decisions for one. It is
+quoted as "pay ten months, use twelve" rather than a percentage, because the
+first phrasing needs no arithmetic.
+
+Quota counts output tokens at a weight, not one-for-one. Output costs four to five
+times input at every provider, so summing the two raw meant two workspaces at the
+same cap could differ several-fold in real cost — the cap guarded volume, not
+spend. Quota is still expressed in tokens, because a ratio does not go stale when
+a provider changes prices.
+
+Limits are shown to customers in units they use: seats, channels, and posts.
+"2,000,000 tokens" means nothing to a business owner. The token-to-post rate is
+measured from that workspace's own history and falls back to a declared default,
+which is stated on screen — an estimate presented as a measurement is the same
+class of error as inventing a metric.
+
 ## 4. Internal health metrics
 
 Havi does not impose a user-facing North Star. The team monitors service health:

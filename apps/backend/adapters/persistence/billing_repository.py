@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.enums import InvoiceStatus, Plan
+from core.enums import BillingCycle, InvoiceStatus, Plan
 from domain.models.workspace import Invoice, Workspace
 
 
@@ -15,7 +15,14 @@ class BillingRepository:
         self._session = session
 
     async def set_plan(
-        self, workspace: Workspace, *, plan: Plan, paid_until: datetime | None
+        self,
+        workspace: Workspace,
+        *,
+        plan: Plan,
+        paid_until: datetime | None,
+        billing_cycle: BillingCycle | None = None,
+        extra_seats: int | None = None,
+        extra_channels: int | None = None,
     ) -> Workspace:
         """Ghi gói mới. `trial_ends_at` KHÔNG bị chạm tới.
 
@@ -25,6 +32,15 @@ class BillingRepository:
         """
         workspace.plan = plan
         workspace.paid_until = paid_until
+        # `None` = giữ nguyên. Thanh toán một hoá đơn chỉ được đổi những gì hoá đơn
+        # đó nói tới; hoá đơn cũ (trước khi có phụ phí) không được lặng lẽ đưa ghế
+        # đã mua về 0.
+        if billing_cycle is not None:
+            workspace.billing_cycle = billing_cycle
+        if extra_seats is not None:
+            workspace.extra_seats = extra_seats
+        if extra_channels is not None:
+            workspace.extra_channels = extra_channels
         await self._session.flush()
         return workspace
 
@@ -36,6 +52,9 @@ class BillingRepository:
         amount_vnd: int,
         issued_at: datetime,
         status: InvoiceStatus = InvoiceStatus.PENDING,
+        billing_cycle: BillingCycle = BillingCycle.MONTHLY,
+        extra_seats: int = 0,
+        extra_channels: int = 0,
     ) -> Invoice:
         invoice = Invoice(
             workspace_id=workspace_id,
@@ -43,6 +62,9 @@ class BillingRepository:
             amount_vnd=amount_vnd,
             issued_at=issued_at,
             status=status,
+            billing_cycle=billing_cycle,
+            extra_seats=extra_seats,
+            extra_channels=extra_channels,
         )
         self._session.add(invoice)
         await self._session.flush()
