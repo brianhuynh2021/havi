@@ -205,6 +205,8 @@ async def test_password_reset_goi_email_sender_va_chi_local_moi_tra_debug_code(
         web_base_url="https://app.havi.vn",
         media_endpoint_url="http://minio:9000",
         media_external_endpoint_url="https://app.havi.vn",
+        # Địa chỉ Facebook/TikTok/Google dùng để TẢI ảnh, nên phải công khai.
+        media_public_url="https://media.havi.vn/havi-media",
         media_access_key="production-media-user",
         media_secret_key="production-media-secret",
         jwt_secret="production-jwt-secret-at-least-32-bytes-long",

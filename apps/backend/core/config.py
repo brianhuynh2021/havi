@@ -252,6 +252,19 @@ class Settings(BaseSettings):
         }
         missing.extend(name for name, bad in unsafe.items() if bad)
 
+        # Import tại chỗ: `domain/policies/__init__` kéo theo `oauth_state`, mà
+        # module đó lại import `Settings` từ đây. Bản thân luật này không phụ
+        # thuộc gì ngoài stdlib — chỉ có package `__init__` tạo ra vòng.
+        from domain.policies.media_reachability import unreachable_reason
+
+        # Facebook, TikTok và Google tự đi tải link media ta đưa. Mặc định là
+        # `http://localhost:9000` — hoàn hảo trên máy dev, và với Facebook thì là
+        # máy của chính Facebook. Lên production mà quên đổi thì mọi bài có ảnh
+        # hoặc video đều chết, mỗi lần một mã lỗi khác nhau và không mã nào nhắc
+        # tới nguyên nhân. Chặn ở đây để chuyện đó không thể xảy ra.
+        if unreachable_reason(self.media_public_url) is not None:
+            missing.append("HAVI_MEDIA_PUBLIC_URL")
+
         https_urls = {
             "HAVI_WEB_BASE_URL": self.web_base_url,
             "HAVI_MEDIA_EXTERNAL_ENDPOINT_URL": self.media_external_endpoint_url,

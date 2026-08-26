@@ -42,8 +42,16 @@ class GoogleBusinessPublisher(PublisherPort):
             raise AuthPermissionError(self.channel, "Missing Google Business access token")
 
         client = self._client or httpx.AsyncClient(timeout=10.0)
-        location_id = request.external_account_id or "locations/primary"
-        url = f"{GOOGLE_MYBUSINESS_BASE}/{location_id}/localPosts"
+        # Đường dẫn đầy đủ `accounts/{a}/locations/{l}` do luồng nối kênh phân
+        # giải và lưu lại. Không có mặc định thay thế: đoán một địa điểm rồi
+        # đăng bài của khách lên đó là sai nguy hiểm hơn hẳn việc không đăng.
+        location_resource = request.external_account_id
+        if not location_resource:
+            raise ValidationPublishError(
+                self.channel,
+                "Kết nối Google Business chưa xác định được địa điểm — cần nối lại kênh",
+            )
+        url = f"{GOOGLE_MYBUSINESS_BASE}/{location_resource}/localPosts"
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",

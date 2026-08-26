@@ -91,6 +91,11 @@ async def test_google_business_publisher_rate_limit():
     transport = httpx.MockTransport(handler)
     async with httpx.AsyncClient(transport=transport) as client:
         publisher = GoogleBusinessPublisher(client=client)
-        req = PublishRequest(text="Local post update")
+        req = PublishRequest(
+            text="Local post update",
+            # Kênh đã nối luôn có đường dẫn địa điểm đầy đủ; thiếu nó là lỗi cấu hình,
+            # không phải một ca cần test ở đây.
+            external_account_id="accounts/111/locations/222",
+        )
         with pytest.raises(TemporaryPublishError):
             await publisher.publish(req, access_token="valid_google_token")

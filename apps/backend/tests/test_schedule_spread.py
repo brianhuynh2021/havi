@@ -10,6 +10,7 @@ Bug này không làm request đỏ và không làm test cũ đỏ: `approve_many
 trong cùng một giây. Nó chỉ lộ ra khi nhìn Trang thật.
 """
 
+from collections import Counter
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -146,8 +147,16 @@ async def test_hai_bai_mot_ngay_thi_gap_doi_mat_do(db_session: AsyncSession):
         posts_per_day=2,
     )
 
-    days = {item.scheduled_at.astimezone(VIETNAM_TZ).date() for item in items}
-    assert len(days) == 3
+    # Không khẳng định "đúng 3 ngày": số ngày phụ thuộc giờ chạy test. Với
+    # `per_day=2`, ngày đầu chỉ nhận những khung 8h/12h chưa trôi qua — chạy lúc
+    # 10h sáng thì ngày đầu còn một khung, ra 4 ngày; chạy lúc 14h thì ngày đầu
+    # không còn khung nào, ra 3 ngày. Con số chính xác đã có test riêng ở
+    # `TestSpreadOverGoldenHours` với `now` cố định; ở đây kiểm bất biến.
+    per_day_counts = Counter(item.scheduled_at.astimezone(VIETNAM_TZ).date() for item in items)
+
+    assert max(per_day_counts.values()) == 2, "không ngày nào vượt hạn mức đã chọn"
+    assert len(per_day_counts) < 6, "gấp đôi mật độ thì phải gọn hơn mỗi ngày một bài"
+    assert len({item.scheduled_at for item in items}) == 6, "không hai bài nào trùng giờ"
 
 
 async def test_dang_ngay_thi_khong_rai_lich(db_session: AsyncSession):

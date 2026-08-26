@@ -61,7 +61,23 @@ async def test_synthesize_trend_endpoint(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_refresh_hot_trends_endpoint(client: AsyncClient):
+async def test_refresh_hot_trends_endpoint(client: AsyncClient, monkeypatch):
+    """Chặn mạng thật — cùng lý do như `test_get_hot_trends_returns_sorted_list`.
+
+    Test này gọi thẳng Google Trends RSS, nên `trend_score` là điểm của bất kỳ
+    từ khoá nào đang nóng ở Việt Nam lúc chạy. Hôm nhiều lượt tìm thì 97, hôm ít
+    thì 76 — cùng một commit, lúc xanh lúc đỏ, không ai đổi dòng code nào.
+    """
+    from application.services.trend_scout_service import TrendScoutService
+
+    async def fake_live(self, count: int = 5):  # noqa: ANN001, ANN202
+        return [
+            {"keyword": f"tu khoa {i}", "traffic": traffic}
+            for i, traffic in enumerate(["50K+", "20K+", "10K+", "5K+", "2K+"][:count])
+        ]
+
+    monkeypatch.setattr(TrendScoutService, "_fetch_google_trends_live_vn", fake_live)
+
     headers, ws_id = await _onboard(client, "refreshtrends@havi.vn")
 
     res = await client.post(f"/workspaces/{ws_id}/trends/refresh", headers=headers)

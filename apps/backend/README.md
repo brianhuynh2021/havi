@@ -114,6 +114,25 @@ Set `HAVI_USE_MOCK_LLM=false` and configure a provider key to call a real model.
 Set `HAVI_USE_FAKE_PUBLISHER=false` only when you intend to publish through a real
 connected platform account.
 
+### Media must be reachable from the platform, not from you
+
+Facebook, TikTok, YouTube and Google Business do not receive your image or video
+bytes. They receive a **link**, and fetch it themselves from their own servers.
+
+So `HAVI_MEDIA_PUBLIC_URL=http://localhost:9000/havi-media` — the local default —
+works perfectly in your browser and means *Facebook's own machine* to Facebook.
+The post is fine; only the link is unusable. What comes back says nothing about
+that:
+
+    [100] (#100) url should represent a valid URL
+    [6000] There was a problem uploading your video file.
+
+Havi now refuses to send an unreachable link and says so plainly instead, and
+`HAVI_ENV=production` will not start with one. To publish real media from a dev
+machine, point `HAVI_MEDIA_PUBLIC_URL` at something the outside world can open —
+a tunnel (`cloudflared tunnel --url http://localhost:9000`, `ngrok http 9000`) or
+a real object-storage bucket.
+
 ## Staging / Production
 
 Read [docs/handoff/DEPLOYMENT.md](../../docs/handoff/DEPLOYMENT.md). The most

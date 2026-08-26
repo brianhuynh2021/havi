@@ -146,6 +146,11 @@ async def test_multichannel_approval_and_publish_flow(db_session: AsyncSession):
         publishes=publish_repo,
         events=event_repo,
         media=media_repo,
+        # Bắt buộc phải là địa chỉ công khai. Mặc định của `Settings` là
+        # `http://localhost:9000` — hợp lệ trên máy dev, vô nghĩa với Facebook,
+        # và `FakePublisher` thì nhận tuốt. Chính khoảng trống đó đã để lọt hai
+        # job vào dead-letter thật với `(#100) url should represent a valid URL`.
+        media_public_url="https://media.havi.vn/havi-media",
         alerts=LoggingAlertSink(),
         publishers=publishers,
     )

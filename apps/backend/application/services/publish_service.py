@@ -29,6 +29,7 @@ from core.enums import (
 from core.events import EventLogEntry
 from core.token_crypto import TokenDecryptionFailed, encrypt_token
 from domain.models.publish import PublishJob
+from domain.policies.media_reachability import unreachable_reason
 from domain.ports.publisher import (
     AmbiguousPublishError,
     AuthPermissionError,
@@ -82,7 +83,10 @@ def select_topic_image(media_note: str | None, text: str | None) -> str:
         return "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80"
     if any(k in combined for k in keywords_food):
         return "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80"
-    if any(k in combined for k in ("da", "dưỡng", "skin", "mặt", "trị liệu", "massage", "facial", "spa")):
+    if any(
+        k in combined
+        for k in ("da", "dưỡng", "skin", "mặt", "trị liệu", "massage", "facial", "spa")
+    ):
         return "https://images.unsplash.com/photo-1512290900673-7002b54177b5?w=1200&q=80"
     return "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&q=80"
 
@@ -291,6 +295,23 @@ class PublishService:
             # chất lượng cao đúng chủ đề để bài đăng trên Facebook luôn có hình đẹp.
             topic_url = select_topic_image(item.media_note, item.text)
             media_urls.append(topic_url)
+
+        # Kiểm sau khi đã gom đủ mọi nguồn media, ngay trước lúc gửi đi: nền tảng
+        # tự đi tải link ta đưa, nên một link chỉ mở được từ máy này sẽ quay về
+        # dưới dạng `(#100) url should represent a valid URL` — một câu không hề
+        # nhắc tới nguyên nhân, và đẩy người đọc đi sửa nhầm chỗ.
+        for url in media_urls:
+            reason = unreachable_reason(url)
+            if reason is not None:
+                return await self._mark_failed_with_event(
+                    job,
+                    kind=PublishFailureKind.VALIDATION_PERMANENT,
+                    detail=(
+                        f"Havi chưa công khai được ảnh/video ra Internet: {reason}. "
+                        "Bài đăng không có lỗi — cần đặt HAVI_MEDIA_PUBLIC_URL thành "
+                        "địa chỉ mà nền tảng mở được."
+                    ),
+                )
 
         try:
             result = await publisher.publish(

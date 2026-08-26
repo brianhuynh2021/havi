@@ -24,7 +24,10 @@ logger = logging.getLogger(__name__)
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+# Business Profile tách làm nhiều API con; `mybusiness.googleapis.com/v4` chỉ
+# còn giữ localPosts, còn danh sách tài khoản và địa điểm nằm ở hai host riêng.
+GOOGLE_ACCOUNTS_URL = "https://mybusinessaccountmanagement.googleapis.com/v1/accounts"
+GOOGLE_LOCATIONS_URL = "https://mybusinessbusinessinformation.googleapis.com/v1"
 _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 
@@ -76,7 +79,7 @@ class GoogleBusinessOAuthClient(OAuthClientPort):
         if not (self._client_id and self._client_secret):
             # Local dev mock fallback
             return OAuthAccount(
-                external_account_id="locations/mock_location_123",
+                external_account_id="accounts/mock_account_123/locations/mock_location_123",
                 account_name="Tiệm Havi Spa (Google Maps)",
                 access_token="mock_google_business_access_token",
                 refresh_token="mock_google_business_refresh_token",
@@ -117,26 +120,129 @@ class GoogleBusinessOAuthClient(OAuthClientPort):
         refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in", 3600)
 
-        # Lấy thông tin user / location name
-        location_id = "locations/primary"
-        account_name = "Google Business Profile"
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                res = await client.get(
-                    GOOGLE_USERINFO_URL,
-                    headers={"Authorization": f"Bearer {access_token}"},
-                )
-                if res.status_code == 200:
-                    info = res.json()
-                    location_id = f"locations/{info.get('id', 'primary')}"
-                    account_name = info.get("name", "Google Business Profile")
-        except Exception as exc:
-            logger.warning("Failed to fetch Google Business account details: %s", exc)
+        resource, account_name = await self._resolve_location(access_token)
 
         return OAuthAccount(
-            external_account_id=location_id,
+            external_account_id=resource,
             account_name=account_name,
             access_token=access_token,
             refresh_token=refresh_token,
             expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
         )
+
+    async def _resolve_location(self, access_token: str) -> tuple[str, str]:
+        """Tìm địa điểm Google Business thật mà tài khoản này quản lý.
+
+        Trước đây chỗ này gọi `userinfo` rồi gắn `locations/` vào trước `id` của
+        **người dùng**. Kết quả trông giống một location ID nhưng không phải::
+
+            locations/117064704841566717018   ← đây là Google account ID
+
+        Kết nối được lưu là CONNECTED, giao diện báo đã nối Google Business, và
+        mọi bài đăng chết ở dead-letter với một trang HTML 404 của Google — vì
+        đường dẫn đó không trỏ tới tài nguyên nào. Chuyện này đã xảy ra thật hai
+        lần.
+
+        Bịa ra một mã rồi báo thành công là cùng loại sai với việc báo "đã đăng"
+        khi chưa gửi đi. Nên ở đây: hỏi đúng hai API của Business Profile, và nếu
+        không tìm được địa điểm nào thì **hỏng ngay lúc nối**, kèm lý do đọc được
+        — chứ không hỏng ba ngày sau ở một bài đăng không liên quan.
+
+        Trả về `("accounts/{a}/locations/{l}", tên địa điểm)` — nguyên đường dẫn
+        tài nguyên, vì đó chính là thứ `localPosts` cần.
+        """
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            headers = {"Authorization": f"Bearer {access_token}"}
+
+            accounts = await self._get_list(
+                client, GOOGLE_ACCOUNTS_URL, headers=headers, key="accounts", what="tài khoản"
+            )
+            if not accounts:
+                raise OAuthPermanentError(
+                    self.platform,
+                    "Tài khoản Google này chưa quản lý hồ sơ doanh nghiệp nào trên Google "
+                    "Business Profile. Cần tạo hoặc xin quyền quản trị hồ sơ trước khi nối.",
+                )
+
+            for account in accounts:
+                account_resource = account.get("name")
+                if not account_resource:
+                    continue
+                locations = await self._get_list(
+                    client,
+                    f"{GOOGLE_LOCATIONS_URL}/{account_resource}/locations",
+                    headers=headers,
+                    params={"readMask": "name,title"},
+                    key="locations",
+                    what="địa điểm",
+                )
+                for location in locations:
+                    location_resource = location.get("name")
+                    if location_resource:
+                        # `name` trả về dạng `locations/{id}`; ghép với account
+                        # thành đường dẫn đầy đủ mà v4 localPosts yêu cầu.
+                        return (
+                            f"{account_resource}/{location_resource}",
+                            location.get("title") or "Google Business Profile",
+                        )
+
+        raise OAuthPermanentError(
+            self.platform,
+            "Không tìm thấy địa điểm nào trong hồ sơ Google Business của tài khoản này. "
+            "Havi cần một địa điểm cụ thể để biết đăng bài lên đâu.",
+        )
+
+    async def _get_list(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        *,
+        headers: dict[str, str],
+        key: str,
+        what: str,
+        params: dict[str, str] | None = None,
+    ) -> list[dict]:
+        """Gọi một API danh sách của Business Profile, phân loại lỗi rồi trả mảng.
+
+        Lỗi tạm (mạng, 5xx, 429) phải là `OAuthTemporaryError` để người dùng bấm
+        nối lại là xong. Riêng 403 ở đây gần như luôn là **chưa được Google duyệt
+        hạn mức** Business Profile API — mặc định dự án mới có quota bằng 0 — nên
+        nói thẳng ra, thay vì để người dùng đi kiểm tra lại mật khẩu Google.
+        """
+        try:
+            res = await client.get(url, headers=headers, params=params)
+        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+            raise OAuthTemporaryError(
+                self.platform, f"Không gọi được Google Business Profile API: {exc}"
+            ) from exc
+
+        if res.status_code in _TRANSIENT_STATUSES:
+            raise OAuthTemporaryError(
+                self.platform,
+                f"Google Business Profile API tạm thời lỗi khi lấy {what}: HTTP {res.status_code}",
+            )
+        if res.status_code == 403:
+            raise OAuthPermanentError(
+                self.platform,
+                "Google từ chối truy cập Business Profile API (403). Dự án Google Cloud cần "
+                "được duyệt hạn mức Business Profile API trước khi Havi đăng bài lên Google "
+                "Maps được.",
+            )
+        if res.status_code >= 400:
+            raise OAuthPermanentError(
+                self.platform,
+                f"Google Business Profile API từ chối yêu cầu lấy {what}: HTTP {res.status_code}",
+            )
+
+        try:
+            payload = res.json()
+        except ValueError as exc:
+            # Google trả HTML thay vì JSON nghĩa là đường dẫn sai, không phải dữ
+            # liệu sai. Đừng nhét nguyên trang HTML vào thông báo lỗi.
+            raise OAuthPermanentError(
+                self.platform,
+                f"Google trả về nội dung không phải JSON khi lấy {what} — sai địa chỉ API.",
+            ) from exc
+
+        items = payload.get(key)
+        return items if isinstance(items, list) else []
