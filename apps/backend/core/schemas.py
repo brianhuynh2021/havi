@@ -10,6 +10,7 @@ from core.enums import (
     Channel,
     ConnectionStatus,
     ContentJobStatus,
+    ContentKind,
     ContentStatus,
     InboxItemStatus,
     InboxItemType,
@@ -809,3 +810,19 @@ class MorningBrief(HaviModel):
     calendar_gaps: list[BriefGap]
     time_saved_minutes: int
     time_saved_actions: list[BriefSavedAction]
+
+
+class ChannelOption(HaviModel):
+    """Một lựa chọn kênh ở bước soạn bài.
+
+    Trả **cả** `kinds` để frontend lọc tại chỗ khi người dùng đổi loại nội dung,
+    không phải gọi lại API — đổi tab mà phải chờ mạng thì ô tick nhảy chỗ.
+    """
+
+    channel: Channel
+    label: str
+    #: Loại nội dung kênh này nhận (`post`, `video`).
+    kinds: list[ContentKind]
+    #: Workspace đã nối kênh này và kết nối còn dùng được hay chưa. Kênh chưa nối
+    #: vẫn hiện nhưng không tick được — ẩn đi thì người dùng không biết là có.
+    connected: bool

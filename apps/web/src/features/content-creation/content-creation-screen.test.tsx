@@ -6,6 +6,7 @@ import { ContentCreationScreen } from "./content-creation-screen";
 const listPendingItems = vi.fn();
 const approveAll = vi.fn();
 const createJob = vi.fn();
+const listChannelOptions = vi.fn();
 
 vi.mock("./content-creation.api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./content-creation.api")>();
@@ -14,6 +15,7 @@ vi.mock("./content-creation.api", async (importOriginal) => {
     listPendingItems: (...args: unknown[]) => listPendingItems(...args),
     approveAll: (...args: unknown[]) => approveAll(...args),
     createJob: (...args: unknown[]) => createJob(...args),
+    listChannelOptions: (...args: unknown[]) => listChannelOptions(...args),
     uploadMedia: vi.fn(),
     dismissItem: vi.fn(),
     dismissAllItems: vi.fn(),
@@ -51,6 +53,19 @@ function draft(index: number) {
 beforeEach(() => {
   vi.clearAllMocks();
   listPendingItems.mockResolvedValue({ ok: true, data: [] });
+  // Đúng hình dạng backend trả: Facebook nhận cả hai loại, Reels chỉ video.
+  listChannelOptions.mockResolvedValue({
+    ok: true,
+    data: [
+      {
+        channel: "facebook_page",
+        label: "Facebook — bài trên Trang",
+        kinds: ["post", "video"],
+        connected: true,
+      },
+      { channel: "reels", label: "Facebook Reels", kinds: ["video"], connected: true },
+    ],
+  });
   // Mặc định: Chủ workspace, duyệt được.
   permissions.mockReturnValue({
     known: true,
@@ -222,5 +237,85 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     expect(
       await screen.findByRole("button", { name: /Duyệt & xếp lịch 1 bài/ }),
     ).toBeInTheDocument();
+  });
+  it("bộ chọn kênh là HÀM của loại nội dung, không phải danh sách phẳng", async () => {
+    // Bản trước là một mảng viết cứng dùng chung cho cả hai loại, nên chọn được
+    // "Bài viết + TikTok" — mà TikTok không nhận bài chữ, và lỗi chỉ lộ ra ở bước
+    // đăng, sau khi đã tốn tiền LLM.
+    render(<ContentCreationScreen />);
+
+    // Loại "Bài viết": Reels không nhận bài chữ nên không được hiện.
+    expect(await screen.findByText("Facebook — bài trên Trang")).toBeInTheDocument();
+    expect(screen.queryByText("Facebook Reels")).toBeNull();
+
+    await userEvent.click(screen.getByRole("tab", { name: /Video/ }));
+
+    // Đổi sang Video thì Reels xuất hiện.
+    expect(await screen.findByText("Facebook Reels")).toBeInTheDocument();
+  });
+
+  it("KHÔNG hiện kênh chưa được nền tảng duyệt", async () => {
+    // Backend chỉ trả kênh đang mở, và frontend không tự thêm kênh nào. Bày ra một
+    // kênh chưa đăng được là hứa một thứ chưa tồn tại.
+    render(<ContentCreationScreen />);
+    await screen.findByText("Facebook — bài trên Trang");
+
+    const body = document.body.textContent ?? "";
+    for (const notLive of ["TikTok", "YouTube", "Google Business", "Zalo OA"]) {
+      expect(body).not.toContain(notLive);
+    }
+  });
+
+  it("kênh chưa nối vẫn hiện nhưng không tick được, kèm đường đi nối", async () => {
+    // Ẩn đi thì người dùng không biết Havi hỗ trợ kênh đó và không biết phải đi nối.
+    listChannelOptions.mockResolvedValue({
+      ok: true,
+      data: [
+        {
+          channel: "facebook_page",
+          label: "Facebook — bài trên Trang",
+          kinds: ["post", "video"],
+          connected: false,
+        },
+      ],
+    });
+    render(<ContentCreationScreen />);
+
+    await screen.findByText("Facebook — bài trên Trang");
+    expect(screen.getByRole("checkbox")).toBeDisabled();
+    expect(screen.getByRole("link", { name: /nối kênh/ })).toHaveAttribute(
+      "href",
+      "/app/connections",
+    );
+  });
+
+  it("chỉ còn một kênh thì tự chọn sẵn, không bắt tick thêm một bước", async () => {
+    render(<ContentCreationScreen />);
+
+    await screen.findByText("Facebook — bài trên Trang");
+    expect(screen.getByRole("checkbox")).toBeChecked();
+  });
+
+  it("đổi loại nội dung thì bỏ kênh không còn nhận được", async () => {
+    listChannelOptions.mockResolvedValue({
+      ok: true,
+      data: [
+        { channel: "facebook_page", label: "FB Post", kinds: ["post"], connected: true },
+        { channel: "reels", label: "FB Reels", kinds: ["video"], connected: true },
+      ],
+    });
+    listPendingItems.mockResolvedValue({ ok: true, data: [draft(1)] });
+    approveAll.mockResolvedValue({ ok: true, data: { approved: [], rejected: [] } });
+    createJob.mockResolvedValue({ ok: true, data: { id: "job-1" } });
+
+    render(<ContentCreationScreen />);
+    await screen.findByText("FB Post");
+
+    await userEvent.click(screen.getByRole("tab", { name: /Video/ }));
+
+    // `facebook_page` không nhận video → không còn trong danh sách, và không thể
+    // còn được chọn. Nếu state cũ giữ lại thì backend sẽ nhận một tổ hợp sai.
+    expect(await screen.findByText("FB Reels")).toBeInTheDocument();
+    expect(screen.queryByText("FB Post")).toBeNull();
   });
 });

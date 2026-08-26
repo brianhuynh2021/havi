@@ -415,3 +415,24 @@ export async function approveAll(
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export type ChannelOption = components["schemas"]["ChannelOption"];
+
+/**
+ * Kênh chọn được khi soạn bài, kèm loại nội dung mỗi kênh nhận.
+ *
+ * Luật "kênh nào nhận gì" nằm ở backend (`domain/policies/channel_capabilities.py`)
+ * chứ không hardcode ở đây: đó là luật của nền tảng — TikTok không nhận bài chữ vì
+ * TikTok là thế — và backend vẫn phải cưỡng chế nó cho client cũ.
+ */
+export async function listChannelOptions(): Promise<Result<ChannelOption[]>> {
+  try {
+    const { data, error } = await apiClient.GET("/content/channels");
+    if (error || !data) {
+      return { ok: false, message: detailToMessage(error, "Chưa tải được danh sách kênh") };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}

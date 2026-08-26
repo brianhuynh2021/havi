@@ -35,9 +35,11 @@ import {
   createJob,
   dismissAllItems,
   dismissItem,
+  listChannelOptions,
   listPendingItems,
   uploadMedia,
   type Channel,
+  type ChannelOption,
   type ContentItem,
   type RawInput,
 } from "./content-creation.api";
@@ -81,7 +83,8 @@ export function ContentCreationScreen() {
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
-  const [selectedChannels, setSelectedChannels] = useState<string[]>(["facebook_page"]);
+  const [channelOptions, setChannelOptions] = useState<ChannelOption[]>([]);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
 
   const [isConfirmingDismissAll, setIsConfirmingDismissAll] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
@@ -127,6 +130,33 @@ export function ContentCreationScreen() {
   useEffect(() => {
     loadItems();
   }, [loadItems]);
+
+  useEffect(() => {
+    void listChannelOptions().then((result) => {
+      if (result.ok) setChannelOptions(result.data);
+    });
+  }, []);
+
+  // Kênh khả dụng là **hàm của loại nội dung**: TikTok và YouTube không nhận bài
+  // chữ. Bản trước là một mảng viết cứng dùng chung cho cả hai loại, nên chọn được
+  // "Bài viết + TikTok" và lỗi chỉ lộ ra ở bước đăng.
+  const availableChannels = channelOptions.filter((option) =>
+    option.kinds.includes(kind),
+  );
+
+  // Đổi loại nội dung thì bỏ những kênh không còn nhận được, và tự chọn kênh duy
+  // nhất nếu chỉ còn một — bắt người dùng tick một ô mà không có lựa chọn nào khác
+  // là một bước thừa.
+  useEffect(() => {
+    const allowed = channelOptions
+      .filter((option) => option.kinds.includes(kind))
+      .map((option) => option.channel as string);
+    setSelectedChannels((prev) => {
+      const kept = prev.filter((channel) => allowed.includes(channel));
+      if (kept.length) return kept;
+      return allowed.length === 1 ? allowed : [];
+    });
+  }, [kind, channelOptions]);
 
   // Cho phép mở thẳng nhánh video bằng `?kind=video` — dùng khi điều hướng từ
   // Tổng quan. Không nạp "chủ đề" từ đâu khác: Havi không giao việc cho ai.
@@ -424,31 +454,9 @@ export function ContentCreationScreen() {
           <span id="kind-title">{t("Bạn muốn đăng gì?")}</span>
         </div>
         
-        <div style={{ marginBottom: 16 }}>
-          <strong style={{ display: "block", marginBottom: 8, fontSize: "0.875rem" }}>{t("Đăng lên kênh nào?")}</strong>
-          <div style={{ display: "flex", gap: 12 }}>
-            {[
-              { id: "facebook_page", label: "Facebook Page" },
-              { id: "google_business", label: "Google Business" },
-              { id: "zalo_oa", label: "Zalo OA" }
-            ].map((channel) => (
-              <label key={channel.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.875rem" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedChannels.includes(channel.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedChannels(prev => [...prev, channel.id]);
-                    } else {
-                      setSelectedChannels(prev => prev.filter(c => c !== channel.id));
-                    }
-                  }}
-                />
-                {channel.label}
-              </label>
-            ))}
-          </div>
-        </div>
+        {/* Bộ chọn kênh nằm SAU bước chọn loại nội dung vì nó phụ thuộc vào
+            loại: đặt trước thì nó phải hiện mọi kênh rồi tự bỏ đi, và ô tick nhảy
+            chỗ ngay trước mắt người dùng. */}
 
         <div className={styles.kindGrid} role="tablist" aria-label={t("Loại nội dung")}>
           <button
@@ -474,6 +482,59 @@ export function ContentCreationScreen() {
             <small>{t("Bạn quay và cắt sẵn, Havi đăng lên Reels và xác nhận đã lên.")}</small>
           </button>
         </div>
+      </section>
+
+      {/* BƯỚC 1b — kênh, phụ thuộc loại nội dung đã chọn ở trên. */}
+      <section className={styles.channelSection} aria-labelledby="channel-title">
+        <div className={styles.stepTitle}>
+          <span className={styles.stepNumber}>2</span>
+          <span id="channel-title">{t("Đăng lên kênh nào?")}</span>
+        </div>
+
+        {availableChannels.length === 0 ? (
+          <p className={styles.channelEmpty}>
+            {channelOptions.length === 0
+              ? t("Đang tải danh sách kênh…")
+              : t("Chưa có kênh nào nhận được loại nội dung này.")}
+          </p>
+        ) : (
+          <div className={styles.channelRow}>
+            {availableChannels.map((option) => {
+              const id = option.channel as string;
+              const checked = selectedChannels.includes(id);
+              return (
+                <label
+                  key={id}
+                  className={`${styles.channelChip} ${checked ? styles.channelChipActive : ""} ${
+                    option.connected ? "" : styles.channelChipDisabled
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    // Kênh chưa nối vẫn HIỆN nhưng không tick được: ẩn đi thì
+                    // người dùng không biết Havi hỗ trợ kênh đó và không biết
+                    // phải đi nối.
+                    disabled={!option.connected}
+                    onChange={(event) =>
+                      setSelectedChannels((prev) =>
+                        event.target.checked
+                          ? [...prev, id]
+                          : prev.filter((channel) => channel !== id),
+                      )
+                    }
+                  />
+                  <span>{option.label}</span>
+                  {option.connected ? null : (
+                    <a className={styles.channelConnect} href="/app/connections">
+                      {t("nối kênh")}
+                    </a>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {kind === "video" ? (

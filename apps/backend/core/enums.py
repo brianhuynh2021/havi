@@ -63,6 +63,17 @@ class Plan(StrEnum):
     DOANH_NGHIEP = "doanh_nghiep"
 
 
+class ContentKind(StrEnum):
+    """Loại nội dung người dùng chọn ở bước đầu của luồng Đăng bài.
+
+    Quyết định **kênh nào nhận được** — TikTok và YouTube chỉ nhận video, nên bộ
+    chọn kênh là hàm của giá trị này. Xem `domain/policies/channel_capabilities.py`.
+    """
+
+    POST = "post"
+    VIDEO = "video"
+
+
 class Channel(StrEnum):
     """Kênh đầu ra của content — mỗi kênh 1 adapter, lõi AI không biết kênh."""
 

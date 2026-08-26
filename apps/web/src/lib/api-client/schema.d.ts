@@ -904,6 +904,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Channel Options
+         * @description Kênh chọn được khi soạn bài, kèm loại nội dung mỗi kênh nhận.
+         *
+         *     Trả **mọi kênh đang chạy**, không lọc theo `kind`: frontend lọc tại chỗ khi
+         *     người dùng đổi loại nội dung, nên đổi tab không phải chờ mạng.
+         *
+         *     Kênh chưa nối vẫn có trong danh sách với `connected: false` — ẩn đi thì người
+         *     dùng không biết là Havi hỗ trợ kênh đó và không biết phải đi nối.
+         *
+         *     Phải khai báo **trước** `/{content_id}`: FastAPI khớp route theo thứ tự, nên
+         *     nằm sau thì "channels" bị đọc như một UUID và trả 422.
+         */
+        get: operations["list_channel_options_content_channels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/{content_id}": {
         parameters: {
             query?: never;
@@ -1804,6 +1833,22 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /**
+         * ChannelOption
+         * @description Một lựa chọn kênh ở bước soạn bài.
+         *
+         *     Trả **cả** `kinds` để frontend lọc tại chỗ khi người dùng đổi loại nội dung,
+         *     không phải gọi lại API — đổi tab mà phải chờ mạng thì ô tick nhảy chỗ.
+         */
+        ChannelOption: {
+            channel: components["schemas"]["Channel"];
+            /** Label */
+            label: string;
+            /** Kinds */
+            kinds: components["schemas"]["ContentKind"][];
+            /** Connected */
+            connected: boolean;
+        };
         /** CheckoutResponse */
         CheckoutResponse: {
             /** Invoice Id */
@@ -1946,6 +1991,15 @@ export interface components {
          * @enum {string}
          */
         ContentJobStatus: "queued" | "processing" | "drafts_ready" | "failed";
+        /**
+         * ContentKind
+         * @description Loại nội dung người dùng chọn ở bước đầu của luồng Đăng bài.
+         *
+         *     Quyết định **kênh nào nhận được** — TikTok và YouTube chỉ nhận video, nên bộ
+         *     chọn kênh là hàm của giá trị này. Xem `domain/policies/channel_capabilities.py`.
+         * @enum {string}
+         */
+        ContentKind: "post" | "video";
         /**
          * ContentStatus
          * @enum {string}
@@ -4833,6 +4887,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_channel_options_content_channels_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelOption"][];
                 };
             };
         };

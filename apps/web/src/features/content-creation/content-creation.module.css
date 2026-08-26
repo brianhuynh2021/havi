@@ -2250,3 +2250,56 @@
   font-size: 13.5px;
   line-height: 1.55;
 }
+
+/* --- Bước 1b: chọn kênh, phụ thuộc loại nội dung --- */
+
+.channelSection {
+  margin-bottom: 24px;
+}
+
+.channelRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.channelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-body);
+  cursor: pointer;
+}
+
+.channelChipActive {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Kênh chưa nối vẫn HIỆN — mờ đi và không tick được. Ẩn thì người dùng không biết
+   Havi hỗ trợ kênh đó, và không biết phải đi nối. */
+.channelChipDisabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.channelConnect {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.channelEmpty {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--color-muted);
+}

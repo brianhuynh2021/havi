@@ -12,6 +12,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
 
+from adapters.persistence.connection_repository import ConnectionRepository
+from adapters.persistence.db import DbSessionDep
 from api.deps import (
     ApprovalServiceDep,
     ApproverWorkspaceDep,
@@ -25,12 +27,19 @@ from api.rate_limit import limit_by_workspace
 from application.services.approval_service import ContentItemNotFound, NotReschedulable
 from application.services.content_service import ContentJobNotFound, SubscriptionExpired
 from application.services.publish_service import (
+    CHANNEL_TO_PLATFORM,
     AlreadyRunning,
     NotRetryable,
     PublishJobNotFound,
 )
 from core.content_state import InvalidTransitionError
-from core.enums import Channel, ContentStatus, PublishStatus
+from core.enums import (
+    Channel,
+    ConnectionStatus,
+    ContentKind,
+    ContentStatus,
+    PublishStatus,
+)
 from core.schemas import (
     ApproveRequest,
     BulkApproveFailure,
@@ -38,6 +47,7 @@ from core.schemas import (
     BulkApproveResult,
     BulkDismissRequest,
     BulkDismissResult,
+    ChannelOption,
     ContentItem,
     ContentItemUpdate,
     ContentItemVersion,
@@ -47,7 +57,7 @@ from core.schemas import (
     PublishJob,
     TokenQuota,
 )
-from domain.policies import rate_limits
+from domain.policies import channel_capabilities, rate_limits
 from domain.policies.quota import QuotaExceeded
 
 logger = logging.getLogger("havi.content")
@@ -94,6 +104,18 @@ async def create_content_job(
     Gửi header `Idempotency-Key` để bấm hai lần không tốn hai lần tiền LLM — cùng
     key trong cùng workspace luôn trả về job đầu tiên và không enqueue lần nữa.
     """
+    # Cưỡng chế luật nền tảng ở backend, không chỉ ẩn ô tick ở frontend: một client
+    # cũ hay một lần gọi API trực tiếp vẫn gửi được `channel=tiktok` cho bài chữ, và
+    # lỗi lúc đó chỉ lộ ra ở bước đăng — sau khi đã tốn tiền LLM sinh nháp.
+    #
+    # `/content/jobs` luôn là bài chữ; video đi qua `/video/posts`.
+    for channel in payload.target_channels or []:
+        reason = channel_capabilities.reject_reason(
+            channel=channel, kind=ContentKind.POST
+        )
+        if reason is not None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, reason)
+
     try:
         raw_inputs_data = [item.model_dump(mode="json") for item in payload.raw_inputs]
         if payload.target_channels:
@@ -224,6 +246,43 @@ async def retry_publish_job(
     except AlreadyRunning as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return PublishJob.model_validate(job)
+
+
+@router.get("/channels", response_model=list[ChannelOption])
+async def list_channel_options(
+    workspace_id: WorkspaceDep, session: DbSessionDep
+) -> list[ChannelOption]:
+    """Kênh chọn được khi soạn bài, kèm loại nội dung mỗi kênh nhận.
+
+    Trả **mọi kênh đang chạy**, không lọc theo `kind`: frontend lọc tại chỗ khi
+    người dùng đổi loại nội dung, nên đổi tab không phải chờ mạng.
+
+    Kênh chưa nối vẫn có trong danh sách với `connected: false` — ẩn đi thì người
+    dùng không biết là Havi hỗ trợ kênh đó và không biết phải đi nối.
+
+    Phải khai báo **trước** `/{content_id}`: FastAPI khớp route theo thứ tự, nên
+    nằm sau thì "channels" bị đọc như một UUID và trả 422.
+    """
+    connected = {
+        connection.platform
+        for connection in await ConnectionRepository(session).list_for_workspace(workspace_id)
+        if connection.status is ConnectionStatus.CONNECTED
+    }
+
+    options: list[ChannelOption] = []
+    for channel in Channel:
+        if channel not in channel_capabilities.LIVE_CHANNELS:
+            continue
+        kinds = sorted(channel_capabilities.CHANNEL_ACCEPTS[channel], key=lambda k: k.value)
+        options.append(
+            ChannelOption(
+                channel=channel,
+                label=channel_capabilities.CHANNEL_LABELS[channel],
+                kinds=kinds,
+                connected=CHANNEL_TO_PLATFORM.get(channel) in connected,
+            )
+        )
+    return options
 
 
 @router.get("/{content_id}", response_model=ContentItem)

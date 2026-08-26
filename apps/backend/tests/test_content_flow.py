@@ -285,7 +285,10 @@ async def test_chon_bai_viet_thi_engine_khong_tao_draft_video(
             "/content/jobs",
             json={
                 "raw_inputs": [{"kind": "text", "text": "Ưu đãi cuối tuần"}],
-                "target_channels": ["facebook_page", "google_business"],
+                # Chỉ kênh ĐANG MỞ và nhận được bài chữ. `google_business` từng
+                # nằm ở đây nhưng nó chưa được nền tảng duyệt, nên API từ chối —
+                # xem `domain/policies/channel_capabilities.py`.
+                "target_channels": ["facebook_page"],
             },
             headers=_headers(token_pair),
         )
@@ -296,36 +299,37 @@ async def test_chon_bai_viet_thi_engine_khong_tao_draft_video(
         workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
     )
 
-    assert {item.channel.value for item in result.items} == {
-        "facebook_page",
-        "google_business",
-    }
+    assert {item.channel.value for item in result.items} == {"facebook_page"}
 
 
-async def test_draft_video_khong_duoc_gan_clip_mau_gia_san_sang(
+async def test_bai_chu_khong_gui_duoc_toi_kenh_chi_nhan_video(
     client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
 ):
+    """Chặn ngay lúc tạo job, **trước** khi tốn tiền LLM.
+
+    Bản trước để job chạy rồi kiểm rằng engine không sinh draft video sai — tức là
+    đã trả tiền cho một lượt gọi model mà kết quả chắc chắn không dùng được. Giờ
+    luật nền tảng cưỡng chế ở API: TikTok, YouTube và Reels không nhận bài chữ, nên
+    yêu cầu đó bị từ chối với câu nói rõ vì sao.
+
+    Cưỡng chế ở backend chứ không chỉ ẩn ô tick: một client cũ hay một lần gọi API
+    trực tiếp vẫn gửi được tổ hợp sai.
+    """
     token_pair = await _onboard(client, email="video-no-fake-clip@havi.vn")
-    job = (
-        await client.post(
+
+    for channel in ("tiktok", "youtube", "reels"):
+        response = await client.post(
             "/content/jobs",
             json={
                 "raw_inputs": [{"kind": "text", "text": "Ưu đãi cuối tuần"}],
-                "target_channels": ["tiktok", "youtube", "reels"],
+                "target_channels": [channel],
             },
             headers=_headers(token_pair),
         )
-    ).json()
-
-    engine = _engine(db_session, FakeProvider(response_text=MIXED_OUTPUT))
-    result = await engine.generate_drafts(
-        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
-    )
-
-    assert [item.channel.value for item in result.items] == ["tiktok"]
-    assert result.items[0].media_url is None, (
-        "kịch bản chưa được dựng không được gắn /test_tiktok.mp4 để giả trạng thái sẵn sàng"
-    )
+        assert response.status_code == 422, f"{channel}: {response.text}"
+        detail = response.json()["detail"]
+        # Câu lỗi phải nói được PHẢI LÀM GÌ, không chỉ "không hợp lệ".
+        assert "video" in detail.lower() or "chưa mở" in detail
 
 
 async def test_full_auto_thi_draft_vao_thang_scheduled(
