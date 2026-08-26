@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { getJob, type ContentJob, type JobStatus } from "./content-creation.api";
 
 /** Poll thưa dần: draft p95 dưới 90 giây (ROADMAP §9) nên vài giây đầu đáng
@@ -33,6 +34,7 @@ export function useJobPolling(
   initialJobId: string | null,
   onReady: () => void,
 ): JobPollState {
+  const { t } = useLanguage();
   const [jobIds, setJobIds] = useState<string[]>(() => (initialJobId ? [initialJobId] : []));
   const [prevInitialJobId, setPrevInitialJobId] = useState<string | null>(initialJobId);
   const [state, setState] = useState<{
@@ -122,7 +124,7 @@ export function useJobPolling(
           setState({
             status: lastStatus,
             job: lastJob,
-            error: "Havi viết lâu hơn thường lệ. Bạn tải lại trang để xem đã xong chưa nhé.",
+            error: t("Havi viết lâu hơn thường lệ. Bạn tải lại trang để xem đã xong chưa nhé."),
           });
           return;
         }
@@ -136,7 +138,7 @@ export function useJobPolling(
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [jobIds]);
+  }, [jobIds, t]);
 
   return {
     status: state.status,

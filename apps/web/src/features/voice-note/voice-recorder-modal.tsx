@@ -71,7 +71,7 @@ function VoiceRecorderModalContent({
         }
       } catch (err: unknown) {
         const errorObj = err as { message?: string };
-        setTranscribeError(errorObj?.message || "Lỗi xử lý âm thanh");
+        setTranscribeError(errorObj?.message || t("Lỗi xử lý âm thanh"));
       } finally {
         setIsTranscribing(false);
       }
@@ -135,7 +135,7 @@ function VoiceRecorderModalContent({
             className={`${styles.micButton} ${isRecording ? styles.micButtonRecording : ""}`}
             onClick={handleToggleRecording}
             disabled={isTranscribing || isGenerating}
-            aria-label={isRecording ? "Dừng ghi âm" : "Bắt đầu ghi âm"}
+            aria-label={t(isRecording ? "Dừng ghi âm" : "Bắt đầu ghi âm")}
             data-testid="mic-toggle-btn"
           >
             {isRecording ? "⏹️" : "🎙️"}
@@ -144,12 +144,12 @@ function VoiceRecorderModalContent({
 
         <div className={`${styles.timer} ${isRecording ? styles.timerRecording : ""}`}>
           {isTranscribing
-            ? "⚡ Đang nhận diện giọng nói…"
+            ? t("⚡ Đang nhận diện giọng nói…")
             : isRecording
-            ? `🔴 Đang thu âm: ${formatTimer(recordingTime)}`
+            ? t("🔴 Đang thu âm: {value}", { value: formatTimer(recordingTime) })
             : hasText
-            ? "✅ Đã thu âm xong"
-            : "Chạm vào Micro để bắt đầu nói"}
+            ? t("✅ Đã thu âm xong")
+            : t("Chạm vào Micro để bắt đầu nói")}
         </div>
 
         <div className={styles.transcriptBox}>
@@ -161,8 +161,8 @@ function VoiceRecorderModalContent({
           ) : (
             <p className={styles.transcriptPlaceholder}>
               {isRecording
-                ? "Đang lắng nghe…"
-                : "Chưa có nội dung. Bạn chạm nút Micro ở trên để nói nhé."}
+                ? t("Đang lắng nghe…")
+                : t("Chưa có nội dung. Bạn chạm nút Micro ở trên để nói nhé.")}
             </p>
           )}
         </div>
@@ -184,7 +184,7 @@ function VoiceRecorderModalContent({
               onClick={handleGenerateDirect}
               data-testid="btn-voice-generate"
             >
-              {isGenerating ? "⚡ Đang viết bài…" : "Để Havi viết bài từ lời này"}
+              {t(isGenerating ? "⚡ Đang viết bài…" : "Để Havi viết bài từ lời này")}
             </Button>
             <Button
               variant="outline"

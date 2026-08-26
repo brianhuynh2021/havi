@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 import { fetchResponseMetrics, type ResponseMetrics } from "@/features/queue/queue.api";
 import {
   fetchReports,
@@ -12,6 +12,7 @@ import {
 } from "./reports.api";
 import styles from "./reports.module.css";
 
+// i18n-data: nhãn kênh, `t()` dịch ở chỗ render
 const channelLabels: Record<string, string> = {
   facebook_page: "Facebook Page",
   google_business: "Google Maps SEO",
@@ -23,13 +24,13 @@ const channelLabels: Record<string, string> = {
 };
 
 /** "8 phút", "3 giờ 20 phút" — giây thô không nói được gì cho người đọc. */
-function formatWait(seconds: number): string {
-  if (seconds < 60) return `${seconds} giây`;
+function formatWait(seconds: number, t: Translate): string {
+  if (seconds < 60) return t("{seconds} giây", { seconds: seconds });
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} phút`;
+  if (minutes < 60) return t("{minutes} phút", { minutes: minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+  return rest ? t("{hours} giờ {rest} phút", { hours: hours, rest: rest }) : t("{hours} giờ", { hours: hours });
 }
 
 function attributionPercent(item: ChannelAttribution): number {
@@ -75,22 +76,22 @@ const { t } = useLanguage();
   function getStatCards(reportsData: ReportsData) {
     return [
       {
-        label: t("dashboard.publishedPosts", "Bài đã đăng"),
+        label: t("Bài đã đăng"),
         value: String(reportsData.summary.published_posts),
         change: reportsData.summary.change_vs_previous_period?.published_posts || 0,
       },
       {
-        label: t({ vi: "Hội thoại đã nhận", en: "Inbox items received" }),
+        label: t("Hội thoại đã nhận"),
         value: String(reportsData.summary.inbox_items),
         change: reportsData.summary.change_vs_previous_period?.inbox_items || 0,
       },
       {
-        label: t({ vi: "Phản hồi đã gửi", en: "Replies sent" }),
+        label: t("Phản hồi đã gửi"),
         value: String(reportsData.summary.replies_sent),
         change: reportsData.summary.change_vs_previous_period?.replies_sent || 0,
       },
       {
-        label: t({ vi: "Lượt đăng thất bại", en: "Failed publishes" }),
+        label: t("Lượt đăng thất bại"),
         value: String(reportsData.summary.failed_posts),
         change: reportsData.summary.change_vs_previous_period?.failed_posts || 0,
       },
@@ -105,23 +106,23 @@ const { t } = useLanguage();
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("reports.title", "Báo Cáo & Phân Tích")}</h1>
+        <h1 className={styles.title}>{t("Báo cáo")}</h1>
         <p className={styles.subtitle}>
-          {t("reports.subtitle", "Theo dõi tình trạng xuất bản và hội thoại theo dữ liệu nền tảng")}
+          {t("Theo dõi tình trạng xuất bản và hội thoại")}
         </p>
       </header>
 
       {error ? (
         <ErrorState
-          title={error}
+          title={t(error)}
           action={
             <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-              {t({ vi: "Thử lại", en: "Retry" })}
+              {t("Thử lại")}
             </Button>
           }
         />
       ) : loading || !data ? (
-        <LoadingState title={t({ vi: "Đang tải báo cáo…", en: "Loading reports…" })} />
+        <LoadingState title={t("Đang tải báo cáo…")} />
       ) : (
         <>
           {/*
@@ -174,11 +175,11 @@ const { t } = useLanguage();
               <div className={styles.statCard}>
                 <p className={styles.statLabel}>{t("Thời gian trả lời khách")}</p>
                 <p className={styles.statValue}>
-                  {loss.replied_count > 0 ? formatWait(loss.avg_response_seconds) : "—"}
+                  {loss.replied_count > 0 ? formatWait(loss.avg_response_seconds, t) : "—"}
                 </p>
                 <p className={styles.statDetail}>
                   {loss.replied_count > 0
-                    ? `${loss.replied_count} tin đã trả lời · chậm nhất ${formatWait(loss.p95_response_seconds)}`
+                    ? t("{replied_count} tin đã trả lời · chậm nhất {value}", { replied_count: loss.replied_count, value: formatWait(loss.p95_response_seconds, t) })
                     : t("Chưa có tin nào được trả lời trong kỳ")}
                 </p>
               </div>
@@ -199,7 +200,7 @@ const { t } = useLanguage();
             </section>
           ) : null}
 
-          <section className={styles.statsGrid} aria-label={t("dashboard.quickStats", "Thống kê nhanh")}>
+          <section className={styles.statsGrid} aria-label={t("Thống kê nhanh")}>
             {getStatCards(data).map((card) => {
               const isPositive = card.change > 0;
               const isZero = card.change === 0;
@@ -220,7 +221,7 @@ const { t } = useLanguage();
           </section>
 
           <section className={styles.chartCard} aria-label={t("Bài đăng theo tuần")}>
-            <h2 className={styles.sectionTitle}>{t({ vi: "Bài đăng theo tuần", en: "Weekly Posts" })}</h2>
+            <h2 className={styles.sectionTitle}>{t("Bài đăng theo tuần")}</h2>
             <div className={styles.chartBars}>
               {data.timeseries.points.map((point) => (
                 <div key={point.period} className={styles.chartColumn}>
@@ -237,11 +238,11 @@ const { t } = useLanguage();
           </section>
 
           <section className={styles.attributionCard} aria-label={t("Bài đã đăng theo kênh")}>
-            <h2 className={styles.sectionTitle}>{t({ vi: "Bài đã đăng theo kênh", en: "Posts by Channel" })}</h2>
+            <h2 className={styles.sectionTitle}>{t("Bài đã đăng theo kênh")}</h2>
             {data.attribution.length === 0 ? (
               <EmptyState
-                title={t({ vi: "Chưa có bài đã đăng", en: "No published posts yet" })}
-                body={t({ vi: "Khi đăng bài thành công, tỷ trọng theo kênh sẽ hiện ở đây.", en: "Channel distribution will appear when posts are published." })}
+                title={t("Chưa có bài đã đăng")}
+                body={t("Khi đăng bài thành công, tỷ trọng theo kênh sẽ hiện ở đây.")}
               />
             ) : (
               <div className={styles.attributionList}>
@@ -268,12 +269,12 @@ const { t } = useLanguage();
 
           <section className={styles.topPostsCard} aria-label={t("Bài viết Facebook gần đây")}>
             <h2 className={styles.sectionTitle}>
-              {t({ vi: "📘 Bài Viết Fanpage Facebook Đã Đăng Gần Đây", en: "Recent Published Facebook Posts" })}
+              {t("📘 Bài Viết Fanpage Facebook Đã Đăng Gần Đây")}
             </h2>
             {!data.topPosts || data.topPosts.length === 0 ? (
               <EmptyState
-                title={t({ vi: "Chưa có bài đăng Facebook", en: "No Facebook posts yet" })}
-                body={t({ vi: "Các bài viết Fanpage sau khi được bạn duyệt và đăng thành công sẽ xuất hiện tại đây.", en: "Posts approved and published to your Fanpage will appear here." })}
+                title={t("Chưa có bài đăng Facebook")}
+                body={t("Các bài viết Fanpage sau khi được bạn duyệt và đăng thành công sẽ xuất hiện tại đây.")}
               />
             ) : (
               <div className={styles.topPostsList}>
@@ -298,12 +299,12 @@ const { t } = useLanguage();
 
           <section className={styles.failedPostsCard} aria-label={t("Bài đăng gặp sự cố")}>
             <h2 className={styles.sectionTitle}>
-              {t({ vi: "🚨 Bài Đăng Gặp Sự Cố", en: "Failed Posts" })}
+              {t("🚨 Bài Đăng Gặp Sự Cố")}
             </h2>
             {!data.failedPosts || data.failedPosts.length === 0 ? (
               <EmptyState
-                title={t({ vi: "Không có sự cố nào", en: "No failures" })}
-                body={t({ vi: "Tuyệt vời! Không có bài viết nào bị lỗi trong kỳ báo cáo này.", en: "Great! No posts failed during this reporting period." })}
+                title={t("Không có sự cố nào")}
+                body={t("Tuyệt vời! Không có bài viết nào bị lỗi trong kỳ báo cáo này.")}
               />
             ) : (
               <div className={styles.failedPostsList}>
@@ -321,8 +322,8 @@ const { t } = useLanguage();
                     </div>
                     <p className={styles.failedPostText}>{post.caption}</p>
                     <div className={styles.failedPostReason}>
-                      <strong>{t({ vi: "Lý do: ", en: "Reason: " })}</strong>
-                      {post.failure_detail || t({ vi: "Không rõ nguyên nhân.", en: "Unknown reason." })}
+                      <strong>{t("Lý do: ")}</strong>
+                      {post.failure_detail || t("Không rõ nguyên nhân.")}
                     </div>
                   </div>
                 ))}

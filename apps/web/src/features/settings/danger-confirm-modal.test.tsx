@@ -16,7 +16,7 @@ describe("DangerConfirmModal", () => {
       />,
     );
 
-    expect(screen.getByText(/Xác nhận xoá tiệm "Spa Lan Anh"/i)).toBeInTheDocument();
+    expect(screen.getByText(/Xác nhận xoá tiệm “Spa Lan Anh”/i)).toBeInTheDocument();
     expect(screen.getByText(/Bạn sẽ mất các quyền lợi sau/i)).toBeInTheDocument();
     expect(screen.getByText(/Mất toàn bộ cấu hình giọng văn/i)).toBeInTheDocument();
     expect(screen.getByText(/0984 883 750/i)).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("DangerConfirmModal", () => {
     const deleteBtn = screen.getByRole("button", { name: /Xác nhận xoá vĩnh viễn/i });
     expect(deleteBtn).toBeDisabled();
 
-    const input = screen.getByPlaceholderText(/Gõ "XOATIEM"/i);
+    const input = screen.getByPlaceholderText(/Gõ “XOATIEM”/i);
     await user.type(input, "sai keyword");
     expect(deleteBtn).toBeDisabled();
 

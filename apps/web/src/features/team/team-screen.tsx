@@ -79,7 +79,7 @@ export function TeamScreen() {
     }
     setError(null);
     setEmail("");
-    setNotice(`Đã thêm ${result.data.name} vào workspace.`);
+    setNotice(t("Đã thêm {name} vào workspace.", { name: result.data.name }));
     load();
   }
 
@@ -99,7 +99,7 @@ export function TeamScreen() {
       return;
     }
     setError(null);
-    setNotice(`Đã gỡ ${member.name}.`);
+    setNotice(t("Đã gỡ {name}.", { name: member.name }));
     load();
   }
 
@@ -113,7 +113,7 @@ export function TeamScreen() {
       return;
     }
     setError(null);
-    setNotice(`Đã đổi vai trò của ${member.name} thành ${ROLE_LABELS[newRole]?.name ?? newRole}.`);
+    setNotice(t("Đã đổi vai trò của {name} thành {value}.", { name: member.name, value: ROLE_LABELS[newRole]?.name ?? newRole }));
     load();
   }
 
@@ -126,7 +126,7 @@ export function TeamScreen() {
       return;
     }
     setError(null);
-    setNotice(`Đã gửi lại lời mời cho ${member.name}.`);
+    setNotice(t("Đã gửi lại lời mời cho {name}.", { name: member.name }));
   }
 
   return (
@@ -141,15 +141,15 @@ export function TeamScreen() {
       {seats ? (
         <p className={seats.used >= seats.limit ? styles.seatsFull : styles.seatsNote}>
           {seats.used >= seats.limit
-            ? `Đã dùng hết ${seats.limit} chỗ của gói hiện tại. Nâng gói ở mục Gói cước để thêm người.`
-            : `${seats.used}/${seats.limit} chỗ của gói hiện tại`}
+            ? t("Đã dùng hết {limit} chỗ của gói hiện tại. Nâng gói ở mục Gói cước để thêm người.", { limit: seats.limit })
+            : t("{used}/{limit} chỗ của gói hiện tại", { used: seats.used, limit: seats.limit })}
         </p>
       ) : null}
 
-      {error ? <ErrorState title={error} /> : null}
+      {error ? <ErrorState title={t(error)} /> : null}
       {notice ? (
         <p className={styles.notice} role="status">
-          {notice}
+          {t(notice)}
         </p>
       ) : null}
 
@@ -187,7 +187,7 @@ export function TeamScreen() {
             ))}
           </select>
           <Button variant="primary" onClick={onInvite} disabled={inviting || !email.trim()}>
-            {inviting ? "Đang thêm…" : "Thêm"}
+            {t(inviting ? "Đang thêm…" : "Thêm")}
           </Button>
         </div>
         <p className={styles.roleHint}>{ROLE_LABELS[role]?.can}</p>
@@ -256,10 +256,10 @@ export function TeamScreen() {
         type="custom"
         isDeleting={busyId === removingMember?.user_id}
         customKeyword="GOTHANHVIEN"
-        customTitle={`Xác nhận gỡ ${removingMember?.name || "thành viên"}`}
+        customTitle={t("Xác nhận gỡ {value}", { value: removingMember?.name || "thành viên" })}
         customLostItems={[
-          `${removingMember?.name || "Người này"} sẽ bị mất quyền truy cập vào workspace này ngay lập tức.`,
-          "Bạn sẽ phải mời lại từ đầu nếu đổi ý.",
+          t("{value} sẽ bị mất quyền truy cập vào workspace này ngay lập tức.", { value: removingMember?.name || "Người này" }),
+          t("Bạn sẽ phải mời lại từ đầu nếu đổi ý."),
         ]}
         onClose={() => setRemovingMember(null)}
         onConfirm={onRemove}

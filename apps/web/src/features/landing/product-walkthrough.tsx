@@ -27,6 +27,7 @@ type Scene = {
   caption: string;
 };
 
+// i18n-data: nội dung từng bước, `t()` dịch ở chỗ render
 const SCENES: Scene[] = [
   {
     id: "brief",
@@ -108,7 +109,7 @@ export function ProductWalkthrough() {
 
       <figcaption className={styles.caption}>
         <p className={styles.captionText} aria-live="polite">
-          {SCENES[active].caption}
+          {t(SCENES[active].caption)}
         </p>
 
         <div className={styles.steps} role="tablist" aria-label={t("Các bước trong luồng")}>
@@ -122,7 +123,7 @@ export function ProductWalkthrough() {
               onClick={() => goTo(index)}
             >
               <span className={styles.stepNum}>{index + 1}</span>
-              <span className={styles.stepLabel}>{scene.label}</span>
+              <span className={styles.stepLabel}>{t(scene.label)}</span>
               {/* Thanh tiến trình chỉ chạy ở bước đang mở, và dừng khi rê chuột
                   — người đang đọc không bị cảnh nhảy mất. */}
               {index === active && !paused ? (

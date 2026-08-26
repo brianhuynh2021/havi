@@ -24,6 +24,7 @@ import {
 import styles from "./organizations.module.css";
 
 /** Khớp `Industry` ở backend — nhãn tiếng Việt, giá trị là enum thật. */
+// i18n-data: nhãn ngành, `t()` dịch ở chỗ render — `value` là enum backend, không dịch
 const INDUSTRIES: Array<{ value: Industry; label: string }> = [
   { value: "spa", label: "Spa / Làm đẹp" },
   { value: "food_beverage", label: "Ăn uống / Cà phê" },
@@ -83,7 +84,9 @@ export function BrandsScreen() {
     setError(null);
     setName("");
     setNotice(
-      `Đã mở "${result.data.name}". Đổi sang thương hiệu đó ở góc trên bên trái để bắt đầu.`,
+      t("Đã mở “{name}”. Đổi sang thương hiệu đó ở góc trên bên trái để bắt đầu.", {
+        name: result.data.name,
+      }),
     );
     load();
   }
@@ -99,10 +102,10 @@ export function BrandsScreen() {
         )}</p>
       </header>
 
-      {error ? <ErrorState title={error} /> : null}
+      {error ? <ErrorState title={t(error)} /> : null}
       {notice ? (
         <p className={styles.notice} role="status">
-          {notice}
+          {t(notice)}
         </p>
       ) : null}
 
@@ -137,7 +140,7 @@ export function BrandsScreen() {
               >
                 {INDUSTRIES.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </option>
                 ))}
               </select>
@@ -146,7 +149,7 @@ export function BrandsScreen() {
                 onClick={() => onCreate(entry.organization.id)}
                 disabled={creating || !name.trim()}
               >
-                {creating ? "Đang mở…" : "Mở thương hiệu"}
+                {t(creating ? "Đang mở…" : "Mở thương hiệu")}
               </Button>
             </div>
           ) : (

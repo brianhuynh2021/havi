@@ -112,8 +112,8 @@ export function PwaRegistrar() {
         <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{t("Cài đặt Havi lên điện thoại")}</div>
         <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
           {showIosPrompt && !installPrompt
-            ? "Bấm nút Chia sẻ 📤 rồi chọn 'Thêm vào MH chính'"
-            : "Mở toàn màn hình, chạy nhanh mượt mà"}
+            ? t("Bấm nút Chia sẻ 📤 rồi chọn 'Thêm vào MH chính'")
+            : t("Mở toàn màn hình, chạy nhanh mượt mà")}
         </div>
       </div>
       {installPrompt ? (

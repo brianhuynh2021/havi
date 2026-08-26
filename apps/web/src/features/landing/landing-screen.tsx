@@ -26,6 +26,9 @@ export function LandingScreen() {
     company: "",
     name: "",
     phone: "",
+    // i18n-exempt: giá trị gửi lên form, không phải chữ hiện ra — phải khớp
+    // đúng `value` của `<option>` bên dưới. Dịch nó là làm lựa chọn mặc định
+    // không còn khớp gì cả.
     branches: "5-10 chi nhánh",
     notes: "",
   });
@@ -54,16 +57,16 @@ export function LandingScreen() {
 
           <nav className={styles.nav}>
             <a href="#demo-studio" className={styles.navLink}>
-              {lang === "VN" ? "Cách hoạt động" : "How it works"}
+              {t("Cách hoạt động")}
             </a>
             <a href="#khach-hang" className={styles.navLink}>
-              {lang === "VN" ? "Trạng thái pilot" : "Pilot status"}
+              {t("Trạng thái pilot")}
             </a>
             <a href="#nguyen-tac" className={styles.navLink}>
-              {lang === "VN" ? "Nguyên tắc an toàn" : "Principles"}
+              {t("Nguyên tắc an toàn")}
             </a>
             <a href="#faq" className={styles.navLink}>
-              {lang === "VN" ? "Hỏi đáp" : "FAQ"}
+              {t("Hỏi đáp")}
             </a>
           </nav>
 
@@ -71,15 +74,15 @@ export function LandingScreen() {
             <LanguageSwitcher />
             {isLoggedIn ? (
               <Link href="/app" className={styles.ctaButton}>
-                {lang === "VN" ? "Vào ứng dụng →" : "Go to App →"}
+                {t("Vào ứng dụng →")}
               </Link>
             ) : (
               <>
                 <Link href="/login" className={styles.loginBtn}>
-                  {lang === "VN" ? "Đăng nhập" : "Login"}
+                  {t("Đăng nhập")}
                 </Link>
                 <Link href="/signup" className={styles.ctaButton}>
-                  {lang === "VN" ? "Dùng thử 7 ngày" : "Get Started"}
+                  {t("Dùng thử 7 ngày")}
                 </Link>
               </>
             )}
@@ -108,22 +111,20 @@ export function LandingScreen() {
             )}
           </h1>
           <p className={styles.heroBody}>
-            {lang === "VN"
-              ? "Một nơi để quản kênh, nội dung, lịch đăng, hội thoại và thành viên. Bạn duyệt trước khi đăng, và Havi chỉ báo thành công sau khi đọc lại nền tảng để xác nhận."
-              : "One place for channels, content, schedule, conversations, and members. You approve before anything publishes, and Havi reports success only after reading the platform back."}
+            {t("Một nơi để quản kênh, nội dung, lịch đăng, hội thoại và thành viên. Bạn duyệt trước khi đăng, và Havi chỉ báo thành công sau khi đọc lại nền tảng để xác nhận.")}
           </p>
 
           <div className={styles.heroActions}>
             {isLoggedIn ? (
               <Link href="/app" className={styles.heroPrimaryBtn}>
-                {lang === "VN" ? "Vào không gian làm việc của bạn" : "Open Your Workspace"}
+                {t("Vào không gian làm việc của bạn")}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </Link>
             ) : (
               <Link href="/signup" className={styles.heroPrimaryBtn}>
-                {lang === "VN" ? "Bắt đầu dùng thử 7 ngày miễn phí" : "Start 7-Day Free Trial"}
+                {t("Bắt đầu dùng thử 7 ngày miễn phí")}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -139,7 +140,7 @@ export function LandingScreen() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" strokeWidth="2.5">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
-              {lang === "VN" ? "Xem demo bên dưới" : "See the demo below"}
+              {t("Xem demo bên dưới")}
             </a>
           </div>
 
@@ -170,9 +171,9 @@ export function LandingScreen() {
                 <div className={styles.statItem}>
                   <div className={styles.statVal}>
                     <span className={styles.statIcon}>{st.icon}</span>
-                    <span>{st.v}</span>
+                    <span>{t(st.v)}</span>
                   </div>
-                  <div className={styles.statLbl}>{st.l}</div>
+                  <div className={styles.statLbl}>{t(st.l)}</div>
                 </div>
               </div>
             ))}
@@ -244,8 +245,8 @@ export function LandingScreen() {
               <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(16,185,129,0.15)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "18px", marginBottom: "16px" }}>
                 ✓
               </div>
-              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "0 0 10px" }}>{pr.title}</h3>
-              <p style={{ fontSize: "14.5px", color: "#b8c0d0", lineHeight: 1.6, margin: 0 }}>{pr.desc}</p>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#fff", margin: "0 0 10px" }}>{t(pr.title)}</h3>
+              <p style={{ fontSize: "14.5px", color: "#b8c0d0", lineHeight: 1.6, margin: 0 }}>{t(pr.desc)}</p>
             </div>
           ))}
         </div>
@@ -270,10 +271,10 @@ export function LandingScreen() {
                   onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
                   aria-expanded={isOpen}
                 >
-                  <span>{faq.question}</span>
+                  <span>{t(faq.question)}</span>
                   <span className={styles.faqToggleIcon}>{isOpen ? "−" : "+"}</span>
                 </button>
-                {isOpen && <div className={styles.faqAnswer}>{faq.answer}</div>}
+                {isOpen && <div className={styles.faqAnswer}>{t(faq.answer)}</div>}
               </div>
             );
           })}
@@ -439,7 +440,19 @@ export function LandingScreen() {
               <div className={styles.b2bSuccessAlert}>
                 <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎉</div>
                 <h3 className={styles.b2bSuccessTitle}>{t("Gửi Yêu Cầu Thành Công!")}</h3>
-                <p className={styles.b2bSuccessDesc}>{t("Chuyên viên giải pháp Havi Enterprise sẽ liên hệ lại với")}<strong>{b2bForm.name || "Quý Doanh Nghiệp"}</strong>{t("qua số điện thoại/Zalo")}<strong>{b2bForm.phone || "của bạn"}</strong>{t("trong vòng 15 phút.")}</p>
+                <p className={styles.b2bSuccessDesc}>
+                  {/* Một câu, hai ô chèn — không phải năm mảnh xen thẻ <strong>.
+                      Bản trước bị chẻ ra nên tiếng Anh không thể đặt lại trật tự
+                      từ. Đổi lại là mất phần in đậm ở tên và số; giữ được câu
+                      dịch đúng thì đáng hơn giữ được nét đậm. */}
+                  {t(
+                    "Chuyên viên giải pháp Havi Enterprise sẽ liên hệ lại với {name} qua số điện thoại/Zalo {phone} trong vòng 15 phút.",
+                    {
+                      name: b2bForm.name || t("Quý Doanh Nghiệp"),
+                      phone: b2bForm.phone || t("của bạn"),
+                    },
+                  )}
+                </p>
                 <div style={{ marginTop: "18px" }}>
                   <button
                     type="button"

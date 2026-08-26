@@ -8,7 +8,7 @@
  * việc soạn bài nằm ở mục Nội dung.
  */
 
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -16,6 +16,7 @@ import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
 import { deleteMedia, listMedia, type MediaAsset, type MediaType } from "./media.api";
 import styles from "./media.module.css";
 
+// i18n-data: nhãn bộ lọc thư viện, `t()` dịch ở chỗ render
 const FILTERS: Array<{ key: "all" | MediaType; label: string }> = [
   { key: "all", label: "Tất cả" },
   { key: "image", label: "Ảnh" },
@@ -34,20 +35,24 @@ function formatSize(bytes: number | null | undefined): string | null {
  * "720:1648" không cho biết dọc hay ngang; "dọc 20.6:9" thì có. Khớp với
  * `describe_shape` ở `domain/policies/video_constraints.py`.
  */
-function describeShape(width?: number | null, height?: number | null): string | null {
+function describeShape(
+  width: number | null | undefined,
+  height: number | null | undefined,
+  t: Translate,
+): string | null {
   if (!width || !height) return null;
   const ratio = width / height;
-  if (ratio < 1) return `dọc ${+(((1 / ratio) * 9).toFixed(1))}:9`;
-  if (ratio === 1) return "vuông 1:1";
-  return `ngang ${+((ratio * 9).toFixed(1))}:9`;
+  if (ratio < 1) return t("dọc {value}:9", { value: +(((1 / ratio) * 9).toFixed(1)) });
+  if (ratio === 1) return t("vuông 1:1");
+  return t("ngang {value}:9", { value: +(ratio * 9).toFixed(1) });
 }
 
-function describeAsset(asset: MediaAsset): string {
+function describeAsset(asset: MediaAsset, t: Translate): string {
   const parts: string[] = [];
-  const shape = describeShape(asset.width, asset.height);
+  const shape = describeShape(asset.width, asset.height, t);
   if (shape) parts.push(shape);
   if (typeof asset.duration_seconds === "number") {
-    parts.push(`${Math.round(asset.duration_seconds)} giây`);
+    parts.push(t("{value} giây", { value: Math.round(asset.duration_seconds) }));
   }
   const size = formatSize(asset.size_bytes);
   if (size) parts.push(size);
@@ -119,7 +124,7 @@ export function MediaScreen() {
             className={`${styles.filterChip} ${filter === item.key ? styles.filterChipActive : ""}`}
             onClick={() => setFilter(item.key)}
           >
-            {item.label}
+            {t(item.label)}
           </button>
         ))}
         {!loading && !error ? (
@@ -128,7 +133,7 @@ export function MediaScreen() {
       </div>
 
       {error ? (
-        <ErrorState title={error} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />
+        <ErrorState title={t(error)} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />
       ) : loading ? (
         <LoadingState title={t("Đang tải thư viện…")} />
       ) : assets.length === 0 ? (
@@ -157,20 +162,20 @@ export function MediaScreen() {
                   <img className={styles.thumb} src={asset.url} alt="" loading="lazy" />
                 )}
                 <span className={styles.typeTag}>
-                  {asset.type === "video" ? "Video" : "Ảnh"}
+                  {t(asset.type === "video" ? "Video" : "Ảnh")}
                 </span>
               </div>
 
               <p className={styles.filename} title={asset.filename}>
                 {asset.filename}
               </p>
-              <p className={styles.meta}>{describeAsset(asset) || "—"}</p>
+              <p className={styles.meta}>{describeAsset(asset, t) || "—"}</p>
               
               <button 
                 type="button"
                 className={styles.deleteButton}
                 onClick={() => setDeletingId(asset.id)}
-                aria-label={`Xoá ${asset.filename}`}
+                aria-label={t("Xoá {filename}", { filename: asset.filename })}
               >{t("Xoá")}</button>
             </li>
           ))}
@@ -184,8 +189,8 @@ export function MediaScreen() {
         customKeyword="XOA"
         customTitle={t("Xoá media khỏi thư viện")}
         customLostItems={[
-          "File này sẽ bị xóa vĩnh viễn khỏi hệ thống.",
-          "Nếu có bài viết (nháp) đang dùng file này, hình/video trong bài đó sẽ bị lỗi hiển thị.",
+          t("File này sẽ bị xóa vĩnh viễn khỏi hệ thống."),
+          t("Nếu có bài viết (nháp) đang dùng file này, hình/video trong bài đó sẽ bị lỗi hiển thị."),
         ]}
         onClose={() => setDeletingId(null)}
         onConfirm={handleDeleteConfirm}

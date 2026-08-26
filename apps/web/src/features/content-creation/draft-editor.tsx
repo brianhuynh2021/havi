@@ -78,17 +78,17 @@ export function DraftEditor({ item, onSaved, onClose }: Props) {
 
       {error ? (
         <p className={styles.editorError} role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : null}
 
       <div className={styles.editorActions}>
         <Button variant="primary" onClick={save} disabled={!dirty || saving}>
-          {saving ? "Đang lưu…" : "Lưu bản sửa"}
+          {t(saving ? "Đang lưu…" : "Lưu bản sửa")}
         </Button>
         <Button variant="outline" onClick={onClose}>{t("Đóng")}</Button>
         <Button variant="outline" onClick={toggleVersions}>
-          {versions ? "Ẩn lịch sử" : `Lịch sử (bản ${item.version_no})`}
+          {versions ? t("Ẩn lịch sử") : t("Lịch sử (bản {version_no})", { version_no: item.version_no })}
         </Button>
       </div>
 

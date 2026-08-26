@@ -1,3 +1,18 @@
+// i18n-data: hai cơ chế, mỗi cái cho một loại chuỗi.
+//
+// Câu **hằng** (`"Chưa tải được lịch, thử lại giúp bạn nhé."`) để nguyên tiếng
+// Việt: nó chính là khoá, và màn hình hiện nó bằng `t(error)` — tra động vẫn
+// đúng vì khoá là câu tiếng Việt. Bọc `t()` ngay tại hằng số cấp module sẽ
+// **đóng băng ngôn ngữ lúc import**, đổi ngôn ngữ sau đó không có tác dụng.
+//
+// Câu **có chèn giá trị** thì phải dịch tại lúc dựng, bằng `translateNow`: sau
+// khi đã ghép số vào thì không còn khoá nào để tra ở chỗ render nữa.
+//
+// Câu do backend trả về không có trong từ điển; `t()` giữ nguyên tiếng Việt.
+// Dùng `translateNow` thay hook: module này không phải component nên không gọi
+// `useLanguage()` được. Đặt bí danh `t` để chỉ có MỘT tên phải nhớ, và để
+// `scripts/i18n-audit.mjs` đếm được như mọi chỗ gọi khác.
+import { translateNow as t } from "@/lib/i18n/language-context";
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
 import type { components } from "@/lib/api-client/schema";
@@ -62,8 +77,8 @@ export async function uploadMedia(
         ok: false,
         message:
           ticket.response?.status === 415
-            ? `Havi chưa nhận được định dạng ${noun} này (${file.type || "không rõ"})`
-            : `Chưa tải được ${noun} lên, thử lại giúp bạn nhé.`,
+            ? t("Havi chưa nhận được định dạng {noun} này ({value})", { noun: noun, value: file.type || "không rõ" })
+            : t("Chưa tải được {noun} lên, thử lại giúp bạn nhé.", { noun: noun }),
       };
     }
     options.onProgress?.(20);
@@ -86,8 +101,8 @@ export async function uploadMedia(
         ok: false,
         message:
           uploaded.status === 400
-            ? `${noun === "clip" ? "Clip" : "Ảnh"} quá nặng hoặc sai định dạng — chọn ${noun} khác giúp bạn nhé.`
-            : `Tải ${noun} lên chưa xong, thử lại giúp bạn nhé.`,
+            ? t("{value} quá nặng hoặc sai định dạng — chọn {noun} khác giúp bạn nhé.", { value: noun === "clip" ? "Clip" : "Ảnh", noun: noun })
+            : t("Tải {noun} lên chưa xong, thử lại giúp bạn nhé.", { noun: noun }),
       };
     }
     options.onProgress?.(85);
@@ -101,7 +116,7 @@ export async function uploadMedia(
     if (completed.error || !completed.data) {
       return {
         ok: false,
-        message: `${noun === "clip" ? "Clip" : "Ảnh"} tải lên chưa hợp lệ, thử ${noun} khác nhé.`,
+        message: t("{value} tải lên chưa hợp lệ, thử {noun} khác nhé.", { value: noun === "clip" ? "Clip" : "Ảnh", noun: noun }),
       };
     }
     options.onProgress?.(100);
@@ -109,7 +124,7 @@ export async function uploadMedia(
     return { ok: true, data: completed.data };
   } catch (error) {
     if (isAbortError(error)) {
-      return { ok: false, message: `Đã huỷ tải ${noun}.` };
+      return { ok: false, message: t("Đã huỷ tải {noun}.", { noun: noun }) };
     }
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
@@ -171,7 +186,7 @@ export async function createJob(
     return {
       ok: false,
       message: errDetail
-        ? `Không kết nối được với Havi (${errDetail}). Kiểm tra kết nối mạng hoặc server giúp em nhé.`
+        ? t("Không kết nối được với Havi ({errDetail}). Kiểm tra kết nối mạng hoặc server giúp em nhé.", { errDetail: errDetail })
         : NETWORK_ERROR_MESSAGE,
     };
   }

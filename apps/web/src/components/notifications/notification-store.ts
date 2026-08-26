@@ -1,3 +1,4 @@
+// i18n-data: nội dung thông báo là dữ liệu trong store; component hiện nó gọi `t()`
 "use client";
 
 import { useEffect, useState } from "react";

@@ -1,3 +1,4 @@
+// i18n-exempt: nội dung Điều khoản và Chính sách bảo mật — xem lý do ở hai trang gọi nó
 /**
  * Nội dung Điều khoản và Chính sách bảo mật.
  *

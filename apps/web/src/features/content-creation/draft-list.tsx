@@ -115,7 +115,7 @@ export function DraftList({
                         onClick={() => onApproveSingle(item.id)}
                         disabled={busy}
                       >
-                        {publishNow ? "Duyệt & đăng ngay" : "Duyệt & xếp lịch"}
+                        {t(publishNow ? "Duyệt & đăng ngay" : "Duyệt & xếp lịch")}
                       </Button>
                     ) : null}
                     <button

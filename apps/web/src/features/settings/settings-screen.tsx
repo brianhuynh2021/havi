@@ -16,7 +16,7 @@ import {
   type Industry,
   type SettingsData,
 } from "./settings.api";
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 import { DangerConfirmModal, type DangerActionType } from "./danger-confirm-modal";
 import styles from "./settings-screen.module.css";
 
@@ -36,21 +36,21 @@ const EMPTY_FORM: FormState = {
   bannedClaimsText: "",
 };
 
-function getBannedClaimsPlaceholder(industry?: string): string {
+function getBannedClaimsPlaceholder(industry: string | undefined, t: Translate): string {
   const ind = (industry || "").toLowerCase();
   if (ind.includes("education") || ind.includes("giáo dục") || ind.includes("đào tạo")) {
-    return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết học xong lương nghìn đô\nbao đậu chứng chỉ 100% không cần học";
+    return t("Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết học xong lương nghìn đô\nbao đậu chứng chỉ 100% không cần học");
   }
   if (ind.includes("restaurant") || ind.includes("fnb") || ind.includes("ăn uống") || ind.includes("cà phê")) {
-    return "Mỗi dòng một câu cấm kỵ, ví dụ:\nquán ăn ngon số 1 Việt Nam\nchữa dứt điểm mọi cơn đói";
+    return t("Mỗi dòng một câu cấm kỵ, ví dụ:\nquán ăn ngon số 1 Việt Nam\nchữa dứt điểm mọi cơn đói");
   }
   if (ind.includes("clinic") || ind.includes("y tế") || ind.includes("phòng khám") || ind.includes("nha khoa")) {
-    return "Mỗi dòng một câu cấm kỵ, ví dụ:\nchữa khỏi dứt điểm 100%\nkhông bao giờ tái phát";
+    return t("Mỗi dòng một câu cấm kỵ, ví dụ:\nchữa khỏi dứt điểm 100%\nkhông bao giờ tái phát");
   }
   if (ind.includes("spa") || ind.includes("beauty") || ind.includes("làm đẹp") || ind.includes("salon")) {
-    return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo trị mụn dứt điểm 100%";
+    return t("Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết trắng da sau 1 lần\nđảm bảo trị mụn dứt điểm 100%");
   }
-  return "Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết hiệu quả 100% sau 1 ngày\nđảm bảo hoàn tiền vô điều kiện trọn đời";
+  return t("Mỗi dòng một câu cấm kỵ, ví dụ:\ncam kết hiệu quả 100% sau 1 ngày\nđảm bảo hoàn tiền vô điều kiện trọn đời");
 }
 
 function toFormState(data: SettingsData): FormState {
@@ -114,7 +114,7 @@ const { t } = useLanguage();
 
     const name = form.name.trim();
     if (name.length < 2) {
-      setError(t({ vi: "Tên tiệm cần ít nhất 2 ký tự.", en: "Business name must be at least 2 characters." }));
+      setError(t("Tên tiệm cần ít nhất 2 ký tự."));
       return;
     }
 
@@ -130,7 +130,7 @@ const { t } = useLanguage();
 
     if (result.ok) {
       setForm(toFormState(result.data));
-      setSuccess(t({ vi: "Đã lưu cài đặt giọng thương hiệu thành công.", en: "Settings updated successfully." }));
+      setSuccess(t("Đã lưu cài đặt giọng thương hiệu thành công."));
     } else {
       setError(result.message);
     }
@@ -169,9 +169,9 @@ const { t } = useLanguage();
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerBadge}>{t("⚙️ Thiết lập hệ thống")}</div>
-        <h1 className={styles.title}>{t("settings.title", "Cài Đặt Hệ Thống")}</h1>
+        <h1 className={styles.title}>{t("Cài đặt")}</h1>
         <p className={styles.subtitle}>
-          {t("settings.subtitle", "Quản lý hồ sơ thương hiệu, phong cách viết bài của AI và các kênh xuất bản")}
+          {t("Quản lý doanh nghiệp, tài khoản và kết nối kênh")}
         </p>
       </header>
 
@@ -186,13 +186,10 @@ const { t } = useLanguage();
           </div>
           <div className={styles.cardHeaderText}>
             <h2 className={styles.sectionTitle} id="brand-voice-title">
-              {t("settings.brandKitTab", "Bộ nhận diện thương hiệu")}
+              {t("Bộ nhận diện thương hiệu")}
             </h2>
             <p className={styles.sectionHint}>
-              {t({
-                vi: "Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi dùng thông tin này làm nền tảng khi AI sáng tạo nội dung.",
-                en: "Havi uses brand voice guidelines when generating drafts for your review.",
-              })}
+              {t("Nội dung đã duyệt vẫn là quyết định cuối cùng; Havi dùng thông tin này làm nền tảng khi AI sáng tạo nội dung.")}
             </p>
           </div>
         </div>
@@ -207,23 +204,23 @@ const { t } = useLanguage();
         */}
         {loadFailed ? (
           <div className={styles.loadFailed} role="alert">
-            <p className={styles.loadFailedText}>{error}</p>
+            <p className={styles.loadFailedText}>{t(error)}</p>
             <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
-              {t({ vi: "Thử lại", en: "Retry" })}
+              {t("Thử lại")}
             </Button>
           </div>
         ) : (
         <>
         {error ? (
           <p className={styles.alert} role="alert">
-            {error}
+            {t(error)}
           </p>
         ) : null}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.grid}>
             <label className={styles.field}>
-              <span className={styles.label}>{t("auth.businessName", "Tên doanh nghiệp / Cửa hàng")}</span>
+              <span className={styles.label}>{t("Tên doanh nghiệp / Cửa hàng")}</span>
               <Input
                 value={form.name}
                 disabled={loading || saving}
@@ -234,7 +231,7 @@ const { t } = useLanguage();
             </label>
 
             <label className={styles.field}>
-              <span className={styles.label}>{t({ vi: "Ngành nghề", en: "Industry" })}</span>
+              <span className={styles.label}>{t("Ngành nghề")}</span>
               <select
                 className={styles.select}
                 value={form.industry}
@@ -256,14 +253,11 @@ const { t } = useLanguage();
           </div>
 
           <label className={styles.field}>
-            <span className={styles.label}>{t({ vi: "Giọng văn của Havi", en: "Tone of Voice" })}</span>
+            <span className={styles.label}>{t("Giọng văn của Havi")}</span>
             <Textarea
               value={form.tone}
               disabled={loading || saving}
-              placeholder={t({
-                vi: "Ví dụ: thân thiện, gần gũi, ấm áp, xưng hô thân mật, ngắn gọn súc tích...",
-                en: "e.g., professional yet warm, concise and engaging...",
-              })}
+              placeholder={t("Ví dụ: thân thiện, gần gũi, ấm áp, xưng hô thân mật, ngắn gọn súc tích...")}
               onChange={(event) =>
                 setForm((current) => ({ ...current, tone: event.target.value }))
               }
@@ -275,7 +269,7 @@ const { t } = useLanguage();
             <Textarea
               value={form.bannedClaimsText}
               disabled={loading || saving}
-              placeholder={getBannedClaimsPlaceholder(form.industry)}
+              placeholder={getBannedClaimsPlaceholder(form.industry, t)}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
@@ -287,11 +281,11 @@ const { t } = useLanguage();
 
           <div className={styles.actions}>
             <Button type="submit" disabled={!canSave}>
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              {t(saving ? "Đang lưu..." : "Lưu thay đổi")}
             </Button>
             {loading ? <span className={styles.status}>{t("Đang tải...")}</span> : null}
             {success ? (
-              <span className={`${styles.status} ${styles.success}`}>{success}</span>
+              <span className={`${styles.status} ${styles.success}`}>{t(success)}</span>
             ) : null}
           </div>
         </form>
@@ -350,7 +344,7 @@ const { t } = useLanguage();
               disabled={loading || deletingWorkspace || deletingAccount}
               onClick={() => setDangerModal("workspace")}
             >
-              {deletingWorkspace ? "Đang xoá tiệm..." : "Xoá tiệm này"}
+              {t(deletingWorkspace ? "Đang xoá tiệm..." : "Xoá tiệm này")}
             </button>
           </div>
 
@@ -367,7 +361,7 @@ const { t } = useLanguage();
               disabled={loading || deletingWorkspace || deletingAccount}
               onClick={() => setDangerModal("account")}
             >
-              {deletingAccount ? "Đang xoá tài khoản..." : "Xoá tài khoản"}
+              {t(deletingAccount ? "Đang xoá tài khoản..." : "Xoá tài khoản")}
             </button>
           </div>
         </div>
@@ -379,7 +373,7 @@ const { t } = useLanguage();
           key={dangerModal}
           isOpen={Boolean(dangerModal)}
           type={dangerModal}
-          targetName={form.name || "tiệm này"}
+          targetName={form.name || undefined}
           isDeleting={dangerModal === "workspace" ? deletingWorkspace : deletingAccount}
           onClose={() => setDangerModal(null)}
           onConfirm={dangerModal === "workspace" ? handleConfirmDeleteWorkspace : handleConfirmDeleteAccount}

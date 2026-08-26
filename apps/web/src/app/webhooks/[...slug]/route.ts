@@ -1,3 +1,4 @@
+// i18n-exempt: chuỗi ở đây là thông điệp `console.error` cho người vận hành đọc trong log, không phải chữ trên giao diện
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(

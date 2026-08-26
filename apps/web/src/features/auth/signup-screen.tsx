@@ -23,15 +23,15 @@ export function SignupScreen() {
 
   async function submit() {
     if (!name.trim()) {
-      setError(t({ vi: "Nhập tên tiệm hoặc tên của bạn", en: "Please enter your name or business name" }));
+      setError(t("Nhập tên tiệm hoặc tên của bạn"));
       return;
     }
     if (!isValidEmail(email)) {
-      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp nhé", en: "Invalid email — please check again" }));
+      setError(t("Email chưa đúng — kiểm tra lại giúp nhé"));
       return;
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(t({ vi: `Mật khẩu cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` }));
+      setError(t("Mật khẩu cần ít nhất {n} ký tự", { n: MIN_PASSWORD_LENGTH }));
       return;
     }
     setError(null);
@@ -48,9 +48,9 @@ export function SignupScreen() {
 
   return (
     <>
-      <h1 className={styles.title}>{t("auth.registerTitle", "Tạo tài khoản Havi")}</h1>
+      <h1 className={styles.title}>{t("Tạo tài khoản Havi")}</h1>
       <p className={styles.subtitle}>
-        {t("auth.registerSubtitle", "Chỉ cần tên, email và mật khẩu — 30 giây là xong.")}
+        {t("Quản lý nội dung, lịch đăng và hội thoại đa kênh trong một nơi.")}
       </p>
 
       <form
@@ -62,13 +62,13 @@ export function SignupScreen() {
         }}
       >
         <label className={styles.field} htmlFor="signup-name">
-          <span className={styles.label}>{t("auth.fullName", "Họ và tên")}</span>
+          <span className={styles.label}>{t("Họ và tên")}</span>
           <Input
             id="signup-name"
             name="name"
             scale="large"
             autoComplete="name"
-            placeholder={t({ vi: "Ví dụ: Nguyễn Thu Hương", en: "e.g., Sarah Jenkins" })}
+            placeholder={t("Ví dụ: Nguyễn Thu Hương")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -76,7 +76,7 @@ export function SignupScreen() {
         </label>
 
         <label className={styles.field} htmlFor="signup-email">
-          <span className={styles.label}>{t("auth.email", "Email")}</span>
+          <span className={styles.label}>{t("Email")}</span>
           <Input
             id="signup-email"
             name="email"
@@ -92,14 +92,14 @@ export function SignupScreen() {
         </label>
 
         <label className={styles.field} htmlFor="signup-password">
-          <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
+          <span className={styles.label}>{t("Mật khẩu")}</span>
           <Input
             id="signup-password"
             name="password"
             scale="large"
             type="password"
             autoComplete="new-password"
-            placeholder={t({ vi: `Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `At least ${MIN_PASSWORD_LENGTH} characters` })}
+            placeholder={t("Ít nhất {n} ký tự", { n: MIN_PASSWORD_LENGTH })}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -108,7 +108,7 @@ export function SignupScreen() {
 
         {error ? (
           <p className={styles.error} role="alert">
-            {error}
+            {t(error)}
           </p>
         ) : null}
 
@@ -119,21 +119,21 @@ export function SignupScreen() {
           disabled={submitting}
         >
           {submitting
-            ? t({ vi: "Đang tạo tài khoản…", en: "Creating account…" })
-            : t("auth.registerButton", "Tạo tài khoản")}
+            ? t("Đang tạo tài khoản…")
+            : t("Tạo tài khoản miễn phí")}
         </Button>
 
         <p className={styles.consentText}>
-          {t({ vi: "Bấm nút là bạn đồng ý với ", en: "By continuing, you agree to Havi's " })}
-          <Link href="/terms">{t("public.terms", "Điều khoản")}</Link> &amp;{" "}
-          <Link href="/privacy">{t("public.privacy", "Bảo mật")}</Link>.
+          {t("Bấm nút là bạn đồng ý với ")}
+          <Link href="/terms">{t("Điều Khoản Dịch Vụ")}</Link> &amp;{" "}
+          <Link href="/privacy">{t("Chính Sách Bảo Mật")}</Link>.
         </p>
       </form>
 
       <div className={styles.footerBlock}>
         <p>
-          {t("auth.hasAccount", "Đã có tài khoản?")}{" "}
-          <Link href="/login">{t("auth.loginButton", "Đăng nhập")}</Link>
+          {t("Đã có tài khoản?")}{" "}
+          <Link href="/login">{t("Đăng nhập")}</Link>
         </p>
       </div>
     </>

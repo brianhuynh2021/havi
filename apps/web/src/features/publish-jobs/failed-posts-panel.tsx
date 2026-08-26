@@ -103,8 +103,8 @@ export function FailedPostsPanel({ onPublished }: Props) {
       <header className={styles.header}>
         <h2 className={styles.title}>
           {jobs.length > 0
-            ? `${jobs.length} bài chưa đăng được`
-            : "Bài chưa đăng được"}
+            ? t("{length} bài chưa đăng được", { length: jobs.length })
+            : t("Bài chưa đăng được")}
         </h2>
         <p className={styles.subtitle}>{t(
           "Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi\n          quyết định giúp em nhé."
@@ -113,7 +113,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
 
       {error ? (
         <p className={styles.error} role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : null}
 
@@ -151,7 +151,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
                     onClick={() => retry(job)}
                     disabled={busyId === job.id}
                   >
-                    {busyId === job.id ? "Đang đăng lại…" : "Thử lại"}
+                    {t(busyId === job.id ? "Đang đăng lại…" : "Thử lại")}
                   </Button>
                 ) : null}
                 {copy.needsReconnect ? (

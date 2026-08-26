@@ -18,10 +18,13 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
     setLoadingProvider(provider);
     setTimeout(() => {
       setLoadingProvider(null);
+      // Một câu có ô chèn tên nền tảng, không phải hai câu gần trùng nhau: sửa
+      // lời văn ở một chỗ mà quên chỗ kia là cách hai câu bắt đầu lệch nhau.
       setError(
-        provider === "google"
-          ? "Đăng nhập Google đang được nâng cấp chứng thực bảo mật OAuth 2.0 PKCE. Vui lòng sử dụng Email & Mật khẩu."
-          : "Đăng nhập Facebook đang được nâng cấp chứng thực bảo mật OAuth 2.0 PKCE. Vui lòng sử dụng Email & Mật khẩu."
+        t(
+          "Đăng nhập {provider} đang được nâng cấp chứng thực bảo mật OAuth 2.0 PKCE. Vui lòng sử dụng Email & Mật khẩu.",
+          { provider: provider === "google" ? "Google" : "Facebook" },
+        ),
       );
     }, 400);
   };
@@ -35,10 +38,7 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
           className={`${styles.socialBtn} ${styles.googleBtn}`}
           onClick={() => handleSocialClick("google")}
           disabled={loadingProvider !== null}
-          aria-label={t({
-            vi: mode === "login" ? "Đăng nhập bằng Google" : "Đăng ký bằng Google",
-            en: mode === "login" ? "Sign in with Google" : "Sign up with Google",
-          })}
+          aria-label={t(mode === "login" ? "Đăng nhập bằng Google" : "Đăng ký bằng Google")}
         >
           {loadingProvider === "google" ? (
             <span className={styles.spinner} />
@@ -64,11 +64,8 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
           )}
           <span className={styles.btnText}>
             {loadingProvider === "google"
-              ? t({ vi: "Đang kết nối Google…", en: "Connecting Google…" })
-              : t({
-                  vi: mode === "login" ? "Tiếp tục bằng Google" : "Đăng ký bằng Google",
-                  en: mode === "login" ? "Continue with Google" : "Sign up with Google",
-                })}
+              ? t("Đang kết nối Google…")
+              : t(mode === "login" ? "Tiếp tục bằng Google" : "Đăng ký bằng Google")}
           </span>
         </button>
 
@@ -78,10 +75,7 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
           className={`${styles.socialBtn} ${styles.facebookBtn}`}
           onClick={() => handleSocialClick("facebook")}
           disabled={loadingProvider !== null}
-          aria-label={t({
-            vi: mode === "login" ? "Đăng nhập bằng Facebook" : "Đăng ký bằng Facebook",
-            en: mode === "login" ? "Sign in with Facebook" : "Sign up with Facebook",
-          })}
+          aria-label={t(mode === "login" ? "Đăng nhập bằng Facebook" : "Đăng ký bằng Facebook")}
         >
           {loadingProvider === "facebook" ? (
             <span className={styles.spinner} />
@@ -92,23 +86,17 @@ export function SocialAuthButtons({ mode = "login" }: Props) {
           )}
           <span className={styles.btnText}>
             {loadingProvider === "facebook"
-              ? t({ vi: "Đang kết nối Facebook…", en: "Connecting Facebook…" })
-              : t({
-                  vi: mode === "login" ? "Tiếp tục bằng Facebook" : "Đăng ký bằng Facebook",
-                  en: mode === "login" ? "Continue with Facebook" : "Sign up with Facebook",
-                })}
+              ? t("Đang kết nối Facebook…")
+              : t(mode === "login" ? "Tiếp tục bằng Facebook" : "Đăng ký bằng Facebook")}
           </span>
         </button>
       </div>
 
-      {error ? <p className={styles.errorText}>{error}</p> : null}
+      {error ? <p className={styles.errorText}>{t(error)}</p> : null}
 
       <div className={styles.divider}>
         <span>
-          {t({
-            vi: mode === "login" ? "hoặc đăng nhập bằng email" : "hoặc tạo tài khoản bằng email",
-            en: mode === "login" ? "or sign in with email" : "or sign up with email",
-          })}
+          {t(mode === "login" ? "hoặc đăng nhập bằng email" : "hoặc tạo tài khoản bằng email")}
         </span>
       </div>
     </div>

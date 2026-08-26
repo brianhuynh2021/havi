@@ -137,10 +137,10 @@ export function WorkspaceName() {
           {/* `title` để rê chuột đọc đủ: chuỗi nhiều chi nhánh có tên gần
               giống nhau, và cắt ở giữa làm mất đúng phần phân biệt. */}
           <span className={styles.workspaceNameText} title={activeWorkspace.name}>
-            {isSwitching ? "Đang chuyển…" : activeWorkspace.name}
+            {t(isSwitching ? "Đang chuyển…" : activeWorkspace.name)}
           </span>
           <span className={styles.workspaceSubText}>
-            {workspaces.length > 1 ? `${workspaces.length} thương hiệu` : "Thương hiệu"}
+            {workspaces.length > 1 ? t("{length} thương hiệu", { length: workspaces.length }) : t("Thương hiệu")}
           </span>
         </div>
         {workspaces.length > 1 && (
@@ -205,7 +205,7 @@ export function WorkspaceName() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "left" }}>
                   <span style={{ fontSize: "13px", fontWeight: isActive ? 700 : 500 }}>{w.name}</span>
                   <span style={{ fontSize: "10.5px", opacity: 0.6 }}>
-                    {w.plan === "TOAN_DIEN" ? "Gói Toàn Diện" : "Bản Dùng Thử"}
+                    {t(w.plan === "TOAN_DIEN" ? "Gói Toàn Diện" : "Bản Dùng Thử")}
                   </span>
                 </div>
                 {isActive && (

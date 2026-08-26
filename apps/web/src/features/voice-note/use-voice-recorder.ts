@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export type VoiceRecorderState = "idle" | "recording" | "processing" | "ready" | "error";
 
@@ -26,6 +27,7 @@ type SpeechRecognitionEvent = {
 };
 
 export function useVoiceRecorder() {
+  const { t } = useLanguage();
   const [state, setState] = useState<VoiceRecorderState>("idle");
   const [recordingTime, setRecordingTime] = useState(0);
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -116,12 +118,12 @@ export function useVoiceRecorder() {
       setState("error");
       const errorObj = err as { name?: string; message?: string };
       if (errorObj?.name === "NotAllowedError" || errorObj?.name === "PermissionDeniedError") {
-        setErrorMessage("Vui lòng cấp quyền Micro trên trình duyệt để Havi nghe được giọng nói.");
+        setErrorMessage(t("Vui lòng cấp quyền Micro trên trình duyệt để Havi nghe được giọng nói."));
       } else {
-        setErrorMessage(errorObj?.message || "Không thể khởi động micro.");
+        setErrorMessage(errorObj?.message || t("Không thể khởi động micro."));
       }
     }
-  }, []);
+  }, [t]);
 
   const stopRecording = useCallback((): Promise<{ base64: string; mimeType: string; transcript: string }> => {
     return new Promise((resolve, reject) => {
@@ -167,7 +169,7 @@ export function useVoiceRecorder() {
 
           reader.onerror = () => {
             setState("error");
-            setErrorMessage("Lỗi xử lý file âm thanh");
+            setErrorMessage(t("Lỗi xử lý file âm thanh"));
             reject(new Error("Lỗi đọc file âm thanh"));
           };
 
@@ -175,14 +177,14 @@ export function useVoiceRecorder() {
         } catch (err: unknown) {
           setState("error");
           const errorObj = err as { message?: string };
-          setErrorMessage(errorObj?.message || "Lỗi xử lý âm thanh");
+          setErrorMessage(errorObj?.message || t("Lỗi xử lý âm thanh"));
           reject(err);
         }
       };
 
       recorder.stop();
     });
-  }, [clearTimer, liveTranscript]);
+  }, [clearTimer, liveTranscript, t]);
 
   const cancelRecording = useCallback(() => {
     clearTimer();

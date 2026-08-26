@@ -59,7 +59,7 @@ const pathname = usePathname();
               aria-current={active ? "page" : undefined}
             >
               <span className={styles.navIcon} aria-hidden="true">{item.icon}</span>
-              <span className={styles.navLabel}>{t(item.key, item.label)}</span>
+              <span className={styles.navLabel}>{t(item.label)}</span>
               {(item.count ?? 0) > 0 ? (
                 <span className={styles.navBadge}>{item.count}</span>
               ) : null}
@@ -82,7 +82,7 @@ const pathname = usePathname();
                 {item.icon}
                 {(item.count ?? 0) > 0 && <span className={styles.mobileNavBadge}>{item.count}</span>}
               </span>
-              <span className={styles.mobileNavLabel}>{t(item.key, item.label)}</span>
+              <span className={styles.mobileNavLabel}>{t(item.label)}</span>
             </Link>
           );
         })}
@@ -98,7 +98,7 @@ const pathname = usePathname();
               <span className={styles.mobileNavBadge}>!</span>
             )}
           </span>
-          <span className={styles.mobileNavLabel}>{t({vi: "Thêm", en: "More"})}</span>
+          <span className={styles.mobileNavLabel}>{t("Thêm")}</span>
         </button>
       </div>
 
@@ -113,7 +113,7 @@ const pathname = usePathname();
                 className={`${styles.mobileMoreItem} ${active ? styles.mobileMoreItemActive : ""}`}
               >
                 <span style={{ marginRight: "12px" }}>{item.icon}</span>
-                {t(item.key, item.label)}
+                {t(item.label)}
                 {(item.count ?? 0) > 0 && <span className={styles.mobileMoreBadge}>{item.count}</span>}
               </Link>
             );

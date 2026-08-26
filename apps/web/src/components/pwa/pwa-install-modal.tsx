@@ -146,16 +146,10 @@ const { lang, t } = useLanguage();
             </div>
             <div>
               <h3 id="pwa-modal-title" className={styles.modalTitle}>
-                {t({
-                  vi: "Cài Đặt Havi Lên Điện Thoại",
-                  en: "Install Havi on Mobile",
-                })}
+                {t("Cài Đặt Havi Lên Điện Thoại")}
               </h3>
               <p className={styles.modalSubtitle}>
-                {t({
-                  vi: "Dùng mượt mà 1-chạm, tiện lợi như app tải về máy",
-                  en: "1-Tap instant access, smooth app experience",
-                })}
+                {t("Dùng mượt mà 1-chạm, tiện lợi như app tải về máy")}
               </p>
             </div>
           </div>
@@ -173,15 +167,15 @@ const { lang, t } = useLanguage();
         <div className={styles.benefitsRow}>
           <div className={styles.benefitItem}>
             <span>⚡</span>
-            <span>{lang === "VN" ? "Mở tức thì không chờ tải" : "Instant 1-tap open"}</span>
+            <span>{t("Mở tức thì không chờ tải")}</span>
           </div>
           <div className={styles.benefitItem}>
             <span>🔔</span>
-            <span>{lang === "VN" ? "Mở hộp thư nhanh hơn" : "Faster inbox access"}</span>
+            <span>{t("Mở hộp thư nhanh hơn")}</span>
           </div>
           <div className={styles.benefitItem}>
             <span>📱</span>
-            <span>{lang === "VN" ? "Toàn màn hình tiện lợi" : "Clean full screen"}</span>
+            <span>{t("Toàn màn hình tiện lợi")}</span>
           </div>
         </div>
 
@@ -266,16 +260,14 @@ const { lang, t } = useLanguage();
             {deferredPrompt ? (
               <div className={styles.androidDirectBox}>
                 <p className={styles.androidDirectText}>
-                  {lang === "VN"
-                    ? "Trình duyệt của bạn đã sẵn sàng cài đặt ứng dụng Havi trực tiếp chỉ với 1 cú chạm:"
-                    : "Your browser is ready to install Havi directly with 1 tap:"}
+                  {t("Trình duyệt của bạn đã sẵn sàng cài đặt ứng dụng Havi trực tiếp chỉ với 1 cú chạm:")}
                 </p>
                 <button
                   type="button"
                   className={styles.primaryActionBtn}
                   onClick={handleNativeInstall}
                 >
-                  📲 {lang === "VN" ? "Bấm Để Cài Đặt Ngay" : "Install Havi App Now"}
+                  📲 {t("Bấm Để Cài Đặt Ngay")}
                 </button>
               </div>
             ) : (
@@ -336,12 +328,10 @@ const { lang, t } = useLanguage();
               </div>
               <div className={styles.qrGuide}>
                 <p className={styles.qrTitle}>
-                  📸 {lang === "VN" ? "Quét mã bằng Camera điện thoại" : "Scan with Mobile Camera"}
+                  📸 {t("Quét mã bằng Camera điện thoại")}
                 </p>
                 <p className={styles.qrSubtitle}>
-                  {lang === "VN"
-                    ? "Mở camera iPhone hoặc Android quét mã để mở Havi trên điện thoại và cài ra màn hình chính trong 3 giây."
-                    : "Scan to open Havi on your mobile device and install in 3 seconds."}
+                  {t("Mở camera iPhone hoặc Android quét mã để mở Havi trên điện thoại và cài ra màn hình chính trong 3 giây.")}
                 </p>
               </div>
             </div>
@@ -355,7 +345,7 @@ const { lang, t } = useLanguage();
             className={styles.dismissBtn}
             onClick={() => setIsOpen(false)}
           >
-            {lang === "VN" ? "Đã hiểu, đóng hướng dẫn" : "Got it, close"}
+            {t("Đã hiểu, đóng hướng dẫn")}
           </button>
         </div>
       </div>
@@ -369,14 +359,11 @@ const { lang, t } = useLanguage();
         type="button"
         className={styles.headerInstallBtn}
         onClick={handleOpenModal}
-        title={t({
-          vi: "Cài Havi ra màn hình chính điện thoại",
-          en: "Add Havi to Home Screen",
-        })}
+        title={t("Cài Havi ra màn hình chính điện thoại")}
       >
         <span className={styles.pulseDot} />
         <span className={styles.btnIcon}>📲</span>
-        <span className={styles.btnText}>{lang === "VN" ? "Cài App Điện Thoại" : "Install App"}</span>
+        <span className={styles.btnText}>{t("Cài App Điện Thoại")}</span>
       </button>
 
       {/* Floating Smart Banner đập vô mắt trên Mobile / Web */}
@@ -393,12 +380,10 @@ const { lang, t } = useLanguage();
             <div className={styles.bannerText}>
               <div className={styles.bannerHeadline}>
                 <span className={styles.bannerBadge}>HOT ⚡</span>
-                <strong>{lang === "VN" ? "Cài Havi Lên Điện Thoại" : "Install Havi App"}</strong>
+                <strong>{t("Cài Havi Lên Điện Thoại")}</strong>
               </div>
               <p className={styles.bannerDesc}>
-                {lang === "VN"
-                  ? "Mở Havi 1 chạm từ màn hình chính và xem hộp thư thuận tiện hơn."
-                  : "Open Havi from your home screen and reach the inbox more easily."}
+                {t("Mở Havi 1 chạm từ màn hình chính và xem hộp thư thuận tiện hơn.")}
               </p>
             </div>
           </div>
@@ -408,7 +393,7 @@ const { lang, t } = useLanguage();
               className={styles.bannerCtaBtn}
               onClick={handleOpenModal}
             >
-              📲 {lang === "VN" ? "Cài App Ngay" : "Install Now"}
+              📲 {t("Cài App Ngay")}
             </button>
             <button
               type="button"

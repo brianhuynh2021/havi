@@ -1,3 +1,8 @@
+// i18n-exempt: nhãn ở đây **cố ý** viết bằng ngôn ngữ kia — đang tiếng Việt thì
+// nút phải nói "Chuyển sang Tiếng Anh", đang tiếng Anh thì nói "Switch to
+// Vietnamese". Bọc `t()` sẽ dịch nhãn về đúng ngôn ngữ hiện tại, tức là làm nút
+// mất nghĩa: người đang ở giao diện tiếng Anh sẽ thấy nút mời họ chuyển sang
+// tiếng Anh.
 "use client";
 
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -81,7 +86,7 @@ export function LanguageSwitcher({
       type="button"
       onClick={toggleLang}
       className={className}
-      title={lang === "VN" ? "Chuyển sang Tiếng Anh (English)" : "Chuyển sang Tiếng Việt"}
+      title={lang === "VN" ? "Chuyển sang Tiếng Anh (English)" : "Switch to Vietnamese"}
       style={{
         background: "transparent",
         border: "1px solid var(--color-border)",

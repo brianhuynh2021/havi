@@ -15,105 +15,11 @@ import {
   type Plan,
   type Subscription,
 } from "./billing.api";
+import { PLAN_DETAILS, STATUS_LABELS } from "./billing.content";
 import styles from "./billing.module.css";
 
-const PLAN_DETAILS: Record<
-  Plan,
-  {
-    title: string;
-    price: string;
-    period: string;
-    dailyNote: string;
-    badge: string | null;
-    badgeTone: "popular" | "featured" | "enterprise" | null;
-    desc: string;
-    features: string[];
-  }
-> = {
-  trial: {
-    title: "Gói Trải Nghiệm",
-    price: "0 đ",
-    period: "/ 7 ngày",
-    dailyNote: "Miễn phí 100% · Không cần thẻ",
-    badge: null,
-    badgeTone: null,
-    desc: "Chạy thử toàn bộ vòng vận hành: nối kênh, soạn, duyệt, đăng và trả lời.",
-    features: [
-      "7 ngày dùng đầy đủ, không cần thẻ",
-      "2 người dùng · 2 kênh nối",
-      "Quy trình soạn → duyệt → đăng có ràng buộc",
-      "Hộp thư Messenger gộp về một nơi",
-      "Hạn mức AI dùng thử ~30 bài",
-    ],
-  },
-  tiem_nho: {
-    title: "Gói Khởi Nghiệp",
-    price: "189.000 đ",
-    period: "/ tháng",
-    dailyNote: "Chỉ ~6.000 đ/ngày",
-    badge: null,
-    badgeTone: null,
-    desc: "Một thương hiệu, một người vận hành, mọi thứ trong tầm kiểm soát.",
-    features: [
-      "3 người dùng · 3 kênh nối",
-      "Lịch đăng, thư viện media và kho nội dung dùng chung",
-      "Hộp thư Messenger kèm trạng thái đã xử lý hay chưa",
-      "Lịch sử hoạt động: ai làm gì, lúc nào, kết quả ra sao",
-      "Hạn mức AI soạn nháp ~150 bài mỗi tháng",
-    ],
-  },
-  toan_dien: {
-    title: "Gói Chuyên Nghiệp",
-    price: "369.000 đ",
-    period: "/ tháng",
-    dailyNote: "Chỉ ~12.000 đ/ngày",
-    badge: null,
-    badgeTone: null,
-    desc: "Dành cho đội nhiều người: ai được soạn, ai được duyệt, ai trực hội thoại.",
-    features: [
-      "10 người dùng · 8 kênh nối",
-      "Phân quyền theo vai: chủ, người soạn, người duyệt, trực hội thoại",
-      "Người soạn không đăng được — quyền kiểm ở máy chủ, không chỉ ẩn nút",
-      "Đăng Reels kèm xác nhận bài đã thật sự lên Trang",
-      "Báo cáo xuất bản và hội thoại theo dữ liệu nền tảng",
-      "Hạn mức AI soạn nháp cao, hỗ trợ kỹ thuật 1-1",
-    ],
-  },
-  doanh_nghiep: {
-    title: "Chuỗi Doanh Nghiệp",
-    price: "799.000 đ",
-    period: "/ tháng",
-    dailyNote: "Chỉ ~26.000 đ/ngày",
-    badge: null,
-    badgeTone: null,
-    desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị và một dấu vết chung. Mỗi thương hiệu tính gói riêng.",
-    features: [
-      "50 người dùng · kênh không giới hạn",
-      "Tầng doanh nghiệp: gom nhiều thương hiệu, nhìn chéo sức khoẻ mọi kênh",
-      "Giọng thương hiệu và danh sách điều không được hứa, theo từng đơn vị",
-      "Hỗ trợ triển khai trực tiếp cùng Founder và đội ngũ",
-      "Hạn mức AI cao nhất · xuất hoá đơn VAT điện tử",
-    ],
-  },
-};
-
-/**
- * Nhãn tiếng Việt cho `SubscriptionStatus`.
- *
- * Bản trước viết `sub.status === "active" ? "Đang hoạt động" : sub.status` — nên
- * mọi trạng thái khác `active` lọt nguyên giá trị enum tiếng Anh ra màn hình:
- * workspace đang dùng thử thấy chữ **"trialing"**, hết hạn thấy **"past_due"**.
- * Đó là loại lỗi chỉ hiện ở đúng những lúc người dùng cần đọc hiểu nhất.
- */
-const STATUS_LABELS: Record<string, string> = {
-  trialing: "Đang dùng thử",
-  active: "Đang hoạt động",
-  past_due: "Đã hết hạn",
-  canceled: "Đã huỷ",
-};
-
 export function BillingScreen() {
-const { t } = useLanguage();
+const { t, lang } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sub, setSub] = useState<Subscription | null>(null);
@@ -209,7 +115,7 @@ const { t } = useLanguage();
     if (res.ok) {
       setCheckoutData(res.data);
     } else {
-      setCheckoutError(res.message || "Không thể khởi tạo mã VietQR lúc này. Vui lòng thử lại sau giây lát.");
+      setCheckoutError(res.message || t("Không thể khởi tạo mã VietQR lúc này. Vui lòng thử lại sau giây lát."));
     }
   }
 
@@ -228,9 +134,11 @@ const { t } = useLanguage();
       }, 1200);
     } else {
       setVerifyNotice(
-        "Hệ thống đang chờ tín hiệu đối soát từ Ngân hàng. " +
-        "Sau khi bạn chuyển khoản đúng số tiền và nội dung, gói cước sẽ tự động kích hoạt trong vòng vài giây. " +
-        "Nếu đã chuyển khoản nhưng chưa thấy kích hoạt, vui lòng liên hệ Hotline/Zalo: 0984 883 750."
+        // Một câu, không ba mảnh: người dịch cần thấy trọn đoạn để đặt lại
+        // trật tự, và số hotline nằm trong câu chứ không phải một chuỗi rời.
+        t(
+          "Hệ thống đang chờ tín hiệu đối soát từ Ngân hàng. Sau khi bạn chuyển khoản đúng số tiền và nội dung, gói cước sẽ tự động kích hoạt trong vòng vài giây. Nếu đã chuyển khoản nhưng chưa thấy kích hoạt, vui lòng liên hệ Hotline/Zalo: 0984 883 750.",
+        )
       );
     }
   }
@@ -242,7 +150,7 @@ const { t } = useLanguage();
   if (error || !sub) {
     return (
       <ErrorState
-        title={error ?? "Không thể tải gói cước"}
+        title={t(error ?? "Không thể tải gói cước")}
         action={
           <Button variant="outline" onClick={() => window.location.reload()}>{t("Thử lại")}</Button>
         }
@@ -255,14 +163,20 @@ const { t } = useLanguage();
     Math.round((sub.token_quota_used / Math.max(1, sub.token_quota_limit)) * 100),
   );
 
+  // Định dạng theo `lang`, không cứng `vi-VN`: bản tiếng Anh phải là 17,316 chứ
+  // không phải 17.316 — dấu phân cách nghìn đổi nghĩa hoàn toàn giữa hai vùng.
+  const tokensPerPost = (sub.tokens_per_post ?? 0).toLocaleString(
+    lang === "EN" ? "en-US" : "vi-VN",
+  );
+
   const currentPlan = sub.plan as keyof typeof PLAN_DETAILS;
 
   return (
     <>
       <header className={styles.header}>
         <div className={styles.titleRow}>
-          <h1 className={styles.title}>{t("nav.billing", "Gói Cước & Thanh Toán")}</h1>
-          <Badge tone={sub.status === "active" ? "success" : "warning"}>{t("Trạng thái:")}{" "}{STATUS_LABELS[sub.status] ?? sub.status}
+          <h1 className={styles.title}>{t("Gói cước")}</h1>
+          <Badge tone={sub.status === "active" ? "success" : "warning"}>{t("Trạng thái:")}{" "}{t(STATUS_LABELS[sub.status] ?? sub.status)}
           </Badge>
         </div>
         <p className={styles.subtitle}>{t(
@@ -318,7 +232,9 @@ const { t } = useLanguage();
               ? t("Gói đã hết hạn. Quét VietQR bên dưới để dùng tiếp — Havi không tự trừ tiền.")
               : sub.days_until_due === 0
                 ? t("Gói hết hạn hôm nay. Quét VietQR bên dưới để dùng tiếp.")
-                : `Còn ${sub.days_until_due} ngày là hết kỳ. Havi không tự trừ tiền — quét VietQR bên dưới khi cần dùng tiếp.`}
+                : t("Còn {days} ngày là hết kỳ. Havi không tự trừ tiền — quét VietQR bên dưới khi cần dùng tiếp.", {
+                    days: sub.days_until_due,
+                  })}
           </p>
         ) : null}
 
@@ -342,8 +258,14 @@ const { t } = useLanguage();
           </div>
           <p className={styles.quotaAssumption}>
             {sub.tokens_per_post_measured
-              ? `Đã dùng ${quotaPercent}% hạn mức. Quy đổi theo ${(sub.tokens_per_post ?? 0).toLocaleString("vi-VN")} token/bài, đo từ chính workspace của bạn.`
-              : `Đã dùng ${quotaPercent}% hạn mức. Quy đổi theo ước lượng mặc định ${(sub.tokens_per_post ?? 0).toLocaleString("vi-VN")} token/bài — sẽ chính xác hơn sau vài bài đầu.`}
+              ? t(
+                  "Đã dùng {percent}% hạn mức. Quy đổi theo {tokens} token/bài, đo từ chính workspace của bạn.",
+                  { percent: quotaPercent, tokens: tokensPerPost },
+                )
+              : t(
+                  "Đã dùng {percent}% hạn mức. Quy đổi theo ước lượng mặc định {tokens} token/bài — sẽ chính xác hơn sau vài bài đầu.",
+                  { percent: quotaPercent, tokens: tokensPerPost },
+                )}
           </p>
         </div>
       </section>
@@ -390,7 +312,7 @@ const { t } = useLanguage();
               value={extraSeats}
               onChange={(event) => setExtraSeats(Math.max(0, Number(event.target.value) || 0))}
             />
-            <span className={styles.addonPrice}>+49.000đ/ghế/tháng</span>
+            <span className={styles.addonPrice}>{t("+49.000đ/ghế/tháng")}</span>
           </label>
           <label className={styles.addonItem}>
             <span className={styles.addonLabel}>{t("Kênh thêm")}</span>
@@ -401,7 +323,7 @@ const { t } = useLanguage();
               value={extraChannels}
               onChange={(event) => setExtraChannels(Math.max(0, Number(event.target.value) || 0))}
             />
-            <span className={styles.addonPrice}>+99.000đ/kênh/tháng</span>
+            <span className={styles.addonPrice}>{t("+99.000đ/kênh/tháng")}</span>
           </label>
         </div>
         <p className={styles.cycleNote}>
@@ -436,19 +358,19 @@ const { t } = useLanguage();
                       : styles.popularBadge
                   }
                 >
-                  {plan.badge}
+                  {t(plan.badge)}
                 </span>
               ) : null}
 
               <div className={styles.planHeader}>
-                <h3 className={styles.planTitle}>{plan.title}</h3>
-                <p className={styles.planDescription}>{plan.desc}</p>
+                <h3 className={styles.planTitle}>{t(plan.title)}</h3>
+                <p className={styles.planDescription}>{t(plan.desc)}</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.priceAmount}>{plan.price}</span>
-                  <span className={styles.pricePeriod}>{plan.period}</span>
+                  <span className={styles.priceAmount}>{t(plan.price)}</span>
+                  <span className={styles.pricePeriod}>{t(plan.period)}</span>
                 </div>
                 {plan.dailyNote ? (
-                  <div className={styles.priceDailyTag}>{plan.dailyNote}</div>
+                  <div className={styles.priceDailyTag}>{t(plan.dailyNote)}</div>
                 ) : null}
               </div>
 
@@ -456,7 +378,7 @@ const { t } = useLanguage();
                 {plan.features.map((f, idx) => (
                   <li key={idx} className={styles.featureItem}>
                     <span className={styles.featureCheck}>✓</span>
-                    <span>{f}</span>
+                    <span>{t(f)}</span>
                   </li>
                 ))}
               </ul>
@@ -471,7 +393,9 @@ const { t } = useLanguage();
                     disabled={isGeneratingCheckout}
                     onClick={() => handleOpenCheckout(planKey)}
                   >
-                    {isGeneratingCheckout ? "Đang tạo mã VietQR…" : `Nâng cấp lên ${plan.title}`}
+                    {isGeneratingCheckout
+                      ? t("Đang tạo mã VietQR…")
+                      : t("Nâng cấp lên {plan}", { plan: t(plan.title) })}
                   </button>
                 )}
               </div>
@@ -515,7 +439,7 @@ const { t } = useLanguage();
                     <td>{new Date(inv.issued_at).toLocaleDateString("vi-VN")}</td>
                     <td>
                       <Badge tone={inv.status === "paid" ? "success" : "info"}>
-                        {inv.status === "paid" ? "✓ Đã thanh toán" : "Đang chờ thanh toán"}
+                        {t(inv.status === "paid" ? "✓ Đã thanh toán" : "Đang chờ thanh toán")}
                       </Badge>
                     </td>
                   </tr>
@@ -569,7 +493,7 @@ const { t } = useLanguage();
                           className={`${styles.copyBtn} ${copiedKey === "account_no" ? styles.copyBtnSuccess : ""}`}
                           onClick={() => handleCopy("account_no", checkoutData.account_no)}
                         >
-                          {copiedKey === "account_no" ? "✓ Đã chép" : "Sao chép"}
+                          {t(copiedKey === "account_no" ? "✓ Đã chép" : "Sao chép")}
                         </button>
                       </div>
                     </div>
@@ -587,7 +511,7 @@ const { t } = useLanguage();
                           className={`${styles.copyBtn} ${copiedKey === "amount" ? styles.copyBtnSuccess : ""}`}
                           onClick={() => handleCopy("amount", String(checkoutData.amount_vnd ?? 0))}
                         >
-                          {copiedKey === "amount" ? "✓ Đã chép" : "Sao chép"}
+                          {t(copiedKey === "amount" ? "✓ Đã chép" : "Sao chép")}
                         </button>
                       </div>
                     </div>
@@ -600,7 +524,7 @@ const { t } = useLanguage();
                           className={`${styles.copyBtn} ${copiedKey === "content" ? styles.copyBtnSuccess : ""}`}
                           onClick={() => handleCopy("content", checkoutData.transfer_content)}
                         >
-                          {copiedKey === "content" ? "✓ Đã chép" : "Sao chép"}
+                          {t(copiedKey === "content" ? "✓ Đã chép" : "Sao chép")}
                         </button>
                       </div>
                     </div>
@@ -623,7 +547,7 @@ const { t } = useLanguage();
                     disabled={upgrading}
                     onClick={handleManualConfirm}
                   >
-                    {upgrading ? "Đang kiểm tra…" : "Kiểm tra trạng thái"}
+                    {t(upgrading ? "Đang kiểm tra…" : "Kiểm tra trạng thái")}
                   </Button>
                 </div>
               </>

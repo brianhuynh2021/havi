@@ -63,8 +63,22 @@ function canReschedule(status: string): boolean {
   return status === "approved" || status === "scheduled";
 }
 
+// i18n-data: nhãn thứ trong tuần, `t()` dịch ở chỗ render
+const WEEKDAYS_SHORT = ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"];
+
+// i18n-data: nhãn thứ đầy đủ, `t()` dịch ở chỗ render
+const WEEKDAYS_FULL = [
+  "Thứ Hai",
+  "Thứ Ba",
+  "Thứ Tư",
+  "Thứ Năm",
+  "Thứ Sáu",
+  "Thứ Bảy",
+  "Chủ Nhật",
+];
+
 export function CalendarScreen() {
-const { lang, t } = useLanguage();
+const { t } = useLanguage();
   const [baseDate, setBaseDate] = useState<string>(() => toVnDateString(new Date()));
   const [days, setDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,13 +99,11 @@ const { lang, t } = useLanguage();
   const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
-  const weekdayLabels = lang === "VN"
-    ? ["Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7", "CN"]
-    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  const fullWeekdayLabels = lang === "VN"
-    ? ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
-    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  // Bản tiếng Anh nằm trong từ điển như mọi chuỗi khác, không phải một nhánh
+  // `lang === "VN"` riêng ở đây: hai chỗ quyết định ngôn ngữ thì sớm muộn cũng
+  // lệch nhau, và cái lệch đó chỉ lộ ra khi có người bấm sang tiếng Anh.
+  const weekdayLabels = WEEKDAYS_SHORT.map((day) => t(day));
+  const fullWeekdayLabels = WEEKDAYS_FULL.map((day) => t(day));
 
   const today = toVnDateString(new Date());
 
@@ -253,14 +265,11 @@ const { lang, t } = useLanguage();
     <>
       <header className={styles.header}>
         <div className={styles.titleRow}>
-          <h1 className={styles.title}>{t("calendar.title", "Lịch Đăng Bài")}</h1>
+          <h1 className={styles.title}>{t("Lịch đăng")}</h1>
           <Badge tone="success">{t("✨ Múi giờ Asia/Ho_Chi_Minh (UTC+7)")}</Badge>
         </div>
         <p className={styles.subtitle}>
-          {t({
-            vi: "Bài đã duyệt được xếp theo thời gian bạn chọn. Chỉ kênh đang được backend hỗ trợ và đã cấp quyền mới có thể xuất bản.",
-            en: "Approved posts follow the time you choose. Only backend-supported channels with valid permissions can publish.",
-          })}
+          {t("Bài đã duyệt được xếp theo thời gian bạn chọn. Chỉ kênh đang được backend hỗ trợ và đã cấp quyền mới có thể xuất bản.")}
         </p>
 
         {/* Dashboard Thống Kê Tổng Quan */}
@@ -292,7 +301,7 @@ const { lang, t } = useLanguage();
             variant="outline"
             onClick={() => setBaseDate((d) => toVnDateString(addDays(new Date(d), viewMode === "month" ? -28 : -7)))}
           >
-            ← {t({ vi: "Trước", en: "Prev" })}
+            ← {t("Trước")}
           </Button>
           <span className={styles.weekRange}>📅 {rangeLabel}</span>
           <div className={styles.weekActions}>
@@ -300,13 +309,13 @@ const { lang, t } = useLanguage();
               variant="outline"
               onClick={() => setBaseDate(toVnDateString(new Date()))}
             >
-              {t({ vi: "Hiện tại", en: "Current" })}
+              {t("Hiện tại")}
             </Button>
             <Button
               variant="outline"
               onClick={() => setBaseDate((d) => toVnDateString(addDays(new Date(d), viewMode === "month" ? 28 : 7)))}
             >
-              {t({ vi: "Sau", en: "Next" })} →
+              {t("Sau")} →
             </Button>
           </div>
         </div>
@@ -373,20 +382,20 @@ const { lang, t } = useLanguage();
 
       {error ? (
         <ErrorState
-          title={error}
+          title={t(error)}
           action={
             <Button variant="outline" onClick={() => setReloadKey((k) => k + 1)}>
-              {t({ vi: "Thử lại", en: "Retry" })}
+              {t("Thử lại")}
             </Button>
           }
         />
       ) : loading ? (
-        <LoadingState title={t({ vi: "Đang tải lịch…", en: "Loading calendar…" })} />
+        <LoadingState title={t("Đang tải lịch…")} />
       ) : (
         <>
           {/* CHẾ ĐỘ 1 & 2: LƯỚI TUẦN / LƯỚI THÁNG */}
           {viewMode === "week" || viewMode === "month" ? (
-            <section className={viewMode === "month" ? styles.monthGrid : styles.grid} aria-label={t("calendar.title", "Lịch đăng bài")}>
+            <section className={viewMode === "month" ? styles.monthGrid : styles.grid} aria-label={t("Lịch đăng")}>
               {/* Nếu là lưới tháng, hiển thị thêm hàng tiêu đề các thứ */}
               {viewMode === "month" && (
                 <div className={styles.monthHeaderRow}>
@@ -417,7 +426,7 @@ const { lang, t } = useLanguage();
                   {day.items.length === 0 ? (
                     <div className={styles.emptySlot} title={t("Chưa có bài lên lịch cho ngày này")}>
                       <span className={styles.emptySlotIcon}>+</span>
-                      {viewMode === "week" && <span className={styles.emptySlotText}>{t({ vi: "Chưa có bài", en: "No posts" })}</span>}
+                      {viewMode === "week" && <span className={styles.emptySlotText}>{t("Chưa có bài")}</span>}
                     </div>
                   ) : (
                     <div className={styles.postList}>
@@ -500,7 +509,7 @@ const { lang, t } = useLanguage();
                                     : "--:--"}
                                 </span>
                                 <span className={styles.timelineChannelText}>
-                                  {item.channel.includes("facebook") ? "FB" : item.channel.includes("tiktok") ? "TikTok" : item.channel.includes("youtube") ? "YouTube" : "Kênh"}
+                                  {t(item.channel.includes("facebook") ? "FB" : item.channel.includes("tiktok") ? "TikTok" : item.channel.includes("youtube") ? "YouTube" : "Kênh")}
                                 </span>
                               </div>
                               {item.media_url ? (
@@ -660,7 +669,7 @@ const { lang, t } = useLanguage();
                       disabled={cancelling}
                       onClick={handleCancelScheduledPost}
                     >
-                      {cancelling ? "Đang chuyển…" : "⏸️ Hoãn lại về Bản nháp"}
+                      {t(cancelling ? "Đang chuyển…" : "⏸️ Hoãn lại về Bản nháp")}
                     </Button>
                     <Button
                       type="button"
@@ -671,7 +680,7 @@ const { lang, t } = useLanguage();
                       type="submit"
                       disabled={rescheduling}
                     >
-                      {rescheduling ? "Đang lưu…" : "Lưu giờ mới"}
+                      {t(rescheduling ? "Đang lưu…" : "Lưu giờ mới")}
                     </Button>
                   </div>
                 </form>

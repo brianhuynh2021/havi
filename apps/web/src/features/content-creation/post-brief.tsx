@@ -43,6 +43,7 @@ export type UploadRow = {
  */
 export type BriefCheck = { id: string; label: string; pass: boolean };
 
+// i18n-data: `label` là chữ hiện ra, `t()` dịch ở chỗ render
 export function checkBrief(text: string, hasPhoto: boolean): BriefCheck[] {
   const content = text.toLowerCase();
   return [
@@ -152,7 +153,7 @@ export function PostBrief({
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploading ? "Đang tải lên…" : "Chọn ảnh có sẵn"}
+            {t(uploading ? "Đang tải lên…" : "Chọn ảnh có sẵn")}
           </Button>
           <Button variant="outline" disabled={uploading} onClick={onOpenMediaPicker}>{t("🖼️ Thư viện")}</Button>
           <Button variant="outline" disabled={uploading} onClick={onOpenVoice} data-testid="btn-voice-modal">{t("🎙️ Nói thay vì gõ")}</Button>
@@ -192,7 +193,7 @@ export function PostBrief({
                 <button
                   type="button"
                   className={styles.chipRemove}
-                  aria-label={`Bỏ ${chip.label}`}
+                  aria-label={t("Bỏ {label}", { label: chip.label })}
                   onClick={() => onRemoveChip(chip.key)}
                 >
                   ×
@@ -214,7 +215,7 @@ export function PostBrief({
                   }`}
                 >
                   <span aria-hidden="true">{check.pass ? "✓" : "○"}</span>
-                  <span>{check.label}</span>
+                  <span>{t(check.label)}</span>
                 </li>
               ))}
             </ul>
@@ -230,7 +231,7 @@ export function PostBrief({
           onClick={onGenerate}
           disabled={!canGenerate}
         >
-          {generating ? "Havi đang viết…" : "Để Havi viết bài"}
+          {t(generating ? "Havi đang viết…" : "Để Havi viết bài")}
         </Button>
         <p className={styles.generateHint}>{t("Havi viết bản nháp. Không bài nào lên Trang khi bạn chưa duyệt.")}</p>
       </div>

@@ -26,11 +26,11 @@ export function AboutScreen() {
 
           <div className={styles.headerActions}>
             <Link href="/" className={styles.backLink}>
-              {lang === "VN" ? "← Về trang chủ" : "← Home"}
+              {t("← Về trang chủ")}
             </Link>
             <LanguageSwitcher />
             <Link href="/signup" className={styles.ctaButton}>
-              {lang === "VN" ? "Dùng thử 7 ngày" : "Get Started"}
+              {t("Dùng thử 7 ngày")}
             </Link>
           </div>
         </div>
@@ -40,7 +40,7 @@ export function AboutScreen() {
       <section className={styles.hero}>
         <div className={styles.heroGlow} />
         <div className={styles.eyebrow}>
-          ✨ {lang === "VN" ? "CÂU CHUYỆN & SỨ MỆNH HAVI" : "ABOUT & MISSION"}
+          ✨ {t("CÂU CHUYỆN & SỨ MỆNH HAVI")}
         </div>
         <h1 className={styles.heroTitle}>
           {lang === "VN" ? (
@@ -55,9 +55,7 @@ export function AboutScreen() {
           )}
         </h1>
         <p className={styles.heroLead}>
-          {lang === "VN"
-            ? "Havi giúp doanh nghiệp, freelancer và đội ngũ social quản lý kênh, nội dung, lịch đăng, hội thoại và phân quyền mà không phải nhảy qua từng nền tảng."
-            : "Havi helps businesses, freelancers, and social teams manage channels, content, schedules, conversations, and access without jumping between platforms."}
+          {t("Havi giúp doanh nghiệp, freelancer và đội ngũ social quản lý kênh, nội dung, lịch đăng, hội thoại và phân quyền mà không phải nhảy qua từng nền tảng.")}
         </p>
       </section>
 

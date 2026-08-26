@@ -30,7 +30,7 @@ export function NotificationBell() {
       <button
         type="button"
         className={styles.bellButton}
-        aria-label={`Thông báo (${unreadCount} chưa đọc)`}
+        aria-label={t("Thông báo ({unreadCount} chưa đọc)", { unreadCount: unreadCount })}
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
       >

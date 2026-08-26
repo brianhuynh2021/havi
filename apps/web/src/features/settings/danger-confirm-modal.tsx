@@ -21,17 +21,20 @@ interface DangerConfirmModalProps {
 export function DangerConfirmModal({
   isOpen,
   type,
-  targetName = "tiệm này",
+  targetName,
   isDeleting,
   customKeyword = "XOA",
-  customTitle = "Xác nhận xoá",
+  customTitle,
   customLostItems = [],
   onClose,
   onConfirm,
 }: DangerConfirmModalProps) {
-  const {
-    t
-  } = useLanguage();
+  const { t } = useLanguage();
+
+  // Mặc định điền ở đây, không ở chữ ký: chữ ký không có `t` trong tay, và một
+  // chuỗi mặc định viết cứng sẽ không bao giờ dịch.
+  const target = targetName ?? t("tiệm này");
+  const title = customTitle ?? t("Xác nhận xoá");
 
   const [confirmInput, setConfirmInput] = useState("");
 
@@ -66,10 +69,10 @@ export function DangerConfirmModal({
           <div className={styles.headerText}>
             <h3 className={styles.modalTitle}>
               {type === "workspace" 
-                ? `Xác nhận xoá tiệm "${targetName}"` 
+                ? t("Xác nhận xoá tiệm “{targetName}”", { targetName: target }) 
                 : type === "account" 
-                  ? "Xác nhận xoá tài khoản Havi"
-                  : customTitle}
+                  ? t("Xác nhận xoá tài khoản Havi")
+                  : title}
             </h3>
             <p className={styles.modalSubtitle}>{t("⚠️ Hành động này mang tính vĩnh viễn và KHÔNG THỂ HOÀN TÁC")}</p>
           </div>
@@ -145,7 +148,7 @@ export function DangerConfirmModal({
               id="confirm-delete-input"
               type="text"
               className={styles.typeInput}
-              placeholder={`Gõ "${requiredKeyword}" để xác nhận`}
+              placeholder={t("Gõ “{requiredKeyword}” để xác nhận", { requiredKeyword })}
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value)}
               disabled={isDeleting}
@@ -162,7 +165,7 @@ export function DangerConfirmModal({
             onClick={onClose}
             disabled={isDeleting}
           >
-            💙 {type === "workspace" ? "Giữ Lại Tiệm (Khuyên dùng)" : type === "account" ? "Giữ Lại Tài Khoản (Khuyên dùng)" : "Hủy thao tác"}
+            💙 {t(type === "workspace" ? "Giữ Lại Tiệm (Khuyên dùng)" : type === "account" ? "Giữ Lại Tài Khoản (Khuyên dùng)" : "Hủy thao tác")}
           </button>
           <button
             type="button"
@@ -170,7 +173,7 @@ export function DangerConfirmModal({
             onClick={onConfirm}
             disabled={!isMatch || isDeleting}
           >
-            {isDeleting ? "Đang xử lý xoá..." : type === "custom" ? "Xác nhận xoá" : "Xác nhận xoá vĩnh viễn"}
+            {t(isDeleting ? "Đang xử lý xoá..." : type === "custom" ? "Xác nhận xoá" : "Xác nhận xoá vĩnh viễn")}
           </button>
         </div>
       </div>

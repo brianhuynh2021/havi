@@ -1,3 +1,4 @@
+// i18n-exempt: văn bản pháp lý — một bản dịch Điều khoản là một văn bản pháp lý thứ hai, cần luật sư
 import type { Metadata } from "next";
 import { LegalPage } from "@/features/legal/legal-page";
 import { termsSections } from "@/features/legal/legal.content";

@@ -172,7 +172,7 @@ export function InboxScreen() {
 
   if (loading) return <LoadingState title={t("Đang tải hội thoại…")} />;
   if (error && items.length === 0) {
-    return <ErrorState title={error} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />;
+    return <ErrorState title={t(error)} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />;
   }
 
   return (
@@ -182,7 +182,7 @@ export function InboxScreen() {
         <p>{t("Phản hồi khách hàng từ tất cả các kênh tại một nơi.")}</p>
       </header>
 
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
+      {error ? <div className={styles.error} role="alert">{t(error)}</div> : null}
 
       {/*
         Chưa có hội thoại nào KHÁC với lọc ra không thấy gì.
@@ -302,7 +302,7 @@ export function InboxScreen() {
                   <div className={styles.composerActions}>
                     <Button variant="outline" onClick={() => void dismiss(pendingItem)} disabled={busyId === pendingItem.id}>{t("Bỏ qua")}</Button>
                     <Button onClick={() => void send(pendingItem)} disabled={busyId === pendingItem.id || !(drafts[pendingItem.id] ?? "").trim()}>
-                      {busyId === pendingItem.id ? "Đang xử lý…" : "Gửi trả lời"}
+                      {t(busyId === pendingItem.id ? "Đang xử lý…" : "Gửi trả lời")}
                     </Button>
                   </div>
                 </div>

@@ -62,7 +62,7 @@ export function MorningBrief() {
         <span className={styles.summaryText}>
           {quiet
             ? t("24 giờ qua không có hoạt động nào")
-            : `24 giờ qua: ${activity.published} bài đã lên kênh · ${activity.inbox_received} tin khách · ${activity.replies_sent} đã trả lời`}
+            : t("24 giờ qua: {published} bài đã lên kênh · {inbox_received} tin khách · {replies_sent} đã trả lời", { published: activity.published, inbox_received: activity.inbox_received, replies_sent: activity.replies_sent })}
           {activity.publish_failed > 0 ? (
             <strong className={styles.failed}> · {activity.publish_failed} bài lỗi</strong>
           ) : null}
@@ -131,8 +131,8 @@ export function MorningBrief() {
                     <span>{channel.label}</span>
                     <span className={styles.calcDetail}>
                       {channel.ever_published
-                        ? `${channel.days} ${t("ngày chưa đăng")}`
-                        : `${t("nối")} ${channel.days} ${t("ngày, chưa đăng bài nào")}`}
+                        ? t("{days} ngày chưa đăng", { days: channel.days })
+                        : t("nối {days} ngày, chưa đăng bài nào", { days: channel.days })}
                     </span>
                   </li>
                 ))}

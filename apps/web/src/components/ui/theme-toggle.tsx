@@ -2,10 +2,12 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./theme-toggle.module.css";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,9 +22,9 @@ export function ThemeToggle() {
     <button
       className={styles.button}
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      aria-label="Toggle theme"
+      aria-label={t("Đổi nền sáng/tối")}
     >
-      {theme === "dark" ? "☀️ Sáng" : "🌙 Tối"}
+      {t(theme === "dark" ? "☀️ Sáng" : "🌙 Tối")}
     </button>
   );
 }

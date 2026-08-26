@@ -169,19 +169,19 @@ export function ContentCreationScreen() {
 
   const onJobReady = useCallback(() => {
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
-    setNotice("Havi vừa viết xong bài mới. Cuộn xuống để xem và xếp lịch.");
+    setNotice(t("Havi vừa viết xong bài mới. Cuộn xuống để xem và xếp lịch."));
     pushNotification({
       type: "draft_ready",
-      title: "Havi vừa viết xong bài mới",
-      description: "Bản nháp đã sẵn sàng để bạn duyệt.",
+      title: t("Havi vừa viết xong bài mới"),
+      description: t("Bản nháp đã sẵn sàng để bạn duyệt."),
     });
     addToast({
       type: "success",
-      title: "Havi viết xong rồi",
-      description: "Bản nháp đã nằm trong danh sách bên dưới.",
+      title: t("Havi viết xong rồi"),
+      description: t("Bản nháp đã nằm trong danh sách bên dưới."),
     });
     loadItems();
-  }, [addToast, loadItems]);
+  }, [addToast, loadItems, t]);
 
   const poll = useJobPolling(jobId, onJobReady);
   const uploading = uploads.some((upload) => upload.status === "uploading");
@@ -264,8 +264,8 @@ export function ContentCreationScreen() {
     if (asset.type !== "image") {
       addToast({
         type: "error", // Use string if ToastItem doesn't support 'error' type. Wait, I should check toast types. If not error, use default or something. Let's assume there is an error type or we just use alert.
-        title: "Không thể chọn video",
-        description: "Bản nháp bài viết hiện chỉ hỗ trợ chèn ảnh.",
+        title: t("Không thể chọn video"),
+        description: t("Bản nháp bài viết hiện chỉ hỗ trợ chèn ảnh."),
       });
       return;
     }
@@ -313,7 +313,7 @@ export function ContentCreationScreen() {
   async function submitJob(inputs: RawInput[], loadingTitle: string) {
     if (!inputs.length) return;
     if (!selectedChannels.length) {
-      setError("Vui lòng chọn ít nhất 1 kênh đăng bài.");
+      setError(t("Vui lòng chọn ít nhất 1 kênh đăng bài."));
       return;
     }
     setError(null);
@@ -336,19 +336,19 @@ export function ContentCreationScreen() {
     addToast({
       type: "loading",
       title: loadingTitle,
-      description: "Bản nháp sẽ hiện bên dưới trong giây lát.",
+      description: t("Bản nháp sẽ hiện bên dưới trong giây lát."),
     });
   }
 
   function generate() {
     const inputs = chips.map((chip) => chip.input);
     if (note.trim()) inputs.push({ kind: "text", text: note.trim() });
-    return submitJob(inputs, "Havi đang viết bài…");
+    return submitJob(inputs, t("Havi đang viết bài…"));
   }
 
   function generateFromVoice(text: string) {
     const inputs = [...chips.map((chip) => chip.input), { kind: "text" as const, text }];
-    return submitJob(inputs, "Havi đang viết bài từ lời bạn nói…");
+    return submitJob(inputs, t("Havi đang viết bài từ lời bạn nói…"));
   }
 
   /**
@@ -368,8 +368,8 @@ export function ContentCreationScreen() {
     }
     setNotice(
       plan.publishNow
-        ? `Đã duyệt ${result.data.approved.length} bài — Havi đang gửi lên Trang.`
-        : `Đã xếp lịch ${result.data.approved.length} bài. Xem và đổi giờ ở mục Lịch đăng.`,
+        ? t("Đã duyệt {length} bài — Havi đang gửi lên Trang.", { length: result.data.approved.length })
+        : t("Đã xếp lịch {length} bài. Xem và đổi giờ ở mục Lịch đăng.", { length: result.data.approved.length }),
     );
     loadItems();
   }
@@ -392,8 +392,8 @@ export function ContentCreationScreen() {
     }
     setNotice(
       plan.publishNow
-        ? "Đã duyệt 1 bài — Havi đang gửi lên Trang."
-        : "Đã xếp lịch 1 bài. Xem và đổi giờ ở mục Lịch đăng.",
+        ? t("Đã duyệt 1 bài — Havi đang gửi lên Trang.")
+        : t("Đã xếp lịch 1 bài. Xem và đổi giờ ở mục Lịch đăng."),
     );
     loadItems();
   }
@@ -439,10 +439,10 @@ export function ContentCreationScreen() {
 
       <QuotaBanner reloadKey={quotaKey} />
 
-      {error ? <ErrorState title={error} /> : null}
+      {error ? <ErrorState title={t(error)} /> : null}
       {notice ? (
         <p className={styles.notice} role="status">
-          {notice}
+          {t(notice)}
         </p>
       ) : null}
 
@@ -570,7 +570,7 @@ export function ContentCreationScreen() {
                     prev.map((item) => (item.id === saved.id ? saved : item)),
                   );
                   setEditingId(null);
-                  setNotice("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt.");
+                  setNotice(t("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt."));
                 }}
                 onApproveSingle={onApproveSingle}
                 publishNow={plan.publishNow}
@@ -583,7 +583,7 @@ export function ContentCreationScreen() {
                 <SchedulePicker
                   noun={t("bài")}
                   labels={items.map((item, index) =>
-                    shortLabel(item.text) || `Bài ${index + 1}`,
+                    shortLabel(item.text) || t("Bài {value}", { value: index + 1 }),
                   )}
                   plan={plan}
                   onPlanChange={setPlan}
@@ -619,10 +619,10 @@ export function ContentCreationScreen() {
         type="custom"
         isDeleting={busyIds.length > 0}
         customKeyword="XOANHAP"
-        customTitle={`Xác nhận xoá tất cả ${items.length} bản nháp`}
+        customTitle={t("Xác nhận xoá tất cả {length} bản nháp", { length: items.length })}
         customLostItems={[
-          "Mọi nội dung, ảnh, video đã chuẩn bị trong các bản nháp này sẽ bị xoá.",
-          "Bạn sẽ phải tạo lại nội dung nếu đổi ý.",
+          t("Mọi nội dung, ảnh, video đã chuẩn bị trong các bản nháp này sẽ bị xoá."),
+          t("Bạn sẽ phải tạo lại nội dung nếu đổi ý."),
         ]}
         onClose={() => setIsConfirmingDismissAll(false)}
         onConfirm={onDismissAll}

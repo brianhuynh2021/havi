@@ -27,6 +27,7 @@ const GOLDEN_HOURS = [8, 12, 20];
 const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
 /** Tên vai bằng tiếng Việt — `marketer` không nói gì với người đang bị chặn. */
+// i18n-data: tên vai, `t()` dịch ở chỗ render
 const ROLE_NAMES: Record<string, string> = {
   owner: "Chủ workspace",
   marketer: "Người soạn",
@@ -115,7 +116,7 @@ export function SchedulePicker({
       <section className={styles.scheduleCard} aria-labelledby="schedule-title">
         <h3 id="schedule-title" className={styles.scheduleTitle}>
           {count} {noun}{" "}{t("này đang chờ duyệt")}</h3>
-        <p className={styles.approveBlocked}>{t("Vai của bạn")}{role ? ` (${ROLE_NAMES[role] ?? role})` : ""}{t(
+        <p className={styles.approveBlocked}>{t("Vai của bạn")}{role ? ` (${t(ROLE_NAMES[role] ?? role)})` : ""}{t(
           "soạn được nhưng\n          không duyệt được. Nhờ Người duyệt hoặc Chủ workspace bấm duyệt giúp —\n          đó là điểm khiến bước duyệt có nghĩa."
         )}</p>
         <ol className={styles.schedulePreview}>
@@ -212,8 +213,8 @@ export function SchedulePicker({
         {busy
           ? "Đang xử lý…"
           : plan.publishNow
-            ? `Duyệt & đăng ${count} ${noun} ngay`
-            : `Duyệt & xếp lịch ${count} ${noun}`}
+            ? t("Duyệt & đăng {count} {noun} ngay", { count: count, noun: noun })
+            : t("Duyệt & xếp lịch {count} {noun}", { count: count, noun: noun })}
       </Button>
     </section>
   );

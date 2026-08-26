@@ -23,6 +23,7 @@ import styles from "./activity.module.css";
  * `job_kind` → câu tiếng Việt. Khoá không có ở đây vẫn hiện được, dưới dạng
  * chính `job_kind` — thà hiện tên kỹ thuật còn hơn nuốt mất một dòng lịch sử.
  */
+// i18n-data: nhãn việc đã xảy ra, `t()` dịch ở chỗ render
 const ACTION_LABELS: Record<string, string> = {
   "content.generate_drafts": "Havi soạn bản nháp mới",
   "content.approve": "Duyệt nội dung",
@@ -106,7 +107,7 @@ export function ActivityScreen() {
 
       {error ? (
         <ErrorState
-          title={error}
+          title={t(error)}
           action={
             <Button variant="outline" onClick={load}>{t("Thử lại")}</Button>
           }
@@ -115,7 +116,7 @@ export function ActivityScreen() {
         <LoadingState title={t("Đang tải lịch sử…")} />
       ) : events.length === 0 ? (
         <EmptyState
-          title={errorOnly ? "Không có việc nào hỏng" : "Chưa có hoạt động nào"}
+          title={t(errorOnly ? "Không có việc nào hỏng" : "Chưa có hoạt động nào")}
           body={
             errorOnly
               ? "Mọi việc trong khoảng thời gian này đều chạy trót lọt."
@@ -139,7 +140,7 @@ export function ActivityScreen() {
                 {event.error ? <p className={styles.reason}>{event.error}</p> : null}
               </div>
               <span className={event.error ? styles.badgeError : styles.badgeOk}>
-                {event.error ? "Hỏng" : "Xong"}
+                {t(event.error ? "Hỏng" : "Xong")}
               </span>
             </li>
           ))}

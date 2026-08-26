@@ -293,7 +293,11 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     render(<ContentCreationScreen />);
 
     await screen.findByText("Facebook — bài trên Trang");
-    expect(screen.getByRole("checkbox")).toBeChecked();
+    // `waitFor`, không phải `expect` trực tiếp: nhãn kênh xuất hiện ở lần render
+    // đặt `channelOptions`, còn effect tự chọn kênh chạy ở nhịp sau. Kiểm ngay
+    // sau `findByText` là xanh hay đỏ tuỳ máy chạy nhanh chậm — và một test như
+    // thế còn tệ hơn không có test.
+    await waitFor(() => expect(screen.getByRole("checkbox")).toBeChecked());
   });
 
   it("đổi loại nội dung thì bỏ kênh không còn nhận được", async () => {

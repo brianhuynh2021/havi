@@ -22,11 +22,11 @@ export function LoginScreen() {
 
   async function submit() {
     if (!isValidEmail(email)) {
-      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp nhé", en: "Invalid email — please check again" }));
+      setError(t("Email chưa đúng — kiểm tra lại giúp nhé"));
       return;
     }
     if (!password) {
-      setError(t({ vi: "Nhập mật khẩu để đăng nhập", en: "Please enter your password to sign in" }));
+      setError(t("Nhập mật khẩu để đăng nhập"));
       return;
     }
     setError(null);
@@ -43,8 +43,8 @@ export function LoginScreen() {
 
   return (
     <>
-      <h1 className={styles.title}>{t("auth.loginTitle", "Đăng nhập Havi")}</h1>
-      <p className={styles.subtitle}>{t("auth.loginSubtitle", "Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
+      <h1 className={styles.title}>{t("Đăng nhập Havi")}</h1>
+      <p className={styles.subtitle}>{t("Chào mừng trở lại! Vui lòng nhập thông tin để truy cập.")}</p>
 
       <form
         className={styles.form}
@@ -55,7 +55,7 @@ export function LoginScreen() {
         }}
       >
         <label className={styles.field} htmlFor="email">
-          <span className={styles.label}>{t("auth.email", "Email")}</span>
+          <span className={styles.label}>{t("Email")}</span>
           <Input
             id="email"
             name="email"
@@ -71,7 +71,7 @@ export function LoginScreen() {
         </label>
 
         <label className={styles.field} htmlFor="password">
-          <span className={styles.label}>{t("auth.password", "Mật khẩu")}</span>
+          <span className={styles.label}>{t("Mật khẩu")}</span>
           <Input
             id="password"
             name="password"
@@ -86,12 +86,12 @@ export function LoginScreen() {
         </label>
 
         <Link href="/forgot-password" className={styles.inlineLink}>
-          {t("auth.forgotPassword", "Quên mật khẩu?")}
+          {t("Quên mật khẩu?")}
         </Link>
 
         {error ? (
           <p className={styles.error} role="alert">
-            {error}
+            {t(error)}
           </p>
         ) : null}
 
@@ -102,16 +102,16 @@ export function LoginScreen() {
           disabled={submitting}
         >
           {submitting
-            ? t({ vi: "Đang đăng nhập…", en: "Signing in…" })
-            : t("auth.loginButton", "Đăng nhập")}
+            ? t("Đang đăng nhập…")
+            : t("Đăng nhập")}
         </Button>
       </form>
 
       <div className={styles.footerBlock}>
         <p>
-          {t({ vi: "Lần đầu dùng Havi? ", en: "First time using Havi? " })}
+          {t("Lần đầu dùng Havi? ")}
           <Link href="/signup">
-            {t("auth.registerButton", "Tạo tài khoản miễn phí")}
+            {t("Tạo tài khoản miễn phí")}
           </Link>
         </p>
       </div>

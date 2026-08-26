@@ -19,6 +19,7 @@ import styles from "./onboarding.module.css";
 
 type Step = 1 | 2;
 
+// i18n-data: nhãn từng bước, `t()` dịch ở chỗ render
 const stepLabels = ["Đặt tên thương hiệu", "Nối kênh"];
 
 export function OnboardingScreen() {
@@ -81,7 +82,7 @@ export function OnboardingScreen() {
    * workspace thứ hai trùng tên. */
   async function submitBrandName() {
     if (!shopName.trim()) {
-      setError("Nhập tên thương hiệu để Havi gọi đúng tên trên mọi kênh");
+      setError(t("Nhập tên thương hiệu để Havi gọi đúng tên trên mọi kênh"));
       return;
     }
 
@@ -120,7 +121,7 @@ export function OnboardingScreen() {
               } ${stepNumber < step ? styles.stepDone : ""}`}
             >
               <span className={styles.stepDot}>{stepNumber}</span>
-              {label}
+              {t(label)}
             </li>
           );
         })}
@@ -147,7 +148,7 @@ export function OnboardingScreen() {
 
             {error ? (
               <p className={styles.error} role="alert">
-                {error}
+                {t(error)}
               </p>
             ) : null}
 
@@ -189,7 +190,7 @@ export function OnboardingScreen() {
                   disabled={!connected || submitting}
                   onClick={handleStep2Proceed}
                 >
-                  {submitting ? "Đang xử lý…" : connected ? "Bắt đầu sử dụng →" : "Bắt đầu sử dụng"}
+                  {t(submitting ? "Đang xử lý…" : connected ? "Bắt đầu sử dụng →" : "Bắt đầu sử dụng")}
                 </Button>
               </div>
             </div>

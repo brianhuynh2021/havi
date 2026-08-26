@@ -136,7 +136,7 @@ export function ConnectionList({ returnTo, onUsableChange }: Props) {
 
       {error ? (
         <p className={`${styles.notice} ${styles.noticeError}`} role="alert">
-          {error}
+          {t(error)}
         </p>
       ) : null}
 

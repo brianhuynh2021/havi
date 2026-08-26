@@ -1,3 +1,5 @@
+// i18n-data: nội dung landing là dữ liệu, `landing-screen.tsx` dịch bằng `t()`
+// khi render — cùng cách tổ chức với `features/billing/billing.content.ts`.
 /**
  * Nội dung landing — theo năng lực đã có bằng chứng trong sản phẩm.
  *

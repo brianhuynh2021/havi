@@ -13,7 +13,7 @@
  * duy nhất — loại nội dung chỉ đổi cách *nhập vào*, không đổi cách *lên lịch*.
  */
 
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
@@ -50,6 +50,7 @@ const CHANNEL_LABELS: Record<string, string> = {
  * từ chối sau đó. Nói sớm một nhịp là chủ tiệm đóng máy đi làm việc khác rồi
  * hôm sau phát hiện bài chưa bao giờ lên.
  */
+// i18n-data: nhãn hiện ra, `t()` dịch ở chỗ render bên dưới
 const STATUS_LABELS: Record<VideoPostStatus, { text: string; tone: string }> = {
   ready_for_review: { text: "Chờ bạn duyệt", tone: "wait" },
   approved: { text: "Đã duyệt — đang xếp hàng gửi", tone: "wait" },
@@ -84,22 +85,26 @@ type ClipDraft = {
  * trong đầu. Quy về dạng `:9` thì đọc được ngay: 20.6:9 là dọc, 16:9 là ngang.
  * Khớp với `describe_shape` ở `domain/policies/video_constraints.py`.
  */
-function describeShape(width?: number | null, height?: number | null): string | null {
+function describeShape(
+  width: number | null | undefined,
+  height: number | null | undefined,
+  t: Translate,
+): string | null {
   if (!width || !height) return null;
   const ratio = width / height;
-  if (ratio < 1) return `khung dọc ${+(((1 / ratio) * 9).toFixed(1))}:9`;
-  if (ratio === 1) return "khung vuông 1:1";
-  return `khung ngang ${+((ratio * 9).toFixed(1))}:9`;
+  if (ratio < 1) return t("khung dọc {value}:9", { value: +(((1 / ratio) * 9).toFixed(1)) });
+  if (ratio === 1) return t("khung vuông 1:1");
+  return t("khung ngang {value}:9", { value: +(ratio * 9).toFixed(1) });
 }
 
-function describeClip(asset: MediaAsset): string {
+function describeClip(asset: MediaAsset, t: Translate): string {
   const parts: string[] = [];
-  const shape = describeShape(asset.width, asset.height);
+  const shape = describeShape(asset.width, asset.height, t);
   if (shape) parts.push(shape);
   if (typeof asset.duration_seconds === "number") {
-    parts.push(`${Math.round(asset.duration_seconds)} giây`);
+    parts.push(t("{value} giây", { value: Math.round(asset.duration_seconds) }));
   }
-  if (asset.has_audio === false) parts.push("không có tiếng");
+  if (asset.has_audio === false) parts.push(t("không có tiếng"));
   return parts.join(" · ");
 }
 
@@ -181,7 +186,7 @@ export function VideoBranch() {
     const file = files?.[0];
     if (!file) return;
     if (mediaTypeOf(file) !== "video") {
-      setError("Chọn một file video giúp bạn nhé — mục này chỉ nhận clip.");
+      setError(t("Chọn một file video giúp bạn nhé — mục này chỉ nhận clip."));
       return;
     }
 
@@ -305,7 +310,7 @@ export function VideoBranch() {
 
   return (
     <>
-      {error ? <ErrorState title={error} /> : null}
+      {error ? <ErrorState title={t(error)} /> : null}
 
       <section className={styles.uploadCard} aria-labelledby="video-upload-title">
         <h2 id="video-upload-title" className={styles.sectionTitle}>{t("Tải clip lên")}</h2>
@@ -328,7 +333,7 @@ export function VideoBranch() {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
             >
-              {uploading ? `Đang tải lên ${uploadProgress}%` : "Chọn clip từ máy"}
+              {uploading ? t("Đang tải lên {uploadProgress}%", { uploadProgress: uploadProgress }) : "Chọn clip từ máy"}
             </Button>
           </div>
         ) : (
@@ -342,7 +347,7 @@ export function VideoBranch() {
             />
 
             <div className={styles.draftForm}>
-              <p className={styles.clipSpec}>{describeClip(draft.asset) || "Đang đọc thông số clip…"}</p>
+              <p className={styles.clipSpec}>{describeClip(draft.asset, t) || "Đang đọc thông số clip…"}</p>
 
               <ul className={styles.channelList}>
                 {Object.entries(CHANNEL_LABELS).map(([channel, label]) => {
@@ -350,7 +355,7 @@ export function VideoBranch() {
                   return (
                     <li key={channel} className={fits ? styles.channelFits : styles.channelUnfit}>
                       <span aria-hidden="true">{fits ? "✓" : "✕"}</span>
-                      <span>{`${label}: ${fits ? "đăng được" : "chưa hợp"}`}</span>
+                      <span>{`${label}: ${t(fits ? "đăng được" : "chưa hợp")}`}</span>
                     </li>
                   );
                 })}
@@ -367,7 +372,7 @@ export function VideoBranch() {
 
               <div className={styles.draftActions}>
                 <Button variant="primary" onClick={onSubmit} disabled={submitting}>
-                  {submitting ? "Đang lưu…" : "Đưa vào hàng chờ duyệt"}
+                  {t(submitting ? "Đang lưu…" : "Đưa vào hàng chờ duyệt")}
                 </Button>
                 <Button variant="outline" onClick={resetDraft} disabled={submitting}>{t("Chọn clip khác")}</Button>
               </div>
@@ -406,7 +411,7 @@ export function VideoBranch() {
                 <li key={post.id} className={styles.postRow}>
                   <div className={styles.postMain}>
                     <span className={`${styles.statusPill} ${styles[`tone_${status.tone}`]}`}>
-                      {status.text}
+                      {t(status.text)}
                     </span>
                     <p className={styles.postCaption}>
                       {post.caption || <em>{t("Chưa có nội dung đăng kèm")}</em>}

@@ -108,6 +108,7 @@ function PlatformIcon({ platform }: { platform: Platform }) {
   }
 }
 
+// i18n-data: mô tả từng nền tảng, `t()` dịch ở chỗ render
 function getPlatformDescription(platform: Platform): string {
   switch (platform) {
     case "facebook":
@@ -184,15 +185,7 @@ export function ConnectionCard({
               {connection && copy ? (
                 <>
                   <Badge tone={copy.needsReconnect ? "warning" : "success"}>
-                    {t({
-                      vi: copy.label,
-                      en:
-                        copy.label === "Đã nối"
-                          ? "Connected"
-                          : copy.label === "Hết hạn"
-                            ? "Expired"
-                            : "Revoked",
-                    })}
+                    {t(copy.label)}
                   </Badge>
                   {connection.account_name ? (
                     <span className={styles.accountName}>
@@ -210,11 +203,11 @@ export function ConnectionCard({
                   ) : null}
                 </>
               ) : (
-                <Badge tone="neutral">{t("settings.notConnected", "Chưa kết nối")}</Badge>
+                <Badge tone="neutral">{t("Chưa kết nối")}</Badge>
               )}
             </div>
             <p className={styles.hint}>
-              {copy?.hint || getPlatformDescription(platform)}
+              {t(copy?.hint || getPlatformDescription(platform))}
             </p>
           </div>
         </div>
@@ -225,19 +218,19 @@ export function ConnectionCard({
               {copy?.needsReconnect ? (
                 <Button variant="primary" onClick={connect} disabled={busy}>
                   {busy
-                    ? t({ vi: "Đang mở…", en: "Connecting…" })
-                    : t({ vi: "Nối lại", en: "Reconnect" })}
+                    ? t("Đang mở…")
+                    : t("Nối lại")}
                 </Button>
               ) : null}
               <Button variant="outline" onClick={remove} disabled={busy}>
-                {t({ vi: "Ngắt kết nối", en: "Disconnect" })}
+                {t("Ngắt kết nối")}
               </Button>
             </>
           ) : (
             <Button variant="primary" onClick={connect} disabled={busy}>
               {busy
-                ? t({ vi: "Đang mở…", en: "Opening…" })
-                : t({ vi: "Kết nối", en: "Connect" })}
+                ? t("Đang mở…")
+                : t("Kết nối")}
             </Button>
           )}
         </div>
@@ -245,7 +238,7 @@ export function ConnectionCard({
 
       {error ? (
         <div className={styles.error} role="alert">
-          {error}
+          {t(error)}
         </div>
       ) : null}
     </div>

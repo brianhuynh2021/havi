@@ -1,5 +1,5 @@
 "use client";
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,8 @@ function number(value: number): string {
   return new Intl.NumberFormat("vi-VN").format(value);
 }
 
-function vnd(value: number): string {
-  return `${new Intl.NumberFormat("vi-VN").format(value)}đ`;
+function vnd(value: number, t: Translate): string {
+  return t("{value}đ", { value: new Intl.NumberFormat("vi-VN").format(value) });
 }
 
 const dayOnly = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
@@ -47,10 +47,10 @@ const vnDateTime = new Intl.DateTimeFormat("vi-VN", {
   hour12: false,
 });
 
-function metricCards(data: OperationsMetrics) {
+function metricCards(data: OperationsMetrics, t: Translate) {
   return [
-    { label: "Event", value: number(data.event_count), detail: `${number(data.error_count)} lỗi` },
-    { label: "Tỷ lệ lỗi", value: percent(data.error_rate), detail: "Theo event log" },
+    { label: "Event", value: number(data.event_count), detail: t("{value} lỗi", { value: number(data.error_count) }) },
+    { label: t("Tỷ lệ lỗi"), value: percent(data.error_rate), detail: t("Theo event log") },
     { label: "Token", value: number(data.tokens_total), detail: `${number(data.tokens_in)} in / ${number(data.tokens_out)} out` },
     { label: "P95 latency", value: `${number(data.p95_duration_ms)}ms`, detail: `Avg ${number(data.avg_duration_ms)}ms` },
   ];
@@ -99,6 +99,10 @@ export function OperationsScreen() {
     };
   }, [reloadKey]);
 
+  // Tính một lần: gọi `pricingDay()` hai lần thì TypeScript không nối được kết
+  // quả của lần kiểm tra với lần dùng, và `null` lọt vào chỗ chèn giá trị.
+  const asOfDay = data ? pricingDay(data.pricing_as_of) : null;
+
   return (
     <>
       <header className={styles.header}>
@@ -113,7 +117,7 @@ export function OperationsScreen() {
 
       {error ? (
         <ErrorState
-          title={error}
+          title={t(error)}
           action={
             <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>{t("Thử lại")}</Button>
           }
@@ -135,7 +139,7 @@ export function OperationsScreen() {
           ) : null}
 
           <section className={styles.statsGrid} aria-label={t("Số liệu job nội bộ")}>
-            {metricCards(data).map((item) => (
+            {metricCards(data, t).map((item) => (
               <div key={item.label} className={styles.statCard}>
                 <p className={styles.statLabel}>{item.label}</p>
                 <p className={styles.statValue}>{item.value}</p>
@@ -157,7 +161,7 @@ export function OperationsScreen() {
               <p className={styles.statLabel}>{t("Chi phí mỗi bài lên kênh")}</p>
               <p className={styles.statValue}>
                 {data.approved_draft_count > 0
-                  ? vnd(data.est_cost_per_approved_draft_vnd)
+                  ? vnd(data.est_cost_per_approved_draft_vnd, t)
                   : "—"}
               </p>
               <p className={styles.statDetail}>
@@ -179,7 +183,7 @@ export function OperationsScreen() {
             <div className={styles.statCard}>
               <p className={styles.statLabel}>{t("Chi phí mỗi job")}</p>
               <p className={styles.statValue}>
-                {data.job_count > 0 ? vnd(data.est_cost_per_job_vnd) : "—"}
+                {data.job_count > 0 ? vnd(data.est_cost_per_job_vnd, t) : "—"}
               </p>
               <p className={styles.statDetail}>
                 {number(data.avg_tokens_per_job)} {t("token/job")}
@@ -193,8 +197,8 @@ export function OperationsScreen() {
           <p className={data.pricing_is_stale ? styles.pricingStale : styles.pricingNote}>
             {data.pricing_is_stale
               ? t("Bảng giá LLM đã quá cũ — mọi con số tiền ở trên chỉ là phỏng đoán. Cập nhật domain/policies/pricing.py.")
-              : pricingDay(data.pricing_as_of)
-                ? `${t("Tiền quy đổi theo bảng giá ngày")} ${pricingDay(data.pricing_as_of)}`
+              : asOfDay
+                ? t("Tiền quy đổi theo bảng giá ngày {date}", { date: asOfDay })
                 : t("Không đọc được ngày của bảng giá — coi con số tiền ở trên là phỏng đoán.")}
           </p>
 

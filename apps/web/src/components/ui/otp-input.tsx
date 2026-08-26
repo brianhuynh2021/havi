@@ -65,7 +65,7 @@ export function OtpInput({ length = 6, value, onChange, disabled }: OtpInputProp
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
           onPaste={handlePaste}
-          aria-label={`Số thứ ${index + 1}`}
+          aria-label={t("Số thứ {value}", { value: index + 1 })}
         />
       ))}
     </div>

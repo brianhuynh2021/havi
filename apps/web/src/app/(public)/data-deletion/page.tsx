@@ -1,3 +1,4 @@
+// i18n-exempt: hướng dẫn Meta App Review yêu cầu, và nó dẫn từng bước theo đúng nhãn tiếng Việt trên giao diện
 import type { Metadata } from "next";
 import { LegalPage } from "@/features/legal/legal-page";
 import type { Section } from "@/features/legal/legal.content";

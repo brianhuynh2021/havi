@@ -44,12 +44,11 @@ export function QuotaBanner({ reloadKey = 0 }: { reloadKey?: number }) {
     return (
       <div className={`${styles.banner} ${styles.blocked}`} role="alert">
         <p className={styles.title}>
-          {t({ vi: "Hết lượt tạo bài tháng này", en: "Monthly generation quota reached" })}
+          {t("Hết lượt tạo bài tháng này")}
         </p>
         <p className={styles.body}>
-          {t({
-            vi: `Lượt tạo bài sẽ mở lại ngày ${resets}. Bài đã duyệt vẫn đăng đúng lịch bình thường.`,
-            en: `Creation limit resets on ${resets}. Previously scheduled posts will publish normally.`,
+          {t("Lượt tạo bài sẽ mở lại ngày {date}. Bài đã duyệt vẫn đăng đúng lịch bình thường.", {
+            date: resets,
           })}
         </p>
       </div>
@@ -60,12 +59,11 @@ export function QuotaBanner({ reloadKey = 0 }: { reloadKey?: number }) {
   return (
     <div className={`${styles.banner} ${styles.warning}`} role="status">
       <p className={styles.title}>
-        {t({ vi: `Còn khoảng ${postsLeft} bài trong tháng này`, en: `~${postsLeft} posts remaining this month` })}
+        {t("Còn khoảng {posts} bài trong tháng này", { posts: postsLeft })}
       </p>
       <p className={styles.body}>
-        {t({
-          vi: `Lượt tạo bài sẽ mở lại ngày ${resets}. Havi báo trước để bạn chủ động lên lịch đăng.`,
-          en: `Creation limit resets on ${resets}. Havi notifies you in advance to plan posts.`,
+        {t("Lượt tạo bài sẽ mở lại ngày {date}. Havi báo trước để bạn chủ động lên lịch đăng.", {
+          date: resets,
         })}
       </p>
     </div>

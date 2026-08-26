@@ -27,7 +27,10 @@ export function ErrorState({ title, body, action }: StateViewProps) {
   );
 }
 
-export function LoadingState({ title = "Đang tải…" }: { title?: string }) {
+// `title` không có mặc định là chủ ý: một mặc định `"Đang tải…"` ở đây là chuỗi
+// cấp module, bọc `t()` tại đó sẽ đóng băng ngôn ngữ lúc import. Bắt chỗ gọi
+// truyền vào thì câu luôn dịch đúng, và chỗ gọi nào cũng đã có `t` trong tay.
+export function LoadingState({ title }: { title: string }) {
   return (
     <div className={styles.state} role="status" aria-live="polite">
       <span className={styles.spinner} aria-hidden="true" />

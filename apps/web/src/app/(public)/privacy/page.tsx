@@ -1,3 +1,4 @@
+// i18n-exempt: văn bản pháp lý — bản dịch Chính sách bảo mật phải do luật sư soạn, không phải codemod
 import type { Metadata } from "next";
 import { LegalPage } from "@/features/legal/legal-page";
 import { privacySections } from "@/features/legal/legal.content";

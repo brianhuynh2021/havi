@@ -30,7 +30,7 @@ export function ForgotPasswordScreen() {
 
   function requestCode() {
     if (!isValidEmail(email)) {
-      setError(t({ vi: "Email chưa đúng — kiểm tra lại giúp nhé", en: "Invalid email — please check again" }));
+      setError(t("Email chưa đúng — kiểm tra lại giúp nhé"));
       return;
     }
     setError(null);
@@ -40,11 +40,11 @@ export function ForgotPasswordScreen() {
 
   function submitNewPassword() {
     if (code.length !== OTP_LENGTH) {
-      setError(t({ vi: `Nhập đủ ${OTP_LENGTH} số trong email`, en: `Enter all ${OTP_LENGTH} digits sent to your email` }));
+      setError(t("Nhập đủ {n} số trong email", { n: OTP_LENGTH }));
       return;
     }
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setError(t({ vi: `Mật khẩu mới cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `New password must be at least ${MIN_PASSWORD_LENGTH} characters` }));
+      setError(t("Mật khẩu mới cần ít nhất {n} ký tự", { n: MIN_PASSWORD_LENGTH }));
       return;
     }
     setError(null);
@@ -53,15 +53,15 @@ export function ForgotPasswordScreen() {
 
   return (
     <>
-      <h1 className={styles.title}>{t("auth.forgotTitle", "Quên mật khẩu")}</h1>
+      <h1 className={styles.title}>{t("Khôi phục mật khẩu")}</h1>
       <p className={styles.subtitle}>
-        {t("auth.forgotSubtitle", "Nhập email của bạn để nhận liên kết khôi phục.")}
+        {t("Nhập email của bạn để nhận liên kết khôi phục.")}
       </p>
 
       {step === "email" ? (
         <div className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>{t({ vi: "Email đã đăng ký", en: "Registered Email Address" })}</span>
+            <span className={styles.label}>{t("Email đã đăng ký")}</span>
             <Input
               scale="large"
               type="email"
@@ -74,45 +74,45 @@ export function ForgotPasswordScreen() {
           </label>
           {error ? (
             <p className={styles.error} role="alert">
-              {error}
+              {t(error)}
             </p>
           ) : null}
 
           <Button variant="primary" scale="large" onClick={requestCode}>
-            {t("auth.sendResetLink", "Gửi mã đặt lại")}
+            {t("Gửi liên kết khôi phục")}
           </Button>
 
           <p className={styles.footerText}>
-            <Link href="/login">← {t("auth.backToLogin", "Quay lại đăng nhập")}</Link>
+            <Link href="/login">← {t("Quay lại đăng nhập")}</Link>
           </p>
         </div>
       ) : step === "otp" ? (
         <div className={styles.form}>
           <p className={styles.otpHint}>
-            {t({ vi: `Havi đã gửi mã ${OTP_LENGTH} số tới `, en: `Havi sent a ${OTP_LENGTH}-digit code to ` })}
+            {t("Havi đã gửi mã {n} số tới ", { n: OTP_LENGTH })}
             <strong>{email}</strong>
           </p>
           <OtpInput value={code} onChange={setCode} />
 
           <label className={styles.field}>
-            <span className={styles.label}>{t({ vi: "Mật khẩu mới", en: "New Password" })}</span>
+            <span className={styles.label}>{t("Mật khẩu mới")}</span>
             <Input
               scale="large"
               type="password"
               autoComplete="new-password"
-              placeholder={t({ vi: `Ít nhất ${MIN_PASSWORD_LENGTH} ký tự`, en: `At least ${MIN_PASSWORD_LENGTH} characters` })}
+              placeholder={t("Ít nhất {n} ký tự", { n: MIN_PASSWORD_LENGTH })}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
           </label>
           {error ? (
             <p className={styles.error} role="alert">
-              {error}
+              {t(error)}
             </p>
           ) : null}
 
           <Button variant="primary" scale="large" onClick={submitNewPassword}>
-            {t({ vi: "Lưu & đăng nhập", en: "Save & Sign In" })}
+            {t("Lưu & đăng nhập")}
           </Button>
 
           <button
@@ -122,21 +122,21 @@ export function ForgotPasswordScreen() {
             onClick={start}
           >
             {canResend
-              ? t({ vi: "Gửi lại mã", en: "Resend code" })
-              : t({ vi: `Gửi lại mã sau ${secondsLeft}s`, en: `Resend code in ${secondsLeft}s` })}
+              ? t("Gửi lại mã")
+              : t("Gửi lại mã sau {seconds}s", { seconds: secondsLeft })}
           </button>
         </div>
       ) : (
         <div className={styles.form}>
           <p className={styles.successText}>
-            {t({ vi: "Mật khẩu đã đổi thành công. Bạn có thể đăng nhập lại bằng mật khẩu mới.", en: "Password changed successfully. You can now log in with your new password." })}
+            {t("Mật khẩu đã đổi thành công. Bạn có thể đăng nhập lại bằng mật khẩu mới.")}
           </p>
           <Button
             variant="primary"
             scale="large"
             onClick={() => router.push("/login")}
           >
-            {t("auth.backToLogin", "Về đăng nhập")}
+            {t("Quay lại đăng nhập")}
           </Button>
         </div>
       )}

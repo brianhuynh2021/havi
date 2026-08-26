@@ -1,3 +1,18 @@
+// i18n-data: hai cơ chế, mỗi cái cho một loại chuỗi.
+//
+// Câu **hằng** (`"Chưa tải được lịch, thử lại giúp bạn nhé."`) để nguyên tiếng
+// Việt: nó chính là khoá, và màn hình hiện nó bằng `t(error)` — tra động vẫn
+// đúng vì khoá là câu tiếng Việt. Bọc `t()` ngay tại hằng số cấp module sẽ
+// **đóng băng ngôn ngữ lúc import**, đổi ngôn ngữ sau đó không có tác dụng.
+//
+// Câu **có chèn giá trị** thì phải dịch tại lúc dựng, bằng `translateNow`: sau
+// khi đã ghép số vào thì không còn khoá nào để tra ở chỗ render nữa.
+//
+// Câu do backend trả về không có trong từ điển; `t()` giữ nguyên tiếng Việt.
+// Dùng `translateNow` thay hook: module này không phải component nên không gọi
+// `useLanguage()` được. Đặt bí danh `t` để chỉ có MỘT tên phải nhớ, và để
+// `scripts/i18n-audit.mjs` đếm được như mọi chỗ gọi khác.
+import { translateNow as t } from "@/lib/i18n/language-context";
 import { NETWORK_ERROR_MESSAGE, detailToMessage } from "@/features/auth/auth.api";
 import { apiClient } from "@/lib/api-client/client";
 import type { components } from "@/lib/api-client/schema";
@@ -75,10 +90,10 @@ export async function fetchBrief(): Promise<Result<MorningBrief>> {
  * ngay, không phải trừ trong đầu.
  */
 export function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes} phút`;
+  if (minutes < 60) return t("{minutes} phút", { minutes: minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+  return rest ? t("{hours} giờ {rest} phút", { hours: hours, rest: rest }) : t("{hours} giờ", { hours: hours });
 }
 
 /** Nhãn tiếng Việt cho loại việc. */
@@ -119,11 +134,11 @@ export const CHANNEL_LABELS: Record<string, string> = {
  */
 export function waitedFor(iso: string, now: Date = new Date()): string {
   const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
-  if (minutes < 1) return "vừa xong";
-  if (minutes < 60) return `${minutes} phút`;
+  if (minutes < 1) return t("vừa xong");
+  if (minutes < 60) return t("{minutes} phút", { minutes: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} giờ`;
-  return `${Math.round(hours / 24)} ngày`;
+  if (hours < 24) return t("{hours} giờ", { hours: hours });
+  return t("{value} ngày", { value: Math.round(hours / 24) });
 }
 
 /**

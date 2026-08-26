@@ -37,6 +37,7 @@ import { MorningBrief } from "./morning-brief";
 import styles from "./work-queue.module.css";
 
 /** Bộ lọc: nhóm loại việc, không phải nhóm màn hình. */
+// i18n-data: nhãn bộ lọc, `t()` dịch ở chỗ render
 const FILTERS: Array<{ key: string; label: string; kinds: string[] }> = [
   { key: "all", label: "Tất cả", kinds: [] },
   { key: "inbox", label: "Khách nhắn", kinds: ["inbox"] },
@@ -90,15 +91,15 @@ export function WorkQueueScreen() {
   }
 
   if (loading) {
-    return <LoadingState title={t({ vi: "Đang tải danh sách việc…", en: "Loading work queue…" })} />;
+    return <LoadingState title={t("Đang tải danh sách việc…")} />;
   }
   if (error && items.length === 0) {
     return (
       <ErrorState
-        title={error}
+        title={t(error)}
         action={
           <Button variant="outline" onClick={() => void load()}>
-            {t({ vi: "Thử lại", en: "Retry" })}
+            {t("Thử lại")}
           </Button>
         }
       />
@@ -114,19 +115,19 @@ export function WorkQueueScreen() {
   return (
     <>
       <header className={styles.header}>
-        <h1 className={styles.title}>{t({ vi: "Việc cần làm", en: "Work queue" })}</h1>
+        <h1 className={styles.title}>{t("Việc cần làm")}</h1>
         <p className={styles.subtitle}>
           {total === 0
-            ? t({ vi: "Không còn việc nào đang chờ.", en: "Nothing waiting." })
+            ? t("Không còn việc nào đang chờ.")
             : overdueCount > 0
-              ? `${total} việc đang chờ — ${overdueCount} việc đã để lâu`
-              : `${total} việc đang chờ`}
+              ? t("{total} việc đang chờ — {overdueCount} việc đã để lâu", { total: total, overdueCount: overdueCount })
+              : t("{total} việc đang chờ", { total: total })}
         </p>
       </header>
 
       {error ? (
         <p className={styles.partialError} role="status">
-          {error}
+          {t(error)}
         </p>
       ) : null}
 
@@ -136,7 +137,7 @@ export function WorkQueueScreen() {
 
       {/* Bộ lọc, không phải điều hướng. Người trực ca ở nguyên một chỗ và thu hẹp
           danh sách; họ không đi sang màn khác rồi tìm đường quay lại. */}
-      <div className={styles.filterRow} role="group" aria-label="Lọc loại việc">
+      <div className={styles.filterRow} role="group" aria-label={t("Lọc loại việc")}>
         {FILTERS.map((item) => {
           const count = item.kinds.length
             ? items.filter((row) => item.kinds.includes(row.kind)).length
@@ -149,7 +150,7 @@ export function WorkQueueScreen() {
               className={`${styles.filterChip} ${filter === item.key ? styles.filterChipActive : ""}`}
               onClick={() => setFilter(item.key)}
             >
-              {item.label}
+              {t(item.label)}
               {count > 0 ? <span className={styles.filterCount}>{count}</span> : null}
             </button>
           );
@@ -157,13 +158,13 @@ export function WorkQueueScreen() {
       </div>
 
       {visible.length === 0 ? (
-        <section className={styles.allClear} aria-label="Tình trạng">
+        <section className={styles.allClear} aria-label={t("Tình trạng")}>
           <span className={styles.allClearMark} aria-hidden="true">
             ✓
           </span>
           <div>
             <p className={styles.allClearTitle}>
-              {total === 0 ? "Hết việc rồi" : "Không có việc nào trong nhóm này"}
+              {t(total === 0 ? "Hết việc rồi" : "Không có việc nào trong nhóm này")}
             </p>
             <p className={styles.allClearBody}>
               {total === 0
@@ -173,7 +174,7 @@ export function WorkQueueScreen() {
           </div>
         </section>
       ) : (
-        <ul className={styles.queue} aria-label="Danh sách việc">
+        <ul className={styles.queue} aria-label={t("Danh sách việc")}>
           {visible.map((item) => {
             const overdue = isOverdue(item);
             const mine = Boolean(meId) && item.assigned_to_user_id === meId;
@@ -196,7 +197,7 @@ export function WorkQueueScreen() {
                     </span>
                   ) : null}
                   <span className={overdue ? styles.waitedLong : styles.waited}>
-                    {t({ vi: "chờ", en: "waited" })} {waitedFor(item.waiting_since)}
+                    {t("chờ")} {waitedFor(item.waiting_since)}
                   </span>
                 </div>
 
@@ -211,7 +212,7 @@ export function WorkQueueScreen() {
 
                 <div className={styles.cardActions}>
                   <Link href={item.href} className={styles.primaryAction}>
-                    {t({ vi: "Xử lý", en: "Handle" })}
+                    {t("Xử lý")}
                   </Link>
 
                   {/* Chỉ hiện khi dựng được link đúng chỗ. `platform_url` là
@@ -224,7 +225,7 @@ export function WorkQueueScreen() {
                       target="_blank"
                       rel="noreferrer noopener"
                     >
-                      {t({ vi: "Mở trên nền tảng ↗", en: "Open on platform ↗" })}
+                      {t("Mở trên nền tảng ↗")}
                     </a>
                   ) : null}
 
@@ -242,10 +243,10 @@ export function WorkQueueScreen() {
                       {busyId === item.id
                         ? "…"
                         : mine
-                          ? t({ vi: "Bỏ nhận", en: "Release" })
+                          ? t("Bỏ nhận")
                           : takenByOther
-                            ? t({ vi: "Nhận thay", en: "Take over" })
-                            : t({ vi: "Tôi nhận", en: "Claim" })}
+                            ? t("Nhận thay")
+                            : t("Tôi nhận")}
                     </button>
                   ) : null}
                 </div>

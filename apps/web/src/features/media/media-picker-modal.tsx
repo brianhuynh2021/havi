@@ -1,5 +1,5 @@
 "use client";
-import { useLanguage } from "@/lib/i18n/language-context";
+import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 
 import React, { useEffect, useState, useCallback } from "react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
@@ -18,20 +18,24 @@ function formatSize(bytes: number | null | undefined): string | null {
   return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
 }
 
-function describeShape(width?: number | null, height?: number | null): string | null {
+function describeShape(
+  width: number | null | undefined,
+  height: number | null | undefined,
+  t: Translate,
+): string | null {
   if (!width || !height) return null;
   const ratio = width / height;
-  if (ratio < 1) return `dọc ${+(((1 / ratio) * 9).toFixed(1))}:9`;
-  if (ratio === 1) return "vuông 1:1";
-  return `ngang ${+((ratio * 9).toFixed(1))}:9`;
+  if (ratio < 1) return t("dọc {value}:9", { value: +(((1 / ratio) * 9).toFixed(1)) });
+  if (ratio === 1) return t("vuông 1:1");
+  return t("ngang {value}:9", { value: +(ratio * 9).toFixed(1) });
 }
 
-function describeAsset(asset: MediaAsset): string {
+function describeAsset(asset: MediaAsset, t: Translate): string {
   const parts: string[] = [];
-  const shape = describeShape(asset.width, asset.height);
+  const shape = describeShape(asset.width, asset.height, t);
   if (shape) parts.push(shape);
   if (typeof asset.duration_seconds === "number") {
-    parts.push(`${Math.round(asset.duration_seconds)} giây`);
+    parts.push(t("{value} giây", { value: Math.round(asset.duration_seconds) }));
   }
   const size = formatSize(asset.size_bytes);
   if (size) parts.push(size);
@@ -88,7 +92,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect }: MediaPickerModal
 
         <div className={styles.body}>
           {error ? (
-            <ErrorState title={error} action={<button onClick={load}>{t("Thử lại")}</button>} />
+            <ErrorState title={t(error)} action={<button onClick={load}>{t("Thử lại")}</button>} />
           ) : loading ? (
             <LoadingState title={t("Đang tải thư viện…")} />
           ) : assets.length === 0 ? (
@@ -115,14 +119,14 @@ export function MediaPickerModal({ isOpen, onClose, onSelect }: MediaPickerModal
                       <img className={styles.thumb} src={asset.url} alt="" loading="lazy" />
                     )}
                     <span className={styles.typeTag}>
-                      {asset.type === "video" ? "Video" : "Ảnh"}
+                      {t(asset.type === "video" ? "Video" : "Ảnh")}
                     </span>
                   </div>
 
                   <p className={styles.filename} title={asset.filename}>
                     {asset.filename}
                   </p>
-                  <p className={styles.meta}>{describeAsset(asset) || "—"}</p>
+                  <p className={styles.meta}>{describeAsset(asset, t) || "—"}</p>
                 </li>
               ))}
             </ul>

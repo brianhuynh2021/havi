@@ -1,3 +1,18 @@
+// i18n-data: hai cơ chế, mỗi cái cho một loại chuỗi.
+//
+// Câu **hằng** (`"Chưa tải được lịch, thử lại giúp bạn nhé."`) để nguyên tiếng
+// Việt: nó chính là khoá, và màn hình hiện nó bằng `t(error)` — tra động vẫn
+// đúng vì khoá là câu tiếng Việt. Bọc `t()` ngay tại hằng số cấp module sẽ
+// **đóng băng ngôn ngữ lúc import**, đổi ngôn ngữ sau đó không có tác dụng.
+//
+// Câu **có chèn giá trị** thì phải dịch tại lúc dựng, bằng `translateNow`: sau
+// khi đã ghép số vào thì không còn khoá nào để tra ở chỗ render nữa.
+//
+// Câu do backend trả về không có trong từ điển; `t()` giữ nguyên tiếng Việt.
+// Dùng `translateNow` thay hook: module này không phải component nên không gọi
+// `useLanguage()` được. Đặt bí danh `t` để chỉ có MỘT tên phải nhớ, và để
+// `scripts/i18n-audit.mjs` đếm được như mọi chỗ gọi khác.
+import { translateNow as t } from "@/lib/i18n/language-context";
 import { apiClient } from "@/lib/api-client/client";
 import { NETWORK_ERROR_MESSAGE, toStoredTokens } from "@/features/auth/auth.api";
 import { readTokens, type StoredTokens } from "@/lib/auth/token-store";
@@ -102,7 +117,7 @@ export async function initializeBusinessTruthPack(
   shopName: string,
 ): Promise<{ ok: boolean; message?: string }> {
   try {
-    const tone = `Chuyên nghiệp, thân thiện, tận tâm phục vụ khách hàng tại ${shopName}.`;
+    const tone = t("Chuyên nghiệp, thân thiện, tận tâm phục vụ khách hàng tại {shopName}.", { shopName: shopName });
 
     // **Không seed FAQ nào cả.**
     //

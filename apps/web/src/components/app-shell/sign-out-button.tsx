@@ -15,6 +15,7 @@ type WorkspaceInfo = {
   plan: string;
 };
 
+// i18n-data: tên gói hiện trên thanh bên, `t()` dịch ở chỗ render
 const PLAN_META: Record<string, { label: string; icon: string; styleClass: string }> = {
   trai_nghiem: { label: "Gói Trải Nghiệm", icon: "🌱", styleClass: styles.tierTrial },
   khoi_nghiep: { label: "Gói Khởi Nghiệp", icon: "⚡", styleClass: styles.tierStarter },
@@ -64,14 +65,16 @@ export function SignOutButton() {
   };
 
   const initial = getInitials(workspace?.name);
-  const displayName = workspace?.name ? `Chủ tiệm ${workspace.name}` : "Chủ cơ sở";
+  const displayName = workspace?.name
+    ? t("Chủ tiệm {name}", { name: workspace.name })
+    : t("Chủ cơ sở");
 
   return (
     <div className={styles.userProfileRow}>
       <Link
         href="/app/billing"
         className={styles.userProfileInfoLink}
-        title={t("nav.billing", "Xem thông tin gói cước & hạn mức")}
+        title={t("Gói cước")}
       >
         <div className={styles.userAvatar}>
           {initial}
@@ -81,7 +84,7 @@ export function SignOutButton() {
             {displayName}
           </span>
           <span className={`${styles.userTier} ${planInfo.styleClass}`}>
-            {planInfo.icon} {planInfo.label}
+            {planInfo.icon} {t(planInfo.label)}
           </span>
         </div>
       </Link>
@@ -90,8 +93,8 @@ export function SignOutButton() {
         type="button"
         className={styles.signOutIconBtn}
         onClick={() => void signOut()}
-        title={t("shell.signOut", "Đăng xuất")}
-        aria-label={t("shell.signOut", "Đăng xuất")}
+        title={t("Đăng xuất")}
+        aria-label={t("Đăng xuất")}
       >
         <svg
           width="15"
