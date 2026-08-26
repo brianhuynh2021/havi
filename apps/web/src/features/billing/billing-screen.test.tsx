@@ -165,6 +165,25 @@ describe("BillingScreen", () => {
     );
   }
 
+  it("trạng thái gói nói bằng tiếng Việt, không lọt enum tiếng Anh", async () => {
+    // Bản trước chỉ dịch `active`; mọi trạng thái khác lọt nguyên giá trị enum —
+    // workspace đang dùng thử thấy chữ "trialing". Lỗi chỉ hiện ở đúng những lúc
+    // người dùng cần đọc hiểu nhất.
+    mockSubscription({ status: "trialing" });
+    renderBilling();
+
+    expect(await screen.findByText(/Đang dùng thử/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("trialing");
+  });
+
+  it("gói quá hạn cũng nói bằng tiếng Việt", async () => {
+    mockSubscription({ status: "past_due", days_until_due: -3 });
+    renderBilling();
+
+    expect(await screen.findByText(/Đã hết hạn/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("past_due");
+  });
+
   it("hiện trần đang được cưỡng chế, không chỉ hạn mức token", async () => {
     // Trước đó quota token là gate DUY NHẤT theo gói: phân quyền, báo cáo, nhiều
     // thương hiệu đều có ở mọi gói. Thang giá thực chất là một thang token.

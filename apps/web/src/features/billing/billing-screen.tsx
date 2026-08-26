@@ -97,6 +97,21 @@ const PLAN_DETAILS: Record<
   },
 };
 
+/**
+ * Nhãn tiếng Việt cho `SubscriptionStatus`.
+ *
+ * Bản trước viết `sub.status === "active" ? "Đang hoạt động" : sub.status` — nên
+ * mọi trạng thái khác `active` lọt nguyên giá trị enum tiếng Anh ra màn hình:
+ * workspace đang dùng thử thấy chữ **"trialing"**, hết hạn thấy **"past_due"**.
+ * Đó là loại lỗi chỉ hiện ở đúng những lúc người dùng cần đọc hiểu nhất.
+ */
+const STATUS_LABELS: Record<string, string> = {
+  trialing: "Đang dùng thử",
+  active: "Đang hoạt động",
+  past_due: "Đã hết hạn",
+  canceled: "Đã huỷ",
+};
+
 export function BillingScreen() {
 const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -247,7 +262,7 @@ const { t } = useLanguage();
       <header className={styles.header}>
         <div className={styles.titleRow}>
           <h1 className={styles.title}>{t("nav.billing", "Gói Cước & Thanh Toán")}</h1>
-          <Badge tone={sub.status === "active" ? "success" : "warning"}>{t("Trạng thái:")}{" "}{sub.status === "active" ? "Đang hoạt động" : sub.status}
+          <Badge tone={sub.status === "active" ? "success" : "warning"}>{t("Trạng thái:")}{" "}{STATUS_LABELS[sub.status] ?? sub.status}
           </Badge>
         </div>
         <p className={styles.subtitle}>{t(
