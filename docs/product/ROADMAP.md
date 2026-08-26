@@ -34,6 +34,26 @@ Every item offers two exits and both are correct: handle it inside Havi, or deep
 link straight to the platform. The expensive part of the job is not answering —
 it is hunting across five sites for what needs answering.
 
+The owner reads a brief, not a queue. Staff work the queue daily; the owner opens
+Havi weekly to learn what happened and whether it earned its fee. Those are two
+surfaces, and forcing the owner through the staff's queue means reading forty
+lines to find four.
+
+### What the brief may not say
+
+The brief counts from data Havi owns, in SQL, with no model call. That rules out
+three numbers that every "AI social manager" pitch opens with, because Havi
+measures none of them: revenue attributed to social (no order data), per-platform
+engagement (no insights permission yet), competitor movement (a different data
+domain entirely). Absent beats guessed.
+
+Time saved is reported only for work Havi actually performed — replies sent,
+posts published — multiplied by a stated per-action assumption that is shown on
+screen next to the total. A customer who can see the arithmetic can check it; a
+total with the assumption hidden is advertising. Anything that is real value but
+has no timestamp to measure ("spotted a failed post", "saved five tabs") stays out
+of the number.
+
 ### Retired product concepts
 
 The following are intentionally outside Havi: goal/roadmap/evidence operating

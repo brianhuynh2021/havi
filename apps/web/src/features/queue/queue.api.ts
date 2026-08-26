@@ -5,6 +5,7 @@ import type { components } from "@/lib/api-client/schema";
 export type WorkItem = components["schemas"]["WorkItem"];
 export type WorkQueue = components["schemas"]["WorkQueue"];
 export type ResponseMetrics = components["schemas"]["ResponseMetrics"];
+export type MorningBrief = components["schemas"]["MorningBrief"];
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
 export async function fetchQueue(): Promise<Result<WorkQueue>> {
@@ -53,6 +54,31 @@ export async function fetchResponseMetrics(
   } catch {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
+}
+
+export async function fetchBrief(): Promise<Result<MorningBrief>> {
+  try {
+    const { data, error } = await apiClient.GET("/queue/brief");
+    if (error || !data) {
+      return { ok: false, message: detailToMessage(error, "Chưa tải được bản tin") };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/**
+ * "6 giờ 42 phút" — phút thô không đọc được ở con số lớn.
+ *
+ * Dưới một giờ thì nói bằng phút chứ không "0 giờ 40 phút": người đọc phải hiểu
+ * ngay, không phải trừ trong đầu.
+ */
+export function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} phút`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
 }
 
 /** Nhãn tiếng Việt cho loại việc. */

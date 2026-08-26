@@ -737,3 +737,55 @@ class ResponseMetrics(HaviModel):
     #: Tin thuộc nhóm tốn tiền (hỏi giá / đặt lịch / khiếu nại) chưa từng được
     #: trả lời sau hơn một ngày. Con số đắt nhất trong bảng này.
     missed_costly: int
+
+
+# --- Bản tin buổi sáng ---------------------------------------------------------
+
+
+class BriefActivity(HaviModel):
+    """Cái gì đã xảy ra trong cửa sổ vừa qua. Đếm thuần, không suy luận."""
+
+    published: int
+    inbox_received: int
+    replies_sent: int
+    publish_failed: int
+
+
+class BriefGap(HaviModel):
+    """Một ngày tới chưa có bài nào xếp lịch."""
+
+    date: date
+    weekday: str
+
+
+class BriefSavedAction(HaviModel):
+    """Một dòng trong phép tính thời gian tiết kiệm.
+
+    `minutes_each` là **giả định**, và nó có mặt ở API để UI hiện ra được. Con số
+    tổng mà không kèm phép tính thì chỉ là quảng cáo.
+    """
+
+    action: str
+    count: int
+    minutes_each: int
+    minutes_total: int
+
+
+class MorningBrief(HaviModel):
+    """Màn của chủ: 24 giờ qua có gì, còn gì phải xử lý, tuần tới chỗ nào trống.
+
+    Mọi con số tính từ dữ liệu Havi đã sở hữu — không gọi LLM, nên không có chỗ
+    nào để bịa. Những thứ Havi chưa đo được (doanh thu từ social, engagement theo
+    nền tảng, động thái đối thủ) **không** xuất hiện ở đây thay vì được đoán.
+    """
+
+    generated_at: datetime
+    window_hours: int
+    activity: BriefActivity
+    #: Tổng việc đang chờ, lấy cùng nguồn với hàng đợi.
+    attention_total: int
+    #: Trong đó là việc bỏ sót thì tốn tiền: hỏi giá, đặt lịch, khiếu nại.
+    attention_costly: int
+    calendar_gaps: list[BriefGap]
+    time_saved_minutes: int
+    time_saved_actions: list[BriefSavedAction]

@@ -4,6 +4,10 @@ import { writeTokens } from "@/lib/auth/token-store";
 import { WorkQueueScreen } from "./work-queue-screen";
 import { isOverdue, waitedFor, type WorkItem } from "./queue.api";
 
+// Bản tin có bộ test riêng (`morning-brief.test.tsx`). Ở đây nó chỉ thêm một lời
+// gọi fetch vào mọi ca kiểm thử của hàng đợi.
+vi.mock("./morning-brief", () => ({ MorningBrief: () => null }));
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,

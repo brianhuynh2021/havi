@@ -1,0 +1,137 @@
+/* Bản tin đứng trên hàng đợi nhưng phải **nhẹ hơn** nó: người mở app mỗi ngày là
+   nhân viên và họ tới để làm việc. Nền phẳng, không viền dày, không màu mạnh. */
+
+.card {
+  margin-bottom: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface-2, var(--color-surface));
+  overflow: hidden;
+}
+
+.summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-body);
+}
+
+.summary:hover {
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
+}
+
+.summaryText {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.failed {
+  color: var(--color-danger);
+}
+
+.chevron {
+  flex: none;
+  font-size: 10px;
+  color: var(--color-muted);
+}
+
+.body {
+  padding: 4px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.blockHint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.costly {
+  color: var(--color-action);
+  font-weight: 700;
+}
+
+/* Phép tính thời gian tiết kiệm. Hiện ra là bắt buộc — con số tổng mà ẩn giả
+   định thì nó là quảng cáo, không phải số liệu. */
+
+.calc {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calcRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-body);
+}
+
+.calcDetail {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.assumption {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-muted);
+  max-width: 62ch;
+}
+
+.gapRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gapChip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-body);
+}
+
+@media (max-width: 640px) {
+  .calcRow {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .calcDetail {
+    white-space: normal;
+  }
+}

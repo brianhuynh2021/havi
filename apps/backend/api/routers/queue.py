@@ -11,7 +11,7 @@ mọi thứ chảy vào. Thứ tự ưu tiên — phần duy nhất có luật n
 `domain/policies/work_queue.py` và test được độc lập.
 """
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -23,10 +23,21 @@ from adapters.persistence.db import DbSessionDep
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import WorkspaceDep
-from core.enums import ConnectionStatus, ContentStatus, PublishStatus
-from core.schemas import AssignRequest, ResponseMetrics, WorkItem, WorkQueue
+from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, PublishStatus
+from core.schemas import (
+    AssignRequest,
+    BriefActivity,
+    BriefGap,
+    BriefSavedAction,
+    MorningBrief,
+    ResponseMetrics,
+    WorkItem,
+    WorkQueue,
+)
 from domain.models.user import User
-from domain.policies import platform_links
+from domain.policies import brief as brief_policy
+from domain.policies import inbox_triage, platform_links
+from domain.policies.scheduling import VIETNAM_TZ
 from domain.policies.work_queue import WorkKind, priority_for
 
 router = APIRouter(prefix="/queue", tags=["queue"])
@@ -203,3 +214,104 @@ async def response_metrics(
         workspace_id=workspace_id, start=range_start, end=range_end, now=now
     )
     return ResponseMetrics(window_start=range_start, window_end=range_end, **metrics)
+
+
+@router.get("/brief", response_model=MorningBrief)
+async def morning_brief(
+    workspace_id: WorkspaceDep,
+    session: DbSessionDep,
+    window_hours: int = Query(default=brief_policy.DEFAULT_WINDOW_HOURS, ge=1, le=168),
+) -> MorningBrief:
+    """Bản tin buổi sáng — màn của chủ, không phải hàng đợi của nhân viên.
+
+    Không gọi LLM: mọi con số đếm từ dữ liệu Havi đã sở hữu, nên không có chỗ nào
+    để bịa. Thứ Havi chưa đo được thì **vắng mặt**, không được đoán — xem
+    `domain/policies/brief.py`.
+    """
+    now = datetime.now(UTC)
+    start = brief_policy.window_start(now=now, hours=window_hours)
+
+    contents = ContentRepository(session)
+    inboxes = InboxRepository(session)
+    publishes = PublishRepository(session)
+
+    published = await contents.count_published_posts(
+        workspace_id=workspace_id, start=start, end=now
+    )
+    inbox_received = await inboxes.count_in_range(
+        workspace_id=workspace_id, start=start, end=now
+    )
+    replies_sent = await inboxes.count_by_status_in_range(
+        workspace_id=workspace_id, status=InboxItemStatus.SENT, start=start, end=now
+    )
+    publish_counts = await publishes.status_counts_for_window(
+        workspace_id=workspace_id, start=start, end=now
+    )
+    publish_failed = publish_counts.get(PublishStatus.FAILED, 0) + publish_counts.get(
+        PublishStatus.DEAD_LETTER, 0
+    )
+
+    # Việc đang chờ lấy cùng nguồn với hàng đợi, để hai màn không bao giờ nói hai
+    # con số khác nhau về cùng một thứ.
+    open_items = await inboxes.list_open(workspace_id=workspace_id, limit=QUEUE_LIMIT)
+    drafts_pending = (
+        await contents.count_items_by_status(workspace_id=workspace_id)
+    ).get(ContentStatus.PENDING_APPROVAL, 0)
+    broken_connections = sum(
+        1
+        for connection in await ConnectionRepository(session).list_for_workspace(workspace_id)
+        if connection.status is not ConnectionStatus.CONNECTED
+    )
+    open_failures = len(
+        await publishes.list_for_workspace(workspace_id=workspace_id, status=PublishStatus.FAILED)
+    ) + len(
+        await publishes.list_for_workspace(
+            workspace_id=workspace_id, status=PublishStatus.DEAD_LETTER
+        )
+    )
+
+    # Chỗ trống lịch: gom ngày (theo giờ VN) đã có bài, rồi lấy phần thiếu.
+    horizon = now + timedelta(days=brief_policy.GAP_LOOKAHEAD_DAYS + 1)
+    scheduled = await contents.list_items_in_range(
+        workspace_id=workspace_id, start=now, end=horizon
+    )
+    scheduled_dates = {
+        item.scheduled_at.astimezone(VIETNAM_TZ).date()
+        for item in scheduled
+        if item.scheduled_at is not None
+    }
+    gaps = brief_policy.calendar_gaps(
+        scheduled_dates=scheduled_dates, today=now.astimezone(VIETNAM_TZ).date()
+    )
+
+    actions = brief_policy.time_saved(replies_sent=replies_sent, posts_published=published)
+
+    return MorningBrief(
+        generated_at=now,
+        window_hours=window_hours,
+        activity=BriefActivity(
+            published=published,
+            inbox_received=inbox_received,
+            replies_sent=replies_sent,
+            publish_failed=publish_failed,
+        ),
+        attention_total=(
+            len(open_items) + drafts_pending + broken_connections + open_failures
+        ),
+        attention_costly=sum(
+            1 for item, _ in open_items if inbox_triage.is_costly(item.category)
+        ),
+        calendar_gaps=[
+            BriefGap(date=day, weekday=brief_policy.weekday_name(day)) for day in gaps
+        ],
+        time_saved_minutes=brief_policy.total_minutes_saved(actions),
+        time_saved_actions=[
+            BriefSavedAction(
+                action=action.action,
+                count=action.count,
+                minutes_each=action.minutes_each,
+                minutes_total=action.minutes_total,
+            )
+            for action in actions
+        ],
+    )

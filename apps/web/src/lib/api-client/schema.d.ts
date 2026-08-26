@@ -580,6 +580,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/queue/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Morning Brief
+         * @description Bản tin buổi sáng — màn của chủ, không phải hàng đợi của nhân viên.
+         *
+         *     Không gọi LLM: mọi con số đếm từ dữ liệu Havi đã sở hữu, nên không có chỗ nào
+         *     để bịa. Thứ Havi chưa đo được thì **vắng mặt**, không được đoán — xem
+         *     `domain/policies/brief.py`.
+         */
+        get: operations["morning_brief_queue_brief_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/video/posts": {
         parameters: {
             query?: never;
@@ -1623,6 +1647,50 @@ export interface components {
             /** Brand Colors */
             brand_colors?: string[] | null;
         };
+        /**
+         * BriefActivity
+         * @description Cái gì đã xảy ra trong cửa sổ vừa qua. Đếm thuần, không suy luận.
+         */
+        BriefActivity: {
+            /** Published */
+            published: number;
+            /** Inbox Received */
+            inbox_received: number;
+            /** Replies Sent */
+            replies_sent: number;
+            /** Publish Failed */
+            publish_failed: number;
+        };
+        /**
+         * BriefGap
+         * @description Một ngày tới chưa có bài nào xếp lịch.
+         */
+        BriefGap: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Weekday */
+            weekday: string;
+        };
+        /**
+         * BriefSavedAction
+         * @description Một dòng trong phép tính thời gian tiết kiệm.
+         *
+         *     `minutes_each` là **giả định**, và nó có mặt ở API để UI hiện ra được. Con số
+         *     tổng mà không kèm phép tính thì chỉ là quảng cáo.
+         */
+        BriefSavedAction: {
+            /** Action */
+            action: string;
+            /** Count */
+            count: number;
+            /** Minutes Each */
+            minutes_each: number;
+            /** Minutes Total */
+            minutes_total: number;
+        };
         /** BulkApproveFailure */
         BulkApproveFailure: {
             /**
@@ -2206,6 +2274,34 @@ export interface components {
              * Format: date-time
              */
             expires_at: string;
+        };
+        /**
+         * MorningBrief
+         * @description Màn của chủ: 24 giờ qua có gì, còn gì phải xử lý, tuần tới chỗ nào trống.
+         *
+         *     Mọi con số tính từ dữ liệu Havi đã sở hữu — không gọi LLM, nên không có chỗ
+         *     nào để bịa. Những thứ Havi chưa đo được (doanh thu từ social, engagement theo
+         *     nền tảng, động thái đối thủ) **không** xuất hiện ở đây thay vì được đoán.
+         */
+        MorningBrief: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Window Hours */
+            window_hours: number;
+            activity: components["schemas"]["BriefActivity"];
+            /** Attention Total */
+            attention_total: number;
+            /** Attention Costly */
+            attention_costly: number;
+            /** Calendar Gaps */
+            calendar_gaps: components["schemas"]["BriefGap"][];
+            /** Time Saved Minutes */
+            time_saved_minutes: number;
+            /** Time Saved Actions */
+            time_saved_actions: components["schemas"]["BriefSavedAction"][];
         };
         /**
          * OAuthReturnTarget
@@ -4134,6 +4230,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResponseMetrics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    morning_brief_queue_brief_get: {
+        parameters: {
+            query?: {
+                window_hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MorningBrief"];
                 };
             };
             /** @description Validation Error */

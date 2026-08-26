@@ -33,6 +33,7 @@ import {
   KIND_LABELS,
   type WorkItem,
 } from "./queue.api";
+import { MorningBrief } from "./morning-brief";
 import styles from "./work-queue.module.css";
 
 /** Bộ lọc: nhóm loại việc, không phải nhóm màn hình. */
@@ -128,6 +129,10 @@ export function WorkQueueScreen() {
           {error}
         </p>
       ) : null}
+
+      {/* Bản tin cho chủ, đứng trên hàng đợi của nhân viên. Mặc định thu gọn:
+          người mở app mỗi ngày tới đây để làm việc, không để đọc báo cáo. */}
+      <MorningBrief />
 
       {/* Bộ lọc, không phải điều hướng. Người trực ca ở nguyên một chỗ và thu hẹp
           danh sách; họ không đi sang màn khác rồi tìm đường quay lại. */}
