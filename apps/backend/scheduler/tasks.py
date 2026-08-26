@@ -44,3 +44,67 @@ def refresh_platform_tokens() -> None:
 def poll_engagement() -> None:
     """Chụp engagement snapshot của bài đã đăng để dựng số cho tab Báo cáo."""
     logger.info("poll_engagement: Scheduled background engagement polling completed.")
+
+
+@celery_app.task(name="havi.scheduler.notify_due_renewals")
+def notify_due_renewals() -> None:
+    """Nhắc đội vận hành về workspace sắp hoặc đã hết hạn.
+
+    Gửi vào chat của đội, **không** gửi cho khách: một cuộc gọi của người thật giữ
+    khách tốt hơn mọi thông báo tự động, và ở quy mô pilot thì đội gọi được hết.
+
+    Chạy một lần mỗi ngày và chỉ gửi ở các mốc trong `renewal.REMINDER_DAYS`, nên
+    không cần bảng lưu "đã nhắc chưa" — xem `domain/policies/renewal.py`.
+
+    Không cấu hình Telegram thì `TelegramAlertSink` chỉ log; task vẫn chạy trọn và
+    không ném. Một lượt nhắc không gửi được không được phép làm chết scheduler.
+    """
+    from adapters.outbound.telegram_alerts import TelegramAlertSink
+    from adapters.persistence.db import session_scope
+    from adapters.persistence.workspace_repository import WorkspaceRepository
+    from core.alerts import Alert
+    from core.config import get_settings
+    from domain.policies import renewal, subscription
+
+    async def _run() -> int:
+        settings = get_settings()
+        sink = TelegramAlertSink(
+            bot_token=settings.telegram_bot_token,
+            chat_id=settings.telegram_default_chat_id,
+        )
+
+        sent = 0
+        async with session_scope() as session:
+            for workspace in await WorkspaceRepository(session).list_all():
+                state = subscription.state_for(
+                    plan=workspace.plan,
+                    trial_ends_at=workspace.trial_ends_at,
+                    paid_until=workspace.paid_until,
+                )
+                if not renewal.should_remind(
+                    plan=workspace.plan,
+                    status=state.status,
+                    paid_until=workspace.paid_until,
+                ):
+                    continue
+
+                days_left = renewal.days_until(workspace.paid_until)
+                if days_left is None:
+                    continue
+
+                await sink.send(
+                    Alert(
+                        type="billing.renewal_due",
+                        severity="critical" if days_left < 0 else "warning",
+                        summary=renewal.reminder_summary(
+                            workspace_name=workspace.name, days_left=days_left
+                        ),
+                        workspace_id=str(workspace.id),
+                        fields={"gói": workspace.plan.value, "còn_lại_ngày": days_left},
+                    )
+                )
+                sent += 1
+        return sent
+
+    sent = asyncio.run(_run())
+    logger.info("notify_due_renewals: đã nhắc %d workspace", sent)

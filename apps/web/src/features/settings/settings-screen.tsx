@@ -74,6 +74,9 @@ const { t } = useLanguage();
   const [deletingWorkspace, setDeletingWorkspace] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [dangerModal, setDangerModal] = useState<DangerActionType | null>(null);
+  // Tách "load hỏng" khỏi "lưu hỏng": load hỏng thì KHÔNG được hiện form.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,8 +88,10 @@ const { t } = useLanguage();
       if (cancelled) return;
       if (result.ok) {
         setForm(toFormState(result.data));
+        setLoadFailed(false);
       } else {
         setError(result.message);
+        setLoadFailed(true);
       }
       setLoading(false);
     }
@@ -95,7 +100,7 @@ const { t } = useLanguage();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   const canSave = useMemo(
     () => form.workspaceId && form.name.trim().length >= 2 && !saving && !loading,
@@ -192,6 +197,23 @@ const { t } = useLanguage();
           </div>
         </div>
 
+        {/*
+          Load hỏng thì **không hiện form**.
+
+          Bản trước hiện banner lỗi rồi vẫn render form rỗng: người dùng gõ tên
+          tiệm vào rồi bấm Lưu là ghi trắng lên giọng văn và danh sách "không được
+          hứa" thật — vì `form` vẫn đang là state khởi tạo, chưa lần nào nạp được
+          dữ liệu cũ. Một màn hình đọc lỗi mà vẫn cho ghi là đường mất dữ liệu.
+        */}
+        {loadFailed ? (
+          <div className={styles.loadFailed} role="alert">
+            <p className={styles.loadFailedText}>{error}</p>
+            <Button variant="outline" onClick={() => setReloadKey((key) => key + 1)}>
+              {t({ vi: "Thử lại", en: "Retry" })}
+            </Button>
+          </div>
+        ) : (
+        <>
         {error ? (
           <p className={styles.alert} role="alert">
             {error}
@@ -273,6 +295,8 @@ const { t } = useLanguage();
             ) : null}
           </div>
         </form>
+        </>
+        )}
       </section>
 
       {/* Card 2: Kênh đã nối */}

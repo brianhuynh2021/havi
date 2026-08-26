@@ -1,0 +1,21 @@
+
+/* Load hỏng: lỗi + nút thử lại, THAY CHO form.
+   Hiện form khi chưa nạp được dữ liệu cũ là mời người dùng ghi trắng lên nó. */
+.loadFailed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.loadFailedText {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-danger);
+}

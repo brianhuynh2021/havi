@@ -137,6 +137,19 @@ class Settings(BaseSettings):
     # Mã Zalo cấp để xác minh quyền sở hữu domain. Nằm trong config chứ không
     # hardcode trong `api/main.py`: mỗi môi trường một domain nên một mã khác
     # nhau, và mã trong source là thứ không xoay được khi cần đổi.
+    # Telegram dùng làm kênh nhắc **ra ngoài app**.
+    #
+    # Vì sao cần: thanh toán VietQR không có auto-renew, nên mỗi tháng khách phải
+    # chủ động trả tiếp. Một banner nhắc trong app không tới được ca churn thật —
+    # người sắp rời đi chính là người đã ngừng mở app.
+    #
+    # Giai đoạn pilot gửi vào một chat của đội vận hành (`telegram_default_chat_id`)
+    # chứ không gửi cho từng khách: đội gọi hoặc nhắn Zalo cho khách, và một cuộc
+    # gọi của người thật giữ khách tốt hơn mọi thông báo tự động. Rỗng thì tính
+    # năng tự tắt, không ném lỗi.
+    telegram_bot_token: str = ""
+    telegram_default_chat_id: str = ""
+
     zalo_site_verification: str = ""
     # Phần đuôi của file xác minh Zalo yêu cầu đặt ở gốc domain, ví dụ
     # `zalo_verifierAbC123.html` thì đây là `AbC123.html`.

@@ -28,5 +28,9 @@ export const navItems: NavItem[] = [
   { key: "nav.team", label: "Đội ngũ", href: "/app/team", icon: "👥" },
   { key: "nav.activity", label: "Lịch sử", href: "/app/activity", icon: "🧾" },
   { key: "nav.reports", label: "Báo cáo", href: "/app/reports", icon: "📊" },
+  // Gói cước phải có trong nav: trước đó chỉ vào được bằng cách gõ URL, nên
+  // khách hàng không tìm được đường trả tiền. Đặt cạnh Cài đặt vì cả hai đều
+  // là việc làm một lần rồi quên, không phải việc hằng ngày.
+  { key: "nav.billing", label: "Gói cước", href: "/app/billing", icon: "💳" },
   { key: "nav.settings", label: "Cài đặt", href: "/app/settings", icon: "⚙️" },
 ];

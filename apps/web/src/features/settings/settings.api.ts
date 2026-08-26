@@ -22,7 +22,6 @@ export type SaveSettingsInput = {
 
 export type Result<T> = { ok: true; data: T } | { ok: false; message: string };
 
-const GENERIC_ERROR = "Chưa tải được cài đặt, thử lại giúp bạn nhé.";
 const SAVE_ERROR = "Chưa lưu được cài đặt, thử lại giúp bạn nhé.";
 
 export async function loadSettings(): Promise<Result<SettingsData>> {
@@ -42,8 +41,13 @@ export async function loadSettings(): Promise<Result<SettingsData>> {
       apiClient.GET("/brand-profile"),
     ]);
 
-    if (workspace.error || !workspace.data || profile.error || !profile.data) {
-      return { ok: false, message: GENERIC_ERROR };
+    // Nói rõ **phần nào** hỏng. Gộp cả hai vào một câu thì người vận hành không
+    // biết nên nối lại kênh, đăng nhập lại, hay gọi hỗ trợ.
+    if (workspace.error || !workspace.data) {
+      return { ok: false, message: "Chưa đọc được thông tin thương hiệu — thử lại giúp bạn nhé." };
+    }
+    if (profile.error || !profile.data) {
+      return { ok: false, message: "Chưa đọc được giọng văn và bộ quy tắc — thử lại giúp bạn nhé." };
     }
     return { ok: true, data: { workspace: workspace.data, profile: profile.data } };
   } catch {

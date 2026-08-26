@@ -137,4 +137,42 @@ describe("SettingsScreen", () => {
     expect(await screen.findByText(/Xác nhận xoá tiệm/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Giữ Lại Tiệm/i })).toBeInTheDocument();
   });
+  it("load hỏng thì KHÔNG hiện form, chỉ lỗi kèm nút thử lại", async () => {
+    // Bản trước hiện banner lỗi rồi vẫn render form rỗng: người dùng gõ tên tiệm
+    // rồi bấm Lưu là ghi trắng lên giọng văn và danh sách "không được hứa" thật.
+    // Một màn hình đọc lỗi mà vẫn cho ghi là đường mất dữ liệu.
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fail"));
+    renderSettings();
+
+    expect(await screen.findByRole("button", { name: /Thử lại/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Tên doanh nghiệp/i)).toBeNull();
+    expect(document.querySelector("form")).toBeNull();
+  });
+
+  it("nói rõ phần nào hỏng, không gộp thành một câu chung", async () => {
+    // Gộp cả hai vào một câu thì người vận hành không biết nên nối lại kênh, đăng
+    // nhập lại, hay gọi hỗ trợ.
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname.endsWith("/brand-profile")) {
+        return new Response(JSON.stringify({ detail: "loi" }), { status: 500 });
+      }
+      return new Response(
+        JSON.stringify({
+          id: "w1",
+          name: "Resort An Nhiên",
+          industry: "other",
+          plan: "trial",
+          publish_mode: "review_first",
+          created_at: "2026-08-01T00:00:00Z",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    });
+    renderSettings();
+
+    expect(
+      await screen.findByText(/Chưa đọc được giọng văn và bộ quy tắc/),
+    ).toBeInTheDocument();
+  });
 });
