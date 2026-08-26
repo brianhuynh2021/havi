@@ -13,7 +13,7 @@ from html import escape
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 from api.routers import (
     analytics,
@@ -142,6 +142,31 @@ def create_app() -> FastAPI:
             duration_ms=duration_ms,
         )
         return response
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request, exc):  # noqa: ANN001, ANN202
+        """Lỗi không lường trước vẫn trả **JSON**, không trả text thô.
+
+        Mặc định của Starlette trả `Internal Server Error` dạng text/plain. Client
+        gọi `res.json()` trên đó thì ném `SyntaxError`, và mọi hàm gọi API trong
+        frontend đều bắt lỗi đó thành *"Không kết nối được với Havi. Kiểm tra
+        mạng"* — nghĩa là mỗi lần backend lỗi, người dùng được bảo đi kiểm tra
+        đường mạng đang hoạt động bình thường.
+
+        Câu đó không chỉ vô ích với người dùng; nó còn đánh lạc hướng người sửa.
+        Trả JSON để client phân biệt được "server hỏng" với "không tới được
+        server".
+
+        Không lộ chi tiết ngoại lệ ra ngoài: nội dung thật đã nằm trong log kèm
+        `request_id`, và thông báo lỗi là chỗ dữ liệu nội bộ hay rò rỉ nhất.
+        """
+        logger.exception(
+            "unhandled error on %s %s", request.method, request.url.path, exc_info=exc
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Havi gặp lỗi khi xử lý yêu cầu này. Thử lại giúp bạn nhé."},
+        )
 
     for router in ROUTERS:
         app.include_router(router)
