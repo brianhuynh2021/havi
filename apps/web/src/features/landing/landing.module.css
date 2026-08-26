@@ -2474,7 +2474,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--color-white) 20%, var(--color-brand-primary-light) 60%, var(--color-brand-primary) 100%);
+  background: radial-gradient(circle, var(--color-surface) 20%, var(--color-brand-primary-light) 60%, var(--color-brand-primary) 100%);
   box-shadow: 0 0 10px var(--color-brand-primary-light), 0 0 20px var(--color-brand-primary), 0 0 30px var(--color-white);
   animation: rocketGlowPulse 1.2s infinite ease-in-out;
 }

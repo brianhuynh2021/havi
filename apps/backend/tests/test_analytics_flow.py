@@ -387,6 +387,7 @@ async def test_operations_metrics_dem_log_va_publish_job_theo_workspace(
             "event_count": 2,
             "error_count": 1,
             "tokens_total": 100,
+            "cost_vnd": 1,
         }
     ]
     assert body["publish"] == {

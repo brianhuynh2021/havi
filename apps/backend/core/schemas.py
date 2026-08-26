@@ -552,6 +552,7 @@ class OperationsProviderMetric(HaviModel):
     event_count: int
     error_count: int
     tokens_total: int
+    cost_vnd: int = 0
 
 
 class OperationsPublishMetric(HaviModel):

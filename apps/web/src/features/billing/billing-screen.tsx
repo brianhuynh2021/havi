@@ -51,8 +51,8 @@ const PLAN_DETAILS: Record<
     price: "189.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~6.000 đ/ngày",
-    badge: "TIẾT KIỆM NHẤT",
-    badgeTone: "popular",
+    badge: null,
+    badgeTone: null,
     desc: "Một thương hiệu, một người vận hành, mọi thứ trong tầm kiểm soát.",
     features: [
       "1 thương hiệu · kênh Facebook không giới hạn Trang",
@@ -67,8 +67,8 @@ const PLAN_DETAILS: Record<
     price: "369.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~12.000 đ/ngày",
-    badge: "PHỔ BIẾN NHẤT 💎",
-    badgeTone: "featured",
+    badge: null,
+    badgeTone: null,
     desc: "Dành cho đội nhiều người: ai được soạn, ai được duyệt, ai trực hội thoại.",
     features: [
       "Phân quyền theo vai: chủ, người soạn, người duyệt, trực hội thoại",
@@ -83,8 +83,8 @@ const PLAN_DETAILS: Record<
     price: "799.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~26.000 đ/ngày",
-    badge: "QUY MÔ CHUỖI 👑",
-    badgeTone: "enterprise",
+    badge: null,
+    badgeTone: null,
     desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị và một dấu vết chung.",
     features: [
       "Nhiều thương hiệu, mỗi thương hiệu một workspace tách bạch",
@@ -260,7 +260,7 @@ export function BillingScreen() {
       <section className={styles.currentStatusCard}>
         <div className={styles.statusTop}>
           <div className={styles.statusPlanName}>
-            <span>💎 {PLAN_DETAILS[currentPlan]?.title ?? sub.plan}</span>
+            <span>{PLAN_DETAILS[currentPlan]?.title ?? sub.plan}</span>
             <Badge tone="primary">Gói hiện tại</Badge>
           </div>
           {sub.current_period_end ? (
@@ -324,7 +324,7 @@ export function BillingScreen() {
                   <span className={styles.pricePeriod}>{plan.period}</span>
                 </div>
                 {plan.dailyNote ? (
-                  <div className={styles.priceDailyTag}>⚡ {plan.dailyNote}</div>
+                  <div className={styles.priceDailyTag}>{plan.dailyNote}</div>
                 ) : null}
               </div>
 

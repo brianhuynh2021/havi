@@ -16,7 +16,6 @@ import {
 } from "./onboarding.api";
 import {
   industryOptions,
-  getIndustrySamplePreview,
   type IndustryOption,
 } from "./onboarding.fixture";
 import styles from "./onboarding.module.css";
@@ -48,7 +47,7 @@ export function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const previewSample = getIndustrySamplePreview(industry, shopName);
+
 
   const handleStep2Proceed = useCallback(async () => {
     setSubmitting(true);
@@ -199,35 +198,6 @@ export function OnboardingScreen() {
               </div>
             </div>
 
-            {/* Xem trước giọng thương hiệu — để lựa chọn ngành ở trên có hệ quả
-                nhìn thấy được, thay vì là một ô radio không biết đổi gì. */}
-            <div className={styles.magicPreviewCard} aria-label="Bản xem trước giọng thương hiệu">
-              <div className={styles.magicPreviewHeader}>
-                <h3 className={styles.magicPreviewTitle}>
-                  ✨ Giọng thương hiệu sẽ ra thế này
-                </h3>
-                <span className={styles.magicBadge}>⚡ Bản mẫu theo ngành</span>
-              </div>
-              <div className={styles.magicPreviewContent}>
-                <div className={styles.mockupHeader}>
-                  <div className={styles.mockupAvatar}>
-                    {(shopName.trim() || "H")[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <p className={styles.mockupName}>{shopName.trim() || "Thương hiệu của bạn"}</p>
-                    <p className={styles.mockupMeta}>Fanpage · Vừa xong · 🌐</p>
-                  </div>
-                </div>
-                <p className={styles.mockupText}>
-                  ✨ &ldquo;{previewSample.text}&rdquo;
-                </p>
-                <div className={styles.mockupFooter}>
-                  {previewSample.hashtags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
 
             {error ? (
               <p className={styles.error} role="alert">
@@ -266,14 +236,13 @@ export function OnboardingScreen() {
                 ← Quay lại
               </Button>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <button
-                  type="button"
-                  className={styles.skipButton}
+                <Button
+                  variant="ghost"
                   onClick={handleStep2Proceed}
                   disabled={submitting}
                 >
-                  Bỏ qua, tôi sẽ kết nối sau
-                </button>
+                  Bỏ qua, kết nối sau
+                </Button>
                 <Button
                   variant="primary"
                   scale="large"

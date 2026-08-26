@@ -11,7 +11,7 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: var(--color-white);
+  background: var(--color-surface);
   border: 1px solid var(--color-slate-300);
   color: var(--color-slate-900);
   font-size: 18px;
@@ -42,7 +42,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--color-white);
+  border: 2px solid var(--color-border);
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
   animation: pulseBadge 2s infinite;
 }
@@ -63,7 +63,7 @@
   z-index: 1000;
   width: 360px;
   max-height: 460px;
-  background: var(--color-white);
+  background: var(--color-surface);
   border-radius: 16px;
   border: 1px solid var(--color-slate-200);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
@@ -132,7 +132,7 @@
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--color-slate-100);
-  background: var(--color-white);
+  background: var(--color-surface);
   cursor: pointer;
   transition: background-color 0.15s ease;
   text-align: left;
