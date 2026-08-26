@@ -145,6 +145,25 @@ This starts:
 
 ---
 
+### Nhắc gia hạn qua Telegram (tuỳ chọn)
+
+Thanh toán VietQR không có auto-renew, nên mỗi tháng khách phải chủ động trả tiếp.
+Banner nhắc trong app không tới được ca churn thật — người sắp rời đi chính là
+người đã ngừng mở app. Kênh Telegram nhắc **đội vận hành** để gọi khách.
+
+```bash
+bash scripts/telegram-setup.sh <BOT_TOKEN>
+```
+
+Script tự lấy `chat_id`, gửi một tin thử, rồi in ra hai dòng cần dán. Token lấy
+từ `@BotFather` trong Telegram (`/newbot`).
+
+Hai biến phải nằm ở **`apps/backend/.env`**, không phải `.env` gốc: backend chạy
+từ `apps/backend/` và `env_file` là đường dẫn tương đối. Để rỗng thì tính năng tự
+tắt và chỉ ghi log — không lỗi.
+
+---
+
 ### Development Test Accounts
 
 Use these pre-configured test credentials to sign in directly at `http://localhost:3000/login`:
