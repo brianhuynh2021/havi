@@ -29,6 +29,7 @@ type DraftListProps = {
   editingId: string | null;
   onEdit: (id: string | null) => void;
   onSaved: (item: ContentItem) => void;
+  onApproveSingle: (id: string) => void;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
 };
@@ -39,6 +40,7 @@ export function DraftList({
   editingId,
   onEdit,
   onSaved,
+  onApproveSingle,
   onDismiss,
   onDismissAll,
 }: DraftListProps) {
@@ -93,6 +95,9 @@ export function DraftList({
                   <div className={styles.draftActions}>
                     <Button variant="outline" onClick={() => onEdit(item.id)} disabled={busy}>
                       Sửa
+                    </Button>
+                    <Button variant="primary" onClick={() => onApproveSingle(item.id)} disabled={busy}>
+                      Duyệt & Đăng ngay
                     </Button>
                     <button
                       type="button"

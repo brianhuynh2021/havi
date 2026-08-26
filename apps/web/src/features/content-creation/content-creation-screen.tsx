@@ -33,6 +33,7 @@ import {
   dismissItem,
   listPendingItems,
   uploadMedia,
+  type Channel,
   type ContentItem,
   type RawInput,
 } from "./content-creation.api";
@@ -42,9 +43,6 @@ import { QuotaBanner } from "./quota-banner";
 import { SchedulePicker, type SchedulePlan } from "./schedule-picker";
 import { useJobPolling } from "./use-job-polling";
 import styles from "./content-creation.module.css";
-
-/** Bài chữ đi Facebook Page. Google Business dùng chung nội dung, thêm sau được. */
-const TARGET_CHANNELS = ["facebook_page"] as const;
 
 type ContentKind = "post" | "video";
 
@@ -76,6 +74,7 @@ export function ContentCreationScreen() {
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [plan, setPlan] = useState<SchedulePlan>({ publishNow: false, postsPerDay: 1 });
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(["facebook_page"]);
 
   // Blob URL của ảnh xem trước phải được thu hồi bằng tay, nếu không mỗi lần
   // chọn ảnh lại giữ thêm một bản trong bộ nhớ trình duyệt cho tới khi tải lại
@@ -246,10 +245,14 @@ export function ContentCreationScreen() {
   /** Gom chips + ghi chú đang gõ dở thành một job. Dùng chung cho nút và giọng nói. */
   async function submitJob(inputs: RawInput[], loadingTitle: string) {
     if (!inputs.length) return;
+    if (!selectedChannels.length) {
+      setError("Vui lòng chọn ít nhất 1 kênh đăng bài.");
+      return;
+    }
     setError(null);
     setNotice(null);
 
-    const result = await createJob(inputs, makeKey("job"), [...TARGET_CHANNELS]);
+    const result = await createJob(inputs, makeKey("job"), [...selectedChannels] as Channel[]);
     setQuotaKey((key) => key + 1);
     if (!result.ok) {
       setError(result.message);
@@ -304,6 +307,19 @@ export function ContentCreationScreen() {
     loadItems();
   }
 
+  async function onApproveSingle(id: string) {
+    setBusyIds((prev) => [...prev, id]);
+    const result = await approveAll([id], true, 1);
+    setBusyIds((prev) => prev.filter((busy) => busy !== id));
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setNotice("Đã duyệt 1 bài — Havi đang gửi lên Trang.");
+    loadItems();
+  }
+
   async function onDismiss(id: string) {
     setBusyIds((prev) => [...prev, id]);
     const result = await dismissItem(id);
@@ -355,6 +371,33 @@ export function ContentCreationScreen() {
           <span className={styles.stepNumber}>1</span>
           <span id="kind-title">Bạn muốn đăng gì?</span>
         </div>
+        
+        <div style={{ marginBottom: 16 }}>
+          <strong style={{ display: "block", marginBottom: 8, fontSize: "0.875rem" }}>Đăng lên kênh nào?</strong>
+          <div style={{ display: "flex", gap: 12 }}>
+            {[
+              { id: "facebook_page", label: "Facebook Page" },
+              { id: "google_business", label: "Google Business" },
+              { id: "zalo_oa", label: "Zalo OA" }
+            ].map((channel) => (
+              <label key={channel.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.875rem" }}>
+                <input
+                  type="checkbox"
+                  checked={selectedChannels.includes(channel.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedChannels(prev => [...prev, channel.id]);
+                    } else {
+                      setSelectedChannels(prev => prev.filter(c => c !== channel.id));
+                    }
+                  }}
+                />
+                {channel.label}
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className={styles.kindGrid} role="tablist" aria-label="Loại nội dung">
           <button
             type="button"
@@ -417,6 +460,7 @@ export function ContentCreationScreen() {
                   setEditingId(null);
                   setNotice("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt.");
                 }}
+                onApproveSingle={onApproveSingle}
                 onDismiss={onDismiss}
                 onDismissAll={onDismissAll}
               />
