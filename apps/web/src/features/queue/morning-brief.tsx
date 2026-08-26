@@ -43,6 +43,8 @@ export function MorningBrief() {
   if (!brief?.activity || !brief.time_saved_actions) return null;
 
   const { activity, time_saved_minutes: saved, calendar_gaps: gaps } = brief;
+  // Backend cũ hơn frontend thì field này vắng — không để nó ném giữa render.
+  const silent = brief.silent_channels ?? [];
   const quiet =
     activity.published === 0 &&
     activity.inbox_received === 0 &&
@@ -109,6 +111,32 @@ export function MorningBrief() {
                 ) : null}
               </p>
               <p className={styles.blockHint}>{t("Danh sách đầy đủ ở ngay dưới.")}</p>
+            </div>
+          ) : null}
+
+          {/* Kênh im lặng — quá khứ; chỗ trống lịch ngay dưới — tương lai.
+              Đọc theo thứ tự đó thì hai mục thành một câu: kênh nào đang bị bỏ,
+              và tuần tới còn chỗ nào để lấp lại.
+
+              Chỉ nói đúng cái Havi đếm được: bao lâu rồi chưa đăng. Không nói
+              "trang đang nguội" hay "reach sẽ giảm" — Havi không đo reach. */}
+          {silent.length > 0 ? (
+            <div className={styles.block}>
+              <p className={styles.blockTitle}>
+                {silent.length} {t("kênh đang mở nhưng lâu chưa đăng")}
+              </p>
+              <ul className={styles.calc}>
+                {silent.map((channel) => (
+                  <li key={channel.channel} className={styles.calcRow}>
+                    <span>{channel.label}</span>
+                    <span className={styles.calcDetail}>
+                      {channel.ever_published
+                        ? `${channel.days} ${t("ngày chưa đăng")}`
+                        : `${t("nối")} ${channel.days} ${t("ngày, chưa đăng bài nào")}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : null}
 

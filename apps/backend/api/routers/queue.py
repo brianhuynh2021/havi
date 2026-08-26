@@ -17,18 +17,28 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 
-from adapters.persistence.connection_repository import ConnectionRepository
+from adapters.persistence.connection_repository import (
+    PLATFORM_TO_CHANNELS,
+    ConnectionRepository,
+)
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import WorkspaceDep
-from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, PublishStatus
+from core.enums import (
+    Channel,
+    ConnectionStatus,
+    ContentStatus,
+    InboxItemStatus,
+    PublishStatus,
+)
 from core.schemas import (
     AssignRequest,
     BriefActivity,
     BriefGap,
     BriefSavedAction,
+    BriefSilentChannel,
     MorningBrief,
     ResponseMetrics,
     WorkItem,
@@ -36,7 +46,7 @@ from core.schemas import (
 )
 from domain.models.user import User
 from domain.policies import brief as brief_policy
-from domain.policies import inbox_triage, platform_links
+from domain.policies import channel_capabilities, inbox_triage, platform_links
 from domain.policies.scheduling import VIETNAM_TZ
 from domain.policies.work_queue import WorkKind, priority_for
 
@@ -257,10 +267,10 @@ async def morning_brief(
     drafts_pending = (
         await contents.count_items_by_status(workspace_id=workspace_id)
     ).get(ContentStatus.PENDING_APPROVAL, 0)
+    # Một lần đọc, hai câu hỏi: kênh nào hỏng, và kênh nào đang mở mà im lặng.
+    connections = await ConnectionRepository(session).list_for_workspace(workspace_id)
     broken_connections = sum(
-        1
-        for connection in await ConnectionRepository(session).list_for_workspace(workspace_id)
-        if connection.status is not ConnectionStatus.CONNECTED
+        1 for connection in connections if connection.status is not ConnectionStatus.CONNECTED
     )
     open_failures = len(
         await publishes.list_for_workspace(workspace_id=workspace_id, status=PublishStatus.FAILED)
@@ -280,8 +290,30 @@ async def morning_brief(
         for item in scheduled
         if item.scheduled_at is not None
     }
-    gaps = brief_policy.calendar_gaps(
-        scheduled_dates=scheduled_dates, today=now.astimezone(VIETNAM_TZ).date()
+    today = now.astimezone(VIETNAM_TZ).date()
+    gaps = brief_policy.calendar_gaps(scheduled_dates=scheduled_dates, today=today)
+
+    # Kênh im lặng. Chỉ soi kênh workspace **thật sự đăng được**: kênh đã mở
+    # (`LIVE_CHANNELS`) và nền tảng còn kết nối. Kênh mất quyền đã là một việc
+    # riêng trong hàng đợi, và nhắc "chưa đăng" ở đó là kể lại hậu quả thay vì
+    # nguyên nhân. Mốc của kênh chưa từng đăng là ngày nối kênh.
+    watched: dict[Channel, date] = {}
+    for connection in connections:
+        if connection.status is not ConnectionStatus.CONNECTED:
+            continue
+        connected_since = connection.created_at.astimezone(VIETNAM_TZ).date()
+        for channel in PLATFORM_TO_CHANNELS.get(connection.platform, []):
+            if channel in channel_capabilities.LIVE_CHANNELS:
+                watched[channel] = connected_since
+    silent = brief_policy.silent_channels(
+        watched=watched,
+        last_published={
+            channel: published_at.astimezone(VIETNAM_TZ).date()
+            for channel, published_at in (
+                await contents.last_published_by_channel(workspace_id=workspace_id)
+            ).items()
+        },
+        today=today,
     )
 
     actions = brief_policy.time_saved(replies_sent=replies_sent, posts_published=published)
@@ -303,6 +335,15 @@ async def morning_brief(
         ),
         calendar_gaps=[
             BriefGap(date=day, weekday=brief_policy.weekday_name(day)) for day in gaps
+        ],
+        silent_channels=[
+            BriefSilentChannel(
+                channel=item.channel,
+                label=channel_capabilities.CHANNEL_LABELS[item.channel],
+                days=item.days,
+                ever_published=item.ever_published,
+            )
+            for item in silent
         ],
         time_saved_minutes=brief_policy.total_minutes_saved(actions),
         time_saved_actions=[

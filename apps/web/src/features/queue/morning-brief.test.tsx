@@ -27,6 +27,20 @@ function brief(overrides: Record<string, unknown> = {}) {
       { date: "2026-08-27", weekday: "Thứ Năm" },
       { date: "2026-08-30", weekday: "Chủ Nhật" },
     ],
+    silent_channels: [
+      {
+        channel: "reels",
+        label: "Facebook Reels",
+        days: 12,
+        ever_published: false,
+      },
+      {
+        channel: "facebook_page",
+        label: "Facebook — bài trên Trang",
+        days: 6,
+        ever_published: true,
+      },
+    ],
     time_saved_minutes: 31,
     time_saved_actions: [
       { action: "Trả lời khách", count: 11, minutes_each: 2, minutes_total: 22 },
@@ -82,8 +96,10 @@ describe("MorningBrief", () => {
     render(<MorningBrief />);
     fireEvent.click(await screen.findByRole("button"));
 
-    expect(screen.getByText(/6/)).toBeInTheDocument();
-    expect(screen.getByText(/việc bỏ sót là mất khách/)).toBeInTheDocument();
+    // Khớp cả con số VỚI nhãn của nó: `/6/` trần khớp bất kỳ chỗ nào có chữ 6
+    // trên màn, nên nó vẫn xanh khi con số này biến mất.
+    expect(screen.getByText(/6\s*việc đang chờ/)).toBeInTheDocument();
+    expect(screen.getByText(/4\s*việc bỏ sót là mất khách/)).toBeInTheDocument();
   });
 
   it("hiện ngày trống lịch bằng thứ, không bằng ngày tháng", async () => {
@@ -164,5 +180,65 @@ describe("formatMinutes", () => {
 
   it("lẻ thì nói cả hai", () => {
     expect(formatMinutes(402)).toBe("6 giờ 42 phút");
+  });
+  it("hiện kênh đang mở mà lâu chưa đăng, kèm số ngày", async () => {
+    // Cùng loại dữ liệu với chỗ trống lịch và cũng rẻ như thế: đếm bằng SQL, không
+    // cần quyền insights. Đây là điều đáng nói mà Havi biết CHẮC.
+    mockBrief();
+    render(<MorningBrief />);
+
+    fireEvent.click(await screen.findByRole("button"));
+
+    expect(screen.getByText(/2\s*kênh đang mở nhưng lâu chưa đăng/)).toBeInTheDocument();
+    expect(screen.getByText("Facebook — bài trên Trang")).toBeInTheDocument();
+    expect(screen.getByText(/6\s*ngày chưa đăng/)).toBeInTheDocument();
+  });
+
+  it("phân biệt 'nhịp bị hụt' với 'chưa bao giờ dùng kênh này'", async () => {
+    // "12 ngày chưa đăng" và "nối 12 ngày rồi chưa đăng bài nào" là hai tình
+    // huống khác nhau. Gộp lại thì người đọc không biết mình đang nhìn cái nào.
+    mockBrief();
+    render(<MorningBrief />);
+
+    fireEvent.click(await screen.findByRole("button"));
+
+    expect(screen.getByText(/nối\s*12\s*ngày, chưa đăng bài nào/)).toBeInTheDocument();
+  });
+
+  it("KHÔNG suy diễn hệ quả mà Havi không đo được", async () => {
+    // Havi không có quyền insights nên không đo reach. "Trang đang nguội",
+    // "reach sẽ giảm" là những câu dễ bán nhất và cũng là chỗ bịa dễ nhất.
+    mockBrief();
+    render(<MorningBrief />);
+
+    fireEvent.click(await screen.findByRole("button"));
+
+    const body = document.body.textContent ?? "";
+    for (const claim of ["nguội", "reach", "tương tác", "thuật toán", "sẽ giảm"]) {
+      expect(body).not.toContain(claim);
+    }
+  });
+
+  it("không có kênh nào im lặng thì không hiện mục đó", async () => {
+    // Mục trống mà vẫn hiện dạy người đọc bỏ qua nó — rồi họ bỏ qua cả lúc nó
+    // có nội dung thật.
+    mockBrief(brief({ silent_channels: [] }));
+    render(<MorningBrief />);
+
+    fireEvent.click(await screen.findByRole("button"));
+
+    expect(screen.queryByText(/kênh đang mở nhưng lâu chưa đăng/)).toBeNull();
+  });
+
+  it("backend chưa có field đó thì bản tin vẫn hiện, không sập", async () => {
+    const { silent_channels: present, ...withoutField } = brief();
+    // Chốt lại là fixture THẬT SỰ có field đó, nên bản thiếu field mới có nghĩa.
+    expect(present.length).toBeGreaterThan(0);
+    mockBrief(withoutField);
+    render(<MorningBrief />);
+
+    fireEvent.click(await screen.findByRole("button"));
+
+    expect(screen.getByText(/Havi làm thay bạn/)).toBeInTheDocument();
   });
 });

@@ -44,6 +44,8 @@ Khách thấy được phép tính thì con số thành một lập luận họ 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
+from core.enums import Channel
+
 #: Thứ trong tuần bằng tiếng Việt. `weekday()` trả 0 = thứ Hai.
 WEEKDAY_NAMES = (
     "Thứ Hai",
@@ -62,6 +64,17 @@ DEFAULT_WINDOW_HOURS = 24
 #: Số ngày tới cần soi chỗ trống lịch. Bảy ngày vì đó là nhịp mà người ta thật sự
 #: lập kế hoạch nội dung — báo trống lịch của tháng sau thì không ai làm gì cả.
 GAP_LOOKAHEAD_DAYS = 7
+
+#: Bao nhiêu ngày im lặng thì một kênh đáng được nhắc.
+#:
+#: Ba ngày, tính theo ngày lịch giờ VN: "đăng hôm thứ Hai, hôm nay thứ Năm". Một
+#: ngày thì chưa phải tin — hiện nó mỗi sáng chỉ dạy người đọc bỏ qua mục này, và
+#: một mục bị bỏ qua thì tệ hơn là không có.
+#:
+#: Ba ngày cũng là mốc mà thuật toán phân phối của các nền tảng bắt đầu coi trang
+#: là nguội. Havi **không** khẳng định điều đó trên màn hình — Havi không đo được
+#: reach — nên con số chỉ nói đúng cái nó đếm: bao lâu rồi chưa đăng.
+SILENT_CHANNEL_DAYS = 3
 
 
 @dataclass(frozen=True)
@@ -119,6 +132,55 @@ def calendar_gaps(
         for offset in range(1, lookahead_days + 1)
         if (day := today + timedelta(days=offset)) not in scheduled_dates
     ]
+
+
+@dataclass(frozen=True)
+class SilentChannel:
+    """Một kênh đã lâu không có bài nào lên.
+
+    `ever_published` là khác biệt đáng nói ra: "12 ngày chưa đăng" và "nối kênh 12
+    ngày rồi chưa đăng bài nào" là hai tình huống khác nhau — một cái là nhịp bị
+    hụt, cái kia là kênh chưa bao giờ được dùng. Gộp chúng lại thì người đọc không
+    biết mình đang nhìn cái nào.
+    """
+
+    channel: Channel
+    days: int
+    ever_published: bool
+
+
+def silent_channels(
+    *,
+    watched: dict[Channel, date],
+    last_published: dict[Channel, date],
+    today: date,
+    threshold_days: int = SILENT_CHANNEL_DAYS,
+) -> list[SilentChannel]:
+    """Kênh đang mở nhưng đã `threshold_days` ngày không có bài nào lên.
+
+    Cùng loại dữ liệu với `calendar_gaps` và cũng rẻ như thế: đếm bằng SQL trên dữ
+    liệu Havi đã sở hữu, **không cần quyền insights**. Đây là điều đáng nói mà
+    Havi biết chắc — khác với "bài này tương tác kém", thứ Havi không đo được.
+
+    `watched` là kênh → ngày kênh bắt đầu đăng được, và **người gọi** chịu trách
+    nhiệm chỉ đưa vào những kênh workspace thật sự đăng được (kênh đã mở, nền tảng
+    còn kết nối). Nhắc "TikTok 40 ngày chưa đăng" khi TikTok chưa đăng được là
+    trách người đọc vì một việc họ không làm được.
+
+    Kênh chưa từng có bài thì đếm từ ngày nối kênh, không phải từ mốc vô hạn: mốc
+    thật là "từ khi có thể đăng", và nó kiểm chứng được.
+
+    Xếp kênh im lâu nhất lên đầu; bằng nhau thì theo thứ tự `Channel` để hai lần
+    tải không đảo chỗ nhau.
+    """
+    order = list(Channel)
+    silent = []
+    for channel, available_since in watched.items():
+        last = last_published.get(channel)
+        days = (today - (last or available_since)).days
+        if days >= threshold_days:
+            silent.append(SilentChannel(channel, days, ever_published=last is not None))
+    return sorted(silent, key=lambda item: (-item.days, order.index(item.channel)))
 
 
 def time_saved(*, replies_sent: int, posts_published: int) -> list[SavedAction]:

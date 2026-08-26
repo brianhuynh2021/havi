@@ -16,7 +16,15 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from adapters.persistence.inbox_repository import InboxRepository
-from core.enums import Channel, ContentStatus, InboxItemStatus, Platform, PublishStatus
+from core.enums import (
+    Channel,
+    ConnectionStatus,
+    ContentStatus,
+    InboxItemStatus,
+    Platform,
+    PublishStatus,
+)
+from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem
 from domain.models.publish import PublishJob
 from domain.policies import brief as brief_policy
@@ -65,6 +73,109 @@ class TestPolicy:
         lượng cao thì khách tự đối chiếu với cảm giác của họ và mất niềm tin."""
         assert brief_policy.MINUTES_PER_REPLY <= 5
         assert brief_policy.MINUTES_PER_PUBLISH <= 5
+
+
+class TestKenhImLang:
+    """"N ngày chưa đăng trên kênh X" — rẻ, và không cần quyền insights."""
+
+    TODAY = date(2026, 8, 26)
+
+    def test_kenh_im_qua_nguong_thi_bao(self):
+        silent = brief_policy.silent_channels(
+            watched={Channel.FACEBOOK_PAGE: date(2026, 8, 1)},
+            last_published={Channel.FACEBOOK_PAGE: date(2026, 8, 20)},
+            today=self.TODAY,
+        )
+        assert [(item.channel, item.days) for item in silent] == [
+            (Channel.FACEBOOK_PAGE, 6)
+        ]
+        assert silent[0].ever_published is True
+
+    def test_vua_dang_hom_qua_thi_khong_bao(self):
+        """Một ngày im chưa phải tin. Hiện nó mỗi sáng chỉ dạy người đọc bỏ qua
+        mục này, và một mục bị bỏ qua thì tệ hơn là không có."""
+        silent = brief_policy.silent_channels(
+            watched={Channel.FACEBOOK_PAGE: date(2026, 8, 1)},
+            last_published={Channel.FACEBOOK_PAGE: self.TODAY - timedelta(days=1)},
+            today=self.TODAY,
+        )
+        assert silent == []
+
+    def test_dung_nguong_thi_bao(self):
+        """Ranh giới lấy từ hằng số, không viết cứng: đổi ngưỡng thì test đổi theo."""
+        silent = brief_policy.silent_channels(
+            watched={Channel.FACEBOOK_PAGE: date(2026, 1, 1)},
+            last_published={
+                Channel.FACEBOOK_PAGE: self.TODAY
+                - timedelta(days=brief_policy.SILENT_CHANNEL_DAYS)
+            },
+            today=self.TODAY,
+        )
+        assert len(silent) == 1
+        assert silent[0].days == brief_policy.SILENT_CHANNEL_DAYS
+
+    def test_kenh_chua_tung_dang_thi_dem_tu_ngay_noi_kenh(self):
+        """Mốc thật là "từ khi có thể đăng", và nó kiểm chứng được — khác một mốc
+        vô hạn hay một con số bịa."""
+        silent = brief_policy.silent_channels(
+            watched={Channel.REELS: self.TODAY - timedelta(days=9)},
+            last_published={},
+            today=self.TODAY,
+        )
+        assert silent[0].days == 9
+        assert silent[0].ever_published is False
+
+    def test_kenh_vua_noi_hom_nay_thi_khong_bi_trach(self):
+        silent = brief_policy.silent_channels(
+            watched={Channel.REELS: self.TODAY},
+            last_published={},
+            today=self.TODAY,
+        )
+        assert silent == []
+
+    def test_chi_soi_kenh_duoc_dua_vao(self):
+        """Người gọi quyết định kênh nào đáng soi. Có bài cũ trên một kênh không
+        còn theo dõi thì cũng không được lôi kênh đó trở lại bản tin."""
+        silent = brief_policy.silent_channels(
+            watched={Channel.FACEBOOK_PAGE: date(2026, 1, 1)},
+            last_published={
+                Channel.FACEBOOK_PAGE: date(2026, 8, 24),
+                Channel.TIKTOK: date(2025, 1, 1),
+            },
+            today=self.TODAY,
+        )
+        assert [item.channel for item in silent] == []
+
+    def test_im_lau_nhat_len_dau_va_thu_tu_on_dinh(self):
+        silent = brief_policy.silent_channels(
+            watched={
+                Channel.REELS: date(2026, 1, 1),
+                Channel.FACEBOOK_PAGE: date(2026, 1, 1),
+            },
+            last_published={
+                Channel.REELS: date(2026, 8, 20),
+                Channel.FACEBOOK_PAGE: date(2026, 8, 1),
+            },
+            today=self.TODAY,
+        )
+        assert [item.channel for item in silent] == [
+            Channel.FACEBOOK_PAGE,
+            Channel.REELS,
+        ]
+
+        # Bằng nhau thì theo thứ tự `Channel` — hai lần tải không đảo chỗ ô nào.
+        tie = brief_policy.silent_channels(
+            watched={
+                Channel.REELS: date(2026, 1, 1),
+                Channel.FACEBOOK_PAGE: date(2026, 1, 1),
+            },
+            last_published={
+                Channel.REELS: date(2026, 8, 1),
+                Channel.FACEBOOK_PAGE: date(2026, 8, 1),
+            },
+            today=self.TODAY,
+        )
+        assert [item.channel for item in tie] == [Channel.FACEBOOK_PAGE, Channel.REELS]
 
 
 async def _onboard(client: AsyncClient, *, email: str) -> dict:
@@ -261,6 +372,130 @@ async def test_bai_dang_loi_vao_ca_hoat_dong_va_viec_cho_xu_ly(
 
     assert body["activity"]["publish_failed"] == 1
     assert body["attention_total"] >= 1
+
+
+async def _connect_facebook(
+    db_session: AsyncSession,
+    *,
+    workspace_id: UUID,
+    days_ago: int,
+    status: ConnectionStatus = ConnectionStatus.CONNECTED,
+) -> None:
+    connection = PlatformConnection(
+        workspace_id=workspace_id,
+        platform=Platform.FACEBOOK,
+        external_account_id=f"page_{workspace_id.hex[:8]}",
+        status=status,
+        access_token_encrypted="encrypted",
+    )
+    connection.created_at = datetime.now(UTC) - timedelta(days=days_ago)
+    db_session.add(connection)
+    await db_session.flush()
+
+
+async def test_kenh_da_noi_ma_chua_tung_dang_thi_vao_ban_tin(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="brief-silent-never@havi.vn")
+    workspace_id = UUID(token_pair["active_workspace_id"])
+    await _connect_facebook(db_session, workspace_id=workspace_id, days_ago=10)
+
+    body = (await client.get("/queue/brief", headers=_headers(token_pair))).json()
+
+    silent = {item["channel"]: item for item in body["silent_channels"]}
+    # Một kết nối Facebook mở hai kênh: bài trên Trang và Reels.
+    assert set(silent) == {"facebook_page", "reels"}
+    assert silent["facebook_page"]["days"] == 10
+    assert silent["facebook_page"]["ever_published"] is False
+    # Nhãn là chữ người đọc, không phải mã kênh.
+    assert silent["facebook_page"]["label"] == "Facebook — bài trên Trang"
+
+
+async def test_bai_moi_dang_thi_kenh_ra_khoi_danh_sach_im_lang(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="brief-silent-fresh@havi.vn")
+    workspace_id = UUID(token_pair["active_workspace_id"])
+    await _connect_facebook(db_session, workspace_id=workspace_id, days_ago=30)
+
+    db_session.add(
+        ContentItem(
+            workspace_id=workspace_id,
+            channel=Channel.FACEBOOK_PAGE,
+            kind="Bài ảnh",
+            text="Bài vừa lên hôm nay",
+            status=ContentStatus.PUBLISHED,
+            published_at=datetime.now(UTC),
+        )
+    )
+    await db_session.flush()
+
+    body = (await client.get("/queue/brief", headers=_headers(token_pair))).json()
+
+    channels = {item["channel"] for item in body["silent_channels"]}
+    assert "facebook_page" not in channels
+    # Reels vẫn im: đăng bài trên Trang không phải là đăng Reels.
+    assert "reels" in channels
+
+
+async def test_bai_cu_thi_dem_dung_so_ngay(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="brief-silent-old@havi.vn")
+    workspace_id = UUID(token_pair["active_workspace_id"])
+    await _connect_facebook(db_session, workspace_id=workspace_id, days_ago=90)
+
+    db_session.add(
+        ContentItem(
+            workspace_id=workspace_id,
+            channel=Channel.FACEBOOK_PAGE,
+            kind="Bài ảnh",
+            text="Bài cũ",
+            status=ContentStatus.PUBLISHED,
+            published_at=datetime.now(UTC) - timedelta(days=8),
+        )
+    )
+    await db_session.flush()
+
+    body = (await client.get("/queue/brief", headers=_headers(token_pair))).json()
+
+    facebook = next(
+        item for item in body["silent_channels"] if item["channel"] == "facebook_page"
+    )
+    # Đếm không giới hạn cửa sổ 24h của bản tin: câu hỏi là "bao lâu rồi chưa
+    # đăng", nên một kênh im 8 ngày không được trông giống kênh im 90 ngày.
+    assert facebook["days"] == 8
+    assert facebook["ever_published"] is True
+
+
+async def test_kenh_mat_ket_noi_thi_khong_bi_trach_la_im_lang(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Mất quyền đã là một việc riêng trong hàng đợi. Nhắc "chưa đăng" ở đây là
+    kể lại hậu quả thay vì nguyên nhân — và trách người đọc vì một việc họ không
+    làm được cho tới khi nối lại kênh."""
+    token_pair = await _onboard(client, email="brief-silent-broken@havi.vn")
+    workspace_id = UUID(token_pair["active_workspace_id"])
+    await _connect_facebook(
+        db_session,
+        workspace_id=workspace_id,
+        days_ago=40,
+        status=ConnectionStatus.EXPIRED,
+    )
+
+    body = (await client.get("/queue/brief", headers=_headers(token_pair))).json()
+
+    assert body["silent_channels"] == []
+    # Nhưng nó vẫn phải nằm trong việc cần xử lý.
+    assert body["attention_total"] >= 1
+
+
+async def test_chua_noi_kenh_nao_thi_khong_co_gi_de_trach(client: AsyncClient):
+    token_pair = await _onboard(client, email="brief-silent-none@havi.vn")
+
+    body = (await client.get("/queue/brief", headers=_headers(token_pair))).json()
+
+    assert body["silent_channels"] == []
 
 
 class TestKhongBia:

@@ -194,6 +194,26 @@ class ContentRepository:
         )
         return {channel: count for channel, count in rows.all()}
 
+    async def last_published_by_channel(
+        self, *, workspace_id: UUID
+    ) -> dict[Channel, datetime]:
+        """Lần cuối mỗi kênh có bài lên, không giới hạn cửa sổ thời gian.
+
+        Cố ý **không** nhận `start`: câu hỏi là "bao lâu rồi chưa đăng", nên giới
+        hạn cửa sổ sẽ làm một kênh im 90 ngày trông giống kênh im 8 ngày. Một
+        `max()` có index trên `workspace_id` thì rẻ dù bảng dài.
+        """
+        rows = await self._session.execute(
+            select(ContentItem.channel, func.max(ContentItem.published_at))
+            .where(
+                ContentItem.workspace_id == workspace_id,
+                ContentItem.status == ContentStatus.PUBLISHED,
+                ContentItem.published_at.is_not(None),
+            )
+            .group_by(ContentItem.channel)
+        )
+        return {channel: published_at for channel, published_at in rows.all()}
+
     async def count_published_posts(
         self, *, workspace_id: UUID, start: datetime, end: datetime
     ) -> int:

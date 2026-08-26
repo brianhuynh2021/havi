@@ -779,6 +779,17 @@ class BriefGap(HaviModel):
     weekday: str
 
 
+class BriefSilentChannel(HaviModel):
+    """Một kênh đang mở nhưng đã lâu không có bài nào lên."""
+
+    channel: Channel
+    label: str
+    days: int
+    #: `False` = nối kênh rồi nhưng chưa từng đăng bài nào. Hai tình huống khác
+    #: nhau: nhịp bị hụt, hay kênh chưa bao giờ được dùng.
+    ever_published: bool
+
+
 class BriefSavedAction(HaviModel):
     """Một dòng trong phép tính thời gian tiết kiệm.
 
@@ -808,6 +819,9 @@ class MorningBrief(HaviModel):
     #: Trong đó là việc bỏ sót thì tốn tiền: hỏi giá, đặt lịch, khiếu nại.
     attention_costly: int
     calendar_gaps: list[BriefGap]
+    #: Kênh đã mở, còn kết nối, nhưng im từ 3 ngày trở lên. Cùng loại dữ liệu với
+    #: `calendar_gaps` — đếm bằng SQL, không cần quyền insights.
+    silent_channels: list[BriefSilentChannel]
     time_saved_minutes: int
     time_saved_actions: list[BriefSavedAction]
 

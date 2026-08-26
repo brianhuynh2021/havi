@@ -1730,6 +1730,19 @@ export interface components {
             /** Minutes Total */
             minutes_total: number;
         };
+        /**
+         * BriefSilentChannel
+         * @description Một kênh đang mở nhưng đã lâu không có bài nào lên.
+         */
+        BriefSilentChannel: {
+            channel: components["schemas"]["Channel"];
+            /** Label */
+            label: string;
+            /** Days */
+            days: number;
+            /** Ever Published */
+            ever_published: boolean;
+        };
         /** BulkApproveFailure */
         BulkApproveFailure: {
             /**
@@ -2374,6 +2387,8 @@ export interface components {
             attention_costly: number;
             /** Calendar Gaps */
             calendar_gaps: components["schemas"]["BriefGap"][];
+            /** Silent Channels */
+            silent_channels: components["schemas"]["BriefSilentChannel"][];
             /** Time Saved Minutes */
             time_saved_minutes: number;
             /** Time Saved Actions */
