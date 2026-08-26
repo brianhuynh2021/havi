@@ -154,6 +154,19 @@ describe("CalendarScreen", () => {
     expect(diff).toBe(7);
   });
 
+  it("chỉ hiện bộ lọc cho kênh đã chạy thật", async () => {
+    // Chip "TikTok" khi TikTok chưa được nền tảng duyệt là một lời hứa: bấm vào
+    // thấy rỗng, và người dùng không phân biệt được "tuần này chưa có bài
+    // TikTok" với "Havi chưa đăng TikTok được".
+    mockCalendar((start) => emptyWeek(start));
+    render(<CalendarScreen />);
+    await screen.findByRole("heading", { name: /Lịch đăng/ });
+
+    expect(screen.getByRole("button", { name: "Facebook" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "TikTok" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "YouTube" })).toBeNull();
+  });
+
   it("lỗi mạng thì báo bằng tiếng Việt và cho thử lại", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fail"));
     render(<CalendarScreen />);

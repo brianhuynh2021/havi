@@ -7,11 +7,13 @@
  * phải là phân quyền — backend vẫn kiểm lại — nhưng bày ra một nút mà người
  * soạn bấm vào chỉ nhận 403 thì tệ hơn không bày.
  *
- * Cảnh báo cho lần sửa sau: nút này ("Đăng ngay") và `SchedulePicker` ngay dưới
- * ("xếp lịch") làm hai việc khác nhau trên cùng một đống nháp. Bản trước từng
- * gỡ hẳn nút trên thẻ vì chủ tiệm bấm nhầm rồi bài lên ngay thay vì vào lịch
- * tuần. Nếu thấy lại triệu chứng đó, sửa bằng cách cho hai nút cùng nghĩa —
- * đừng cho hai nghĩa vào hai nút trông giống nhau.
+ * Nút này và nút duyệt cả loạt ở `SchedulePicker` **luôn cùng nghĩa**, chỉ khác
+ * phạm vi: cách xử lý do `plan` dưới danh sách quyết định, và nhãn nút đổi theo
+ * `publishNow` để nói đúng việc sắp xảy ra. Bản trước hardcode "Đăng ngay"
+ * trong khi nút dưới xếp lịch — hai nút trông giống nhau làm hai việc trái
+ * ngược, và đó là lý do nút trên thẻ từng bị gỡ hẳn một lần.
+ *
+ * Nếu lần sau cần đổi, giữ nguyên bất biến: một nghĩa, hai phạm vi.
  */
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,8 @@ type DraftListProps = {
   onEdit: (id: string | null) => void;
   onSaved: (item: ContentItem) => void;
   onApproveSingle: (id: string) => void;
+  /** Từ `plan` dưới danh sách — quyết định nhãn nút duyệt lẻ. */
+  publishNow: boolean;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
 };
@@ -46,6 +50,7 @@ export function DraftList({
   onEdit,
   onSaved,
   onApproveSingle,
+  publishNow,
   onDismiss,
   onDismissAll,
 }: DraftListProps) {
@@ -110,7 +115,7 @@ export function DraftList({
                         onClick={() => onApproveSingle(item.id)}
                         disabled={busy}
                       >
-                        Duyệt & Đăng ngay
+                        {publishNow ? "Duyệt & đăng ngay" : "Duyệt & xếp lịch"}
                       </Button>
                     ) : null}
                     <button

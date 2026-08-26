@@ -101,7 +101,9 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     approveAll.mockResolvedValue({ ok: true, data: { approved: ["item-1", "item-2"], rejected: [] } });
 
     render(<ContentCreationScreen />);
-    await userEvent.click(await screen.findByRole("button", { name: /Duyệt & xếp lịch/ }));
+    // Nút duyệt CẢ LOẠT luôn kèm số lượng; nút duyệt lẻ trên từng thẻ thì
+    // không. Hai nút cùng nhãn là chủ ý — chúng làm cùng một việc.
+    await userEvent.click(await screen.findByRole("button", { name: /Duyệt & xếp lịch 2 bài/ }));
 
     await waitFor(() => expect(approveAll).toHaveBeenCalled());
     const [, publishNow, postsPerDay] = approveAll.mock.calls[0];
@@ -147,10 +149,39 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     approveAll.mockResolvedValue({ ok: true, data: { approved: [], rejected: [] } });
 
     render(<ContentCreationScreen />);
-    await userEvent.click(await screen.findByRole("button", { name: /Duyệt & xếp lịch/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Duyệt & xếp lịch 3 bài/ }));
 
     await waitFor(() => expect(approveAll).toHaveBeenCalled());
     expect(approveAll.mock.calls[0][0]).toEqual(["item-1", "item-2", "item-3"]);
+  });
+
+  it("nút duyệt lẻ dùng CHUNG cách xử lý với nút duyệt cả loạt", async () => {
+    // Bất biến: một nghĩa, hai phạm vi. Bản trước nút trên thẻ hardcode
+    // `publishNow = true` nên nó đẩy bài lên Trang ngay trong khi nút dưới xếp
+    // lịch — hai nút trông giống nhau làm hai việc trái ngược.
+    listPendingItems.mockResolvedValue({ ok: true, data: [draft(1)] });
+    approveAll.mockResolvedValue({ ok: true, data: { approved: ["item-1"], rejected: [] } });
+
+    render(<ContentCreationScreen />);
+    // Tên khớp tuyệt đối: nút cả loạt là "Duyệt & xếp lịch 1 bài", nút lẻ không kèm số.
+    await userEvent.click(await screen.findByRole("button", { name: "Duyệt & xếp lịch" }));
+
+    await waitFor(() => expect(approveAll).toHaveBeenCalled());
+    const [ids, publishNow, postsPerDay] = approveAll.mock.calls[0];
+    expect(ids).toEqual(["item-1"]);
+    expect(publishNow).toBe(false);
+    expect(postsPerDay).toBe(1);
+  });
+
+  it("đổi sang Đăng hết ngay thì nhãn nút duyệt lẻ đổi theo", async () => {
+    listPendingItems.mockResolvedValue({ ok: true, data: [draft(1)] });
+
+    render(<ContentCreationScreen />);
+    await userEvent.click(await screen.findByRole("button", { name: /Đăng hết ngay/ }));
+
+    // Nhãn phải nói đúng việc sắp xảy ra, không phải một câu cố định.
+    expect(screen.getByRole("button", { name: "Duyệt & đăng ngay" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Duyệt & xếp lịch" })).toBeNull();
   });
 
   it("không có bản nháp nào thì không có chỗ nào bấm đăng được", async () => {
@@ -188,6 +219,8 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     listPendingItems.mockResolvedValue({ ok: true, data: [draft(1)] });
 
     render(<ContentCreationScreen />);
-    expect(await screen.findByRole("button", { name: /Duyệt & xếp lịch/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /Duyệt & xếp lịch 1 bài/ }),
+    ).toBeInTheDocument();
   });
 });

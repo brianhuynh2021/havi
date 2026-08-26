@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
-import { channelLabels } from "@/features/content-creation/content-creation.fixture";
+import {
+  CHANNEL_FILTERS,
+  channelLabels,
+} from "@/features/content-creation/content-creation.fixture";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { FailedPostsPanel } from "@/features/publish-jobs/failed-posts-panel";
 import {
@@ -318,27 +321,16 @@ export function CalendarScreen() {
             >
               Tất cả
             </button>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${channelFilter === "facebook_page" ? styles.filterChipActive : ""}`}
-              onClick={() => setChannelFilter("facebook_page")}
-            >
-              Facebook
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${channelFilter === "tiktok" ? styles.filterChipActive : ""}`}
-              onClick={() => setChannelFilter("tiktok")}
-            >
-              TikTok
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterChip} ${channelFilter === "youtube" ? styles.filterChipActive : ""}`}
-              onClick={() => setChannelFilter("youtube")}
-            >
-              YouTube
-            </button>
+            {CHANNEL_FILTERS.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                className={`${styles.filterChip} ${channelFilter === filter.key ? styles.filterChipActive : ""}`}
+                onClick={() => setChannelFilter(filter.key)}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           <div className={styles.filterGroup}>

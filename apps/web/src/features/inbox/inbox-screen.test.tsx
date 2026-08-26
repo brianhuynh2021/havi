@@ -73,6 +73,39 @@ describe("InboxScreen", () => {
     });
   });
 
+  it("hai khách TRÙNG TÊN không bị gộp làm một hội thoại", async () => {
+    // Gom luồng theo `recipient_id` chứ không theo tên hiển thị. Trùng tên trên
+    // Facebook là chuyện chắc chắn xảy ra; gộp nhầm thì người trực chat đọc
+    // lịch sử của người này rồi trả lời cho người kia.
+    const huongA = { ...inboxItem, id: "a", recipient_id: "psid-a", content: "Còn lịch chiều nay không?" };
+    const huongB = { ...inboxItem, id: "b", recipient_id: "psid-b", content: "Cho hỏi giá gói mặt?" };
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ items: [huongA, huongB], total: 2 }),
+    );
+
+    render(<InboxScreen />);
+
+    expect(await screen.findByText("Còn lịch chiều nay không?")).toBeInTheDocument();
+    expect(screen.getByText("Cho hỏi giá gói mặt?")).toBeInTheDocument();
+    // Cùng tên "Minh Anh" nhưng là hai người — hai dòng trong danh sách.
+    expect(screen.getAllByText("Minh Anh")).toHaveLength(2);
+  });
+
+  it("cùng một khách nhắn nhiều lần thì vẫn là MỘT hội thoại", async () => {
+    const lan1 = { ...inboxItem, id: "a", recipient_id: "psid-a", content: "Còn lịch chiều nay không?" };
+    const lan2 = { ...inboxItem, id: "b", recipient_id: "psid-a", content: "Alo shop ơi" };
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ items: [lan1, lan2], total: 2 }),
+    );
+
+    render(<InboxScreen />);
+
+    await screen.findByText("Minh Anh");
+    expect(screen.getAllByText("Minh Anh")).toHaveLength(1);
+  });
+
   it("hiển thị trạng thái trống trung thực", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ items: [], total: 0 }));
 

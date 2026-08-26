@@ -20,12 +20,29 @@ const platformName: Record<string, string> = {
 };
 
 interface Thread {
-  id: string; // author_name + "::" + platform
+  /** Xem `threadKey` — danh tính ở nền tảng, không phải tên hiển thị. */
+  id: string;
   author_name: string;
   platform: string;
   items: InboxItem[];
   latest_created_at: string;
   hasUnread: boolean;
+}
+
+/**
+ * Khoá gom luồng phải là **danh tính ở nền tảng**, không phải tên hiển thị.
+ *
+ * Hai khách cùng tên "Nguyễn Thị Hương" trên Facebook là chuyện chắc chắn xảy
+ * ra ở bất kỳ Trang nào có lượng tin nhắn thật. Gom theo tên thì hai người bị
+ * nhập làm một luồng, và người trực hội thoại đọc lịch sử của người này rồi trả
+ * lời cho người kia.
+ *
+ * `recipient_id` là id do nền tảng cấp (PSID với Messenger). Chỉ lùi về tên khi
+ * nền tảng không cấp id — lúc đó gộp nhầm vẫn đỡ hơn tách một người thành N
+ * luồng mồ côi, nhưng khoá được gắn tiền tố để không đụng id thật.
+ */
+function threadKey(item: InboxItem): string {
+  return `${item.platform}::${item.recipient_id ?? `name:${item.author_name}`}`;
 }
 
 export function InboxScreen() {
@@ -69,7 +86,7 @@ export function InboxScreen() {
   const threads = useMemo(() => {
     const map = new Map<string, Thread>();
     items.forEach((item) => {
-      const threadId = `${item.author_name}::${item.platform}`;
+      const threadId = threadKey(item);
       if (!map.has(threadId)) {
         map.set(threadId, {
           id: threadId,

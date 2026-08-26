@@ -339,16 +339,27 @@ export function ContentCreationScreen() {
     loadItems();
   }
 
+  /**
+   * Duyệt một bài — **cùng nghĩa** với nút duyệt cả loạt ở dưới, chỉ khác phạm
+   * vi. Bản trước hardcode `publishNow = true`, nên hai nút trông giống nhau
+   * trên cùng một đống nháp lại làm hai việc trái ngược: nút trên thẻ đẩy bài
+   * lên Trang ngay, nút dưới xếp vào lịch tuần. Đó đúng là lý do nút trên thẻ
+   * từng bị gỡ một lần rồi.
+   */
   async function onApproveSingle(id: string) {
     setBusyIds((prev) => [...prev, id]);
-    const result = await approveAll([id], true, 1);
+    const result = await approveAll([id], plan.publishNow, plan.postsPerDay);
     setBusyIds((prev) => prev.filter((busy) => busy !== id));
 
     if (!result.ok) {
       setError(result.message);
       return;
     }
-    setNotice("Đã duyệt 1 bài — Havi đang gửi lên Trang.");
+    setNotice(
+      plan.publishNow
+        ? "Đã duyệt 1 bài — Havi đang gửi lên Trang."
+        : "Đã xếp lịch 1 bài. Xem và đổi giờ ở mục Lịch đăng.",
+    );
     loadItems();
   }
 
@@ -497,6 +508,7 @@ export function ContentCreationScreen() {
                   setNotice("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt.");
                 }}
                 onApproveSingle={onApproveSingle}
+                publishNow={plan.publishNow}
                 onDismiss={onDismiss}
                 onDismissAll={onDismissAllRequested}
               />
