@@ -4,14 +4,16 @@ from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import select
 
+from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import AuditViewerWorkspaceDep, WorkspaceDep
-from core.enums import ContentStatus, InboxItemStatus, PublishStatus
+from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, PublishStatus
 from core.schemas import (
     AnalyticsSummary,
     AnalyticsTimeseries,
@@ -23,6 +25,8 @@ from core.schemas import (
     OperationsPublishMetric,
     Page,
 )
+from domain.models.content import ContentItem
+from domain.models.publish import PublishJob
 from domain.policies.scheduling import VIETNAM_TZ
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -37,9 +41,6 @@ def _date_range(start: date, end: date) -> tuple[datetime, datetime]:
     )
     return range_start, range_end
 
-
-from adapters.persistence.connection_repository import ConnectionRepository
-from core.enums import ConnectionStatus
 
 @router.get("/dashboard", response_model=DashboardContentSummary)
 async def dashboard(workspace_id: WorkspaceDep, session: DbSessionDep) -> DashboardContentSummary:
@@ -290,11 +291,7 @@ async def failed_posts(
 ) -> list[FailedPostRecord]:
     """Danh sách các bài đăng thất bại trong kỳ, kèm lý do."""
     range_start, range_end = _date_range(start, end)
-    
-    from sqlalchemy import select
-    from domain.models.publish import PublishJob
-    from domain.models.content import ContentItem
-    
+
     result = await session.execute(
         select(ContentItem, PublishJob)
         .join(PublishJob, PublishJob.content_item_id == ContentItem.id)

@@ -48,7 +48,7 @@ export async function deleteMedia(assetId: string): Promise<Result<null>> {
   try {
     const { error } = await apiClient.DELETE("/media/{asset_id}", {
       params: { path: { asset_id: assetId } },
-    } as any); // Using 'any' since we haven't regenerated schema.d.ts yet
+    });
     if (error) {
       return { ok: false, message: detailToMessage(error, "Không xoá được ảnh/video") };
     }

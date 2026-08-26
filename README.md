@@ -37,6 +37,30 @@ dung trùng, cảnh báo bất thường, gợi ý câu trả lời để con ng
 AI **không** tự đặt mục tiêu, **không** hứa marketing, và **không** tự quyết
 định thay doanh nghiệp.
 
+Đăng bài và lên lịch cũng nằm cùng nhóm này: chúng là **tính năng hỗ trợ** bên
+trong một nền tảng quản trị, không phải lý do Havi tồn tại. Một công cụ chỉ biết
+đẩy bài lên kênh thì Canva và CapCut đã làm rồi.
+
+## Điều gì còn lại khi nền tảng đổi luật
+
+Havi **không** miễn nhiễm với việc Meta hay TikTok siết quyền API. Mất quyền là
+mất đường ra kênh, và Havi sẽ hiện rõ kênh đang hỏng thay vì im lặng.
+
+Thứ **không** mất, vì nó nằm trong workspace chứ không nằm ở nền tảng:
+
+* kho nội dung đã duyệt và lịch sử từng phiên bản;
+* ai duyệt cái gì, lúc nào, kết quả ra sao;
+* giọng thương hiệu và danh sách điều không được hứa;
+* lịch sử hội thoại với từng khách;
+* cấu trúc thương hiệu, chi nhánh và phân quyền.
+
+Đó là **trí nhớ vận hành**. Nền tảng mới xuất hiện thì doanh nghiệp nối Havi vào
+nền tảng đó và phần đã tích luỹ vẫn còn nguyên — thay ống dẫn, không xây lại từ
+đầu. Công cụ nào chỉ là đường ống thì chết cùng đường ống.
+
+Hệ quả cho việc ưu tiên: audit log, lịch sử phiên bản và khả năng xuất dữ liệu
+**không phải** tính năng phụ để làm sau. Chúng chính là thứ được bán.
+
 ## Những gì Havi không làm
 
 Mỗi mục dưới đây từng tồn tại trong sản phẩm rồi bị gỡ. Đưa lại là một quyết

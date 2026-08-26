@@ -11,15 +11,12 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PwaInstallModal } from "@/components/pwa/pwa-install-modal";
-import { useLanguage } from "@/lib/i18n/language-context";
 
 type AppShellProps = {
   children: ReactNode;
 };
 
 export function AppShell({ children }: AppShellProps) {
-  const { t } = useLanguage();
-
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>

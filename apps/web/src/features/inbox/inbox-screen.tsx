@@ -162,6 +162,20 @@ export function InboxScreen() {
 
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
 
+      {/*
+        Chưa có hội thoại nào KHÁC với lọc ra không thấy gì.
+
+        Bố cục hai cột với danh sách rỗng bên trái và "chọn một hội thoại ở danh
+        sách bên trái" bên phải đọc như một câu đố: người dùng đi tìm cái danh
+        sách mà họ được bảo là có. Còn "Không tìm thấy hội thoại nào" thì hàm ý
+        bộ lọc đã loại mất — sai với workspace vừa nối kênh xong.
+      */}
+      {items.length === 0 ? (
+        <EmptyState
+          title="Chưa có hội thoại"
+          body="Hội thoại mới từ các kênh đã kết nối sẽ xuất hiện tại đây."
+        />
+      ) : (
       <div className={styles.workspace}>
         {/* Sidebar */}
         <aside className={styles.sidebar}>
@@ -287,6 +301,7 @@ export function InboxScreen() {
           )}
         </main>
       </div>
+      )}
     </div>
   );
 }

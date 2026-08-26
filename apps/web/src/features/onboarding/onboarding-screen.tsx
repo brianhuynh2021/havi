@@ -23,15 +23,15 @@ import styles from "./onboarding.module.css";
 
 type Step = 1 | 2;
 
-const stepLabels = ["Chọn ngành", "Nối kênh"];
+const stepLabels = ["Khai báo thương hiệu", "Nối kênh"];
 
 export function OnboardingScreen() {
   const router = useRouter();
   const { signIn } = useSession();
   // Quay về từ Facebook là một page load MỚI (backend redirect tới
   // /onboarding?ket_noi=...), nên mọi state trước đó đã mất. Không đọc lại bước
-  // từ URL thì chủ tiệm rơi về bước 1 và bấm "Tiếp tục" là tạo tiệm thứ hai
-  // trùng tên. `useState` với initializer chứ không `useEffect`: sửa step sau
+  // từ URL thì người dùng rơi về bước 1 và bấm "Tiếp tục" là tạo workspace
+  // thứ hai trùng tên. `useState` với initializer chứ không `useEffect`: sửa step sau
   // lần render đầu sẽ nháy qua bước 1 một khung hình.
   const [step, setStep] = useState<Step>(() =>
     typeof window !== "undefined" &&
@@ -45,7 +45,6 @@ export function OnboardingScreen() {
   const [shopName, setShopName] = useState("");
   const [industry, setIndustry] = useState<IndustryOption["value"] | null>(null);
   const [connected, setConnected] = useState(false);
-  const [learning, setLearning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -77,12 +76,13 @@ export function OnboardingScreen() {
 
 
 
-  /** Lưu hoặc cập nhật tiệm (Idempotent) ở cuối bước 1.
-   * Nếu user quay lại từ bước 2 để sửa tên tiệm, cập nhật tiệm hiện tại
-   * thay vì tạo tiệm thứ hai trùng tên. */
+  /** Lưu hoặc cập nhật thương hiệu (idempotent) ở cuối bước 1.
+   *
+   * Quay lại bước 1 để sửa tên thì cập nhật workspace hiện tại, không tạo
+   * workspace thứ hai trùng tên. */
   async function submitIndustry() {
     if (!shopName.trim()) {
-      setError("Nhập tên tiệm để Havi gọi đúng tên trong bài viết");
+      setError("Nhập tên thương hiệu để Havi gọi đúng tên trên mọi kênh");
       return;
     }
     if (!industry) return;
@@ -131,26 +131,27 @@ export function OnboardingScreen() {
       <div className={styles.panel}>
         {step === 1 ? (
           <>
-            <h1 className={styles.title}>Cơ sở của bạn tên gì, ngành nào?</h1>
+            <h1 className={styles.title}>Thương hiệu bạn quản trị tên gì?</h1>
             <p className={styles.subtitle}>
-              Havi sẽ dùng thông tin này để viết bài đúng giọng, đúng ngành.
+              Havi dùng tên và ngành để đặt giọng thương hiệu và bộ quy tắc nội
+              dung cho workspace này.
             </p>
 
             <div className={styles.inputSection}>
               <label className={styles.label} htmlFor="shop-name">
-                Tên tiệm
+                Tên thương hiệu
               </label>
               <Input
                 id="shop-name"
                 scale="large"
-                placeholder="Ví dụ: Spa An Nhiên, Tiệm Cà Phê 1985..."
+                placeholder="Ví dụ: Spa An Nhiên, Cà Phê 1985, Nhật Minh…"
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
               />
             </div>
 
             <div className={styles.industrySection}>
-              <label className={styles.label}>Ngành kinh doanh của tiệm</label>
+              <label className={styles.label}>Ngành của thương hiệu</label>
               <div className={styles.industryGrid}>
                 {industryOptions.map((option) => {
                   const isSelected = industry === option.value;
@@ -198,13 +199,14 @@ export function OnboardingScreen() {
               </div>
             </div>
 
-            {/* Magic Onboarding Live Preview (100/100 Weapon) */}
-            <div className={styles.magicPreviewCard} aria-label="Bản xem trước bài viết AI">
+            {/* Xem trước giọng thương hiệu — để lựa chọn ngành ở trên có hệ quả
+                nhìn thấy được, thay vì là một ô radio không biết đổi gì. */}
+            <div className={styles.magicPreviewCard} aria-label="Bản xem trước giọng thương hiệu">
               <div className={styles.magicPreviewHeader}>
                 <h3 className={styles.magicPreviewTitle}>
-                  ✨ Bản xem trước bài viết theo ngành
+                  ✨ Giọng thương hiệu sẽ ra thế này
                 </h3>
-                <span className={styles.magicBadge}>⚡ Tự động tạo mẫu</span>
+                <span className={styles.magicBadge}>⚡ Bản mẫu theo ngành</span>
               </div>
               <div className={styles.magicPreviewContent}>
                 <div className={styles.mockupHeader}>
@@ -248,7 +250,9 @@ export function OnboardingScreen() {
           <>
             <h1 className={styles.title}>Kết nối kênh của bạn</h1>
             <p className={styles.subtitle}>
-              Kết nối Facebook bằng API chính thức để thử luồng tạo, duyệt và đăng bài. Các kênh khác vẫn đang ở roadmap/Beta.
+              Nối Facebook bằng API chính thức để Havi thấy được Trang, Reels và
+              Messenger của bạn. TikTok là kênh kế tiếp, sau đó YouTube Shorts rồi
+              Google Business Profile — mỗi kênh chỉ bật sau khi nền tảng duyệt.
             </p>
             <div className={styles.connectionListWrapper}>
               <ConnectionList returnTo="onboarding" onUsableChange={setConnected} />

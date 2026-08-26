@@ -15,7 +15,6 @@ vi.mock("./content-creation.api", async (importOriginal) => {
     approveAll: (...args: unknown[]) => approveAll(...args),
     createJob: (...args: unknown[]) => createJob(...args),
     uploadMedia: vi.fn(),
-    generateItemImage: vi.fn(),
     dismissItem: vi.fn(),
     dismissAllItems: vi.fn(),
   };

@@ -95,7 +95,7 @@ describe("OnboardingScreen", () => {
     renderOnboarding();
 
     await waitFor(() =>
-      expect(screen.getByLabelText("Tên tiệm")).toHaveValue("Spa An Nhiên"),
+      expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
   });
 
@@ -103,7 +103,7 @@ describe("OnboardingScreen", () => {
     const fetchSpy = mockApi();
     renderOnboarding();
     await waitFor(() =>
-      expect(screen.getByLabelText("Tên tiệm")).toHaveValue("Spa An Nhiên"),
+      expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
 
     await chonNganhVaTiepTuc();
@@ -138,7 +138,7 @@ describe("OnboardingScreen", () => {
 
     renderOnboarding();
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Tên tiệm"), "Spa An Nhiên");
+    await user.type(screen.getByLabelText("Tên thương hiệu"), "Spa An Nhiên");
     await chonNganhVaTiepTuc();
 
     expect(await screen.findByRole("alert")).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe("OnboardingScreen", () => {
     mockApi();
     renderOnboarding();
     await waitFor(() =>
-      expect(screen.getByLabelText("Tên tiệm")).toHaveValue("Spa An Nhiên"),
+      expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
     await chonNganhVaTiepTuc();
 
@@ -199,9 +199,9 @@ describe("OnboardingScreen", () => {
     renderOnboarding();
 
     expect(
-      screen.getByText(/Bản xem trước bài viết/i),
+      screen.getByText(/Giọng thương hiệu sẽ ra thế này/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Tự động tạo mẫu/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bản mẫu theo ngành/i)).toBeInTheDocument();
 
     const user = userEvent.setup();
 
@@ -227,11 +227,11 @@ describe("OnboardingScreen", () => {
     expect(screen.getByText("#MonNgonMoiNgay")).toBeInTheDocument();
   });
 
-  it("quay lại bước 1 sửa tên tiệm thì gọi PATCH cập nhật chứ không tạo thêm tiệm mới (Idempotent)", async () => {
+  it("quay lại bước 1 sửa tên thì gọi PATCH cập nhật chứ không tạo workspace thứ hai (idempotent)", async () => {
     const fetchSpy = mockApi();
     renderOnboarding();
     await waitFor(() =>
-      expect(screen.getByLabelText("Tên tiệm")).toHaveValue("Spa An Nhiên"),
+      expect(screen.getByLabelText("Tên thương hiệu")).toHaveValue("Spa An Nhiên"),
     );
 
     const user = userEvent.setup();
@@ -248,11 +248,11 @@ describe("OnboardingScreen", () => {
 
     // Đã quay về bước 1
     expect(
-      screen.getByRole("heading", { name: /cơ sở của bạn tên gì/i }),
+      screen.getByRole("heading", { name: /thương hiệu bạn quản trị tên gì/i }),
     ).toBeInTheDocument();
 
     // Sửa tên tiệm
-    const nameInput = screen.getByLabelText("Tên tiệm");
+    const nameInput = screen.getByLabelText("Tên thương hiệu");
     await user.clear(nameInput);
     await user.type(nameInput, "Spa An Nhiên Premium");
 

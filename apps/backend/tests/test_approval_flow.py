@@ -521,28 +521,6 @@ async def test_hoan_bai_tren_lich_ve_nhap_xoa_scheduled_at(
     assert body["scheduled_at"] is None
 
 
-async def test_generate_ai_image_cap_nhat_media_url(client: AsyncClient, db_session: AsyncSession):
-    token_pair = await _onboard(client, email="genimage1@havi.vn")
-    item = await _draft(db_session, token_pair)
-
-    resp = await client.post(
-        f"/content/{item.id}/generate-image",
-        json={"style": "3d_studio"},
-        headers=_headers(token_pair),
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "media_url" in data
-    assert data["media_url"].startswith("http")
-
-    # Verify persisted in item
-    get_resp = await client.get("/content", headers=_headers(token_pair))
-    assert get_resp.status_code == 200
-    items = get_resp.json()["items"]
-    assert len(items) == 1
-    assert items[0]["media_url"] == data["media_url"]
-
-
 async def test_update_item_media_url_va_xoa_anh(client: AsyncClient, db_session: AsyncSession):
     token_pair = await _onboard(client, email="editmedia1@havi.vn")
     item = await _draft(db_session, token_pair)

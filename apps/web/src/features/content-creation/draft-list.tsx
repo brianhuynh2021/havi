@@ -1,17 +1,22 @@
 "use client";
 
 /**
- * Danh sách bản nháp — sửa, bỏ bài, xem lại trước khi duyệt.
+ * Danh sách bản nháp — sửa, bỏ bài, duyệt lẻ một bài, hoặc bỏ qua.
  *
- * Ở đây **không có nút duyệt nào**, và đó là chủ ý. Quyết định "đưa lên Trang
- * lúc nào" nằm gọn ở `SchedulePicker` ngay dưới danh sách, đúng một chỗ. Bản
- * trước rải nút duyệt trên từng thẻ *và* một cặp nút duyệt-tất-cả ở cuối: chủ
- * tiệm không biết bấm cái nào, và bấm nhầm cái trên từng thẻ thì bài lên ngay
- * thay vì vào lịch của tuần.
+ * Nút duyệt trên từng thẻ **chỉ hiện với người có quyền duyệt**. Ẩn nút không
+ * phải là phân quyền — backend vẫn kiểm lại — nhưng bày ra một nút mà người
+ * soạn bấm vào chỉ nhận 403 thì tệ hơn không bày.
+ *
+ * Cảnh báo cho lần sửa sau: nút này ("Đăng ngay") và `SchedulePicker` ngay dưới
+ * ("xếp lịch") làm hai việc khác nhau trên cùng một đống nháp. Bản trước từng
+ * gỡ hẳn nút trên thẻ vì chủ tiệm bấm nhầm rồi bài lên ngay thay vì vào lịch
+ * tuần. Nếu thấy lại triệu chứng đó, sửa bằng cách cho hai nút cùng nghĩa —
+ * đừng cho hai nghĩa vào hai nút trông giống nhau.
  */
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/state-views";
+import { PERMISSIONS, usePermissions } from "@/lib/auth/use-permissions";
 import type { ContentItem } from "./content-creation.api";
 import { channelLabels, type ChannelKey } from "./content-creation.fixture";
 import { DraftEditor } from "./draft-editor";
@@ -44,6 +49,9 @@ export function DraftList({
   onDismiss,
   onDismissAll,
 }: DraftListProps) {
+  const { can } = usePermissions();
+  const mayApprove = can(PERMISSIONS.approveContent);
+
   if (!items.length) {
     return (
       <EmptyState
@@ -96,9 +104,15 @@ export function DraftList({
                     <Button variant="outline" onClick={() => onEdit(item.id)} disabled={busy}>
                       Sửa
                     </Button>
-                    <Button variant="primary" onClick={() => onApproveSingle(item.id)} disabled={busy}>
-                      Duyệt & Đăng ngay
-                    </Button>
+                    {mayApprove ? (
+                      <Button
+                        variant="primary"
+                        onClick={() => onApproveSingle(item.id)}
+                        disabled={busy}
+                      >
+                        Duyệt & Đăng ngay
+                      </Button>
+                    ) : null}
                     <button
                       type="button"
                       className={styles.linkDanger}

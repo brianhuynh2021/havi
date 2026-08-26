@@ -54,12 +54,16 @@ describe("InboxScreen", () => {
 
     render(<InboxScreen />);
 
-    expect(await screen.findByText("Shop còn lịch chiều nay không?")).toBeInTheDocument();
-    const draft = screen.getByLabelText(/Bản nháp trả lời/);
+    // Danh sách bên trái hiện trước; phải mở hội thoại rồi mới có ô trả lời.
+    fireEvent.click(await screen.findByText("Shop còn lịch chiều nay không?"));
+
+    const draft = screen.getByLabelText(/Trả lời Minh Anh/);
     fireEvent.change(draft, { target: { value: "Dạ shop còn lịch lúc 16:00 ạ." } });
     fireEvent.click(screen.getByRole("button", { name: "Gửi trả lời" }));
 
-    await screen.findByText("Đã trả lời");
+    // Gửi xong thì ô soạn biến mất và câu vừa gửi thành bong bóng của tiệm —
+    // `ai_suggested_reply` đã bị ghi đè bằng text thật ở `update_status`.
+    await screen.findByText(/Havi gửi/);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
     const replyRequest = fetchMock.mock.calls[1]?.[0];

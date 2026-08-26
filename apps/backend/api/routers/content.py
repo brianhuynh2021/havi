@@ -43,8 +43,6 @@ from core.schemas import (
     ContentItemVersion,
     ContentJob,
     ContentJobCreate,
-    GenerateImageRequest,
-    GenerateImageResponse,
     Page,
     PublishJob,
     TokenQuota,
@@ -267,21 +265,6 @@ async def update_content(
     except NotReschedulable as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return ContentItem.model_validate(item)
-
-
-@router.post("/{content_id}/generate-image", response_model=GenerateImageResponse)
-async def generate_item_image(
-    content_id: UUID,
-    payload: GenerateImageRequest,
-    auth: AuthDep,
-    workspace_id: WorkspaceDep,
-    approvals: ApprovalServiceDep,
-) -> GenerateImageResponse:
-    """Tạo sinh ảnh AI mới bằng Gemini / Imagen theo ngữ cảnh bài viết."""
-    raise HTTPException(
-        status_code=501,
-        detail="Tính năng tạo ảnh AI đang được phát triển. Tạm thời vô hiệu hoá để đảm bảo không trả về ảnh stock (fake) cho khách hàng."
-    )
 
 
 @router.get("/{content_id}/versions", response_model=list[ContentItemVersion])

@@ -343,22 +343,6 @@ export async function dismissAllItems(itemIds: string[]): Promise<Result<string[
   }
 }
 
-export async function generateItemImage(
-  itemId: string,
-  style?: string,
-): Promise<Result<{ media_url: string; prompt_used: string }>> {
-  try {
-    const { data, error } = await apiClient.POST("/content/{content_id}/generate-image", {
-      params: { path: { content_id: itemId } },
-      body: { style: style || "3d_studio" },
-    });
-    if (error || !data) return { ok: false, message: "Chưa chọn được ảnh minh họa, thử lại giúp mình nhé." };
-    return { ok: true, data };
-  } catch {
-    return { ok: false, message: NETWORK_ERROR_MESSAGE };
-  }
-}
-
 export async function uploadRenderedVideoBlob(
   itemId: string,
   blob: Blob,

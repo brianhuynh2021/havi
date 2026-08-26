@@ -121,6 +121,9 @@ async def test_dashboard_workspace_moi_tra_so_0(client: AsyncClient):
         "scheduled": 0,
         "published": 0,
         "failed": 0,
+        "total_connections": 0,
+        "broken_connections": 0,
+        "unhandled_inbox": 0,
     }
 
 
@@ -164,6 +167,9 @@ async def test_dashboard_dem_content_item_theo_workspace(
         "scheduled": 1,
         "published": 1,
         "failed": 1,
+        "total_connections": 0,
+        "broken_connections": 0,
+        "unhandled_inbox": 0,
     }
 
 

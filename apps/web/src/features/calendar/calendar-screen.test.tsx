@@ -136,13 +136,15 @@ describe("CalendarScreen", () => {
     expect(screen.queryByText("02:30")).not.toBeInTheDocument();
   });
 
-  it("bấm tuần sau thì hỏi đúng tuần kế tiếp", async () => {
+  it("bấm Sau ở chế độ tuần thì hỏi đúng tuần kế tiếp", async () => {
     const asked = mockCalendar((start) => emptyWeek(start));
     render(<CalendarScreen />);
     await waitFor(() => expect(asked.length).toBe(1));
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /tuần sau/i }));
+    // Nút lùi/tiến dùng chung cho cả chế độ tuần và tháng nên nhãn chỉ là
+    // "Trước"/"Sau"; bước nhảy do `viewMode` quyết định — mặc định là tuần.
+    await user.click(screen.getByRole("button", { name: /Sau/ }));
 
     await waitFor(() => expect(asked.length).toBe(2));
     const diff =

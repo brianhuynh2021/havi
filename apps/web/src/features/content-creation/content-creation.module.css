@@ -586,115 +586,6 @@
   }
 }
 
-/* --- Step 1: Campaign Playbooks Grid --- */
-.playbookSection {
-  margin-top: 20px;
-  margin-bottom: 24px;
-}
-
-.stepTitle {
-  font-size: 14px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-slate-600);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.stepNumber {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--color-indigo-600);
-  color: var(--color-white);
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.playbookGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-@media (max-width: 1024px) {
-  .playbookGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .playbookGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.playbookCard {
-  text-align: left;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1.5px solid var(--color-slate-200);
-  background: var(--color-white);
-  cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.playbookCard:hover {
-  transform: translateY(-3px);
-  border-color: var(--color-indigo-500);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
-}
-
-.playbookCardActive {
-  border-color: var(--color-indigo-600);
-  background: linear-gradient(180deg, var(--color-purple-50) 0%, var(--color-white) 100%);
-  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.18);
-}
-
-.playbookIconHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.playbookIcon {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.playbookTag {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--color-blue-50);
-  color: var(--color-blue-700);
-  border: 1px solid var(--color-blue-200);
-}
-
-.playbookCardTitle {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-slate-900);
-  line-height: 1.3;
-}
-
-.playbookCardDesc {
-  font-size: 12px;
-  color: var(--color-slate-500);
-  line-height: 1.45;
-}
-
 /* --- Step 2: Smart Input Dock --- */
 .dropZone {
   margin-top: 8px;
@@ -2148,10 +2039,6 @@
   margin-top: 20px;
   padding-top: 18px;
   border-top: 1px solid var(--color-border);
-}
-
-.playbookIcon {
-  font-size: 22px;
 }
 
 /* --- Bước 1: rẽ nhánh loại nội dung --- */

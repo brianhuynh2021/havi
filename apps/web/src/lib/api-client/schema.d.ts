@@ -515,57 +515,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/workspaces/{workspace_id}/trends/hot": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lấy danh sách các Hot Trends thời gian thực được AI đề xuất cho tiệm */
-        get: operations["get_hot_trends_workspaces__workspace_id__trends_hot_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/workspaces/{workspace_id}/trends/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Quét và làm mới danh sách các Hot Trends mới nhất từ Radar AI */
-        post: operations["refresh_hot_trends_workspaces__workspace_id__trends_refresh_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/workspaces/{workspace_id}/trends/synthesize": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Biến một trend thành kịch bản video ngắn và edit plan 9:16 hoàn chỉnh */
-        post: operations["synthesize_trend_workspaces__workspace_id__trends_synthesize_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/workspaces/{workspace_id}/video/posts": {
         parameters: {
             query?: never;
@@ -892,26 +841,6 @@ export interface paths {
          *     sửa lúc đó sẽ làm bản trên Facebook khác bản trong DB.
          */
         patch: operations["update_content_content__content_id__patch"];
-        trace?: never;
-    };
-    "/content/{content_id}/generate-image": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Generate Item Image
-         * @description Tạo sinh ảnh AI mới bằng Gemini / Imagen theo ngữ cảnh bài viết.
-         */
-        post: operations["generate_item_image_content__content_id__generate_image_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/content/{content_id}/versions": {
@@ -2011,24 +1940,6 @@ export interface components {
              */
             approved: boolean;
         };
-        /** GenerateImageRequest */
-        GenerateImageRequest: {
-            /** Prompt */
-            prompt?: string | null;
-            /**
-             * Style
-             * @description photorealistic | 3d_studio | cinematic
-             * @default photorealistic
-             */
-            style: string | null;
-        };
-        /** GenerateImageResponse */
-        GenerateImageResponse: {
-            /** Media Url */
-            media_url: string;
-            /** Prompt Used */
-            prompt_used: string;
-        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2043,11 +1954,6 @@ export interface components {
             /** Version */
             version: string;
         };
-        /**
-         * HookStyle
-         * @enum {string}
-         */
-        HookStyle: "warning_mistake" | "real_comparison" | "behind_scenes" | "hero_rescue" | "career_income";
         /** InboxItem */
         InboxItem: {
             /**
@@ -2721,44 +2627,6 @@ export interface components {
          * @enum {string}
          */
         SubscriptionStatus: "trialing" | "active" | "past_due" | "canceled";
-        /** SynthesizeTrendRequest */
-        SynthesizeTrendRequest: {
-            /** Trend Id */
-            trend_id: string;
-            /**
-             * Target Aspect Ratio
-             * @default 9:16
-             */
-            target_aspect_ratio: string;
-            /**
-             * Duration Seconds
-             * @default 15
-             */
-            duration_seconds: number;
-            /** Custom Notes */
-            custom_notes?: string | null;
-        };
-        /** SynthesizeTrendResponse */
-        SynthesizeTrendResponse: {
-            /** Trend Id */
-            trend_id: string;
-            /** Keyword */
-            keyword: string;
-            /** Title */
-            title: string;
-            /** Hook Caption */
-            hook_caption: string;
-            /** Caption Style */
-            caption_style: string;
-            /** Script Outline */
-            script_outline: string[];
-            /** Suggested Hashtags */
-            suggested_hashtags: string[];
-            /** Edit Plan */
-            edit_plan: {
-                [key: string]: unknown;
-            };
-        };
         /** TimeseriesPoint */
         TimeseriesPoint: {
             /**
@@ -2812,30 +2680,6 @@ export interface components {
              * Format: date-time
              */
             resets_at: string;
-        };
-        /**
-         * TrendCategory
-         * @enum {string}
-         */
-        TrendCategory: "tech_education" | "career_guidance" | "vocational_skills" | "viral_meme" | "tech_news" | "lifestyle";
-        /** TrendingTopicResponse */
-        TrendingTopicResponse: {
-            /** Id */
-            id: string;
-            /** Keyword */
-            keyword: string;
-            category: components["schemas"]["TrendCategory"];
-            /** Trend Score */
-            trend_score: number;
-            /** Source */
-            source: string;
-            hook_style: components["schemas"]["HookStyle"];
-            /** Sample Hook */
-            sample_hook: string;
-            /** Suggested Angle */
-            suggested_angle: string;
-            /** Suggested Hashtags */
-            suggested_hashtags: string[];
         };
         /** UpdateVideoPostRequest */
         UpdateVideoPostRequest: {
@@ -4020,79 +3864,6 @@ export interface operations {
             };
         };
     };
-    get_hot_trends_workspaces__workspace_id__trends_hot_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TrendingTopicResponse"][];
-                };
-            };
-        };
-    };
-    refresh_hot_trends_workspaces__workspace_id__trends_refresh_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TrendingTopicResponse"][];
-                };
-            };
-        };
-    };
-    synthesize_trend_workspaces__workspace_id__trends_synthesize_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SynthesizeTrendRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SynthesizeTrendResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_video_posts_workspaces__workspace_id__video_posts_get: {
         parameters: {
             query?: {
@@ -4691,41 +4462,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentItem"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    generate_item_image_content__content_id__generate_image_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                content_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GenerateImageRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GenerateImageResponse"];
                 };
             };
             /** @description Validation Error */

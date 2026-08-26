@@ -33,53 +33,6 @@ export type UploadRow = {
   controller: AbortController;
 };
 
-export type ContentPurpose = {
-  id: string;
-  icon: string;
-  title: string;
-  desc: string;
-  /** Câu gợi ý nạp thẳng vào ô ghi chú — chủ tiệm sửa lại chứ không phải gõ từ đầu. */
-  text: string;
-};
-
-/**
- * Các loại nội dung thường dùng để người dùng không phải bắt đầu từ trang trắng.
- *
- * Mỗi mục chỉ nạp sẵn một câu gợi ý vào ô ghi chú. Havi không hứa kết quả nào ở
- * đây — hiệu quả thật chỉ đo được sau khi bài đã đăng, nên phần mô tả nói về
- * *nội dung sẽ viết ra*, không nói về doanh thu.
- */
-export const CONTENT_PURPOSES: ContentPurpose[] = [
-  {
-    id: "offer",
-    icon: "🏷️",
-    title: "Giới thiệu ưu đãi",
-    desc: "Bài nêu rõ ưu đãi, điều kiện áp dụng và cách khách liên hệ.",
-    text: "Nêu rõ ưu đãi đang áp dụng, thời hạn và điều kiện thật; cuối bài mời khách nhắn tin để nhân viên xác nhận lịch trống.",
-  },
-  {
-    id: "local",
-    icon: "📍",
-    title: "Khách quanh khu vực",
-    desc: "Bài nhấn vị trí, giờ mở cửa và dịch vụ chính — hợp với tìm kiếm quanh đây.",
-    text: "Giới thiệu dịch vụ chính, vị trí và giờ mở cửa của cơ sở, kèm cách đặt lịch nhanh nhất.",
-  },
-  {
-    id: "proof",
-    icon: "💬",
-    title: "Kể chuyện khách hàng",
-    desc: "Bài dựa trên một trường hợp có thật đã làm ở cơ sở.",
-    text: "Kể lại một trường hợp khách hàng có thật: vấn đề ban đầu, cơ sở đã xử lý thế nào, kết quả khách nhận được.",
-  },
-  {
-    id: "intro",
-    icon: "✨",
-    title: "Giới thiệu dịch vụ mới",
-    desc: "Bài mô tả dịch vụ hoặc sản phẩm vừa có, kèm mức giá nếu đã chốt.",
-    text: "Giới thiệu dịch vụ hoặc sản phẩm mới: dành cho ai, làm trong bao lâu, giá tham khảo nếu đã có.",
-  },
-];
-
 /**
  * Việc bài viết còn thiếu gì — dạng danh sách kiểm, **không** phải điểm số.
  *
@@ -122,7 +75,6 @@ type PostBriefProps = {
   chips: RawChip[];
   uploads: UploadRow[];
   note: string;
-  selectedPurpose: string | null;
   uploading: boolean;
   generating: boolean;
   onNoteChange: (value: string) => void;
@@ -131,7 +83,6 @@ type PostBriefProps = {
   onPickFiles: (files: FileList | null) => void;
   onOpenVoice: () => void;
   onOpenMediaPicker: () => void;
-  onSelectPurpose: (purpose: ContentPurpose) => void;
   onGenerate: () => void;
 };
 
@@ -139,7 +90,6 @@ export function PostBrief({
   chips,
   uploads,
   note,
-  selectedPurpose,
   uploading,
   generating,
   onNoteChange,
@@ -148,7 +98,6 @@ export function PostBrief({
   onPickFiles,
   onOpenVoice,
   onOpenMediaPicker,
-  onSelectPurpose,
   onGenerate,
 }: PostBriefProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,30 +111,6 @@ export function PostBrief({
 
   return (
     <>
-      <section className={styles.playbookSection} aria-labelledby="purpose-title">
-        <div className={styles.stepTitle}>
-          <span className={styles.stepNumber}>1</span>
-          <span id="purpose-title">Chọn loại nội dung</span>
-        </div>
-        <div className={styles.playbookGrid}>
-          {CONTENT_PURPOSES.map((purpose) => (
-            <button
-              key={purpose.id}
-              type="button"
-              aria-pressed={selectedPurpose === purpose.id}
-              className={`${styles.playbookCard} ${
-                selectedPurpose === purpose.id ? styles.playbookCardActive : ""
-              }`}
-              onClick={() => onSelectPurpose(purpose)}
-            >
-              <span className={styles.playbookIcon}>{purpose.icon}</span>
-              <strong>{purpose.title}</strong>
-              <small>{purpose.desc}</small>
-            </button>
-          ))}
-        </div>
-      </section>
-
       <section className={styles.rawSection} aria-labelledby="brief-title">
         <div className={styles.stepTitle}>
           <span className={styles.stepNumber}>2</span>

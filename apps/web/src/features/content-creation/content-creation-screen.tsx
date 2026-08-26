@@ -41,7 +41,7 @@ import {
   type RawInput,
 } from "./content-creation.api";
 import { DraftList } from "./draft-list";
-import { PostBrief, type ContentPurpose, type RawChip, type UploadRow } from "./post-brief";
+import { PostBrief, type RawChip, type UploadRow } from "./post-brief";
 import { QuotaBanner } from "./quota-banner";
 import { SchedulePicker, type SchedulePlan } from "./schedule-picker";
 import { useJobPolling } from "./use-job-polling";
@@ -63,7 +63,6 @@ export function ContentCreationScreen() {
   const [chips, setChips] = useState<RawChip[]>([]);
   const [uploads, setUploads] = useState<UploadRow[]>([]);
   const [note, setNote] = useState("");
-  const [selectedPurpose, setSelectedPurpose] = useState<string | null>(null);
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,11 +274,6 @@ export function ContentCreationScreen() {
     setUploads((prev) => prev.filter((upload) => upload.assetId !== key));
   }
 
-  function selectPurpose(purpose: ContentPurpose) {
-    setSelectedPurpose(purpose.id);
-    setNote(purpose.text);
-  }
-
   /** Gom chips + ghi chú đang gõ dở thành một job. Dùng chung cho nút và giọng nói. */
   async function submitJob(inputs: RawInput[], loadingTitle: string) {
     if (!inputs.length) return;
@@ -475,7 +469,6 @@ export function ContentCreationScreen() {
             chips={chips}
             uploads={uploads}
             note={note}
-            selectedPurpose={selectedPurpose}
             uploading={uploading}
             generating={generating}
             onNoteChange={setNote}
@@ -484,7 +477,6 @@ export function ContentCreationScreen() {
             onPickFiles={onPickFiles}
             onOpenVoice={() => setVoiceModalOpen(true)}
             onOpenMediaPicker={() => setMediaPickerOpen(true)}
-            onSelectPurpose={selectPurpose}
             onGenerate={generate}
           />
 

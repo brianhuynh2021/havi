@@ -328,18 +328,6 @@ class ContentItemUpdate(HaviModel):
     scheduled_at: datetime | None = None
 
 
-class GenerateImageRequest(HaviModel):
-    prompt: str | None = None
-    style: str | None = Field(
-        default="photorealistic", description="photorealistic | 3d_studio | cinematic"
-    )
-
-
-class GenerateImageResponse(HaviModel):
-    media_url: str
-    prompt_used: str
-
-
 class GenerateVideoRequest(HaviModel):
     target_aspect_ratio: str = Field(default="9:16", description="9:16 | 1:1 | 16:9")
     title: str | None = None

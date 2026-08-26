@@ -26,13 +26,28 @@ type Fixture = {
     scheduled: number;
     published: number;
     failed: number;
+    total_connections: number;
+    broken_connections: number;
+    unhandled_inbox: number;
   }>;
   connections?: Array<Record<string, unknown>>;
   inbox?: Array<Record<string, unknown>>;
   summaryFails?: boolean;
 };
 
+/**
+ * Bảng điều khiển đọc **một** endpoint duy nhất — `/analytics/dashboard` đã đếm
+ * sẵn kênh hỏng và hội thoại chưa xử lý ở backend.
+ *
+ * Fixture vẫn nhận `connections` và `inbox` dạng danh sách vì đó là cách diễn
+ * đạt tự nhiên của từng ca kiểm thử ("một kênh nối, một kênh mất quyền"); hàm
+ * này quy chúng về đúng con số mà backend sẽ trả. Đếm ở đây phải khớp với
+ * `api/routers/analytics.py`, nếu không test xanh mà màn hình sai.
+ */
 function mockApi(fixture: Fixture = {}) {
+  const connections = fixture.connections ?? [];
+  const inbox = fixture.inbox ?? [];
+
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
 
@@ -44,15 +59,13 @@ function mockApi(fixture: Fixture = {}) {
         scheduled: 0,
         published: 0,
         failed: 0,
+        total_connections: connections.length,
+        broken_connections: connections.filter((item) => item.status !== "connected").length,
+        unhandled_inbox: inbox.filter(
+          (item) => item.status === "new" || item.status === "drafted",
+        ).length,
         ...fixture.summary,
       });
-    }
-    if (url.pathname.endsWith("/connections")) {
-      return jsonResponse(fixture.connections ?? []);
-    }
-    if (url.pathname.endsWith("/inbox")) {
-      // `/inbox` trả về `Page` — bọc trong `items`, không phải mảng trần.
-      return jsonResponse({ items: fixture.inbox ?? [], total: (fixture.inbox ?? []).length });
     }
     return jsonResponse([]);
   });
@@ -134,12 +147,20 @@ describe("DashboardScreen — bảng điều khiển vận hành", () => {
     expect(document.body.textContent).toContain("1 việc cần bạn xử lý");
   });
 
-  it("API phụ hỏng thì phần còn lại của bảng vẫn hiện", async () => {
-    // `/connections` và `/inbox` trả rỗng chứ không chặn cả màn.
-    mockApi({ summary: { pending_approval: 2 }, connections: [], inbox: [] });
+  it("chỉ gọi ĐÚNG MỘT request để dựng cả bảng", async () => {
+    // Bản trước gọi ba API rồi đếm bằng JS ở trình duyệt: tải cả danh sách kết
+    // nối và cả hộp thư về chỉ để lấy hai con số. Hộp thư vài trăm hội thoại là
+    // màn được mở nhiều nhất trở thành màn nặng nhất.
+    mockApi({ summary: { pending_approval: 2 } });
     render(<DashboardScreen />);
+    await screen.findByText("2 nội dung đang chờ người duyệt");
 
-    expect(await screen.findByText("2 nội dung đang chờ người duyệt")).toBeInTheDocument();
+    const calls = vi.mocked(globalThis.fetch).mock.calls;
+    expect(calls).toHaveLength(1);
+    const [input] = calls[0];
+    expect(input instanceof Request ? input.url : String(input)).toContain(
+      "/analytics/dashboard",
+    );
   });
 
   it("số liệu chính hỏng thì báo lỗi kèm nút thử lại, không hiện số bịa", async () => {
