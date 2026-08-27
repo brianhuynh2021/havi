@@ -3,13 +3,23 @@
 Documentation in `docs/` is grouped by audience and purpose:
 
 - [`handoff/`](handoff/) — [DEPLOYMENT.md](handoff/DEPLOYMENT.md) and [CREDENTIALS_AND_SECRETS_GUIDE.md](handoff/CREDENTIALS_AND_SECRETS_GUIDE.md)
-- [`product/`](product/) — roadmap, product direction, and [COMMERCIALIZATION_PHASES.md](product/COMMERCIALIZATION_PHASES.md)
-- [`architecture/`](architecture/) — technical spec, repository strategy, and
-  architecture decisions
-- [`operations/`](operations/) — dogfooding, external beta launch, and Facebook
-  App Review
-- [`security/`](security/) — security review checklists and release gates
-- [`testing/`](testing/) — visual regression and accessibility baselines
+- [`product/`](product/) — [ROADMAP.md](product/ROADMAP.md),
+  [PRODUCT_CONTRACT.md](product/PRODUCT_CONTRACT.md) and
+  [COMMERCIALIZATION_PHASES.md](product/COMMERCIALIZATION_PHASES.md)
+- [`architecture/`](architecture/) —
+  [SYSTEM_ARCHITECTURE.md](architecture/SYSTEM_ARCHITECTURE.md),
+  [TECHNICAL_SPEC.md](architecture/TECHNICAL_SPEC.md),
+  [REPOSITORY_STRATEGY.md](architecture/REPOSITORY_STRATEGY.md) and
+  [VIDEO_PIPELINE.md](architecture/VIDEO_PIPELINE.md)
+- [`operations/`](operations/) —
+  [EXTERNAL_BETA_LAUNCH.md](operations/EXTERNAL_BETA_LAUNCH.md),
+  [DOGFOODING_PLAN.md](operations/DOGFOODING_PLAN.md) and
+  [FACEBOOK_APP_REVIEW.md](operations/FACEBOOK_APP_REVIEW.md)
+- [`security/`](security/) — [SECURITY_REVIEW.md](security/SECURITY_REVIEW.md)
+  and [DATA_RETENTION_AND_CONSENT.md](security/DATA_RETENTION_AND_CONSENT.md)
+- [`testing/`](testing/) —
+  [VISUAL_ACCESSIBILITY.md](testing/VISUAL_ACCESSIBILITY.md)
+- [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md) — brand voice and visual identity
 
 Setting up staging or production? Start with
 [`handoff/DEPLOYMENT.md`](handoff/DEPLOYMENT.md). It captures the operational
