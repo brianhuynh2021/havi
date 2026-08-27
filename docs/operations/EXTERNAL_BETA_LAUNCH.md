@@ -18,12 +18,12 @@ Havi is a **multi-channel communications manager for small businesses**
 What the pitch may claim, because the software does it and can prove it:
 
 1. **Posting keeps its rhythm.** Prepare a week in one sitting; Havi publishes
-   one story per day on the schedule the owner approved, and reports which posts
-   actually landed.
+   one story per day on the schedule the owner approved, tracking publish status
+   and failures directly via official Graph API responses.
 2. **Messages land in one inbox.** Comments and Messenger appear together;
    approved FAQs can prefill a reply, and a person decides what is sent.
 3. **Clips already made get published.** Upload, Havi checks the clip fits the
-   channel, posts it, then reads the page back to confirm.
+   channel, posts it, then reads the page back to confirm before marking published.
 
 What the pitch must **never** claim:
 
@@ -54,10 +54,13 @@ cd /opt/havi
 cp .env.example .env
 # Chỉnh sửa biến môi trường Production:
 # - HAVI_ENV=production
-# - DATABASE_URL=postgresql+asyncpg://...
-# - REDIS_URL=redis://...
-# - PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY
-# - META_APP_ID, META_APP_SECRET
+# - HAVI_TOKEN_ENCRYPTION_KEY=<sinh bằng: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
+# - HAVI_DATABASE_URL=postgresql+psycopg://...
+# - HAVI_REDIS_URL=redis://...
+# - HAVI_MEDIA_PUBLIC_URL=https://<domain_cdn_hoặc_r2>/havi-media
+# - HAVI_PAYOS_CLIENT_ID, HAVI_PAYOS_API_KEY, HAVI_PAYOS_CHECKSUM_KEY
+# - HAVI_FACEBOOK_CLIENT_ID, HAVI_FACEBOOK_CLIENT_SECRET
+# - HAVI_META_WEBHOOK_VERIFY_TOKEN=<chuỗi_tự_đặt_khớp_với_meta_dashboard>
 ```
 
 ### Step 2.3: Launch Production Stack
@@ -66,9 +69,17 @@ cp .env.example .env
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-### Step 2.4: Permanent Webhook Registration
+### Step 2.4: Permanent Webhook & Facebook Permissions Setup
 * **PayOS Webhook URL:** `https://app.havi.vn/webhooks/payos`
-* **Meta Graph Webhook URL:** `https://app.havi.vn/webhooks/meta` (Verify Token: configured in `.env`)
+* **Meta Graph Webhook URL:** `https://app.havi.vn/webhooks/meta` (Verify Token: configured via `HAVI_META_WEBHOOK_VERIFY_TOKEN`)
+* **Meta App Facebook Scopes (7 quyền bắt buộc trong `adapters/oauth/facebook.py`):**
+  1. `pages_show_list` (Hiển thị danh sách Fanpage)
+  2. `pages_read_engagement` (Đọc chỉ số & bài viết)
+  3. `pages_manage_posts` (Đăng bài viết & video)
+  4. `pages_messaging` (Nhận & gửi tin nhắn Messenger)
+  5. `pages_read_user_content` (Đọc bình luận của khách)
+  6. `pages_manage_engagement` (Trả lời bình luận của khách)
+  7. `pages_manage_metadata` (Đăng ký nhận webhook sự kiện)
 
 ---
 
