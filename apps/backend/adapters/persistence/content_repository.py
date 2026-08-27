@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from core.enums import Channel, ContentJobStatus, ContentStatus
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
@@ -120,6 +121,25 @@ class ContentRepository:
             status=status,
         )
         self._session.add(item)
+        await self._session.flush()
+        # Bản v1 — chính chữ AI vừa sinh — được lưu ngay tại đây.
+        #
+        # `update_item` ghi đè `item.text` khi có người sửa, nên nếu v1 không
+        # được lưu lúc này thì bản gốc **biến mất** và không cách nào lấy lại:
+        # cặp (AI viết gì → người sửa thành gì) là dữ liệu duy nhất nói lên giọng
+        # thật của tiệm, và nó chỉ tồn tại nếu ta ghi trước khi bị ghi đè.
+        #
+        # `edited_by=None` phân biệt máy với người: mọi bản do người sửa đều
+        # mang id của họ. Không cần thêm cột nào.
+        self._session.add(
+            ContentItemVersion(
+                content_item_id=item.id,
+                version_no=item.version_no,
+                text=text,
+                edited_by=None,
+                edited_at=datetime.now(UTC),
+            )
+        )
         await self._session.flush()
         return item
 
@@ -371,6 +391,44 @@ class ContentRepository:
             .order_by(ContentItemVersion.version_no)
         )
         return list(result.scalars().all())
+
+    async def list_ai_human_pairs(
+        self, *, workspace_id: UUID, limit: int = 20
+    ) -> list[tuple[str, str]]:
+        """Cặp `(chữ AI viết, chữ người sửa thành)` của một workspace, mới trước.
+
+        Đây là dữ liệu để nắn giọng văn: chỗ chủ tiệm sửa nói rõ hơn mọi ô khai
+        form, vì nó là *hành vi* chứ không phải *mô tả về mình*.
+
+        Chỉ lấy item đã có người sửa (`version_no > 1`). Bài AI viết mà được duyệt
+        nguyên văn không nằm ở đây — nó không chứa thông tin sửa chữa nào, và
+        trộn vào chỉ làm loãng tín hiệu.
+
+        `edited_by IS NULL` chọn đúng bản của máy; bản cuối là bản `version_no`
+        lớn nhất, tức chữ đang được dùng thật.
+        """
+        ai = aliased(ContentItemVersion)
+        human = aliased(ContentItemVersion)
+        latest = (
+            select(func.max(ContentItemVersion.version_no))
+            .where(ContentItemVersion.content_item_id == ContentItem.id)
+            .scalar_subquery()
+        )
+        result = await self._session.execute(
+            select(ai.text, human.text)
+            .join(ContentItem, ContentItem.id == ai.content_item_id)
+            .join(human, human.content_item_id == ContentItem.id)
+            .where(
+                ContentItem.workspace_id == workspace_id,
+                ai.version_no == 1,
+                ai.edited_by.is_(None),
+                human.version_no == latest,
+                human.version_no > 1,
+            )
+            .order_by(human.edited_at.desc())
+            .limit(limit)
+        )
+        return [(row[0], row[1]) for row in result.all()]
 
     async def set_item_status(
         self,

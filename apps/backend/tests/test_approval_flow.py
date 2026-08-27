@@ -84,11 +84,16 @@ async def test_sua_text_tao_version_moi_khong_ghi_de(client: AsyncClient, db_ses
 
     versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
     rows = versions.json()
-    assert len(rows) == 1
-    assert rows[0]["version_no"] == 2
-    assert rows[0]["text"] == "Bản chị Hương sửa lại cho gần gũi hơn"
+    # Hai bản: v1 là chữ AI sinh (ghi lúc tạo item), v2 là chữ chủ tiệm sửa.
+    # v1 phải còn nguyên — nó là nửa còn lại của cặp dùng để học giọng văn.
+    assert len(rows) == 2
+    assert rows[0]["version_no"] == 1
+    assert rows[0]["text"] == "Bản gốc của Havi"
+    assert rows[0]["edited_by"] is None, "bản của máy không mang id người nào"
+    assert rows[1]["version_no"] == 2
+    assert rows[1]["text"] == "Bản chị Hương sửa lại cho gần gũi hơn"
     # Audit phải trả lời được "ai sửa" — không chỉ "đã sửa".
-    assert rows[0]["edited_by"] is not None
+    assert rows[1]["edited_by"] is not None
 
     # Trajectory audit event được ghi vào event_log
     events_res = await client.get("/analytics/events?job_kind=content.edit", headers=_headers(token_pair))
@@ -115,7 +120,10 @@ async def test_patch_khong_gui_text_thi_khong_tang_version(
     assert response.json()["version_no"] == 1
     assert response.json()["media_note"] == "Chụp lúc đang gội"
     versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
-    assert versions.json() == []
+    # Chỉ còn v1 do AI sinh: không sửa text thì không có bản mới nào.
+    rows = versions.json()
+    assert [row["version_no"] for row in rows] == [1]
+    assert rows[0]["edited_by"] is None
 
 
 async def test_sua_text_giong_het_ban_cu_khong_tao_version(
@@ -126,7 +134,10 @@ async def test_sua_text_giong_het_ban_cu_khong_tao_version(
 
     await client.patch(f"/content/{item.id}", json={"text": "Y hệt"}, headers=_headers(token_pair))
     versions = await client.get(f"/content/{item.id}/versions", headers=_headers(token_pair))
-    assert versions.json() == []
+    # Chỉ còn v1 do AI sinh: không sửa text thì không có bản mới nào.
+    rows = versions.json()
+    assert [row["version_no"] for row in rows] == [1]
+    assert rows[0]["edited_by"] is None
 
 
 async def test_khong_sua_duoc_bai_da_dang(client: AsyncClient, db_session: AsyncSession):

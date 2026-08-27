@@ -107,6 +107,63 @@ critical integration tests passing.
 - Review assignments, activity filters and approval accountability.
 - Mobile-friendly daily operations.
 
+### Phase B2 — Draft quality from the shop's own data
+
+The competitive question is not whether Havi can post; Buffer posts too. It is
+whether the draft is close enough to what the owner would have written that
+approving it is cheaper than rewriting it. Everything in this phase serves that
+one number: how often a draft ships unedited.
+
+The model is Cursor, not a chat window. Cursor won a market that already had
+Copilot by reading the user's own codebase, so its suggestions arrive in the
+user's own names and patterns. The equivalent here is not "AI writes posts" but
+**AI that knows this shop** — and the shop's data is already in Havi's database.
+
+#### Shipped (Phase A groundwork, not yet used for drafting)
+
+- Every AI-generated draft is stored as version 1 the moment it is created, with
+  `edited_by = NULL` marking machine authorship. Owner edits become v2, v3, …
+  This is what makes the pair `(what AI wrote → what the owner shipped)`
+  recoverable; `content_items.text` is overwritten on edit, so a draft not saved
+  at creation time is gone for good. `ContentRepository.list_ai_human_pairs`
+  reads those pairs back.
+
+#### Ordered by evidence, not by appeal
+
+1. **Style from real edits.** Feed recent `(AI draft, owner's final)` pairs into
+   the drafting prompt. Where the owner edits is a stronger signal than any
+   onboarding form, because it is behaviour rather than self-description — every
+   shop describes its tone as "friendly and professional".
+2. **Topics from the real inbox.** What customers actually asked this week
+   decides what is worth posting about. Requires the Messenger webhook to have
+   been live long enough to hold real traffic — `inbox_items` is empty until
+   then, so this cannot be built before the pilot has run.
+3. **Inline refine over regeneration.** Presets (shorten, add a call to action,
+   warmer) plus a free-text instruction that rewrites the current draft instead
+   of generating a new one, with a word-level diff so the owner approves a
+   visible change rather than re-reading a whole post. This lowers the cost of a
+   near-miss draft, which is the common case and the one regeneration handles
+   worst.
+4. **Pre-publish diagnostics.** Aspect ratio, caption length, absolute-claim
+   wording. Cheap, and it belongs after the three above because a well-formatted
+   draft in the wrong voice is still rewritten.
+
+Deliberately excluded: learned brand baselines and automatic style rules derived
+without review. A rule inferred from a handful of edits and applied silently
+produces drafts nobody can explain, and the owner cannot correct what they
+cannot see. Prompt context stays inspectable.
+
+No vector database until the data says otherwise. One shop's corpus is hundreds
+of posts, not millions; Postgres text search with recency and frequency ordering
+covers it, and an embedding store can be added later behind the same interface.
+
+Entry criteria: the Facebook pilot has produced real edit pairs and real inbox
+volume. Building this before that means guessing which part of the draft was
+wrong — which is copying the diagram instead of reading the evidence.
+
+Exit criteria: unedited-approval rate improves against the pilot baseline, and
+prompt context remains auditable per draft.
+
 ### Phase C — Additional organic channels
 
 Expand only after the previous channel is operationally complete. Implementation
