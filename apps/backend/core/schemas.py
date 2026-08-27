@@ -303,6 +303,40 @@ class ContentJobCreate(HaviModel):
     target_channels: list[Channel] | None = None
 
 
+class OwnContentItemCreate(HaviModel):
+    """Bài người dùng **tự viết** — Havi không sửa một chữ nào.
+
+    Có mặt vì `/content/jobs` luôn gọi LLM: người đã viết xong bài mà buộc đi
+    đường đó thì phải nhờ Havi viết một bản không ai cần rồi ghi đè lên.
+    """
+
+    text: str = Field(min_length=1, max_length=63206)
+    channel: Channel = Channel.FACEBOOK_PAGE
+    kind: str = "post"
+    media_id: UUID | None = Field(
+        default=None, description="Ảnh đã upload xong qua /media"
+    )
+
+
+class RenderWarning(HaviModel):
+    """Một chỗ nền tảng sẽ hiện khác chữ đã gửi. Cảnh báo, không chặn đăng."""
+
+    code: str
+    message: str
+    at_char: int | None = None
+
+
+class ContentPreview(HaviModel):
+    """Bài sẽ trông thế nào trên Trang, kèm những chỗ hiện khác chữ đã gửi."""
+
+    text: str
+    media_url: str | None = None
+    char_count: int
+    #: Ký tự thứ mấy Facebook chèn "Xem thêm"; `None` nghĩa là hiện trọn bài.
+    truncate_at: int | None = None
+    warnings: list[RenderWarning] = Field(default_factory=list)
+
+
 class ContentJob(HaviModel):
     id: UUID
     workspace_id: UUID

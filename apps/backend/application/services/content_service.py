@@ -12,13 +12,17 @@ from uuid import UUID
 
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
+from adapters.storage.object_storage import ObjectStorage
 from application.services.job_queue import JobQueue
 from core.alerts import Alert, AlertSink, LoggingAlertSink
 from core.enums import Channel, ContentStatus
+from core.events import EventLogEntry
 from core.request_context import get_request_id
 from domain.models.content import ContentItem, ContentJob
 from domain.policies import quota
+from domain.policies.content_state import initial_status
 
 
 class ContentJobNotFound(Exception):
@@ -27,6 +31,10 @@ class ContentJobNotFound(Exception):
 
 class WorkspaceNotFound(Exception):
     pass
+
+
+class MediaNotFound(Exception):
+    """Ảnh không tồn tại, hoặc thuộc workspace khác."""
 
 
 @dataclass
@@ -49,12 +57,17 @@ class ContentService:
         workspaces: WorkspaceRepository,
         events: EventLogRepository,
         alerts: AlertSink | None = None,
+        media: MediaRepository | None = None,
+        storage: ObjectStorage | None = None,
     ) -> None:
         self._content = content
         self._queue = queue
         self._workspaces = workspaces
         self._events = events
         self._alerts = alerts or LoggingAlertSink()
+        # Chỉ cần cho bài tự viết có kèm ảnh; các use case khác không dùng tới.
+        self._media = media
+        self._storage = storage
 
     async def quota_status(
         self, *, workspace_id: UUID, now: datetime | None = None
@@ -145,6 +158,63 @@ class ContentService:
                 workspace_id=workspace_id, job_id=job.id, request_id=get_request_id()
             )
         return CreatedJob(job=job, created=created)
+
+    async def create_own_item(
+        self,
+        *,
+        workspace_id: UUID,
+        text: str,
+        channel: Channel,
+        kind: str = "post",
+        media_id: UUID | None = None,
+    ) -> ContentItem:
+        """Bài người dùng **tự viết** — vào thẳng hàng chờ, không gọi LLM.
+
+        Vì sao không đi qua `create_job`: đường đó là nút "Để Havi viết bài", nó
+        luôn gọi LLM. Người đã có bài hoàn chỉnh mà buộc đi đường đó thì phải nhờ
+        Havi viết một bản không ai cần, tốn quota, rồi PATCH đè bài của mình lên.
+
+        Không trừ quota token: quota đếm tiền LLM, và ở đây không có lần gọi nào.
+
+        Trạng thái đầu tiên theo đúng `publish_mode` của workspace — cùng luật với
+        bài AI viết. Bài tự viết không phải cửa sau để lách bước duyệt: ai bật
+        `review_first` là muốn mọi bài đều qua người duyệt, bất kể ai viết ra nó.
+        """
+        workspace = await self._workspaces.get_by_id(workspace_id)
+        if workspace is None:
+            raise WorkspaceNotFound()
+
+        media_url: str | None = None
+        if media_id is not None:
+            if self._media is None or self._storage is None:
+                raise MediaNotFound("Service chưa được cấu hình để nhận ảnh")
+            asset = await self._media.get(workspace_id=workspace_id, asset_id=media_id)
+            if asset is None:
+                raise MediaNotFound(f"Không tìm thấy ảnh {media_id}")
+            media_url = self._storage.public_url(asset.object_key)
+
+        item = await self._content.create_item(
+            workspace_id=workspace_id,
+            job_id=None,
+            channel=channel,
+            kind=kind,
+            text=text,
+            media_note=None,
+            media_url=media_url,
+            status=initial_status(workspace.publish_mode),
+            # Không có bản AI nào để so — xem `create_item`.
+            ai_authored=False,
+        )
+        await self._events.record(
+            EventLogEntry(
+                workspace_id=workspace_id,
+                job_kind="content.own_item",
+                input_summary=f"{len(text)} ký tự, channel={channel.value}",
+                output_summary=f"item={item.id} status={item.status.value}",
+                request_id=get_request_id(),
+            )
+        )
+        return item
 
     async def get_job(self, *, workspace_id: UUID, job_id: UUID) -> ContentJob:
         job = await self._content.get_job(workspace_id=workspace_id, job_id=job_id)

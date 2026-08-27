@@ -227,6 +227,8 @@ def get_content_service(
         workspaces=WorkspaceRepository(session),
         events=EventLogRepository(session),
         alerts=alerts,
+        media=MediaRepository(session),
+        storage=_object_storage(),
     )
 
 

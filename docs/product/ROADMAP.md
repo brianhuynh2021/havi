@@ -119,6 +119,22 @@ Copilot by reading the user's own codebase, so its suggestions arrive in the
 user's own names and patterns. The equivalent here is not "AI writes posts" but
 **AI that knows this shop** — and the shop's data is already in Havi's database.
 
+#### Shipped: the owner's own post, and what the page will actually show
+
+- `POST /content/items` takes a finished post and queues it without calling a
+  model. Before it, the only way in was the "let Havi write it" button, so anyone
+  arriving with a post already written had to have Havi produce a draft nobody
+  wanted, spend quota on it, and overwrite it. The new path still obeys the
+  workspace `publish_mode` — writing it yourself is not a back door around
+  review.
+- `POST /content/preview` answers "what will this look like on the Page" without
+  writing anything. Facebook does not render Markdown and cuts a post after
+  roughly 800 characters, so a post written in an editor that shows bold text
+  arrives on the Page with the asterisks visible and the tail behind "See more".
+  Neither is detectable after publishing, which is the only time it used to
+  become visible. The preview deliberately renders as badly as Facebook does; one
+  that showed `**bold**` as bold would be lying about the outcome.
+
 #### Shipped (Phase A groundwork, not yet used for drafting)
 
 - Every AI-generated draft is stored as version 1 the moment it is created, with
@@ -144,9 +160,10 @@ user's own names and patterns. The equivalent here is not "AI writes posts" but
    visible change rather than re-reading a whole post. This lowers the cost of a
    near-miss draft, which is the common case and the one regeneration handles
    worst.
-4. **Pre-publish diagnostics.** Aspect ratio, caption length, absolute-claim
-   wording. Cheap, and it belongs after the three above because a well-formatted
-   draft in the wrong voice is still rewritten.
+4. **Remaining pre-publish diagnostics.** Video aspect ratio and absolute-claim
+   wording. Facebook's own rendering differences already ship (see below); what
+   is left is channel constraints and policy risk, and it belongs after the three
+   above because a well-formatted draft in the wrong voice is still rewritten.
 
 Deliberately excluded: learned brand baselines and automatic style rules derived
 without review. A rule inferred from a handful of edits and applied silently

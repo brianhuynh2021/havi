@@ -102,14 +102,21 @@ class ContentRepository:
         self,
         *,
         workspace_id: UUID,
-        job_id: UUID,
+        job_id: UUID | None,
         channel: Channel,
         kind: str,
         text: str,
         media_note: str | None,
         media_url: str | None = None,
         status: ContentStatus,
+        ai_authored: bool = True,
     ) -> ContentItem:
+        """`ai_authored=False` cho bài người tự viết: không ghi bản v1 của máy.
+
+        Bài người tự dán vào không có "bản AI" nào để so, nên ghi nó thành v1 sẽ
+        làm `list_ai_human_pairs` trả về cặp (chữ người viết → chữ người sửa) và
+        dạy nắn giọng văn theo chính giọng người dùng — một vòng lặp học từ nhiễu.
+        """
         item = ContentItem(
             workspace_id=workspace_id,
             job_id=job_id,
@@ -131,16 +138,17 @@ class ContentRepository:
         #
         # `edited_by=None` phân biệt máy với người: mọi bản do người sửa đều
         # mang id của họ. Không cần thêm cột nào.
-        self._session.add(
-            ContentItemVersion(
-                content_item_id=item.id,
-                version_no=item.version_no,
-                text=text,
-                edited_by=None,
-                edited_at=datetime.now(UTC),
+        if ai_authored:
+            self._session.add(
+                ContentItemVersion(
+                    content_item_id=item.id,
+                    version_no=item.version_no,
+                    text=text,
+                    edited_by=None,
+                    edited_at=datetime.now(UTC),
+                )
             )
-        )
-        await self._session.flush()
+            await self._session.flush()
         return item
 
     async def list_items_for_job(self, job_id: UUID) -> list[ContentItem]:

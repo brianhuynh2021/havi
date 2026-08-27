@@ -14,18 +14,25 @@ from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
+from adapters.persistence.media_repository import MediaRepository
 from api.deps import (
     ApprovalServiceDep,
     ApproverWorkspaceDep,
     AuthDep,
     ContentServiceDep,
+    ObjectStorageDep,
     PublishServiceDep,
     WorkspaceDep,
 )
 from api.errors import transition_conflict
 from api.rate_limit import limit_by_workspace
 from application.services.approval_service import ContentItemNotFound, NotReschedulable
-from application.services.content_service import ContentJobNotFound, SubscriptionExpired
+from application.services.content_service import (
+    ContentJobNotFound,
+    MediaNotFound,
+    SubscriptionExpired,
+    WorkspaceNotFound,
+)
 from application.services.publish_service import (
     CHANNEL_TO_PLATFORM,
     AlreadyRunning,
@@ -53,11 +60,17 @@ from core.schemas import (
     ContentItemVersion,
     ContentJob,
     ContentJobCreate,
+    ContentPreview,
+    OwnContentItemCreate,
     Page,
     PublishJob,
     TokenQuota,
 )
 from domain.policies import channel_capabilities, rate_limits
+from domain.policies.facebook_render import (
+    FACEBOOK_TRUNCATE_CHARS,
+    facebook_render_warnings,
+)
 from domain.policies.quota import QuotaExceeded
 
 logger = logging.getLogger("havi.content")
@@ -246,6 +259,84 @@ async def retry_publish_job(
     except AlreadyRunning as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     return PublishJob.model_validate(job)
+
+
+@router.post("/items", response_model=ContentItem, status_code=status.HTTP_201_CREATED)
+async def create_own_content_item(
+    payload: OwnContentItemCreate,
+    workspace_id: WorkspaceDep,
+    content_service: ContentServiceDep,
+) -> ContentItem:
+    """Nút "Tôi tự viết" — đưa bài đã hoàn chỉnh vào hàng chờ, không gọi LLM.
+
+    Khác `/content/jobs` ở chỗ không có model nào chạm vào chữ của người dùng, nên
+    trả 201 ngay chứ không 202: không có gì để chờ.
+
+    Trạng thái đầu tiên vẫn theo `publish_mode` của workspace — bài tự viết không
+    phải cửa sau để lách bước duyệt.
+
+    Phải khai báo **trước** `/{content_id}`: FastAPI khớp route theo thứ tự, nằm
+    sau thì "items" bị đọc như một UUID và trả 422.
+    """
+    reason = channel_capabilities.reject_reason(
+        channel=payload.channel, kind=ContentKind(payload.kind)
+    )
+    if reason is not None:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, reason)
+    try:
+        item = await content_service.create_own_item(
+            workspace_id=workspace_id,
+            text=payload.text,
+            channel=payload.channel,
+            kind=payload.kind,
+            media_id=payload.media_id,
+        )
+    except MediaNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except WorkspaceNotFound as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy workspace") from exc
+    return ContentItem.model_validate(item)
+
+
+@router.post("/preview", response_model=ContentPreview)
+async def preview_content(
+    payload: OwnContentItemCreate,
+    workspace_id: WorkspaceDep,
+    session: DbSessionDep,
+    storage: ObjectStorageDep,
+) -> ContentPreview:
+    """Bài sẽ trông thế nào trên Trang — trước khi nó nằm trên tường khách.
+
+    Không ghi gì vào DB: đây là câu hỏi "nếu đăng thì ra sao", không phải một bản
+    nháp. Người dùng gõ và xem lại nhiều lần, mỗi lần tạo một hàng rác thì hàng
+    chờ duyệt đầy những thứ chưa ai định đăng.
+
+    Trả `truncate_at` thay vì tự cắt chuỗi: giao diện cần cả bài để vẽ được nút
+    "Xem thêm" mở ra, còn cắt ở đây thì phần sau không còn để mở.
+    """
+    media_url: str | None = None
+    if payload.media_id is not None:
+        asset = await MediaRepository(session).get(
+            workspace_id=workspace_id, asset_id=payload.media_id
+        )
+        if asset is None:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND, f"Không tìm thấy ảnh {payload.media_id}"
+            )
+        media_url = storage.public_url(asset.object_key)
+
+    warnings = facebook_render_warnings(payload.text)
+    return ContentPreview(
+        text=payload.text,
+        media_url=media_url,
+        char_count=len(payload.text),
+        truncate_at=(
+            FACEBOOK_TRUNCATE_CHARS if len(payload.text) > FACEBOOK_TRUNCATE_CHARS else None
+        ),
+        warnings=[
+            {"code": w.code, "message": w.message, "at_char": w.at_char} for w in warnings
+        ],
+    )
 
 
 @router.get("/channels", response_model=list[ChannelOption])

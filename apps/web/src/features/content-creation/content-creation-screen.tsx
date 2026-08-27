@@ -25,6 +25,7 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { IconContent, IconDrafts, IconMedia } from "@/components/app-shell/nav-icons";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
+import { OwnPostComposer } from "./own-post-composer";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import { VideoBranch } from "@/features/video/video-branch";
@@ -67,6 +68,10 @@ export function ContentCreationScreen() {
   } = useLanguage();
 
   const [kind, setKind] = useState<ContentKind>("post");
+  // Tách khỏi `kind`: `kind` là loại nội dung mà backend biết ("post"/"video"),
+  // còn đây là *cách soạn* — Havi viết, hay người dùng tự viết. Nhét "own" vào
+  // `ContentKind` sẽ gửi một giá trị backend không có lên API.
+  const [byMe, setByMe] = useState(false);
 
   const [chips, setChips] = useState<RawChip[]>([]);
   const [uploads, setUploads] = useState<UploadRow[]>([]);
@@ -523,9 +528,9 @@ export function ContentCreationScreen() {
           <button
             type="button"
             role="tab"
-            aria-selected={kind === "post"}
-            className={`${styles.kindCard} ${kind === "post" ? styles.kindCardActive : ""}`}
-            onClick={() => setKind("post")}
+            aria-selected={kind === "post" && !byMe}
+            className={`${styles.kindCard} ${kind === "post" && !byMe ? styles.kindCardActive : ""}`}
+            onClick={() => { setKind("post"); setByMe(false); }}
           >
             <span className={styles.kindIcon}>📝</span>
             <strong>{t("Bài viết")}</strong>
@@ -536,11 +541,22 @@ export function ContentCreationScreen() {
             role="tab"
             aria-selected={kind === "video"}
             className={`${styles.kindCard} ${kind === "video" ? styles.kindCardActive : ""}`}
-            onClick={() => setKind("video")}
+            onClick={() => { setKind("video"); setByMe(false); }}
           >
             <span className={styles.kindIcon}>🎬</span>
             <strong>Video</strong>
             <small>{t("Bạn quay và cắt sẵn, Havi đăng lên Reels và xác nhận đã lên.")}</small>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={byMe}
+            className={`${styles.kindCard} ${byMe ? styles.kindCardActive : ""}`}
+            onClick={() => { setKind("post"); setByMe(true); }}
+          >
+            <span className={styles.kindIcon}>✏️</span>
+            <strong>{t("Tôi tự viết")}</strong>
+            <small>{t("Bài đã xong rồi — dán vào, xem trước, Havi không sửa chữ nào.")}</small>
           </button>
         </div>
       </section>
@@ -598,7 +614,16 @@ export function ContentCreationScreen() {
         )}
       </section>
 
-      {kind === "video" ? (
+      {byMe ? (
+        <OwnPostComposer
+          channel={(selectedChannels[0] ?? "facebook_page") as Channel}
+          mediaId={uploads.find((row) => row.assetId)?.assetId}
+          onCreated={(item) => {
+            setItems((prev) => [item, ...prev]);
+            setNotice(t("Đã đưa bài của bạn vào hàng chờ duyệt."));
+          }}
+        />
+      ) : kind === "video" ? (
         <VideoBranch />
       ) : (
         <>

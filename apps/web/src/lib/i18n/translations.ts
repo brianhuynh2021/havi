@@ -29,6 +29,23 @@ export type Language = "VN" | "EN";
  * - Thêm/đổi chuỗi xong thì chạy `node scripts/i18n-audit.mjs`.
  */
 export const EN: Record<string, string> = {
+  "Bài chưa hợp lệ.": "This post is not valid.",
+  "Bài đã xong rồi — dán vào, xem trước, Havi không sửa chữ nào.": "Already written — paste it, preview it, Havi changes nothing.",
+  "Bài tôi tự viết": "My own post",
+  "Cảnh báo trước khi đăng": "Warnings before publishing",
+  "Dán bài đã viết sẵn vào đây…": "Paste your finished post here…",
+  "Havi không sửa chữ nào. Dán bài vào, xem trước, rồi đưa vào hàng chờ duyệt.": "Havi changes nothing. Paste it, preview it, then send it to the approval queue.",
+  "Không tìm thấy ảnh bạn chọn.": "That image was not found.",
+  "Không tìm thấy ảnh bạn chọn — thử nạp lại nhé.": "That image was not found — try uploading it again.",
+  "Nội dung bài": "Post text",
+  "Thu gọn": "See less",
+  "Trên Facebook sẽ hiện như thế này": "This is how Facebook will show it",
+  "Tôi tự viết": "I write it myself",
+  "Xem thêm": "See more",
+  "Đang lưu…": "Saving…",
+  "Đã đưa bài của bạn vào hàng chờ duyệt.": "Your post is in the approval queue.",
+  "Đưa vào hàng chờ duyệt": "Send to approval queue",
+  "{count} ký tự": "{count} characters",
   "Bài đã duyệt được xếp theo thời gian bạn chọn. Chỉ kênh đang được backend hỗ trợ và đã cấp quyền mới có thể xuất bản.": "Approved posts follow the time you choose. Only backend-supported channels with valid permissions can publish.",
   "Bài đã đăng": "Published Posts",
   "Bài đã đăng theo kênh": "Posts by Channel",

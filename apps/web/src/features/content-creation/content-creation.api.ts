@@ -505,3 +505,75 @@ export async function listChannelOptions(): Promise<Result<ChannelOption[]>> {
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export type ContentPreview = components["schemas"]["ContentPreview"];
+export type RenderWarning = components["schemas"]["RenderWarning"];
+
+/**
+ * Bài người dùng **tự viết** — không gọi LLM, không tốn quota.
+ *
+ * Khác `createJob`: đường đó là nút "Để Havi viết bài" và luôn chạy model. Người
+ * đã có bài hoàn chỉnh mà buộc đi đường đó thì phải nhờ Havi viết một bản không
+ * ai cần rồi ghi đè lên.
+ *
+ * Không cần `Idempotency-Key`: bấm hai lần tạo hai bản nháp trùng nhau — thấy
+ * ngay trong hàng chờ và xoá được, khác với hai lần tiền LLM đã tiêu.
+ */
+export async function createOwnItem(
+  text: string,
+  channel: Channel,
+  mediaId?: string,
+): Promise<Result<ContentItem>> {
+  try {
+    const { data, error, response } = await apiClient.POST("/content/items", {
+      body: { text, channel, kind: "post", media_id: mediaId ?? null },
+    });
+    if (error || !data) {
+      const detailObj = (error as { detail?: unknown } | undefined)?.detail;
+      if (response?.status === 404) {
+        return {
+          ok: false,
+          message: detailToMessage(detailObj, t("Không tìm thấy ảnh bạn chọn — thử nạp lại nhé.")),
+        };
+      }
+      if (response?.status === 422) {
+        return { ok: false, message: detailToMessage(detailObj, t("Bài chưa hợp lệ.")) };
+      }
+      return { ok: false, message: detailToMessage(detailObj, GENERIC_ERROR) };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+/**
+ * Bài sẽ trông thế nào trên Trang. Không ghi gì vào DB.
+ *
+ * Trả cả bài kèm `truncate_at` chứ không phải chuỗi đã cắt: giao diện cần phần
+ * sau để vẽ nút "Xem thêm" mở ra được.
+ */
+export async function previewContent(
+  text: string,
+  channel: Channel,
+  mediaId?: string,
+): Promise<Result<ContentPreview>> {
+  try {
+    const { data, error, response } = await apiClient.POST("/content/preview", {
+      body: { text, channel, kind: "post", media_id: mediaId ?? null },
+    });
+    if (error || !data) {
+      const detailObj = (error as { detail?: unknown } | undefined)?.detail;
+      if (response?.status === 404) {
+        return {
+          ok: false,
+          message: detailToMessage(detailObj, t("Không tìm thấy ảnh bạn chọn.")),
+        };
+      }
+      return { ok: false, message: detailToMessage(detailObj, GENERIC_ERROR) };
+    }
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}

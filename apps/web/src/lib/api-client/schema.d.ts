@@ -903,6 +903,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/content/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Own Content Item
+         * @description Nút "Tôi tự viết" — đưa bài đã hoàn chỉnh vào hàng chờ, không gọi LLM.
+         *
+         *     Khác `/content/jobs` ở chỗ không có model nào chạm vào chữ của người dùng, nên
+         *     trả 201 ngay chứ không 202: không có gì để chờ.
+         *
+         *     Trạng thái đầu tiên vẫn theo `publish_mode` của workspace — bài tự viết không
+         *     phải cửa sau để lách bước duyệt.
+         *
+         *     Phải khai báo **trước** `/{content_id}`: FastAPI khớp route theo thứ tự, nằm
+         *     sau thì "items" bị đọc như một UUID và trả 422.
+         */
+        post: operations["create_own_content_item_content_items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/content/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Content
+         * @description Bài sẽ trông thế nào trên Trang — trước khi nó nằm trên tường khách.
+         *
+         *     Không ghi gì vào DB: đây là câu hỏi "nếu đăng thì ra sao", không phải một bản
+         *     nháp. Người dùng gõ và xem lại nhiều lần, mỗi lần tạo một hàng rác thì hàng
+         *     chờ duyệt đầy những thứ chưa ai định đăng.
+         *
+         *     Trả `truncate_at` thay vì tự cắt chuỗi: giao diện cần cả bài để vẽ được nút
+         *     "Xem thêm" mở ra, còn cắt ở đây thì phần sau không còn để mở.
+         */
+        post: operations["preview_content_content_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/content/channels": {
         parameters: {
             query?: never;
@@ -2013,6 +2069,22 @@ export interface components {
          */
         ContentKind: "post" | "video";
         /**
+         * ContentPreview
+         * @description Bài sẽ trông thế nào trên Trang, kèm những chỗ hiện khác chữ đã gửi.
+         */
+        ContentPreview: {
+            /** Text */
+            text: string;
+            /** Media Url */
+            media_url?: string | null;
+            /** Char Count */
+            char_count: number;
+            /** Truncate At */
+            truncate_at?: number | null;
+            /** Warnings */
+            warnings?: components["schemas"]["RenderWarning"][];
+        };
+        /**
          * ContentStatus
          * @enum {string}
          */
@@ -2628,6 +2700,29 @@ export interface components {
             /** Debug Code */
             debug_code?: string | null;
         };
+        /**
+         * OwnContentItemCreate
+         * @description Bài người dùng **tự viết** — Havi không sửa một chữ nào.
+         *
+         *     Có mặt vì `/content/jobs` luôn gọi LLM: người đã viết xong bài mà buộc đi
+         *     đường đó thì phải nhờ Havi viết một bản không ai cần rồi ghi đè lên.
+         */
+        OwnContentItemCreate: {
+            /** Text */
+            text: string;
+            /** @default facebook_page */
+            channel: components["schemas"]["Channel"];
+            /**
+             * Kind
+             * @default post
+             */
+            kind: string;
+            /**
+             * Media Id
+             * @description Ảnh đã upload xong qua /media
+             */
+            media_id?: string | null;
+        };
         /** Page[ContentItem] */
         Page_ContentItem_: {
             /** Items */
@@ -2870,6 +2965,18 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token?: string | null;
+        };
+        /**
+         * RenderWarning
+         * @description Một chỗ nền tảng sẽ hiện khác chữ đã gửi. Cảnh báo, không chặn đăng.
+         */
+        RenderWarning: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** At Char */
+            at_char?: number | null;
         };
         /** RescheduleRequest */
         RescheduleRequest: {
@@ -4912,6 +5019,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublishJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_own_content_item_content_items_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnContentItemCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_content_content_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnContentItemCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPreview"];
                 };
             };
             /** @description Validation Error */
