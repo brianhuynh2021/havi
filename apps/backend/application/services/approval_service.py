@@ -67,7 +67,8 @@ class ApprovalService:
             # Sửa text của bài đã/đang lên mạng thì bản trên Facebook và bản trong
             # DB lệch nhau — audit trail nói dối.
             raise NotReschedulable(item.status)
-        return await self._content.update_item(
+        old_text = item.text
+        updated = await self._content.update_item(
             item,
             text=text,
             media_note=media_note,
@@ -75,6 +76,16 @@ class ApprovalService:
             scheduled_at=scheduled_at,
             edited_by=user_id,
         )
+        if text is not None and text != old_text:
+            diff_len = len(text) - len(old_text)
+            diff_sign = f"+{diff_len}" if diff_len >= 0 else str(diff_len)
+            await self._audit(
+                workspace_id=workspace_id,
+                item=updated,
+                action="content.edit",
+                summary=f"user={user_id} v{updated.version_no} diff_chars={diff_sign}",
+            )
+        return updated
 
     async def get_item(self, *, workspace_id: UUID, item_id: UUID) -> ContentItem:
         return await self._require_item(workspace_id=workspace_id, item_id=item_id)

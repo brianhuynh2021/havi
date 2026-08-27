@@ -90,6 +90,13 @@ async def test_sua_text_tao_version_moi_khong_ghi_de(client: AsyncClient, db_ses
     # Audit phải trả lời được "ai sửa" — không chỉ "đã sửa".
     assert rows[0]["edited_by"] is not None
 
+    # Trajectory audit event được ghi vào event_log
+    events_res = await client.get("/analytics/events?job_kind=content.edit", headers=_headers(token_pair))
+    assert events_res.status_code == 200
+    ev_items = events_res.json()["items"]
+    assert len(ev_items) == 1
+    assert "v2" in ev_items[0]["input_summary"]
+
 
 async def test_patch_khong_gui_text_thi_khong_tang_version(
     client: AsyncClient, db_session: AsyncSession
