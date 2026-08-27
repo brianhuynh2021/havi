@@ -2433,3 +2433,48 @@
   font-size: 14px;
   color: var(--color-muted);
 }
+
+.navShortcuts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.navShortcutItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-body);
+  transition: all 0.15s ease;
+}
+
+.navShortcutItem:hover {
+  background: var(--color-border-soft);
+  color: var(--color-ink);
+  border-color: var(--color-border-strong);
+}
+
+.navShortcutActive {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.navShortcutBadge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+

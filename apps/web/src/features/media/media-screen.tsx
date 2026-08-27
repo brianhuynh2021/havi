@@ -8,8 +8,10 @@
  * việc soạn bài nằm ở mục Nội dung.
  */
 
+import Link from "next/link";
 import { useLanguage, type Translate } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
+import { IconArrowLeft } from "@/components/app-shell/nav-icons";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
@@ -108,6 +110,13 @@ export function MediaScreen() {
 
   return (
     <>
+      <div className={styles.backLinkWrap}>
+        <Link href="/app/content" className={styles.backLink}>
+          <IconArrowLeft size={15} aria-hidden="true" />
+          <span>{t("Quay lại Nội dung")}</span>
+        </Link>
+      </div>
+
       <header className={styles.header}>
         <h1 className={styles.title}>{t("Thư viện media")}</h1>
         <p className={styles.subtitle}>{t(

@@ -261,6 +261,260 @@
   font-weight: 700;
 }
 
+.adminDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 12px 4px;
+}
+
+.adminSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.adminToggleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-slate-300);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.adminToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+}
+
+.adminToggleBtnActive {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.adminChevron {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-slate-400);
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.adminChevronOpen {
+  transform: rotate(180deg);
+}
+
+.adminList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+  margin-top: 4px;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.adminNavItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-slate-400);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.adminNavItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+}
+
+.adminNavItemActive {
+  background: rgba(0, 102, 255, 0.18);
+  border-color: rgba(0, 102, 255, 0.35);
+  color: var(--color-white);
+  font-weight: 600;
+}
+
+.adminNavIcon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.warningBadge {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-red-500);
+  color: var(--color-white);
+  font-size: 10.5px;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.mobileHeaderAdminBtn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-slate-200);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobileHeaderAdminBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+}
+
+.mobileHeaderAdminIcon {
+  font-size: 14px;
+}
+
+.mobileSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 150;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.mobileSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: min(82vh, 580px);
+  background: var(--color-slate-950);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px 20px 0 0;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  z-index: 151;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.mobileSheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobileSheetTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.mobileSheetCloseBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: var(--color-slate-300);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobileSheetCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-white);
+}
+
+.mobileSheetList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileSheetItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--color-slate-200);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.mobileSheetItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-white);
+}
+
+.mobileSheetItemActive {
+  background: rgba(0, 102, 255, 0.18);
+  border-color: rgba(0, 102, 255, 0.35);
+  color: var(--color-white);
+}
+
+.mobileSheetBadge {
+  margin-left: auto;
+  background: var(--color-red-500);
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 /* Mobile navigation sống ngoài sidebar để vẫn tồn tại khi sidebar bị ẩn. */
 .mobileNavShell,
 .mobileNav {
@@ -478,6 +732,12 @@
   .sidebar {
     display: none;
   }
+  /* Sidebar bị ẩn cùng với nhóm Quản trị trong đó, nên nút mở bottom sheet phải
+     hiện lên đúng tại đây — nếu không, 7 mục quản trị không còn đường nào để tới
+     trên mobile. */
+  .mobileHeaderAdminBtn {
+    display: inline-flex;
+  }
   .mobileNavShell {
     display: block;
   }
@@ -545,58 +805,7 @@
     font-weight: 600;
     line-height: 1;
   }
-  
-  .mobileMoreMenu {
-    display: flex;
-    flex-direction: column;
-    background: var(--color-slate-900);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 14px 14px 0 0;
-    padding: 8px 16px;
-    animation: slideDown 0.2s ease-out;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(73px + env(safe-area-inset-bottom));
-    z-index: 69;
-    max-height: min(65vh, 520px);
-    overflow-y: auto;
-  }
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .mobileMoreItem {
-    display: flex;
-    align-items: center;
-    padding: 14px 12px;
-    color: var(--color-slate-300);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 10px;
-    margin-bottom: 4px;
-  }
-  .mobileMoreItem:last-child {
-    margin-bottom: 0;
-  }
-  .mobileMoreItem:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  .mobileMoreItemActive {
-    background: rgba(0, 102, 255, 0.15);
-    color: var(--color-white);
-  }
-  .mobileMoreBadge {
-    margin-left: auto;
-    background: var(--color-red-500);
-    color: var(--color-white);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 9px;
-  }
+
   
   .content {
     margin-left: 0;

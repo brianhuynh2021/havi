@@ -1,5 +1,27 @@
 /* Thư viện media — chỉ xem kho, không sửa gì. */
 
+.backLinkWrap {
+  margin-bottom: 14px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.backLink:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  text-decoration: underline;
+}
+
 .header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .title { font-family: var(--font-display); font-size: 28px; font-weight: 900; color: var(--color-ink); }
 .subtitle { color: var(--color-muted); font-size: 14.5px; line-height: 1.5; max-width: 620px; }

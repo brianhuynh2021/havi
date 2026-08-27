@@ -20,8 +20,10 @@
  * hai nhánh, và đó là lý do `SchedulePicker` dùng chung.
  */
 
+import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
+import { IconContent, IconDrafts, IconMedia } from "@/components/app-shell/nav-icons";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
@@ -470,6 +472,22 @@ export function ContentCreationScreen() {
         )}</p>
       </header>
 
+      <nav className={styles.navShortcuts} aria-label={t("Lối tắt nội dung")}>
+        <span className={`${styles.navShortcutItem} ${styles.navShortcutActive}`} aria-current="page">
+          <IconContent size={15} aria-hidden="true" />
+          <span>{t("Tạo nội dung")}</span>
+        </span>
+        <a href="#draft-list-section" className={styles.navShortcutItem}>
+          <IconDrafts size={15} aria-hidden="true" />
+          <span>{t("Bản nháp")}</span>
+          {items.length > 0 && <span className={styles.navShortcutBadge}>{items.length}</span>}
+        </a>
+        <Link href="/app/media" className={styles.navShortcutItem}>
+          <IconMedia size={15} aria-hidden="true" />
+          <span>{t("Thư viện media")}</span>
+        </Link>
+      </nav>
+
       <QuotaBanner reloadKey={quotaKey} />
 
       {error ? <ErrorState title={t(error)} /> : null}
@@ -605,23 +623,25 @@ export function ContentCreationScreen() {
             <LoadingState title={t("Đang tải bản nháp…")} />
           ) : (
             <>
-              <DraftList
-                items={items}
-                busyIds={busyIds}
-                editingId={editingId}
-                onEdit={setEditingId}
-                onSaved={(saved) => {
-                  setItems((prev) =>
-                    prev.map((item) => (item.id === saved.id ? saved : item)),
-                  );
-                  setEditingId(null);
-                  setNotice(t("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt."));
-                }}
-                onApproveSingle={onApproveSingle}
-                publishNow={plan.publishNow}
-                onDismiss={onDismiss}
-                onDismissAll={onDismissAllRequested}
-              />
+              <div id="draft-list-section">
+                <DraftList
+                  items={items}
+                  busyIds={busyIds}
+                  editingId={editingId}
+                  onEdit={setEditingId}
+                  onSaved={(saved) => {
+                    setItems((prev) =>
+                      prev.map((item) => (item.id === saved.id ? saved : item)),
+                    );
+                    setEditingId(null);
+                    setNotice(t("Đã lưu bản sửa — bài vẫn đang chờ bạn duyệt."));
+                  }}
+                  onApproveSingle={onApproveSingle}
+                  publishNow={plan.publishNow}
+                  onDismiss={onDismiss}
+                  onDismissAll={onDismissAllRequested}
+                />
+              </div>
 
               {/* BƯỚC 3 — chung với nhánh Video. */}
               {items.length ? (
