@@ -617,7 +617,6 @@ export function ContentCreationScreen() {
       {byMe ? (
         <OwnPostComposer
           channel={(selectedChannels[0] ?? "facebook_page") as Channel}
-          mediaId={uploads.find((row) => row.assetId)?.assetId}
           onCreated={(item) => {
             setItems((prev) => [item, ...prev]);
             setNotice(t("Đã đưa bài của bạn vào hàng chờ duyệt."));

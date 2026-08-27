@@ -39,6 +39,16 @@ describe("OwnPostComposer", () => {
     );
   }
 
+  function asset(overrides: Partial<api.MediaAsset> = {}): api.MediaAsset {
+    return {
+      id: "asset-1",
+      url: "https://cdn.test/anh.jpg",
+      filename: "anh.jpg",
+      type: "image",
+      ...overrides,
+    } as api.MediaAsset;
+  }
+
   it("nút gửi bị tắt khi chưa gõ gì", () => {
     renderComposer();
     expect(screen.getByRole("button", { name: /Đưa vào hàng chờ duyệt/i })).toBeDisabled();
@@ -139,5 +149,84 @@ describe("OwnPostComposer", () => {
     await user.click(screen.getByRole("button", { name: /Đưa vào hàng chờ duyệt/i }));
 
     expect(await screen.findByText(/Không tìm thấy ảnh bạn chọn/i)).toBeInTheDocument();
+  });
+
+  it("chèn được ảnh và gửi kèm media_id", async () => {
+    vi.spyOn(api, "uploadMedia").mockResolvedValue({ ok: true, data: asset() });
+    const createSpy = vi
+      .spyOn(api, "createOwnItem")
+      .mockResolvedValue({ ok: true, data: { id: "item-1" } as api.ContentItem });
+
+    const user = userEvent.setup();
+    renderComposer();
+    await user.type(screen.getByLabelText(/Nội dung bài/i), "Bài của tôi");
+    await user.upload(
+      screen.getByTestId("own-file-input"),
+      new File(["x"], "anh.jpg", { type: "image/jpeg" }),
+    );
+
+    // Ảnh hiện trong khung xem trước, không phải chỉ nằm đâu đó trong state.
+    await waitFor(() => {
+      expect(document.querySelector("img")).toHaveAttribute("src", "https://cdn.test/anh.jpg");
+    });
+
+    await user.click(screen.getByRole("button", { name: /Đưa vào hàng chờ duyệt/i }));
+    await waitFor(() => {
+      expect(createSpy).toHaveBeenCalledWith("Bài của tôi", "facebook_page", "asset-1");
+    });
+  });
+
+  it("clip hiện bằng thẻ video, không phải img", async () => {
+    vi.spyOn(api, "uploadMedia").mockResolvedValue({
+      ok: true,
+      data: asset({ id: "clip-1", url: "https://cdn.test/clip.mp4", filename: "clip.mp4", type: "video" }),
+    });
+
+    const user = userEvent.setup();
+    renderComposer();
+    await user.type(screen.getByLabelText(/Nội dung bài/i), "Bài kèm clip");
+    await user.upload(
+      screen.getByTestId("own-file-input"),
+      new File(["x"], "clip.mp4", { type: "video/mp4" }),
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector("video")).toHaveAttribute("src", "https://cdn.test/clip.mp4");
+    });
+    expect(document.querySelector("img")).toBeNull();
+  });
+
+  it("bỏ được ảnh đã chèn", async () => {
+    vi.spyOn(api, "uploadMedia").mockResolvedValue({ ok: true, data: asset() });
+
+    const user = userEvent.setup();
+    renderComposer();
+    await user.type(screen.getByLabelText(/Nội dung bài/i), "Bài của tôi");
+    await user.upload(
+      screen.getByTestId("own-file-input"),
+      new File(["x"], "anh.jpg", { type: "image/jpeg" }),
+    );
+
+    const remove = await screen.findByRole("button", { name: /Bỏ anh\.jpg/i });
+    await user.click(remove);
+
+    await waitFor(() => expect(document.querySelector("img")).toBeNull());
+  });
+
+  it("lỗi upload được hiện ra và không gắn media nào", async () => {
+    vi.spyOn(api, "uploadMedia").mockResolvedValue({
+      ok: false,
+      message: "Ảnh quá lớn.",
+    });
+
+    const user = userEvent.setup();
+    renderComposer();
+    await user.upload(
+      screen.getByTestId("own-file-input"),
+      new File(["x"], "to.jpg", { type: "image/jpeg" }),
+    );
+
+    expect(await screen.findByText(/Ảnh quá lớn/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Bỏ /i })).not.toBeInTheDocument();
   });
 });

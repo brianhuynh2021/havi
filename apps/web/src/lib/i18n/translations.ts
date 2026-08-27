@@ -29,12 +29,15 @@ export type Language = "VN" | "EN";
  * - Thêm/đổi chuỗi xong thì chạy `node scripts/i18n-audit.mjs`.
  */
 export const EN: Record<string, string> = {
+  "Bỏ {name}": "Remove {name}",
+  "Havi không sửa chữ nào. Dán bài vào, chèn ảnh hoặc clip, xem trước rồi đưa vào hàng chờ duyệt.": "Havi changes nothing. Paste your post, add an image or clip, preview it, then send it to the approval queue.",
+  "🖼️ Chèn ảnh / clip": "🖼️ Add image / clip",
+  "📂 Lấy từ Thư viện": "📂 From library",
   "Bài chưa hợp lệ.": "This post is not valid.",
   "Bài đã xong rồi — dán vào, xem trước, Havi không sửa chữ nào.": "Already written — paste it, preview it, Havi changes nothing.",
   "Bài tôi tự viết": "My own post",
   "Cảnh báo trước khi đăng": "Warnings before publishing",
   "Dán bài đã viết sẵn vào đây…": "Paste your finished post here…",
-  "Havi không sửa chữ nào. Dán bài vào, xem trước, rồi đưa vào hàng chờ duyệt.": "Havi changes nothing. Paste it, preview it, then send it to the approval queue.",
   "Không tìm thấy ảnh bạn chọn.": "That image was not found.",
   "Không tìm thấy ảnh bạn chọn — thử nạp lại nhé.": "That image was not found — try uploading it again.",
   "Nội dung bài": "Post text",

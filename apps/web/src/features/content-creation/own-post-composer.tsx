@@ -9,6 +9,13 @@
  * Người viết sẵn một bài ở nơi khác rồi dán vào thì phải nhờ Havi viết một bản
  * không ai cần, tốn quota, rồi ghi đè bài của mình lên.
  *
+ * Ảnh và clip nằm ngay ở đây, không phải đi vòng
+ * ----------------------------------------------
+ * Bài viết sẵn gần như luôn đi kèm ảnh của chính người viết. Bắt họ sang tab khác
+ * để nạp ảnh rồi quay lại là chia một việc thành hai màn hình, và màn kia là
+ * "kể cho Havi nghe" — nơi ảnh được hiểu là *gợi ý cho AI*, không phải ảnh sẽ
+ * đăng. Nên upload và Thư viện đều mở được tại chỗ.
+ *
  * Khung xem trước cố tình hiện **xấu như thật**
  * ---------------------------------------------
  * Facebook không hiểu Markdown và cắt bài sau khoảng 800 ký tự. Một khung xem
@@ -17,13 +24,16 @@
  * như Facebook sẽ hiện: nguyên ký hiệu, và cắt ở chỗ Facebook cắt.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { MediaPickerModal } from "@/features/media/media-picker-modal";
+import type { MediaAsset as PickerAsset } from "@/features/media/media.api";
 import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./content-creation.module.css";
 import {
   createOwnItem,
   previewContent,
+  uploadMedia,
   type Channel,
   type ContentItem,
   type ContentPreview,
@@ -31,21 +41,31 @@ import {
 
 type OwnPostComposerProps = {
   channel: Channel;
-  /** Ảnh đã upload xong qua Thư viện media, nếu có. */
-  mediaId?: string;
   onCreated: (item: ContentItem) => void;
+};
+
+/** Ảnh/clip đang gắn vào bài. `url` để xem trước, `id` để gửi lên API. */
+type AttachedMedia = {
+  id: string;
+  url: string;
+  kind: "image" | "video";
+  fileName: string;
 };
 
 /** Xem trước chờ người dùng ngừng gõ — mỗi ký tự một request là vô ích. */
 const PREVIEW_DEBOUNCE_MS = 400;
 
-export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposerProps) {
+export function OwnPostComposer({ channel, onCreated }: OwnPostComposerProps) {
   const { t } = useLanguage();
   const [text, setText] = useState("");
+  const [media, setMedia] = useState<AttachedMedia | null>(null);
   const [preview, setPreview] = useState<ContentPreview | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!text.trim()) {
@@ -53,25 +73,55 @@ export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposer
       return;
     }
     const timer = setTimeout(async () => {
-      const result = await previewContent(text, channel, mediaId);
+      const result = await previewContent(text, channel, media?.id);
       if (result.ok) setPreview(result.data);
     }, PREVIEW_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [text, channel, mediaId]);
+  }, [text, channel, media?.id]);
+
+  async function onPickFile(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const result = await uploadMedia(file);
+    setUploading(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setMedia({
+      id: result.data.id,
+      url: result.data.url,
+      kind: result.data.type === "video" ? "video" : "image",
+      fileName: result.data.filename,
+    });
+  }
+
+  function onPickFromLibrary(asset: PickerAsset) {
+    setMedia({
+      id: asset.id,
+      url: asset.url,
+      kind: asset.type === "video" ? "video" : "image",
+      fileName: asset.filename,
+    });
+    setPickerOpen(false);
+  }
 
   const onSubmit = useCallback(async () => {
     setBusy(true);
     setError(null);
-    const result = await createOwnItem(text, channel, mediaId);
+    const result = await createOwnItem(text, channel, media?.id);
     setBusy(false);
     if (!result.ok) {
       setError(result.message);
       return;
     }
     setText("");
+    setMedia(null);
     setPreview(null);
     onCreated(result.data);
-  }, [text, channel, mediaId, onCreated]);
+  }, [text, channel, media?.id, onCreated]);
 
   // Cắt đúng chỗ Facebook cắt. Phần sau vẫn giữ để nút "Xem thêm" mở ra được —
   // đó là lý do backend trả cả bài kèm `truncate_at` thay vì chuỗi đã cắt.
@@ -85,7 +135,7 @@ export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposer
         {t("Bài tôi tự viết")}
       </h3>
       <p className={styles.ownHint}>
-        {t("Havi không sửa chữ nào. Dán bài vào, xem trước, rồi đưa vào hàng chờ duyệt.")}
+        {t("Havi không sửa chữ nào. Dán bài vào, chèn ảnh hoặc clip, xem trước rồi đưa vào hàng chờ duyệt.")}
       </p>
 
       <label className={styles.ownLabel} htmlFor="own-post-text">
@@ -99,6 +149,42 @@ export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposer
         rows={10}
         placeholder={t("Dán bài đã viết sẵn vào đây…")}
       />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        hidden
+        data-testid="own-file-input"
+        onChange={(event) => onPickFile(event.target.files)}
+      />
+
+      <div className={styles.ownMediaActions}>
+        <Button
+          variant="outline"
+          disabled={uploading || busy}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? t("Đang tải lên…") : t("🖼️ Chèn ảnh / clip")}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={uploading || busy}
+          onClick={() => setPickerOpen(true)}
+        >
+          {t("📂 Lấy từ Thư viện")}
+        </Button>
+        {media ? (
+          <button
+            type="button"
+            className={styles.ownRemoveMedia}
+            onClick={() => setMedia(null)}
+            disabled={busy}
+          >
+            {t("Bỏ {name}", { name: media.fileName })}
+          </button>
+        ) : null}
+      </div>
 
       {preview ? (
         <>
@@ -117,17 +203,21 @@ export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposer
               {t("Trên Facebook sẽ hiện như thế này")}
             </p>
             <div className={styles.fbCard}>
-              {preview.media_url ? (
+              {media ? (
                 <div className={styles.fbImageWrap}>
-                  {/* `<img>` chứ không phải `next/image`: host media đổi theo môi
-                      trường (MinIO ở local, object storage khi deploy) nên không
-                      khai báo trước được trong `remotePatterns`. `draft-list` đã
-                      dùng cùng cách. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className={styles.fbImage} src={preview.media_url} alt="" />
+                  {media.kind === "video" ? (
+                    <video className={styles.fbImage} src={media.url} controls />
+                  ) : (
+                    /* `<img>` chứ không phải `next/image`: host media đổi theo môi
+                       trường (MinIO ở local, object storage khi deploy) nên không
+                       khai báo trước được trong `remotePatterns`. `draft-list` đã
+                       dùng cùng cách. */
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img className={styles.fbImage} src={media.url} alt="" />
+                  )}
                 </div>
               ) : null}
-              {/* `whiteSpace: pre-wrap` giữ đúng xuống dòng người dùng gõ, và chữ
+              {/* `white-space: pre-wrap` giữ đúng xuống dòng người dùng gõ, và chữ
                   đi ra nguyên văn — không render Markdown, vì Facebook cũng không. */}
               <p className={styles.fbText}>
                 {shown}
@@ -152,9 +242,15 @@ export function OwnPostComposer({ channel, mediaId, onCreated }: OwnPostComposer
 
       {error ? <p className={styles.ownError}>{error}</p> : null}
 
-      <Button variant="primary" onClick={onSubmit} disabled={busy || !text.trim()}>
+      <Button variant="primary" onClick={onSubmit} disabled={busy || uploading || !text.trim()}>
         {busy ? t("Đang lưu…") : t("Đưa vào hàng chờ duyệt")}
       </Button>
+
+      <MediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={onPickFromLibrary}
+      />
     </section>
   );
 }
