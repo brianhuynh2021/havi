@@ -421,3 +421,22 @@ describe("Lối vào Quản trị trên mobile (đọc CSS)", () => {
     expect(desktop).toMatch(/\.mobileHeaderAdminBtn\s*\{[^}]*display:\s*none/);
   });
 });
+
+describe("Bản dịch tiếng Anh cho điều hướng", () => {
+  it("tất cả mục chính và quản trị đều có bản dịch EN đầy đủ", async () => {
+    const { primaryNavItems, adminNavItems } = await import("./nav-items");
+    const { translate } = await import("@/lib/i18n/language-context");
+
+    for (const item of [...primaryNavItems, ...adminNavItems]) {
+      const enLabel = translate(item.label, "EN");
+      expect(enLabel).not.toEqual(item.label);
+      expect(enLabel.length).toBeGreaterThan(0);
+    }
+
+    expect(translate("Quản trị", "EN")).toBe("Administration");
+    expect(translate("Bản nháp", "EN")).toBe("Drafts");
+    expect(translate("Quay lại Nội dung", "EN")).toBe("Back to Content");
+    expect(translate("Lối tắt nội dung", "EN")).toBe("Content shortcuts");
+    expect(translate("Tạo nội dung", "EN")).toBe("Create content");
+  });
+});
