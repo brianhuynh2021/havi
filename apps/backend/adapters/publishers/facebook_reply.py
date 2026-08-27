@@ -1,6 +1,6 @@
 """Adapter gửi tin nhắn trả lời Facebook Page qua Graph API chính thức.
 
-Chỉ dùng endpoint Graph API chính thức POST /v21.0/me/messages (hoặc /{page_id}/messages).
+Chỉ dùng endpoint Graph API chính thức POST /{page_id}/messages.
 Payload:
 {
   "recipient": {"id": recipient_id},
@@ -15,8 +15,9 @@ from typing import Any
 
 import httpx
 
+from adapters.meta_graph import GRAPH_BASE
 from adapters.persistence.connection_repository import ConnectionRepository
-from core.enums import InboxItemType, Platform
+from core.enums import ConnectionStatus, InboxItemType, Platform
 from domain.ports.reply_publisher import (
     ReplyError,
     ReplyPublisherPort,
@@ -25,9 +26,6 @@ from domain.ports.reply_publisher import (
 )
 
 logger = logging.getLogger("havi.facebook_reply")
-
-GRAPH_VERSION = "v21.0"
-GRAPH_BASE = f"https://graph.facebook.com/{GRAPH_VERSION}"
 
 
 class FacebookReplyAdapter(ReplyPublisherPort):
@@ -53,6 +51,11 @@ class FacebookReplyAdapter(ReplyPublisherPort):
             raise ReplyError(
                 self.platform,
                 "Chưa kết nối Fanpage Facebook — vui lòng kết nối Fanpage trong mục Cài đặt.",
+            )
+        if connection.status != ConnectionStatus.CONNECTED:
+            raise ReplyError(
+                self.platform,
+                "Kết nối Facebook cần được nối lại trước khi gửi phản hồi.",
             )
 
         access_token = self._connections.read_access_token(connection)
@@ -93,15 +96,45 @@ class FacebookReplyAdapter(ReplyPublisherPort):
                     f"Lỗi mạng khi kết nối Meta Graph API: {exc}",
                 ) from exc
 
-            body = response.json() if response.content else {}
+            try:
+                body = response.json() if response.content else {}
+            except ValueError as exc:
+                raise ReplyError(
+                    self.platform,
+                    "Meta trả dữ liệu không đọc được; chưa thể xác nhận đã gửi.",
+                ) from exc
             if response.status_code >= 400:
                 err_data = body.get("error", {})
                 code = err_data.get("code")
-                msg = err_data.get("message", "Lỗi gửi tin nhắn Facebook")
-                logger.error("Meta Graph API error code %s: %s", code, msg)
-                raise ReplyError(self.platform, f"Meta Graph API error ({code}): {msg}")
+                # Không đưa provider message vào log hay event: Meta đôi lúc
+                # vọng tham số request trong message và có thể làm lộ token.
+                logger.error("Meta Graph API reply error code=%s", code)
+                if code in {102, 190}:
+                    detail = "Quyền Facebook đã hết hiệu lực — hãy nối lại Trang."
+                    await self._connections.mark_unusable(
+                        connection,
+                        status=ConnectionStatus.EXPIRED,
+                        reason=detail,
+                    )
+                elif code in {10, 200}:
+                    detail = "Facebook từ chối quyền gửi phản hồi — hãy nối lại Trang."
+                    await self._connections.mark_unusable(
+                        connection,
+                        status=ConnectionStatus.REVOKED,
+                        reason=detail,
+                    )
+                else:
+                    detail = f"Meta Graph API từ chối phản hồi (mã {code or 'không rõ'})."
+                raise ReplyError(self.platform, detail)
 
-            message_id = body.get("message_id") or body.get("id") or "fb_msg_ok"
+            message_id = body.get("message_id") or body.get("id")
+            if not message_id:
+                # 2xx không ID không chứng minh được tin đã gửi. Báo thành công
+                # ở đây sẽ khiến người vận hành bỏ qua một khách chưa được trả lời.
+                raise ReplyError(
+                    self.platform,
+                    "Meta không trả mã phản hồi; chưa thể xác nhận đã gửi.",
+                )
             return ReplyResult(
                 external_reply_id=str(message_id),
                 sent_at=datetime.now(UTC),

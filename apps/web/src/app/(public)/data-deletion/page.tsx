@@ -15,8 +15,8 @@ const dataDeletionSections: Section[] = [
     paragraphs: [
       "Bạn có thể ngắt kết nối Trang Facebook khỏi Havi bất kỳ lúc nào ngay trong ứng dụng:",
       "1. Đăng nhập vào tài khoản Havi của bạn.",
-      "2. Truy cập mục Cài đặt -> Kênh liên kết.",
-      "3. Tại ô Trang Facebook, nhấn nút 'Ngắt kết nối'.",
+      "2. Truy cập mục 'Kênh kết nối'.",
+      "3. Tại kênh Facebook Page, nhấn nút 'Ngắt kết nối'.",
       "Hệ thống Havi sẽ lập tức hủy và xóa vĩnh viễn access token đã mã hóa của Trang Facebook khỏi cơ sở dữ liệu.",
     ],
   },
@@ -27,7 +27,7 @@ const dataDeletionSections: Section[] = [
       "1. Mở Facebook và vào phần Cài đặt & Quản lý quyền riêng tư -> Cài đặt.",
       "2. Chọn 'Ứng dụng và trang web' (Apps and Websites).",
       "3. Tìm ứng dụng 'Havi' và nhấn nút 'Gỡ' (Remove).",
-      "Khi bạn thực hiện thao tác này, Facebook sẽ tự động gửi thông báo Hủy quyền (Data Deletion Request) đến máy chủ của Havi.",
+      "Khi Meta gửi Data Deletion Request có chữ ký, Havi xác minh yêu cầu rồi xóa toàn bộ token và kết nối Facebook do tài khoản đó cấp.",
     ],
   },
   {

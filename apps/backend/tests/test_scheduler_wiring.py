@@ -34,16 +34,15 @@ class TestBeatSchedule:
         assert "havi.publish.run_due" in scheduled
 
     def test_task_chua_lam_khong_nam_trong_lich(self):
-        """`refresh_platform_tokens`, `poll_engagement` chạy an toàn không crash worker."""
+        """Job chưa làm không được đăng ký rồi log như đã hoàn tất."""
         chua_lam = {
             "havi.scheduler.refresh_platform_tokens",
             "havi.scheduler.poll_engagement",
         }
+        scheduled = {entry["task"] for entry in celery_app.conf.beat_schedule.values()}
         for name in chua_lam:
-            assert name in celery_app.tasks
-            task = celery_app.tasks[name]
-            # Chạy hàm task an toàn
-            task.run()
+            assert name not in scheduled
+            assert name not in celery_app.tasks
 
 
 class TestDispatchDuePosts:

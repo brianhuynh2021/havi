@@ -14,6 +14,13 @@ import os
 # Bản thân cơ chế rate limit vẫn được test — ở `test_rate_limit.py`, bằng cách
 # dựng limiter trực tiếp với Redis thật thay vì đi qua HTTP.
 os.environ.setdefault("HAVI_DISABLE_RATE_LIMIT", "true")
+# PyJWT cảnh báo ở mỗi lần ký và đọc nếu khoá dưới 32 byte. Khoá mặc định ngắn
+# có chủ ý để production validator từ chối, nhưng để nó trong test tạo hàng trăm
+# warning giống nhau và che mất warning mới. Đây chỉ là secret của tiến trình test.
+os.environ.setdefault(
+    "HAVI_JWT_SECRET",
+    "havi-test-only-jwt-secret-at-least-32-bytes",
+)
 
 import pytest_asyncio  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402

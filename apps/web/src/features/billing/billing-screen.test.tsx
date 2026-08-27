@@ -84,8 +84,7 @@ describe("BillingScreen", () => {
     expect(planTitles.length).toBeGreaterThan(0);
     // Hạn mức nói bằng **bài**, không bằng token: "250.000 token" không có nghĩa
     // gì với chủ cơ sở. Xem `quota.ASSUMED_TOKENS_PER_POST`.
-    expect(screen.getByText(/khoảng/i)).toBeInTheDocument();
-    expect(screen.getByText(/130/)).toBeInTheDocument();
+    expect(screen.getByText(/^khoảng 130 bài$/i)).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("250.000 token");
     const prices = screen.getAllByText(/189.000/i);
     expect(prices.length).toBeGreaterThan(0);

@@ -220,7 +220,7 @@ class BrandProfile(HaviModel):
 
 
 class FaqEntry(HaviModel):
-    """Chỉ câu chủ đã duyệt sẵn mới được trả lời tự động 24/7."""
+    """Câu đã duyệt được dùng làm gợi ý; mỗi phản hồi vẫn cần người bấm gửi."""
 
     question: str
     answer: str
@@ -584,6 +584,10 @@ class OperationsMetrics(HaviModel):
     error_rate: float
     avg_duration_ms: int
     p95_duration_ms: int
+    content_generation_count: int = 0
+    slow_content_generation_count: int = 0
+    content_generation_p95_ms: int = 0
+    slow_content_generation_threshold_ms: int = 20_000
     tokens_in: int
     tokens_out: int
     tokens_total: int

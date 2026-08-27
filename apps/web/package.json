@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint && node ../../scripts/css-module-audit.mjs",
     "test": "vitest run",
     "test:visual": "playwright test",
     "test:watch": "vitest",

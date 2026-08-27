@@ -92,6 +92,7 @@ class ConnectionRepository:
         expires_at: datetime | None = None,
         account_name: str | None = None,
         external_account_id: str | None = None,
+        external_user_id: str | None = None,
         connected_by: UUID | None = None,
     ) -> PlatformConnection:
         """Nối kênh, hoặc nối lại kênh đã có.
@@ -111,6 +112,7 @@ class ConnectionRepository:
             existing.expires_at = expires_at
             existing.account_name = account_name
             existing.external_account_id = external_account_id
+            existing.external_user_id = external_user_id
             existing.connected_by = connected_by
             existing.status = ConnectionStatus.CONNECTED
             existing.failure_reason = None
@@ -125,6 +127,7 @@ class ConnectionRepository:
             expires_at=expires_at,
             account_name=account_name,
             external_account_id=external_account_id,
+            external_user_id=external_user_id,
             connected_by=connected_by,
             status=ConnectionStatus.CONNECTED,
         )
@@ -167,3 +170,22 @@ class ConnectionRepository:
         """Chủ tiệm chủ động ngắt kết nối — xoá hẳn cả token đã mã hoá."""
         await self._session.delete(connection)
         await self._session.flush()
+
+    async def delete_by_external_user(self, *, platform: Platform, external_user_id: str) -> int:
+        """Delete every credential granted by one provider-scoped user.
+
+        Meta may call the deletion endpoint after the person has lost access to
+        Havi, so this lookup intentionally has no workspace/user-session input.
+        Its caller must authenticate the provider-signed request first.
+        """
+        result = await self._session.execute(
+            select(PlatformConnection).where(
+                PlatformConnection.platform == platform,
+                PlatformConnection.external_user_id == external_user_id,
+            )
+        )
+        rows = list(result.scalars().all())
+        for row in rows:
+            await self._session.delete(row)
+        await self._session.flush()
+        return len(rows)

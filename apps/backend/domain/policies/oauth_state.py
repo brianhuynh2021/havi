@@ -109,7 +109,7 @@ def verify_oauth_state(state: str, *, platform: Platform, settings: Settings) ->
         )
     except jwt.ExpiredSignatureError as exc:
         raise InvalidOAuthState(
-            "Phiên nối kênh đã hết hạn — bấm nối lại từ đầu giúp chị nhé"
+            "Phiên nối kênh đã hết hạn — bạn bấm nối lại từ đầu nhé"
         ) from exc
     except jwt.InvalidTokenError as exc:
         raise InvalidOAuthState("Yêu cầu nối kênh không hợp lệ") from exc

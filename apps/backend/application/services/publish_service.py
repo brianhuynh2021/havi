@@ -191,7 +191,7 @@ class PublishService:
             return await self._mark_failed_with_event(
                 job,
                 kind=PublishFailureKind.AUTH_PERMISSION,
-                detail="Kênh chưa nối hoặc đã mất kết nối — chị nối lại giúp em nhé",
+                detail="Kênh chưa nối hoặc đã mất kết nối — bạn nối lại nhé",
             )
 
         try:
@@ -359,7 +359,7 @@ class PublishService:
         if claimed is None:
             # Scheduler nhận trước trong khoảnh khắc giữa reset và claim. Không
             # phải lỗi: job sẽ chạy, chỉ là không phải ở lượt này.
-            raise AlreadyRunning("Havi đang thử đăng lại bài này — chị đợi chút rồi xem lại nhé")
+            raise AlreadyRunning("Havi đang thử đăng lại bài này — bạn đợi một chút rồi xem lại nhé")
         return await self.run_job(claimed)
 
     async def run_due(self, *, now: datetime | None = None, limit: int = 20) -> list[PublishJob]:

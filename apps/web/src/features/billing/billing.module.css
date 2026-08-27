@@ -144,6 +144,73 @@
   box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08);
 }
 
+.planCardPopular {
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 8px 24px -4px rgba(0, 102, 255, 0.15);
+}
+
+.planCardFeatured {
+  border-color: var(--color-indigo-400);
+  box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.18);
+}
+
+.planCardEnterprise {
+  border-color: var(--color-slate-500);
+  background: linear-gradient(180deg, var(--color-surface), var(--color-slate-50));
+}
+
+.popularBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-brand-primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+.enterpriseBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-slate-800);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.featuredBadge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: var(--color-white);
+  background: var(--color-indigo-600);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.billingDisclaimer {
+  margin: 16px 0 28px;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+}
+
 
 .planHeader {
   display: flex;
@@ -170,6 +237,15 @@
   align-items: baseline;
   gap: 6px;
   flex-wrap: nowrap;
+}
+
+.priceAmountOriginal {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-slate-400);
+  text-decoration: line-through;
+  margin-right: 4px;
 }
 
 .priceAmount {

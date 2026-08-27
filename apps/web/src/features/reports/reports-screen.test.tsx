@@ -55,6 +55,17 @@ function mockReports(summaryOverrides: Record<string, number> = {}) {
           ],
         });
       }
+      if (url.pathname.endsWith("/failed-posts")) return jsonResponse([]);
+      if (url.pathname.includes("/response-metrics")) {
+        return jsonResponse({
+          replied_count: 1,
+          avg_response_seconds: 120,
+          p95_response_seconds: 120,
+          waiting_over_1h: 0,
+          waiting_over_4h: 0,
+          missed_costly: 0,
+        });
+      }
       if (url.pathname.endsWith("/calendar") || url.pathname.includes("/calendar")) {
         return jsonResponse({
           start: "2026-08-01",

@@ -11,7 +11,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LanguageProvider, translate, translateNow, useLanguage } from "./language-context";
 import { EN } from "./translations";
@@ -107,9 +106,8 @@ function Probe() {
 }
 
 describe("LanguageProvider", () => {
-  it("bấm đổi ngôn ngữ thì CHỮ ĐỔI THẬT", async () => {
-    // Đây là bài kiểm tra mà bản cũ trượt: nút chạy, `lang` đổi, và chữ y nguyên.
-    const [vietnamese, english] = Object.entries(EN)[0];
+  it("chỉ phục vụ tiếng Việt khi bản EN chưa phủ hết core flow", () => {
+    const [vietnamese] = Object.entries(EN)[0];
     render(
       <LanguageProvider>
         <Probe />
@@ -117,38 +115,27 @@ describe("LanguageProvider", () => {
     );
 
     expect(screen.getByTestId("text")).toHaveTextContent(vietnamese);
-
-    await userEvent.click(screen.getByRole("button", { name: "đổi" }));
-
-    expect(screen.getByTestId("lang")).toHaveTextContent("EN");
-    expect(screen.getByTestId("text")).toHaveTextContent(english);
+    screen.getByRole("button", { name: "đổi" }).click();
+    expect(screen.getByTestId("lang")).toHaveTextContent("VN");
+    expect(screen.getByTestId("text")).toHaveTextContent(vietnamese);
   });
 
-  it("nhớ lựa chọn qua lần mở sau", async () => {
+  it("bỏ qua lựa chọn EN cũ trong localStorage", () => {
+    window.localStorage.setItem("havi_preferred_language", "EN");
     render(
       <LanguageProvider>
         <Probe />
       </LanguageProvider>,
     );
-    await userEvent.click(screen.getByRole("button", { name: "đổi" }));
-
-    // Mở lại từ đầu: đọc từ localStorage, không quay về mặc định.
-    render(
-      <LanguageProvider>
-        <Probe />
-      </LanguageProvider>,
-    );
-    expect(screen.getAllByTestId("lang").at(-1)).toHaveTextContent("EN");
+    expect(screen.getByTestId("lang")).toHaveTextContent("VN");
   });
 });
 
 describe("translateNow", () => {
-  it("đọc đúng lựa chọn mà Provider đã ghi", () => {
-    // Dành cho module `*.api.ts` — không gọi hook được nhưng vẫn chạy trong
-    // trình duyệt, nên phải đọc cùng một khoá localStorage.
-    const [vietnamese, english] = Object.entries(EN)[0];
+  it("không dùng lựa chọn EN cũ khi EN đang ẩn", () => {
+    const [vietnamese] = Object.entries(EN)[0];
     window.localStorage.setItem("havi_preferred_language", "EN");
-    expect(translateNow(vietnamese)).toBe(english);
+    expect(translateNow(vietnamese)).toBe(vietnamese);
   });
 
   it("chưa chọn gì thì mặc định tiếng Việt", () => {

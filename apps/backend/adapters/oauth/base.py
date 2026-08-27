@@ -31,6 +31,7 @@ class OAuthAccount:
     external_account_id: str
     account_name: str
     access_token: str
+    external_user_id: str | None = None
     expires_at: datetime | None = None
     refresh_token: str | None = None
 
@@ -43,7 +44,8 @@ class OAuthAccount:
         """
         return (
             f"OAuthAccount(external_account_id={self.external_account_id!r}, "
-            f"account_name={self.account_name!r}, access_token='***', "
+            f"account_name={self.account_name!r}, external_user_id={self.external_user_id!r}, "
+            "access_token='***', "
             f"expires_at={self.expires_at!r})"
         )
 

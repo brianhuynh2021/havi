@@ -127,10 +127,9 @@ export async function initializeBusinessTruthPack(
     // một hàng rào mỏng: người dùng mở Cài đặt, thấy một danh sách trông đã hoàn
     // chỉnh, và bấm duyệt cả loạt mà không đọc từng câu.
     //
-    // Câu trả lời tự động là đường **duy nhất** trong Havi đi tới người ngoài mà
-    // không qua mắt con người. Nói sai giờ mở cửa với khách thì không rút lại
-    // được. Nên thứ Havi không biết thì Havi không viết ra — FAQ để rỗng, chủ
-    // nhập câu thật ở Cài đặt.
+    // FAQ có thể trở thành gợi ý trả lời, nên đoán sai vẫn làm người dùng mất
+    // công kiểm tra và dễ gửi nhầm. Thứ Havi không biết thì Havi không viết ra:
+    // FAQ để rỗng, người dùng nhập câu thật ở Cài đặt.
     const faq: Array<{ question: string; answer: string; approved: boolean }> = [];
 
     await apiClient.PUT("/brand-profile", {
@@ -157,5 +156,4 @@ export async function initializeBusinessTruthPack(
     return { ok: true };
   }
 }
-
 

@@ -3,7 +3,6 @@
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { readTokens, subscribeTokens } from "@/lib/auth/token-store";
 import {
   faqs,
@@ -20,18 +19,7 @@ export function LandingScreen() {
   } = useLanguage();
 
   const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
-  const [b2bSubmitted, setB2bSubmitted] = useState(false);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
-  const [b2bForm, setB2bForm] = useState({
-    company: "",
-    name: "",
-    phone: "",
-    // i18n-exempt: giá trị gửi lên form, không phải chữ hiện ra — phải khớp
-    // đúng `value` của `<option>` bên dưới. Dịch nó là làm lựa chọn mặc định
-    // không còn khớp gì cả.
-    branches: "5-10 chi nhánh",
-    notes: "",
-  });
   const { lang } = useLanguage();
 
   const isLoggedIn = useSyncExternalStore(
@@ -39,11 +27,6 @@ export function LandingScreen() {
     () => Boolean(readTokens()?.accessToken),
     () => false,
   );
-
-  const handleB2BSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setB2bSubmitted(true);
-  };
 
   return (
     <div className={styles.page}>
@@ -71,7 +54,6 @@ export function LandingScreen() {
           </nav>
 
           <div className={styles.headerActions}>
-            <LanguageSwitcher />
             {isLoggedIn ? (
               <Link href="/app" className={styles.ctaButton}>
                 {t("Vào ứng dụng →")}
@@ -145,7 +127,7 @@ export function LandingScreen() {
           </div>
 
           <div className={styles.heroTrustLine}>
-            <span>{t("🧪 Đang dogfood với Customer Zero: Trung Tâm Công Nghệ Nhật Minh")}</span>
+            <span>{t("🧪 Đang thử nghiệm nội bộ cùng Trung Tâm Công Nghệ Nhật Minh")}</span>
             <span>•</span>
             <span style={{ color: "#34d399", fontWeight: 700 }}>{t("✓ Kích hoạt 7 ngày không cần thẻ tín dụng")}</span>
           </div>
@@ -185,10 +167,10 @@ export function LandingScreen() {
       {/* Pilot evidence must be real before Havi displays testimonials or ROI. */}
       <section id="khach-hang" className={styles.testimonialSection}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionTag} style={{ color: "#38bdf8" }}>CUSTOMER ZERO</div>
-          <h2 className={styles.sectionTitle}>{t("Pilot Đang Được Đo Bằng Dữ Liệu Thật")}</h2>
+          <div className={styles.sectionTag} style={{ color: "#38bdf8" }}>{t("THỬ NGHIỆM THỰC TẾ")}</div>
+          <h2 className={styles.sectionTitle}>{t("Bằng chứng từ vận hành thực tế")}</h2>
           <p className={styles.sectionSubtitle}>{t(
-            "Havi đang dogfood tại Trung Tâm Công Nghệ Nhật Minh. Chúng tôi chưa công bố testimonial, ROI hoặc số khách đến cho tới khi có bằng chứng xác minh."
+            "Havi đang được thử nghiệm tại Trung Tâm Công Nghệ Nhật Minh. Chúng tôi chỉ công bố phản hồi khách hàng hoặc hiệu quả đầu tư khi có bằng chứng xác minh."
           )}</p>
         </div>
 
@@ -215,15 +197,12 @@ export function LandingScreen() {
               </span>
             </div>
             <p style={{ fontSize: "14px", color: "#cbd5e1", margin: "6px 0 0 0" }}>{t(
-              "Havi hỗ trợ trực tiếp quy trình setup, đào tạo AI chuyên sâu và tích hợp cho các cơ sở tham gia giai đoạn dogfooding."
+              "Havi hỗ trợ trực tiếp việc kết nối Page, thiết lập vai trò và chạy thử quy trình soạn → duyệt → đăng cho các đơn vị tham gia pilot."
             )}</p>
           </div>
           <button
             type="button"
-            onClick={() => {
-              setIsB2BModalOpen(true);
-              setB2bSubmitted(false);
-            }}
+            onClick={() => setIsB2BModalOpen(true)}
             className={styles.b2bCtaBtn}
           >{t("Liên hệ Chuyên viên B2B")}</button>
         </div>
@@ -436,110 +415,22 @@ export function LandingScreen() {
               </button>
             </div>
 
-            {b2bSubmitted ? (
-              <div className={styles.b2bSuccessAlert}>
-                <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎉</div>
-                <h3 className={styles.b2bSuccessTitle}>{t("Gửi Yêu Cầu Thành Công!")}</h3>
-                <p className={styles.b2bSuccessDesc}>
-                  {/* Một câu, hai ô chèn — không phải năm mảnh xen thẻ <strong>.
-                      Bản trước bị chẻ ra nên tiếng Anh không thể đặt lại trật tự
-                      từ. Đổi lại là mất phần in đậm ở tên và số; giữ được câu
-                      dịch đúng thì đáng hơn giữ được nét đậm. */}
-                  {t(
-                    "Chuyên viên giải pháp Havi Enterprise sẽ liên hệ lại với {name} qua số điện thoại/Zalo {phone} trong vòng 15 phút.",
-                    {
-                      name: b2bForm.name || t("Quý Doanh Nghiệp"),
-                      phone: b2bForm.phone || t("của bạn"),
-                    },
-                  )}
-                </p>
-                <div style={{ marginTop: "18px" }}>
-                  <button
-                    type="button"
-                    className={styles.ctaButton}
-                    style={{ border: "none", cursor: "pointer", width: "100%" }}
-                    onClick={() => setIsB2BModalOpen(false)}
-                  >{t("Đã Hiểu")}</button>
-                </div>
+            <div className={styles.b2bForm}>
+              <p className={styles.b2bSuccessDesc}>{t(
+                "Havi chưa nhận biểu mẫu tự động trên website. Chọn một kênh bên dưới để trao đổi trực tiếp; Havi chỉ xác nhận khi cuộc gọi hoặc Zalo đã được mở trên thiết bị của bạn."
+              )}</p>
+              <div className={styles.b2bHotlineRow}>
+                <a href="tel:0984883750" className={styles.b2bHotlineBtn}>
+                  📞 {t("Gọi 0984 883 750")}
+                </a>
+                <a href="https://zalo.me/0984883750" target="_blank" rel="noreferrer" className={styles.b2bHotlineBtn}>
+                  {t("💬 Mở Zalo trực tiếp")}
+                </a>
               </div>
-            ) : (
-              <form onSubmit={handleB2BSubmit} className={styles.b2bForm}>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>{t("Tên Doanh Nghiệp / Chuỗi *")}</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={t("VD: Viện Thẩm Mỹ Seoul Spa")}
-                      className={styles.formInput}
-                      value={b2bForm.company}
-                      onChange={(e) => setB2bForm({ ...b2bForm, company: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>{t("Họ và tên người liên hệ *")}</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder={t("VD: Nguyễn Văn A (Giám đốc)")}
-                      className={styles.formInput}
-                      value={b2bForm.name}
-                      onChange={(e) => setB2bForm({ ...b2bForm, name: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>{t("Số điện thoại / Zalo *")}</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="VD: 0912 345 678"
-                      className={styles.formInput}
-                      value={b2bForm.phone}
-                      onChange={(e) => setB2bForm({ ...b2bForm, phone: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>{t("Quy mô cơ sở")}</label>
-                    <select
-                      className={styles.formSelect}
-                      value={b2bForm.branches}
-                      onChange={(e) => setB2bForm({ ...b2bForm, branches: e.target.value })}
-                    >
-                      <option value={t("5-10 chi nhánh")}>{t("Chuỗi 5 – 10 chi nhánh")}</option>
-                      <option value={t("> 10 chi nhánh")}>{t("Chuỗi lớn > 10 chi nhánh")}</option>
-                      <option value="Agency Marketing">{t("Agency Marketing / Quản lý nhiều Page")}</option>
-                      <option value={t("Hợp đồng & VAT")}>{t("Cần hợp đồng & hoá đơn VAT")}</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>{t("Nhu cầu chi tiết hoặc câu hỏi")}</label>
-                  <textarea
-                    rows={3}
-                    placeholder={t(
-                      "Mô tả nhu cầu tích hợp API, đào tạo nhân viên, hoặc setup private cloud..."
-                    )}
-                    className={styles.formTextarea}
-                    value={b2bForm.notes}
-                    onChange={(e) => setB2bForm({ ...b2bForm, notes: e.target.value })}
-                  />
-                </div>
-
-                <button type="submit" className={styles.b2bSubmitBtn}>{t("🚀 Gửi Yêu Cầu Tư Vấn Ngay")}</button>
-
-                <div className={styles.b2bHotlineRow}>
-                  <span style={{ fontSize: "12px", color: "#64748b" }}>{t("Hoặc liên hệ nhanh Hotline / Zalo:")}</span>
-                  <a href="tel:0984883750" className={styles.b2bHotlineBtn}>
-                    📞 0984 883 750
-                  </a>
-                  <a href="https://zalo.me/0984883750" target="_blank" rel="noreferrer" className={styles.b2bHotlineBtn}>{t("💬 Chat Zalo Trực Tiếp")}</a>
-                </div>
-              </form>
-            )}
+              <p className={styles.modalSubtitle}>{t(
+                "Không có dữ liệu liên hệ nào được lưu chỉ bằng việc mở cửa sổ này."
+              )}</p>
+            </div>
           </div>
         </div>
       )}

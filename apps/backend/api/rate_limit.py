@@ -22,7 +22,7 @@ from api.deps import RateLimiterDep, WorkspaceDep
 
 logger = logging.getLogger(__name__)
 
-TOO_MANY = "Chị thao tác hơi nhanh — đợi một chút rồi thử lại giúp em nhé."
+TOO_MANY = "Bạn thao tác hơi nhanh — đợi một chút rồi thử lại nhé."
 
 
 def _client_ip(request: Request) -> str:

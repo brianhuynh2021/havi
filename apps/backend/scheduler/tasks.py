@@ -34,18 +34,6 @@ def dispatch_due_posts() -> None:
     publish_run_due.delay()
 
 
-@celery_app.task(name="havi.scheduler.refresh_platform_tokens")
-def refresh_platform_tokens() -> None:
-    """Refresh token sắp hết hạn; hỏng thì đặt connection về `expired` để UI báo nối lại."""
-    logger.info("refresh_platform_tokens: Scheduled platform token health check completed.")
-
-
-@celery_app.task(name="havi.scheduler.poll_engagement")
-def poll_engagement() -> None:
-    """Chụp engagement snapshot của bài đã đăng để dựng số cho tab Báo cáo."""
-    logger.info("poll_engagement: Scheduled background engagement polling completed.")
-
-
 @celery_app.task(name="havi.scheduler.notify_due_renewals")
 def notify_due_renewals() -> None:
     """Nhắc đội vận hành về workspace sắp hoặc đã hết hạn.

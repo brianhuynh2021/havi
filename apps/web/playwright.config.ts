@@ -2,7 +2,13 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
-const maxDiffPixelRatio = process.env.CI ? 0.25 : 0.05;
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === "1";
+// Routes are fully mocked and animations are disabled, so a 1% difference is
+// already meaningful. The old 5% local / 25% CI threshold let an entire narrow
+// mobile panel remain broken while the screenshot test stayed green.
+const maxDiffPixelRatio = 0.01;
+const serverURL = new URL(baseURL);
+const serverPort = serverURL.port || (serverURL.protocol === "https:" ? "443" : "80");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -39,10 +45,12 @@ export default defineConfig({
   webServer: skipWebServer
     ? undefined
     : {
-        command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
+        command: `npm run dev -- --hostname ${serverURL.hostname} --port ${serverPort}`,
         url: baseURL,
         env: { NEXT_PUBLIC_API_BASE_URL: baseURL },
-        reuseExistingServer: !process.env.CI,
+        // Opt-in only. Reusing an unrelated `next dev` process made visual
+        // tests pass against stale code while the current mobile UI was broken.
+        reuseExistingServer,
         timeout: 120_000,
       },
 });

@@ -11,6 +11,7 @@ const POLL_DELAYS_MS = [1500, 2000, 3000, 4000, 5000];
 /** Trần an toàn ~3 phút. Job thật quá mốc này gần như chắc chắn đã kẹt, cứ poll
  * mãi thì user nhìn spinner vô tận mà không có đường thoát. */
 const MAX_POLLS = 45;
+const SLOW_AFTER_MS = 20_000;
 
 function delayFor(attempt: number): number {
   return POLL_DELAYS_MS[Math.min(attempt, POLL_DELAYS_MS.length - 1)];
@@ -20,6 +21,7 @@ export type JobPollState = {
   status: JobStatus | null;
   job: ContentJob | null;
   error: string | null;
+  slow: boolean;
   activeCount: number;
   addJobId: (id: string) => void;
   resetJob: () => void;
@@ -33,15 +35,19 @@ export type JobPollState = {
 export function useJobPolling(
   initialJobId: string | null,
   onReady: () => void,
+  options: { maxPolls?: number; slowAfterMs?: number } = {},
 ): JobPollState {
   const { t } = useLanguage();
   const [jobIds, setJobIds] = useState<string[]>(() => (initialJobId ? [initialJobId] : []));
   const [prevInitialJobId, setPrevInitialJobId] = useState<string | null>(initialJobId);
+  const maxPolls = options.maxPolls ?? MAX_POLLS;
+  const slowAfterMs = options.slowAfterMs ?? SLOW_AFTER_MS;
   const [state, setState] = useState<{
     status: JobStatus | null;
     job: ContentJob | null;
     error: string | null;
-  }>({ status: null, job: null, error: null });
+    slow: boolean;
+  }>({ status: null, job: null, error: null, slow: false });
 
   // Cập nhật jobIds khi prop initialJobId thay đổi
   if (initialJobId !== prevInitialJobId) {
@@ -62,8 +68,22 @@ export function useJobPolling(
 
   const resetJob = useCallback(() => {
     setJobIds([]);
-    setState({ status: null, job: null, error: null });
+    setState({ status: null, job: null, error: null, slow: false });
   }, []);
+
+  // P1 vận hành: sau 20 giây người dùng phải biết job vẫn đang chạy, không phải
+  // đoán spinner đã treo. Timer này chỉ đổi copy; worker vẫn tiếp tục và kết quả
+  // vẫn được poll bình thường.
+  useEffect(() => {
+    if (!jobIds.length) {
+      setState((current) => (current.slow ? { ...current, slow: false } : current));
+      return;
+    }
+    const timer = setTimeout(() => {
+      setState((current) => ({ ...current, slow: true }));
+    }, slowAfterMs);
+    return () => clearTimeout(timer);
+  }, [jobIds.length, slowAfterMs]);
 
   useEffect(() => {
     if (!jobIds.length) {
@@ -89,6 +109,10 @@ export function useJobPolling(
 
         if (!result.ok) {
           lastError = result.message;
+          // Lỗi đọc trạng thái có thể chỉ là một nhịp mạng yếu. Bỏ id ở đây làm
+          // frontend ngừng theo dõi một job vẫn đang chạy và không bao giờ báo
+          // khi bản nháp sẵn sàng.
+          remaining.push(id);
           continue;
         }
 
@@ -100,6 +124,9 @@ export function useJobPolling(
           anyReady = true;
         } else if (job.status === "failed") {
           lastStatus = "failed";
+          lastError = t(
+            "Havi chưa viết được bài này. Bạn có thể kiểm tra nội dung rồi bấm tạo lại.",
+          );
         } else {
           remaining.push(id);
         }
@@ -109,23 +136,33 @@ export function useJobPolling(
         onReadyRef.current();
       }
 
-      setState({
+      setState((current) => ({
         status: lastStatus,
         job: lastJob,
         error: lastError,
-      });
+        slow: remaining.length > 0 && current.slow,
+      }));
 
       if (cancelled) return;
-      setJobIds(remaining);
+      // Không tạo mảng state mới khi danh sách không đổi. Trước đây mỗi poll
+      // làm effect chạy lại, `attempt` về 0 và trần MAX_POLLS không bao giờ tới.
+      setJobIds((current) =>
+        current.length === remaining.length &&
+        current.every((id, index) => id === remaining[index])
+          ? current
+          : remaining,
+      );
 
       if (remaining.length > 0) {
         attempt += 1;
-        if (attempt >= MAX_POLLS) {
+        if (attempt >= maxPolls) {
           setState({
-            status: lastStatus,
+            status: null,
             job: lastJob,
             error: t("Havi viết lâu hơn thường lệ. Bạn tải lại trang để xem đã xong chưa nhé."),
+            slow: false,
           });
+          setJobIds([]);
           return;
         }
         timer = setTimeout(tick, delayFor(attempt));
@@ -138,12 +175,13 @@ export function useJobPolling(
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [jobIds, t]);
+  }, [jobIds, maxPolls, t]);
 
   return {
     status: state.status,
     job: state.job,
     error: state.error,
+    slow: state.slow,
     activeCount: jobIds.length,
     addJobId,
     resetJob,

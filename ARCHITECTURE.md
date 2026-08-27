@@ -13,7 +13,9 @@ Havi owns social operations. It does not own business outcomes.
 - No video editor. Havi accepts finished media and validates it for publishing.
 - No direct ad creation, budget changes, or media-spend custody.
 - No promises about customers, growth, conversion, or revenue.
-- AI is an assistive utility. A person reviews content and non-FAQ replies.
+- Havi is positioned as an AI secretary, but current AI capability is bounded:
+  it drafts content while deterministic policies prioritize work. A person
+  reviews content and non-FAQ replies.
 
 ## Runtime topology
 

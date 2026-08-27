@@ -51,8 +51,9 @@ Các kênh liên kết để Havi đăng nội dung đã duyệt, nhận hội t
 * **Các biến**:
   * `HAVI_FACEBOOK_CLIENT_ID`: App ID
   * `HAVI_FACEBOOK_CLIENT_SECRET`: App Secret
-  * `HAVI_FACEBOOK_CONFIG_ID`: ID của Facebook Login for Business Configuration (chứa quyền `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`).
-  * `HAVI_FACEBOOK_REDIRECT_URI`: `http://localhost:8000/connections/facebook/callback`
+  * `HAVI_FACEBOOK_CONFIG_ID`: ID của Facebook Login for Business Configuration (chứa đủ 7 quyền trong [Facebook App Review guide](../operations/FACEBOOK_APP_REVIEW.md)).
+  * `HAVI_FACEBOOK_REDIRECT_URI`: URL HTTPS khớp chính xác với `https://<api-domain>/connections/facebook/callback`.
+  * `HAVI_META_WEBHOOK_VERIFY_TOKEN`: chuỗi ngẫu nhiên riêng dùng để Meta xác minh `https://<api-domain>/webhooks/meta`; không dùng lại App Secret.
 
 ### B. Google Cloud (YouTube Shorts & Google Business Profile)
 * **Trang quản trị**: [Google Cloud Console](https://console.cloud.google.com/) $\rightarrow$ APIs & Services $\rightarrow$ Credentials.

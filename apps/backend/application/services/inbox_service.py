@@ -2,7 +2,7 @@
 
 NGUYÊN TẮC #2 & #7:
 1. Không bao giờ tự động gửi tin nhắn cho khách (full_auto = False).
-2. Ngoại lệ duy nhất là FAQ chủ đã duyệt sẵn từng câu trong Brand Profile.
+2. FAQ đã duyệt chỉ được dùng làm gợi ý; người thật vẫn phải bấm gửi.
 """
 
 import logging
@@ -17,6 +17,7 @@ from domain.models.inbox import InboxItem
 from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
 
 logger = logging.getLogger(__name__)
+
 
 class InboxItemNotFound(Exception):
     pass
@@ -118,27 +119,9 @@ class InboxService:
         matched_answer = _match_approved_faq(faqs, content)
 
         if matched_answer:
-            # FAQ khớp tuyệt đối -> gửi qua reply publisher port (Nguyên tắc #1)
-            reply_res = None
-            auto_status = InboxItemStatus.SENT
-            try:
-                publisher = self._reply_publishers.get(platform)
-                if publisher is None:
-                    raise ReplyError(platform, "Chưa cấu hình kênh gửi phản hồi")
-                reply_res = await publisher.send_reply(
-                    ReplyRequest(
-                        workspace_id=workspace_id,
-                        platform=platform,
-                        text=matched_answer,
-                        item_type=item_type,
-                        recipient_id=recipient_id,
-                        external_message_id=external_message_id,
-                    )
-                )
-            except ReplyError as exc:
-                logger.warning("Không thể tự động gửi trả lời: %s", exc)
-                auto_status = InboxItemStatus.FAILED
-
+            # “Đã duyệt” ở Brand Profile nghĩa là câu trả lời đáng tin để gợi ý,
+            # không phải chấp thuận gửi cho một hội thoại cụ thể. Tách hai loại
+            # đồng ý này để một FAQ cũ không thể tự phát ngôn với khách mới.
             item = await self._inbox.create(
                 workspace_id=workspace_id,
                 platform=platform,
@@ -146,21 +129,16 @@ class InboxService:
                 author_name=author_name,
                 type=item_type,
                 ai_suggested_reply=matched_answer,
-                status=auto_status,
+                status=InboxItemStatus.DRAFTED,
                 external_message_id=external_message_id,
                 recipient_id=recipient_id,
             )
-            # Tự động gửi cho khách là hành vi nhạy cảm nhất trong hệ thống —
-            # phải để lại dấu vết để về sau trả lời được "vì sao khách nhận câu
-            # này mà chủ tiệm không bấm gì".
             await self._events.record(
                 EventLogEntry(
                     workspace_id=workspace_id,
-                    job_kind="inbox.faq_auto_reply",
-                    input_summary=f"{platform.value}: tin nhắn khớp FAQ đã duyệt",
-                    output_summary=(
-                        f"status:{auto_status.value} reply_id:{reply_res.external_reply_id if reply_res else 'none'} | {matched_answer[:200]}"
-                    ),
+                    job_kind="inbox.faq_suggested",
+                    input_summary=f"{platform.value}: nội dung khớp FAQ đã duyệt",
+                    output_summary=f"status:drafted | {matched_answer[:200]}",
                 )
             )
             return item

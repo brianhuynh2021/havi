@@ -37,6 +37,7 @@ import { join, relative } from "node:path";
 
 const SRC = new URL("../apps/web/src/", import.meta.url).pathname;
 const DICT = join(SRC, "lib/i18n/translations.ts");
+const AVAILABILITY = join(SRC, "lib/i18n/availability.ts");
 
 /** `t("...")` nhưng không phải `it("...")`, `format(...)`, `obj.t("...")`. */
 const T_CALL = /(?<![A-Za-z0-9_$.])t\(\s*"((?:[^"\\]|\\.)*)"/g;
@@ -203,6 +204,9 @@ function isCode(body, at) {
 
 const files = walk(SRC);
 const english = readEnglish();
+const englishUiEnabled = /ENGLISH_UI_ENABLED\s*=\s*true\b/.test(
+  readFileSync(AVAILABILITY, "utf8"),
+);
 
 const wrapped = new Map(); // chuỗi -> file đầu tiên gặp
 const unwrapped = [];
@@ -258,6 +262,7 @@ const show = (label, rows) => {
 console.log(`đã bọc t()      : ${wrapped.size}`);
 console.log(`có bản EN       : ${wrapped.size - missing.length}`);
 console.log(`thiếu bản EN    : ${missing.length}`);
+console.log(`giao diện EN    : ${englishUiEnabled ? "đang bật" : "đang ẩn"}`);
 console.log(`còn trần trong JSX: ${unwrapped.length}`);
 console.log(`bản EN không ai dùng: ${dead.length}`);
 console.log(`file dịch ở chỗ render (i18n-data): ${dataFiles.length}`);
@@ -271,4 +276,6 @@ show("cố ý chỉ tiếng Việt", exemptFiles.map((f) => [f, "i18n-exempt"]))
 if (!list && (missing.length || unwrapped.length)) {
   console.log("\nChạy lại với --list để xem từng dòng.");
 }
-process.exit(missing.length || unwrapped.length ? 1 : 0);
+// Bản dịch thiếu chỉ chặn release khi người dùng thực sự nhìn thấy nút EN.
+// Chuỗi tiếng Việt còn trần luôn là lỗi vì UI chính thức là tiếng Việt.
+process.exit((englishUiEnabled && missing.length) || unwrapped.length ? 1 : 0);

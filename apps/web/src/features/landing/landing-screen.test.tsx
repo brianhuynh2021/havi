@@ -59,7 +59,7 @@ describe("LandingScreen", () => {
     }
   });
 
-  it("bấm nút Liên hệ Chuyên viên B2B thì mở popup tư vấn doanh nghiệp", async () => {
+  it("B2B chỉ mở kênh liên hệ thật, không diễn gửi biểu mẫu thành công", async () => {
     renderLanding();
     const user = userEvent.setup();
 
@@ -67,13 +67,22 @@ describe("LandingScreen", () => {
     await user.click(b2bButton);
 
     expect(screen.getByText(/Tư Vấn Giải Pháp Havi Enterprise/i)).toBeInTheDocument();
-    expect(screen.getByText(/Gửi Yêu Cầu Tư Vấn Ngay/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Gọi 0984 883 750/i })).toHaveAttribute(
+      "href",
+      "tel:0984883750",
+    );
+    expect(screen.getByRole("link", { name: /Mở Zalo trực tiếp/i })).toHaveAttribute(
+      "href",
+      "https://zalo.me/0984883750",
+    );
+    expect(screen.queryByRole("button", { name: /Gửi Yêu Cầu/i })).toBeNull();
+    expect(screen.queryByText(/Gửi Yêu Cầu Thành Công/i)).toBeNull();
   });
 
   it("không dựng testimonial hoặc ROI khi pilot chưa có bằng chứng", () => {
     renderLanding();
-    expect(screen.getByText(/Pilot Đang Được Đo Bằng Dữ Liệu Thật/i)).toBeInTheDocument();
-    expect(screen.getByText(/chưa công bố testimonial, ROI/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bằng chứng từ vận hành thực tế/i)).toBeInTheDocument();
+    expect(screen.getByText(/chỉ công bố phản hồi khách hàng hoặc hiệu quả đầu tư/i)).toBeInTheDocument();
     expect(screen.queryByText(/Chị Mai Lan/i)).not.toBeInTheDocument();
   });
 

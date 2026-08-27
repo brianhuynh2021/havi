@@ -983,7 +983,9 @@
 .generateRow {
   margin-top: 18px;
   display: flex;
-  justify-content: flex-end;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .heroGenerateBtn {
@@ -1803,6 +1805,13 @@
   overflow-y: auto;
 }
 
+.versionItem {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+}
+
 .versionMeta {
   color: var(--color-muted);
   font-size: 11.5px;
@@ -1933,9 +1942,86 @@
 }
 
 .generateHint {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 13px;
   color: var(--color-muted);
+  text-align: center;
+}
+
+/* Các class này là cấu trúc của luồng soạn bài hiện tại. Trước đây component
+   tham chiếu class không tồn tại nên số bước dính thẳng vào tiêu đề, còn các
+   nút nạp tư liệu phụ thuộc vào whitespace ngẫu nhiên của HTML. */
+.stepTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--color-ink);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.stepNumber {
+  display: inline-flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--color-white);
+  background: var(--color-primary);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.rawSection {
+  margin-top: 24px;
+}
+
+.rawActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .rawActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rawActions button {
+    width: 100%;
+    padding-inline: 10px;
+  }
+
+  .uploadRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .uploadAction {
+    width: 100%;
+  }
+}
+
+.pollSlow,
+.pollError {
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 10px;
+  background: var(--color-amber-100);
+  color: var(--color-amber-800);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.pollError {
+  border-color: var(--color-red-200);
+  background: var(--color-red-50);
+  color: var(--color-red-800);
 }
 
 .uploadList {
@@ -1950,9 +2036,53 @@
 .uploadRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-border-soft);
   font-size: 13px;
   color: var(--color-muted);
+}
+
+.uploadRow[data-status="failed"] {
+  border-color: var(--color-red-200);
+  background: var(--color-red-50);
+  color: var(--color-red-800);
+}
+
+.uploadSummary {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.uploadFileName {
+  overflow: hidden;
+  color: var(--color-body);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadActions {
+  flex: 0 0 auto;
+}
+
+.uploadAction {
+  padding: 6px 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.uploadAction:hover {
+  background: var(--color-surface);
 }
 
 /* Danh sách kiểm — cố ý KHÔNG có điểm số. Xem `checkBrief` trong post-brief.tsx. */

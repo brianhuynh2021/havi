@@ -100,7 +100,10 @@ class TestTokenCrypto:
 
 
 def _settings() -> Settings:
-    return Settings(jwt_secret="test-secret-cho-oauth-state", token_encryption_key="")
+    return Settings(
+        jwt_secret="havi-oauth-state-test-jwt-secret-at-least-32-bytes",
+        token_encryption_key="",
+    )
 
 
 class TestOAuthState:
@@ -133,7 +136,10 @@ class TestOAuthState:
 
     def test_state_ky_bang_khoa_khac_bi_tu_choi(self):
         """Đây chính là lớp chống CSRF: kẻ tấn công không ký được state hợp lệ."""
-        attacker = Settings(jwt_secret="khoa-cua-ke-tan-cong", token_encryption_key="")
+        attacker = Settings(
+            jwt_secret="havi-attacker-test-jwt-secret-at-least-32-bytes",
+            token_encryption_key="",
+        )
         state = create_oauth_state(
             workspace_id=uuid.uuid4(),
             user_id=uuid.uuid4(),

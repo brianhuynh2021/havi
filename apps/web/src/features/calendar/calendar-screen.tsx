@@ -255,6 +255,12 @@ const { t } = useLanguage();
   const uniqueChannels = Array.from(
     new Set(days.flatMap((d) => d.items.map((i) => i.channel))),
   );
+  const scheduledChannelNames = uniqueChannels
+    // `email` còn nằm trong schema để đọc dữ liệu lịch sử, nhưng không phải
+    // một social channel có thể chọn mới. Vẫn đặt nhãn an toàn thay vì để một
+    // enum kỹ thuật hoặc làm hỏng cả màn lịch khi gặp bản ghi cũ.
+    .map((channel) => (channel === "email" ? "Email" : channelLabels[channel]))
+    .join(", ");
 
   const empty = days.every((day) => day.items.length === 0);
   const rangeLabel = days.length
@@ -280,14 +286,16 @@ const { t } = useLanguage();
             <span className={styles.metricSubtext}>{t("Tuần đang hiển thị")}</span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t("📢 Kênh kết nối")}</span>
+            <span className={styles.metricLabel}>{t("📢 Kênh có lịch")}</span>
             <span className={styles.metricValue}>{uniqueChannels.length || 0}{" "}{t("kênh")}</span>
-            <span className={styles.metricSubtext}>Facebook, TikTok, YouTube</span>
+            <span className={styles.metricSubtext}>
+              {scheduledChannelNames || t("Chưa có kênh nào trong tuần")}
+            </span>
           </div>
           <div className={styles.metricCard}>
-            <span className={styles.metricLabel}>{t("⚡ Tự động đăng")}</span>
-            <span className={styles.metricValue}>{t("Giờ Vàng VN")}</span>
-            <span className={styles.metricSubtext}>08:00 • 12:00 • 20:00 ICT</span>
+            <span className={styles.metricLabel}>{t("✅ Quy trình xuất bản")}</span>
+            <span className={styles.metricValue}>{t("Duyệt trước")}</span>
+            <span className={styles.metricSubtext}>{t("Không đăng khi chưa được duyệt")}</span>
           </div>
         </div>
       </header>

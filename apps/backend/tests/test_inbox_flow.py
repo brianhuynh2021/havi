@@ -35,7 +35,7 @@ async def _onboard(client: AsyncClient, email: str) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_inbox_faq_auto_reply(client: AsyncClient):
+async def test_inbox_faq_is_suggested_but_waits_for_human(client: AsyncClient):
     auth_headers = await _onboard(client, "mai.inbox@havi.vn")
 
     # 1. Update brand profile with approved FAQ
@@ -56,14 +56,18 @@ async def test_inbox_faq_auto_reply(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["total"] == 0
 
-    # 3. Simulate inbound FAQ message -> auto reply
+    # 3. FAQ khớp chính xác vẫn chỉ là bản nháp chờ người thật bấm gửi.
     sim_resp = await client.post(
         "/webhooks/dev/simulate",
         json={"content": "Giờ mở cửa", "author_name": "Khách A"},
         headers=auth_headers,
     )
     assert sim_resp.status_code == 200
-    assert sim_resp.json()["status"] == "sent"
+    assert sim_resp.json()["status"] == "drafted"
+    faq_item_id = sim_resp.json()["id"]
+    listing = await client.get("/inbox", headers=auth_headers)
+    faq_item = next(item for item in listing.json()["items"] if item["id"] == faq_item_id)
+    assert faq_item["ai_suggested_reply"] == "Tiệm mở cửa từ 8:00 đến 21:00 hàng ngày ạ!"
 
     # 4. Simulate inbound non-FAQ message -> drafted
     sim_resp2 = await client.post(

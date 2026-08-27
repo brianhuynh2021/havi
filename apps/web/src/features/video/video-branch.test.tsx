@@ -119,6 +119,29 @@ describe("VideoBranch (nhánh Video của luồng Đăng bài)", () => {
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
   });
 
+  it("clip đang tải có nút huỷ nối vào AbortSignal thật", async () => {
+    let signal: AbortSignal | undefined;
+    uploadMedia.mockImplementation(
+      (_file: File, options: { signal?: AbortSignal }) =>
+        new Promise((resolve) => {
+          signal = options.signal;
+          options.signal?.addEventListener("abort", () =>
+            resolve({ ok: false, message: "Đã huỷ tải clip." }),
+          );
+        }),
+    );
+    render(<VideoBranch />);
+    await waitFor(() => expect(listVideoPosts).toHaveBeenCalled());
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, new File(["video"], "spa.mp4", { type: "video/mp4" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Huỷ tải" }));
+
+    expect(signal?.aborted).toBe(true);
+    expect(await screen.findByRole("button", { name: "Chọn clip từ máy" })).toBeEnabled();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("video đang chờ xác nhận KHÔNG được hiện là đã đăng", async () => {
     listVideoPosts.mockResolvedValue({
       ok: true,

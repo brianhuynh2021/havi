@@ -324,10 +324,13 @@ class TestChanTruocKhiTonTien:
         assert response.status_code == 429
         assert int(response.headers["Retry-After"]) > 0
         detail = response.json()["detail"]
-        # Trần Trial, có dấu phân cách cho dễ đọc. Dẫn từ chính sách để đổi
-        # trần không phải sửa test.
-        assert f"{quota.quota_for(Plan.TRIAL):,}" in detail
-        assert "quota mở lại" in detail
+        # UI nói bằng số bài ước tính, không để lộ token nội bộ. Không in
+        # `used/limit`: một bài dài có thể tiêu hơn mức trung bình và cho ra phân
+        # số vô nghĩa như 66/26 dù người dùng không hề tạo 66 bài.
+        estimated_posts = quota.quota_for(Plan.TRIAL) // quota.ASSUMED_TOKENS_PER_POST
+        assert f"{estimated_posts:,} bài" in detail
+        assert f"{quota.quota_for(Plan.TRIAL):,}" not in detail
+        assert "hạn mức mở lại" in detail
 
     async def test_con_quota_thi_tao_job_binh_thuong(
         self, client: AsyncClient, db_session: AsyncSession

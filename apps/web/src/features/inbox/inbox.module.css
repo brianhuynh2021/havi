@@ -18,6 +18,7 @@
 .workspace {
   display: flex;
   flex: 1;
+  min-width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 14px;
@@ -27,6 +28,7 @@
 
 /* Sidebar */
 .sidebar {
+  flex: 0 0 340px;
   width: 340px;
   border-right: 1px solid var(--color-border);
   display: flex;
@@ -48,7 +50,9 @@
 }
 
 .threadItem {
+  width: 100%;
   padding: 16px;
+  border: 0;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
   transition: background 0.15s;
@@ -57,6 +61,9 @@
   gap: 6px;
   background: var(--color-surface);
   border-left: 3px solid transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
 .threadItem:hover {
@@ -124,6 +131,7 @@
 /* Main Panel */
 .mainPanel {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
@@ -140,6 +148,10 @@
 .mainHeaderTitle {
   font-weight: 600;
   font-size: 16px;
+}
+
+.mobileBack {
+  display: none;
 }
 
 .chatHistory {
@@ -241,6 +253,13 @@
   justify-content: flex-end;
 }
 
+.composerHint {
+  margin: -2px 0 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .searchBar {
   display: flex;
   gap: 8px;
@@ -257,6 +276,7 @@
 
 .searchBar input {
   flex: 1;
+  min-width: 0;
 }
 
 /* System items in chat (like dismiss notices) */
@@ -268,4 +288,99 @@
   padding: 4px 12px;
   border-radius: 12px;
   margin: 8px 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    height: auto;
+    max-height: none;
+  }
+
+  .header {
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .workspace {
+    display: block;
+    min-height: min(650px, calc(100dvh - 210px));
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: inherit;
+    border-right: 0;
+  }
+
+  .mainPanel {
+    display: none;
+    min-height: inherit;
+  }
+
+  .threadOpen .sidebar {
+    display: none;
+  }
+
+  .threadOpen .mainPanel {
+    display: flex;
+  }
+
+  .sidebarHeader {
+    padding: 12px;
+  }
+
+  .searchBar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .threadItem {
+    min-height: 96px;
+  }
+
+  .mainHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 12px 16px;
+  }
+
+  .mobileBack {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0;
+    border: 0;
+    color: var(--color-primary);
+    background: transparent;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .chatHistory {
+    min-height: 260px;
+    padding: 16px;
+  }
+
+  .bubbleWrapper {
+    max-width: 88%;
+  }
+
+  .composer {
+    padding: 14px 16px;
+  }
+
+  .composerActions {
+    align-items: stretch;
+    flex-direction: row;
+  }
+
+  .composerActions button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }

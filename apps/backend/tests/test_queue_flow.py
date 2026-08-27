@@ -267,6 +267,36 @@ async def test_nhan_viec_khong_ton_tai_tra_404(client: AsyncClient):
     assert response.status_code == 404
 
 
+async def test_khong_giao_viec_cho_nguoi_o_workspace_khac(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """UUID user là khoá ngoại hợp lệ vẫn không đủ: tenant boundary là
+    membership của chính workspace đang hoạt động."""
+    owner = await _onboard(client, email="queue-assign-owner@havi.vn")
+    outsider = await _onboard(client, email="queue-assign-outsider@havi.vn")
+    outsider_me = await client.get("/auth/me", headers=_headers(outsider))
+    outsider_id = outsider_me.json()["id"]
+
+    item = await _add_inbox(
+        db_session,
+        workspace_id=owner["active_workspace_id"],
+        content="Cho em xin báo giá",
+        created_at=datetime.now(UTC),
+    )
+    await db_session.flush()
+
+    response = await client.post(
+        f"/queue/inbox/{item.id}/assign",
+        json={"user_id": outsider_id},
+        headers=_headers(owner),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Người được giao không thuộc workspace"
+    await db_session.refresh(item)
+    assert item.assigned_to_user_id is None
+
+
 async def test_chi_so_ton_that_tranh_duoc(client: AsyncClient, db_session: AsyncSession):
     """Chỉ số bán được hàng: thời gian phản hồi và việc bị bỏ sót.
 

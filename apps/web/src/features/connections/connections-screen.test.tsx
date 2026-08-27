@@ -42,6 +42,7 @@ function mockConnections(body: unknown, status = 200) {
 
 function stubAssign() {
   const assign = vi.fn();
+  vi.spyOn(window, "open").mockReturnValue(null);
   Object.defineProperty(window, "location", {
     configurable: true,
     value: { ...window.location, assign, search: "", href: "http://localhost/cai-dat" },

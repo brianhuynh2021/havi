@@ -34,6 +34,7 @@
  */
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { ENGLISH_UI_ENABLED } from "./availability";
 import { EN, type Language } from "./translations";
 
 /** Giá trị chèn vào `{ô}` trong câu. Số cũng nhận, để chỗ gọi không phải `String()`. */
@@ -81,6 +82,7 @@ export function translate(vietnamese: string, lang: Language, params?: TextParam
 }
 
 function readSaved(): Language {
+  if (!ENGLISH_UI_ENABLED) return "VN";
   if (typeof window === "undefined") return "VN";
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -118,9 +120,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Language>(readSaved);
 
   const setLang = useCallback((next: Language) => {
-    setLangState(next);
+    const available = ENGLISH_UI_ENABLED ? next : "VN";
+    setLangState(available);
     try {
-      localStorage.setItem(STORAGE_KEY, next);
+      localStorage.setItem(STORAGE_KEY, available);
     } catch {
       // Không lưu được thì vẫn đổi trong phiên này.
     }
@@ -130,7 +133,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     () => ({
       lang,
       setLang,
-      toggleLang: () => setLang(lang === "VN" ? "EN" : "VN"),
+      toggleLang: () => {
+        if (ENGLISH_UI_ENABLED) setLang(lang === "VN" ? "EN" : "VN");
+      },
       t: (vietnamese, params) => translate(vietnamese, lang, params),
     }),
     [lang, setLang],

@@ -7,6 +7,7 @@ const listPendingItems = vi.fn();
 const approveAll = vi.fn();
 const createJob = vi.fn();
 const listChannelOptions = vi.fn();
+const uploadMedia = vi.fn();
 
 vi.mock("./content-creation.api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./content-creation.api")>();
@@ -16,7 +17,7 @@ vi.mock("./content-creation.api", async (importOriginal) => {
     approveAll: (...args: unknown[]) => approveAll(...args),
     createJob: (...args: unknown[]) => createJob(...args),
     listChannelOptions: (...args: unknown[]) => listChannelOptions(...args),
-    uploadMedia: vi.fn(),
+    uploadMedia: (...args: unknown[]) => uploadMedia(...args),
     dismissItem: vi.fn(),
     dismissAllItems: vi.fn(),
   };
@@ -52,6 +53,8 @@ function draft(index: number) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  globalThis.URL.createObjectURL = vi.fn(() => "blob:preview");
+  globalThis.URL.revokeObjectURL = vi.fn();
   listPendingItems.mockResolvedValue({ ok: true, data: [] });
   // Đúng hình dạng backend trả: Facebook nhận cả hai loại, Reels chỉ video.
   listChannelOptions.mockResolvedValue({
@@ -321,5 +324,49 @@ describe("ContentCreationScreen — một tab, một luồng", () => {
     // còn được chọn. Nếu state cũ giữ lại thì backend sẽ nhận một tổ hợp sai.
     expect(await screen.findByText("FB Reels")).toBeInTheDocument();
     expect(screen.queryByText("FB Post")).toBeNull();
+  });
+
+  it("upload ảnh lỗi giữ nguyên file, nói rõ lý do và cho thử lại tại chỗ", async () => {
+    uploadMedia
+      .mockResolvedValueOnce({ ok: false, message: "Ảnh quá nặng — chọn ảnh khác nhé." })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: { id: "asset-1", type: "image", url: "https://storage/anh.jpg" },
+      });
+    render(<ContentCreationScreen />);
+    await screen.findByText("Facebook — bài trên Trang");
+
+    const file = new File(["image"], "anh-spa.jpg", { type: "image/jpeg" });
+    await userEvent.upload(screen.getByTestId("file-input"), file);
+
+    expect((await screen.findAllByText(/Ảnh quá nặng/)).length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+
+    await waitFor(() => expect(uploadMedia).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("anh-spa.jpg")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Thử lại" })).toBeNull();
+  });
+
+  it("đang upload có thể huỷ thật qua AbortSignal", async () => {
+    let receivedSignal: AbortSignal | undefined;
+    uploadMedia.mockImplementation(
+      (_file: File, options: { signal?: AbortSignal }) =>
+        new Promise((resolve) => {
+          receivedSignal = options.signal;
+          options.signal?.addEventListener("abort", () =>
+            resolve({ ok: false, message: "Đã huỷ tải ảnh." }),
+          );
+        }),
+    );
+    render(<ContentCreationScreen />);
+    await screen.findByText("Facebook — bài trên Trang");
+
+    const file = new File(["image"], "anh-spa.jpg", { type: "image/jpeg" });
+    await userEvent.upload(screen.getByTestId("file-input"), file);
+    await userEvent.click(await screen.findByRole("button", { name: "Huỷ tải" }));
+
+    expect(receivedSignal?.aborted).toBe(true);
+    expect(await screen.findByText("Đã huỷ")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Thử lại" })).toBeInTheDocument();
   });
 });

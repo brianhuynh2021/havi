@@ -548,10 +548,9 @@ export interface paths {
          * Assign Inbox Item
          * @description Nhận việc, hoặc trả lại hàng đợi khi `user_id` là `null`.
          *
-         *     Không kiểm "người này có trong workspace không" ở đây vì `assigned_to_user_id`
-         *     có khoá ngoại `ON DELETE SET NULL` sang `users`, và giá trị chỉ dùng để hiện
-         *     tên — gán sai thì hậu quả là một cái tên lạ trên thẻ việc, không phải một lỗ
-         *     quyền. Ai được nhận việc gì là câu hỏi của lần sau.
+         *     Người được giao phải là thành viên workspace. Nếu chỉ dựa vào khoá ngoại tới
+         *     `users`, một UUID ở workspace khác có thể làm lộ tên người đó trên thẻ việc
+         *     và phá vỡ bất biến tenant dù bản thân tin nhắn vẫn không bị đọc chéo.
          */
         post: operations["assign_inbox_item_queue_inbox__item_id__assign_post"];
         delete?: never;
@@ -2154,7 +2153,7 @@ export interface components {
         };
         /**
          * FaqEntry
-         * @description Chỉ câu chủ đã duyệt sẵn mới được trả lời tự động 24/7.
+         * @description Câu đã duyệt được dùng làm gợi ý; mỗi phản hồi vẫn cần người bấm gửi.
          */
         FaqEntry: {
             /** Question */
@@ -2436,6 +2435,26 @@ export interface components {
             avg_duration_ms: number;
             /** P95 Duration Ms */
             p95_duration_ms: number;
+            /**
+             * Content Generation Count
+             * @default 0
+             */
+            content_generation_count: number;
+            /**
+             * Slow Content Generation Count
+             * @default 0
+             */
+            slow_content_generation_count: number;
+            /**
+             * Content Generation P95 Ms
+             * @default 0
+             */
+            content_generation_p95_ms: number;
+            /**
+             * Slow Content Generation Threshold Ms
+             * @default 20000
+             */
+            slow_content_generation_threshold_ms: number;
             /** Tokens In */
             tokens_in: number;
             /** Tokens Out */

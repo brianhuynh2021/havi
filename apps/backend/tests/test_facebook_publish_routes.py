@@ -68,9 +68,7 @@ def graph(monkeypatch):
             original_init(self, *args, **kwargs)
 
         monkeypatch.setattr(httpx.AsyncClient, "__init__", patched_init)
-        publisher = FacebookPublisher(
-            Settings(facebook_client_id="x", facebook_client_secret="y")
-        )
+        publisher = FacebookPublisher(Settings(facebook_client_id="x", facebook_client_secret="y"))
         return publisher, recorder
 
     return _make
@@ -84,7 +82,7 @@ async def test_bai_khong_anh_di_duong_feed(graph):
         access_token="tok",
     )
 
-    assert recorder.paths() == ["/v21.0/page_1/feed"]
+    assert recorder.paths() == ["/v26.0/page_1/feed"]
     assert recorder.form_of(0)["message"].startswith("Tu")
     assert result.external_post_id == "page_1_post_9"
 
@@ -101,16 +99,14 @@ async def test_bai_mot_anh_di_duong_photos(graph):
         access_token="tok",
     )
 
-    assert recorder.paths() == ["/v21.0/page_1/photos"]
+    assert recorder.paths() == ["/v26.0/page_1/photos"]
     # ID *bài*, không phải ID *ảnh*. Lấy nhầm là mất khả năng đối soát.
     assert result.external_post_id == "page_1_post_5"
 
 
 async def test_nhieu_anh_upload_an_truoc_roi_moi_dang_mot_bai(graph):
     """Thiếu `published=false` là mỗi ảnh thành một bài rời trên Trang khách."""
-    publisher, recorder = graph(
-        {"/photos": {"id": "photo_x"}, "/feed": {"id": "page_1_post_7"}}
-    )
+    publisher, recorder = graph({"/photos": {"id": "photo_x"}, "/feed": {"id": "page_1_post_7"}})
 
     result = await publisher.publish(
         PublishRequest(
@@ -126,8 +122,8 @@ async def test_nhieu_anh_upload_an_truoc_roi_moi_dang_mot_bai(graph):
     )
 
     paths = recorder.paths()
-    assert paths[:3] == ["/v21.0/page_1/photos"] * 3
-    assert paths[3] == "/v21.0/page_1/feed"
+    assert paths[:3] == ["/v26.0/page_1/photos"] * 3
+    assert paths[3] == "/v26.0/page_1/feed"
     for index in range(3):
         assert recorder.form_of(index)["published"] == "false"
     assert result.external_post_id == "page_1_post_7"

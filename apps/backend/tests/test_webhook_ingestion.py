@@ -229,7 +229,7 @@ class TestLocalSimulator:
         assert listing.json()["total"] == 1
 
     @pytest.mark.asyncio
-    async def test_exact_faq_auto_replies_but_substring_does_not(self, client: AsyncClient):
+    async def test_exact_faq_is_suggested_but_never_auto_sent(self, client: AsyncClient):
         headers = await _onboard(client, "webhook.faq@havi.vn")
         await client.put(
             "/brand-profile",
@@ -250,10 +250,10 @@ class TestLocalSimulator:
             json={"content": "giờ mở cửa?", "external_message_id": "m_exact"},
             headers=headers,
         )
-        assert exact.json()["status"] == "sent"
+        assert exact.json()["status"] == "drafted"
 
-        # Câu dài chỉ *chứa* câu FAQ thì không được tự gửi — đó là cách bản cũ
-        # sai, và nó gửi nhầm câu trả lời cho khách.
+        # Câu dài chỉ *chứa* câu FAQ cũng là bản nháp, nhưng không được lấy câu
+        # FAQ làm gợi ý vì ngữ cảnh có thể khác.
         loose = await client.post(
             "/webhooks/dev/simulate",
             json={
@@ -337,11 +337,7 @@ async def _onboard(client: AsyncClient, email: str) -> dict:
 
 
 class TestFaqFailClosed:
-    """FAQ tự động là đường DUY NHẤT trong Havi đi tới người ngoài không qua mắt chủ tiệm.
-
-    Nói sai giờ mở cửa hay một cam kết dịch vụ với khách thì không rút lại được,
-    nên mọi trạng thái không rõ ràng phải nghiêng về "không gửi".
-    """
+    """FAQ chỉ trở thành gợi ý khi cờ duyệt là boolean True thật sự."""
 
     def test_thieu_co_approved_thi_khong_tu_tra_loi(self):
         """Bản trước dùng `entry.get("approved", True)` — thiếu trường là gửi luôn.
@@ -368,7 +364,7 @@ class TestFaqFailClosed:
             faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h", "approved": value}]
             assert _match_approved_faq(faqs, "Mấy giờ mở cửa?") is None, value
 
-    def test_chi_approved_true_that_su_moi_gui(self):
+    def test_chi_approved_true_that_su_moi_goi_y(self):
         from application.services.inbox_service import _match_approved_faq
 
         faqs = [{"question": "Mấy giờ mở cửa?", "answer": "8h–20h", "approved": True}]

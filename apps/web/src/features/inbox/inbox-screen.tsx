@@ -198,18 +198,23 @@ export function InboxScreen() {
           body={t("Hội thoại mới từ các kênh đã kết nối sẽ xuất hiện tại đây.")}
         />
       ) : (
-      <div className={styles.workspace}>
+      <div className={`${styles.workspace} ${activeThread ? styles.threadOpen : ""}`}>
         {/* Sidebar */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
             <div className={styles.searchBar}>
               <input 
                 type="search" 
+                aria-label={t("Tìm trong hội thoại")}
                 placeholder={t("Tìm khách hàng hoặc tin nhắn...")} 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
-              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <select
+                aria-label={t("Lọc hội thoại theo trạng thái")}
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+              >
                 <option value="all">{t("Tất cả")}</option>
                 <option value="unread">{t("Cần trả lời")}</option>
                 <option value="resolved">{t("Đã xong")}</option>
@@ -222,9 +227,10 @@ export function InboxScreen() {
               <div style={{ padding: "20px", textAlign: "center", color: "var(--color-muted)", fontSize: "14px" }}>{t("Không tìm thấy hội thoại nào")}</div>
             ) : (
               filteredThreads.map(thread => {
-                const latestItem = thread.items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+                const latestItem = [...thread.items].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
                 return (
-                  <div 
+                  <button
+                    type="button"
                     key={thread.id} 
                     className={`${styles.threadItem} ${activeThreadId === thread.id ? styles.threadItemActive : ""}`}
                     onClick={() => setActiveThreadId(thread.id)}
@@ -242,7 +248,7 @@ export function InboxScreen() {
                       </span>
                       {thread.hasUnread && <span className={styles.badgeIndicator} />}
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
@@ -254,12 +260,21 @@ export function InboxScreen() {
           {activeThread ? (
             <>
               <div className={styles.mainHeader}>
+                <button
+                  type="button"
+                  className={styles.mobileBack}
+                  onClick={() => setActiveThreadId(null)}
+                  aria-label={t("Quay lại danh sách hội thoại")}
+                >
+                  <span aria-hidden="true">←</span>
+                  {t("Hội thoại")}
+                </button>
                 <div className={styles.mainHeaderTitle}>{activeThread.author_name}</div>
                 <span className={styles.threadPlatform}>{platformName[activeThread.platform] ?? activeThread.platform}</span>
               </div>
               
               <div className={styles.chatHistory}>
-                {activeThread.items
+                {[...activeThread.items]
                   .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                   .map(item => (
                     <div key={item.id} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -280,7 +295,7 @@ export function InboxScreen() {
                       {item.status === "sent" && item.ai_suggested_reply && (
                         <div className={`${styles.bubbleWrapper} ${styles.bubbleOutgoing}`}>
                           <div className={styles.bubbleContent}>{item.ai_suggested_reply}</div>
-                          <span className={styles.bubbleMeta}>{t("Havi gửi •")}{" "}{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                          <span className={styles.bubbleMeta}>{t("Đã gửi qua Havi •")}{" "}{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       )}
@@ -299,6 +314,11 @@ export function InboxScreen() {
                     onChange={(event) => setDrafts((current) => ({ ...current, [pendingItem.id]: event.target.value }))}
                     rows={3}
                   />
+                  {pendingItem.type === "message" && pendingItem.platform === "facebook" ? (
+                    <p className={styles.composerHint}>
+                      {t("Messenger thường chỉ cho phép trả lời trong vòng 24 giờ từ tin nhắn gần nhất của khách.")}
+                    </p>
+                  ) : null}
                   <div className={styles.composerActions}>
                     <Button variant="outline" onClick={() => void dismiss(pendingItem)} disabled={busyId === pendingItem.id}>{t("Bỏ qua")}</Button>
                     <Button onClick={() => void send(pendingItem)} disabled={busyId === pendingItem.id || !(drafts[pendingItem.id] ?? "").trim()}>

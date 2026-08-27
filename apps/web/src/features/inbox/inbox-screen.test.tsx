@@ -63,7 +63,7 @@ describe("InboxScreen", () => {
 
     // Gửi xong thì ô soạn biến mất và câu vừa gửi thành bong bóng của tiệm —
     // `ai_suggested_reply` đã bị ghi đè bằng text thật ở `update_status`.
-    await screen.findByText(/Havi gửi/);
+    await screen.findByText(/Đã gửi qua Havi/);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
     const replyRequest = fetchMock.mock.calls[1]?.[0];
@@ -71,6 +71,25 @@ describe("InboxScreen", () => {
     expect(await (replyRequest as Request).clone().json()).toEqual({
       text: "Dạ shop còn lịch lúc 16:00 ạ.",
     });
+  });
+
+  it("danh sách hội thoại dùng nút và có đường quay lại cho mobile", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ items: [inboxItem], total: 1 }),
+    );
+
+    render(<InboxScreen />);
+
+    const threadButton = await screen.findByRole("button", {
+      name: /Minh Anh.*Shop còn lịch chiều nay không/i,
+    });
+    fireEvent.click(threadButton);
+
+    const back = screen.getByLabelText("Quay lại danh sách hội thoại");
+    expect(screen.getByLabelText(/Trả lời Minh Anh/)).toBeInTheDocument();
+
+    fireEvent.click(back);
+    expect(screen.queryByLabelText(/Trả lời Minh Anh/)).toBeNull();
   });
 
   it("hai khách TRÙNG TÊN không bị gộp làm một hội thoại", async () => {

@@ -110,7 +110,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect }: MediaPickerModal
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img className={styles.thumb} src={asset.thumbnail_url} alt="" />
                       ) : (
-                        <div className={styles.thumbFallback} aria-hidden="true" style={{ fontSize: 32, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
+                        <div className={styles.thumbFallback} aria-hidden="true">
                           🎬
                         </div>
                       )

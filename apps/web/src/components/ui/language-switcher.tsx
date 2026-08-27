@@ -6,6 +6,7 @@
 "use client";
 
 import { useLanguage } from "@/lib/i18n/language-context";
+import { ENGLISH_UI_ENABLED } from "@/lib/i18n/availability";
 
 type LanguageSwitcherProps = {
   variant?: "pill" | "compact" | "subtle";
@@ -17,6 +18,10 @@ export function LanguageSwitcher({
   className = "",
 }: LanguageSwitcherProps) {
   const { lang, toggleLang } = useLanguage();
+
+  // Không hiện một lựa chọn chỉ dịch được một phần nhỏ giao diện. Khi flag bật,
+  // i18n audit sẽ tự chuyển phần bản dịch thiếu từ thông tin thành lỗi release.
+  if (!ENGLISH_UI_ENABLED) return null;
 
   if (variant === "compact") {
     return (

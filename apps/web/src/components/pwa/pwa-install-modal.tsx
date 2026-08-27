@@ -54,32 +54,16 @@ function getServerPlatformSnapshot(): "ios" | "android" | "desktop" {
   return "desktop";
 }
 
-function subscribeBanner(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-function getBannerSnapshot(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem("havi_pwa_banner_dismissed") === "true";
-}
-function getServerBannerSnapshot() {
-  return false;
-}
-
 export function PwaInstallModal() {
 const { lang, t } = useLanguage();
   const mounted = useSyncExternalStore(subscribeMount, getMountSnapshot, getServerMountSnapshot);
   const detectedPlatform = useSyncExternalStore(subscribePlatform, getPlatformSnapshot, getServerPlatformSnapshot);
-  const bannerStored = useSyncExternalStore(subscribeBanner, getBannerSnapshot, getServerBannerSnapshot);
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<"ios" | "android" | "desktop" | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [userDismissed, setUserDismissed] = useState(false);
 
   const activeTab = selectedTab ?? detectedPlatform;
-  const isBannerDismissed = userDismissed || bannerStored;
 
   const isStandalone = useSyncExternalStore(
     subscribeStandalone,
@@ -114,13 +98,6 @@ const { lang, t } = useLanguage();
       }
     } else {
       setIsOpen(true);
-    }
-  };
-
-  const handleDismissBanner = () => {
-    setUserDismissed(true);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("havi_pwa_banner_dismissed", "true");
     }
   };
 
@@ -365,48 +342,6 @@ const { lang, t } = useLanguage();
         <span className={styles.btnIcon}>📲</span>
         <span className={styles.btnText}>{t("Cài App Điện Thoại")}</span>
       </button>
-
-      {/* Floating Smart Banner đập vô mắt trên Mobile / Web */}
-      {!isBannerDismissed && (
-        <aside
-          className={styles.smartFloatingBanner}
-          role="region"
-          aria-label={t("Cài đặt Havi ra màn hình chính")}
-        >
-          <div className={styles.bannerLeft}>
-            <div className={styles.bannerIcon}>
-              <Logo size={28} />
-            </div>
-            <div className={styles.bannerText}>
-              <div className={styles.bannerHeadline}>
-                <span className={styles.bannerBadge}>HOT ⚡</span>
-                <strong>{t("Cài Havi Lên Điện Thoại")}</strong>
-              </div>
-              <p className={styles.bannerDesc}>
-                {t("Mở Havi 1 chạm từ màn hình chính và xem hộp thư thuận tiện hơn.")}
-              </p>
-            </div>
-          </div>
-          <div className={styles.bannerActions}>
-            <button
-              type="button"
-              className={styles.bannerCtaBtn}
-              onClick={handleOpenModal}
-            >
-              📲 {t("Cài App Ngay")}
-            </button>
-            <button
-              type="button"
-              className={styles.bannerCloseBtn}
-              onClick={handleDismissBanner}
-              title={t("Đóng thông báo")}
-              aria-label={t("Đóng")}
-            >
-              ✕
-            </button>
-          </div>
-        </aside>
-      )}
 
       {/* Render Modal ra Document.Body bằng Portal để không bao giờ bị che khuất */}
       {mounted && typeof document !== "undefined" && document.body

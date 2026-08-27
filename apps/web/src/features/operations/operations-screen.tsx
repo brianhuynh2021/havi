@@ -48,11 +48,22 @@ const vnDateTime = new Intl.DateTimeFormat("vi-VN", {
 });
 
 function metricCards(data: OperationsMetrics, t: Translate) {
+  const slowThresholdSeconds = Math.round(data.slow_content_generation_threshold_ms / 1000);
   return [
-    { label: "Event", value: number(data.event_count), detail: t("{value} lỗi", { value: number(data.error_count) }) },
-    { label: t("Tỷ lệ lỗi"), value: percent(data.error_rate), detail: t("Theo event log") },
-    { label: "Token", value: number(data.tokens_total), detail: `${number(data.tokens_in)} in / ${number(data.tokens_out)} out` },
-    { label: "P95 latency", value: `${number(data.p95_duration_ms)}ms`, detail: `Avg ${number(data.avg_duration_ms)}ms` },
+    { label: t("Sự kiện"), value: number(data.event_count), detail: t("{value} lỗi trong nhật ký", { value: number(data.error_count) }) },
+    { label: t("Tỷ lệ lỗi"), value: percent(data.error_rate), detail: t("Theo nhật ký sự kiện") },
+    { label: t("Token AI"), value: number(data.tokens_total), detail: t("{input} vào / {output} ra", { input: number(data.tokens_in), output: number(data.tokens_out) }) },
+    { label: t("Độ trễ P95"), value: `${number(data.p95_duration_ms)}ms`, detail: t("Trung bình {value}ms", { value: number(data.avg_duration_ms) }) },
+    {
+      label: t("Tạo bài chậm"),
+      value: number(data.slow_content_generation_count),
+      detail: t("{count}/{total} lượt quá {seconds} giây · P95 {p95}ms", {
+        count: number(data.slow_content_generation_count),
+        total: number(data.content_generation_count),
+        seconds: slowThresholdSeconds,
+        p95: number(data.content_generation_p95_ms),
+      }),
+    },
   ];
 }
 
@@ -107,11 +118,11 @@ export function OperationsScreen() {
     <>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Internal pilot</p>
+          <p className={styles.eyebrow}>{t("Thử nghiệm nội bộ")}</p>
           <h1 className={styles.title}>{t("Vận hành")}</h1>
         </div>
         <p className={styles.subtitle}>{t(
-          "Debug job, token và publish health bằng dữ liệu aggregate trong workspace."
+          "Theo dõi tác vụ, token và tình trạng xuất bản bằng số liệu tổng hợp của không gian làm việc."
         )}</p>
       </header>
 
@@ -133,12 +144,12 @@ export function OperationsScreen() {
             <EmptyState
               title={t("Chưa có dữ liệu vận hành")}
               body={t(
-                "Khi worker tạo nội dung hoặc publish job chạy, số liệu debug sẽ hiện ở đây."
+                "Khi tác vụ tạo nội dung hoặc xuất bản chạy, số liệu vận hành sẽ hiện ở đây."
               )}
             />
           ) : null}
 
-          <section className={styles.statsGrid} aria-label={t("Số liệu job nội bộ")}>
+          <section className={styles.statsGrid} aria-label={t("Số liệu tác vụ nội bộ")}>
             {metricCards(data, t).map((item) => (
               <div key={item.label} className={styles.statCard}>
                 <p className={styles.statLabel}>{item.label}</p>
@@ -181,12 +192,12 @@ export function OperationsScreen() {
               </p>
             </div>
             <div className={styles.statCard}>
-              <p className={styles.statLabel}>{t("Chi phí mỗi job")}</p>
+              <p className={styles.statLabel}>{t("Chi phí mỗi lượt tạo bài")}</p>
               <p className={styles.statValue}>
                 {data.job_count > 0 ? vnd(data.est_cost_per_job_vnd, t) : "—"}
               </p>
               <p className={styles.statDetail}>
-                {number(data.avg_tokens_per_job)} {t("token/job")}
+                {number(data.avg_tokens_per_job)} {t("token/lượt")}
               </p>
             </div>
           </section>
@@ -204,10 +215,10 @@ export function OperationsScreen() {
 
           <section className={styles.splitGrid}>
             <article className={styles.panel}>
-              <h2 className={styles.panelTitle}>Publish health</h2>
+              <h2 className={styles.panelTitle}>{t("Tình trạng xuất bản")}</h2>
               <div className={styles.publishGrid}>
                 <div>
-                  <p className={styles.miniLabel}>{t("Tổng job")}</p>
+                  <p className={styles.miniLabel}>{t("Tổng lượt")}</p>
                   <p className={styles.miniValue}>{number(data.publish.total)}</p>
                 </div>
                 <div>
@@ -215,35 +226,35 @@ export function OperationsScreen() {
                   <p className={styles.miniValue}>{number(data.publish.succeeded)}</p>
                 </div>
                 <div>
-                  <p className={styles.miniLabel}>Dead-letter</p>
+                  <p className={styles.miniLabel}>{t("Cần xử lý thủ công")}</p>
                   <p className={styles.miniValue}>{number(data.publish.dead_letter)}</p>
                 </div>
               </div>
               <div className={styles.rateRows}>
                 <div className={styles.rateRow}>
-                  <span>Success rate</span>
+                  <span>{t("Tỷ lệ thành công")}</span>
                   <strong>{percent(data.publish.success_rate)}</strong>
                 </div>
                 <div className={styles.rateRow}>
-                  <span>Dead-letter rate</span>
+                  <span>{t("Tỷ lệ cần xử lý thủ công")}</span>
                   <strong>{percent(data.publish.dead_letter_rate)}</strong>
                 </div>
               </div>
             </article>
 
             <article className={styles.panel}>
-              <h2 className={styles.panelTitle}>Provider breakdown</h2>
+              <h2 className={styles.panelTitle}>{t("Theo nhà cung cấp")}</h2>
               {data.providers.length === 0 ? (
                 <EmptyState
-                  title={t("Chưa có provider nào")}
-                  body={t("Provider sẽ xuất hiện sau khi LLM hoặc publisher ghi event.")}
+                  title={t("Chưa có nhà cung cấp nào")}
+                  body={t("Nhà cung cấp sẽ xuất hiện sau khi AI hoặc nền tảng ghi nhận một sự kiện.")}
                 />
               ) : (
                 <div className={styles.providerList}>
                   {data.providers.map((provider) => (
                     <div key={provider.provider} className={styles.providerRow}>
                       <span className={styles.providerName}>{provider.provider}</span>
-                      <span>{number(provider.event_count)} event</span>
+                      <span>{number(provider.event_count)} {t("sự kiện")}</span>
                       <span>{number(provider.tokens_total)} token</span>
                       <strong>{providerErrorRate(provider)}{" "}{t("lỗi")}</strong>
                     </div>

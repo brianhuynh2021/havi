@@ -24,6 +24,7 @@ from datetime import UTC, datetime
 
 import httpx
 
+from adapters.meta_graph import GRAPH_BASE
 from core.config import Settings
 from core.enums import Channel
 from domain.ports.publisher import (
@@ -38,9 +39,6 @@ from domain.ports.publisher import (
 )
 
 logger = logging.getLogger(__name__)
-
-GRAPH_VERSION = "v21.0"
-GRAPH_BASE = f"https://graph.facebook.com/{GRAPH_VERSION}"
 
 #: Mã lỗi Graph API nghĩa là token/quyền hỏng — KHÔNG retry, cần nối lại kênh.
 #: 190 = token hết hạn hoặc bị thu hồi; 200/10 = thiếu quyền; 102 = phiên hỏng.

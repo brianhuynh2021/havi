@@ -1,7 +1,11 @@
-# Havi Commercial Launch & Go-To-Market Execution Guide
+# Havi Design-Partner Launch Guide
 
-> **Target Audience:** Founders, Lead Engineers, Growth Marketers  
-> **Mission:** Bring Havi to market, onboard Cohort 1 (10–50 paying shops), and automate revenue collection via PayOS VietQR.
+> **Target Audience:** Founder, product and operations team
+> **Mission:** onboard 5–10 paying design partners, verify the Facebook operating
+> loop with real data, and collect evidence before a self-service launch.
+>
+> All claims in this guide are subordinate to
+> [PRODUCT_CONTRACT.md](../product/PRODUCT_CONTRACT.md).
 
 ---
 
@@ -16,8 +20,8 @@ What the pitch may claim, because the software does it and can prove it:
 1. **Posting keeps its rhythm.** Prepare a week in one sitting; Havi publishes
    one story per day on the schedule the owner approved, and reports which posts
    actually landed.
-2. **Messages land in one inbox.** Comments and Messenger together; approved
-   FAQs answer themselves, everything else waits for a human.
+2. **Messages land in one inbox.** Comments and Messenger appear together;
+   approved FAQs can prefill a reply, and a person decides what is sent.
 3. **Clips already made get published.** Upload, Havi checks the clip fits the
    channel, posts it, then reads the page back to confirm.
 
@@ -68,43 +72,46 @@ docker compose -f docker-compose.prod.yml up -d
 
 ---
 
-## 3. Cohort 1 Target Profile (10–20 Pilot Shops)
+## 3. Cohort 1 target profile (5–10 design partners)
 
-| Sector | Target % | Pain Point Solved by Havi |
-|---|---|---|
-| **Spa / Salon / Thẩm Mỹ** | 35% | Bận làm dịch vụ dính tay $\rightarrow$ Havi trực Inbox báo giá + chốt lịch 24/7. |
-| **Quán Ăn / Cafe / F&B** | 25% | Khách hỏi menu đêm $\rightarrow$ Havi gửi menu + địa chỉ Google Maps tức thì. |
-| **Cò / Môi Giới Bất Động Sản** | 25% | Đi đường xem đất $\rightarrow$ Chụp 1 ảnh sổ đỏ, Havi biến thành 3 bài đăng + kịch bản TikTok. |
-| **Dịch Vụ Kỹ Thuật / Đào Tạo** | 15% | Đăng bài dự án thực chiến hàng ngày lên Fanpage/Google Maps mà không tốn 1 giờ viết. |
+Select service businesses that already operate an active Facebook Page and have
+at least two people in the social workflow: one handles content or inbox work,
+and one owns or approves it. Training centres, clinics, spas and small service
+chains are suitable examples. Do not recruit a business whose primary need is
+orders, POS, livestream selling or ad execution; those are outside Havi's scope.
 
 ---
 
-## 4. 15-Second Sales Pitch & Onboarding Scripts
+## 4. Honest pitch and onboarding
 
 ### 4.1 15-Second Elevator Pitch (Nói trực tiếp hoặc nhắn Zalo)
-> *"Chào anh/chị, thay vì bỏ 4–5 triệu thuê người đăng bài mà nửa đêm vẫn bị sót tin nhắn của khách, Havi là nhân viên AI chỉ 10k/ngày: vừa tự làm bài đăng đa kênh chuẩn ngành, vừa trực page trả lời bảng giá và xin số điện thoại khách trong 5 giây. Em cài cho anh/chị dùng thử 7 ngày miễn phí nhé, chỉ mất 3 phút kết nối Fanpage thôi!"*
+> *"Havi gom việc social cần xử lý vào một hàng đợi: bài chờ duyệt, tin nhắn
+> đang chờ, bài đăng lỗi và kênh mất kết nối. Havi chuẩn bị nội dung, người có
+> quyền duyệt, rồi hệ thống chỉ báo thành công sau khi Facebook xác nhận."*
 
 ### 4.2 3-Minute Onboarding Protocol
 1. **Phút 1:** Mở `app.havi.vn` $\rightarrow$ Đăng ký tài khoản $\rightarrow$ Chọn ngành (Spa, F&B, BĐS...).
 2. **Phút 2:** Bấm **"Kết nối Facebook"** $\rightarrow$ Chọn Fanpage của tiệm.
-3. **Phút 3:** Nhập 3–5 dịch vụ chính + bảng giá $\rightarrow$ Bấm chụp 1 ảnh để Havi tạo ngay bài đăng đầu tiên.
+3. **Sau khi nối:** nhập thông tin thương hiệu, tạo một bản nháp, duyệt và xác
+   nhận một bài thật hoặc xử lý một hội thoại thật trong 24 giờ.
 
 ---
 
-## 5. Automated 7-Day VietQR Conversion Protocol
+## 5. Seven-day design-partner protocol
 
 ```
-[Day 1-6: Trải nghiệm 7 ngày Miễn Phí]
+[Day 1: Kết nối Facebook Page thật]
   │
-  ├─► Havi tự đăng 1-2 bài/ngày + trực inbox trả lời khách
+  ├─► Founder cùng khách hoàn thành một hành động đã được duyệt
   │
-[Day 7: Thông báo kích hoạt gói dịch vụ]
+[Day 2-6: Quan sát hàng đợi, lỗi đăng và hội thoại thật]
   │
-  ├─► Popup hiển thị VietQR PayOS (189k Gói Khởi Nghiệp / 369k Gói Chuyên Nghiệp)
+  ├─► Ghi nhận việc được xử lý, thời gian phản hồi và phản hồi của từng vai trò
   │
-[Khách hàng quét chuyển khoản]
+[Day 7: Review cùng khách]
   │
-  └─► PayOS Webhook kích hoạt trong 1.0s ➔ Tự động gia hạn 30 ngày ➔ Xuất hóa đơn VAT
+  └─► Chỉ đề nghị trả phí khi vòng vận hành thật đã hoàn tất; VietQR chỉ được
+      coi là thanh toán sau khi webhook hoặc đối soát xác nhận
 ```
 
 ---
@@ -124,4 +131,3 @@ npm --prefix apps/web test
 # exercises nothing.
 cd apps/backend && uv run pytest
 ```
-

@@ -28,6 +28,10 @@ function metrics(overrides: Record<string, unknown> = {}) {
     error_rate: 0.25,
     avg_duration_ms: 120,
     p95_duration_ms: 410,
+    content_generation_count: 4,
+    slow_content_generation_count: 1,
+    content_generation_p95_ms: 21_000,
+    slow_content_generation_threshold_ms: 20_000,
     tokens_in: 1000,
     tokens_out: 250,
     tokens_total: 1250,
@@ -97,10 +101,12 @@ describe("OperationsScreen", () => {
     expect(screen.getByText("25%")).toBeInTheDocument();
     expect(screen.getByText("1.250")).toBeInTheDocument();
     expect(screen.getByText("410ms")).toBeInTheDocument();
-    expect(screen.getByText("Publish health")).toBeInTheDocument();
+    expect(screen.getByText("Tạo bài chậm")).toBeInTheDocument();
+    expect(screen.getByText(/1\/4 lượt quá 20 giây/)).toBeInTheDocument();
+    expect(screen.getByText("Tình trạng xuất bản")).toBeInTheDocument();
     expect(screen.getByText("80%")).toBeInTheDocument();
     expect(screen.getByText("20%")).toBeInTheDocument();
-    expect(screen.getByText("Provider breakdown")).toBeInTheDocument();
+    expect(screen.getByText("Theo nhà cung cấp")).toBeInTheDocument();
     expect(screen.getByText("openai")).toBeInTheDocument();
     expect(screen.getByText("facebook")).toBeInTheDocument();
     await waitFor(() => expect(asked[0].pathname).toBe("/analytics/operations"));
@@ -121,7 +127,7 @@ describe("OperationsScreen", () => {
 
     render(<OperationsScreen />);
 
-    expect(await screen.findByText("Provider breakdown")).toBeInTheDocument();
+    expect(await screen.findByText("Theo nhà cung cấp")).toBeInTheDocument();
     expect(screen.queryByText(/customer@example.com/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/sk-secret/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/graph token expired/i)).not.toBeInTheDocument();
@@ -154,7 +160,7 @@ describe("OperationsScreen", () => {
     render(<OperationsScreen />);
 
     expect(await screen.findByText(/chưa có dữ liệu vận hành/i)).toBeInTheDocument();
-    expect(screen.getByText(/chưa có provider nào/i)).toBeInTheDocument();
+    expect(screen.getByText(/chưa có nhà cung cấp nào/i)).toBeInTheDocument();
   });
 
   it("lỗi mạng thì báo rõ và cho thử lại", async () => {

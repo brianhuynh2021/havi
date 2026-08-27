@@ -93,7 +93,11 @@ be "Ready for testing":
 |---|---|
 | `pages_show_list` | Read Pages the user manages |
 | `pages_read_engagement` | Read Page metadata and retrieve Page tokens |
+| `pages_read_user_content` | Receive user-authored Page comments |
 | `pages_manage_posts` | Publish posts |
+| `pages_manage_engagement` | Submit an explicit public comment reply |
+| `pages_manage_metadata` | Subscribe the selected Page to webhooks |
+| `pages_messaging` | Receive and explicitly reply to Messenger conversations |
 
 If these permissions are not enabled here, they cannot be selected in the
 Configuration step.
@@ -109,14 +113,32 @@ Create a Configuration with:
 - Login variation: General
 - Access token: User access token
 - Permissions: exactly `pages_show_list`, `pages_read_engagement`,
-  `pages_manage_posts`
-- Do not add `business_management` or `pages_manage_engagement`
+  `pages_read_user_content`, `pages_manage_posts`, `pages_manage_engagement`,
+  `pages_manage_metadata`, and `pages_messaging`
+- Do not add `business_management` or advertising permissions
 
 Copy the Configuration ID to `HAVI_FACEBOOK_CONFIG_ID`.
 
 If the app uses classic Facebook Login, leave `HAVI_FACEBOOK_CONFIG_ID` empty.
 
-### 2.5. Development Mode Access
+### 2.5. Page Webhooks
+
+In the Webhooks product, configure the `Page` object with:
+
+- Callback URL: `https://api.your-domain.com/webhooks/meta`
+- Verify token: the same high-entropy value as `HAVI_META_WEBHOOK_VERIFY_TOKEN`
+- Fields: `messages` and `feed`
+
+OAuth completion checks all seven granted permissions, requires Page tasks
+`CREATE_CONTENT`, `MESSAGING`, and `MODERATE`, then subscribes that Page through
+`/{page-id}/subscribed_apps`. A failure in any step creates no connection.
+
+After deploying migration `a5b6c7d8e9f0`, reconnect any Facebook Page that was
+connected on an older build. Existing rows cannot be safely backfilled with the
+Meta app-scoped user ID; reconnecting captures it without guessing or silently
+revoking every live connection.
+
+### 2.6. Development Mode Access
 
 Before App Review, only app roles can use the app in Development mode. Add closed
 beta users manually as Administrator, Developer, or Tester.
@@ -455,6 +477,8 @@ Do not invite customer beta users while any critical item remains unchecked:
 - [ ] API, worker, beat, and web processes are all running
 - [ ] Beat verified by approving a post and seeing it publish
 - [ ] Facebook App Domains, Redirect URI, permissions, and Configuration ID set
+- [ ] Meta verifies `/webhooks/meta`; the test Page is subscribed to `messages,feed`
+- [ ] One real Messenger message and one Page comment arrive and can be explicitly replied to
 - [ ] Reverse proxy overwrites `X-Forwarded-For`
 - [ ] Real email provider configured for password reset
 - [ ] Redis failure alerting configured

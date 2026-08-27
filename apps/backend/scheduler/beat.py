@@ -35,11 +35,6 @@ celery_app.conf.beat_schedule = {
         "task": "havi.video.reconcile",
         "schedule": crontab(minute="*/10"),
     },
-    # Refresh access token nền tảng trước khi hết hạn
-    "refresh-platform-tokens": {
-        "task": "havi.scheduler.refresh_platform_tokens",
-        "schedule": crontab(hour="*/6", minute=0),
-    },
     # Nhắc đội vận hành về workspace sắp hết hạn. Một lần mỗi ngày, 8h sáng giờ
     # VN (1h UTC) — nhắc lúc người ta bắt đầu ngày làm việc, không nhắc lúc nửa
     # đêm. Chỉ gửi ở các mốc ngày trong `renewal.REMINDER_DAYS`, nên chạy hằng
@@ -47,10 +42,5 @@ celery_app.conf.beat_schedule = {
     "notify-due-renewals": {
         "task": "havi.scheduler.notify_due_renewals",
         "schedule": crontab(hour=1, minute=0),
-    },
-    # Chụp engagement snapshot cho tab Báo cáo (không cần real-time)
-    "poll-engagement": {
-        "task": "havi.scheduler.poll_engagement",
-        "schedule": crontab(hour="*/3", minute=15),
     },
 }

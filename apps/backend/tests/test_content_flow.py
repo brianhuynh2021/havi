@@ -10,6 +10,7 @@ Celery cũng không chạy thật: `RecordingJobQueue` thay cho Redis (xem
 """
 
 import json
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
@@ -519,6 +520,15 @@ async def test_event_log_ghi_token_va_provider_vao_db(
         )
     ).json()
 
+    # Giả lập job đã chờ queue 25 giây. Metric P1 phải đo từ lúc API tạo job,
+    # không được chỉ lấy latency 1ms của FakeProvider.
+    stored_job = await ContentRepository(db_session).get_job(
+        workspace_id=UUID(job["workspace_id"]), job_id=UUID(job["id"])
+    )
+    assert stored_job is not None
+    stored_job.created_at = datetime.now(UTC) - timedelta(seconds=25)
+    await db_session.flush()
+
     engine = _engine(
         db_session,
         FakeProvider(
@@ -548,6 +558,8 @@ async def test_event_log_ghi_token_va_provider_vao_db(
     assert entry.tokens_in == 44
     assert entry.tokens_out == 66
     assert "anthropic" in entry.output_summary
+    assert entry.duration_ms >= 25_000
+    assert "provider_latency_ms=" in entry.output_summary
 
 
 async def test_prompt_chua_brand_voice_va_banned_claims(

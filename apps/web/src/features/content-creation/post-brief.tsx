@@ -31,6 +31,7 @@ export type UploadRow = {
   status: "uploading" | "complete" | "cancelled" | "failed";
   message?: string;
   assetId?: string;
+  file: File;
   controller: AbortController;
 };
 
@@ -83,6 +84,8 @@ type PostBriefProps = {
   onAddNote: () => void;
   onRemoveChip: (key: string) => void;
   onPickFiles: (files: FileList | null) => void;
+  onCancelUpload: (key: string) => void;
+  onRetryUpload: (key: string) => void;
   onOpenVoice: () => void;
   onOpenMediaPicker: () => void;
   onGenerate: () => void;
@@ -98,6 +101,8 @@ export function PostBrief({
   onAddNote,
   onRemoveChip,
   onPickFiles,
+  onCancelUpload,
+  onRetryUpload,
   onOpenVoice,
   onOpenMediaPicker,
   onGenerate,
@@ -119,7 +124,7 @@ export function PostBrief({
     <>
       <section className={styles.rawSection} aria-labelledby="brief-title">
         <div className={styles.stepTitle}>
-          <span className={styles.stepNumber}>2</span>
+          <span className={styles.stepNumber} aria-hidden="true">3</span>
           <span id="brief-title">{t("Kể cho Havi nghe")}</span>
         </div>
 
@@ -171,14 +176,45 @@ export function PostBrief({
           <Button variant="outline" onClick={onAddNote} disabled={!note.trim()}>{t("Thêm ghi chú")}</Button>
         </div>
 
-        {uploads.some((upload) => upload.status === "uploading") ? (
+        {uploads.some((upload) => upload.status !== "complete") ? (
           <ul className={styles.uploadList}>
             {uploads
-              .filter((upload) => upload.status === "uploading")
+              .filter((upload) => upload.status !== "complete")
               .map((upload) => (
-                <li key={upload.key} className={styles.uploadRow}>
-                  <span>{upload.fileName}</span>
-                  <span>{upload.progress}%</span>
+                <li
+                  key={upload.key}
+                  className={styles.uploadRow}
+                  data-status={upload.status}
+                >
+                  <div className={styles.uploadSummary}>
+                    <span className={styles.uploadFileName}>{upload.fileName}</span>
+                    <span>
+                      {upload.status === "uploading"
+                        ? t("Đang tải {progress}%", { progress: upload.progress })
+                        : upload.status === "cancelled"
+                          ? t("Đã huỷ")
+                          : t(upload.message ?? "Tải lên chưa thành công")}
+                    </span>
+                  </div>
+                  <div className={styles.uploadActions}>
+                    {upload.status === "uploading" ? (
+                      <button
+                        type="button"
+                        className={styles.uploadAction}
+                        onClick={() => onCancelUpload(upload.key)}
+                      >
+                        {t("Huỷ tải")}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.uploadAction}
+                        onClick={() => onRetryUpload(upload.key)}
+                      >
+                        {t("Thử lại")}
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
           </ul>

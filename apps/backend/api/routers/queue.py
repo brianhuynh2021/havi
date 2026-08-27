@@ -25,6 +25,7 @@ from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.db import DbSessionDep
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
+from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from api.deps import WorkspaceDep
 from core.enums import (
     Channel,
@@ -165,15 +166,23 @@ async def assign_inbox_item(
 ) -> WorkItem:
     """Nhận việc, hoặc trả lại hàng đợi khi `user_id` là `null`.
 
-    Không kiểm "người này có trong workspace không" ở đây vì `assigned_to_user_id`
-    có khoá ngoại `ON DELETE SET NULL` sang `users`, và giá trị chỉ dùng để hiện
-    tên — gán sai thì hậu quả là một cái tên lạ trên thẻ việc, không phải một lỗ
-    quyền. Ai được nhận việc gì là câu hỏi của lần sau.
+    Người được giao phải là thành viên workspace. Nếu chỉ dựa vào khoá ngoại tới
+    `users`, một UUID ở workspace khác có thể làm lộ tên người đó trên thẻ việc
+    và phá vỡ bất biến tenant dù bản thân tin nhắn vẫn không bị đọc chéo.
     """
     repo = InboxRepository(session)
     item = await repo.get(workspace_id=workspace_id, item_id=item_id)
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không có việc này trong workspace")
+
+    if payload.user_id is not None and not await WorkspaceMemberRepository(session).is_member(
+        workspace_id=workspace_id,
+        user_id=payload.user_id,
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Người được giao không thuộc workspace",
+        )
 
     updated = await repo.assign(item, user_id=payload.user_id)
 

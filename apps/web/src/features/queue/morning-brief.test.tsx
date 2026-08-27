@@ -69,32 +69,33 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("MorningBrief", () => {
-  it("mặc định thu gọn — người mở app mỗi ngày tới để làm việc, không đọc báo cáo", async () => {
+  it("mặc định mở để Time Havi Saved không bị giấu", async () => {
     mockBrief();
     render(<MorningBrief />);
 
-    expect(await screen.findByText(/3 bài đã lên kênh/)).toBeInTheDocument();
-    // Phần chi tiết chưa mở.
-    expect(screen.queryByText(/Havi làm thay bạn/)).toBeNull();
+    expect(await screen.findByText(/3 bài đã đăng/)).toBeInTheDocument();
+    expect(screen.getByText(/Havi đã tiết kiệm 31 phút/)).toBeInTheDocument();
   });
 
-  it("mở ra thì hiện PHÉP TÍNH thời gian tiết kiệm, không chỉ con số tổng", async () => {
+  it("hiện phép tính thời gian tiết kiệm và vẫn cho phép thu gọn", async () => {
     // Con số tổng mà ẩn giả định thì nó là quảng cáo, không phải số liệu. Khách
     // thấy được phép tính thì họ tự kiểm và tin.
     mockBrief();
     render(<MorningBrief />);
-    fireEvent.click(await screen.findByRole("button"));
+    const toggle = await screen.findByRole("button");
 
-    expect(screen.getByText(/Havi làm thay bạn/)).toBeInTheDocument();
+    expect(screen.getByText(/Havi đã tiết kiệm 31 phút/)).toBeInTheDocument();
     expect(screen.getByText(/11 × 2 phút = 22 phút/)).toBeInTheDocument();
     expect(screen.getByText(/3 × 3 phút = 9 phút/)).toBeInTheDocument();
     expect(screen.getByText(/Chỉ đếm việc Havi thật sự đã làm/)).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(screen.queryByText(/Havi đã tiết kiệm 31 phút/)).toBeNull();
   });
 
   it("nói rõ bao nhiêu việc bỏ sót là mất khách", async () => {
     mockBrief();
     render(<MorningBrief />);
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     // Khớp cả con số VỚI nhãn của nó: `/6/` trần khớp bất kỳ chỗ nào có chữ 6
     // trên màn, nên nó vẫn xanh khi con số này biến mất.
@@ -107,7 +108,7 @@ describe("MorningBrief", () => {
     // tra lịch mới biết đó là hôm nào.
     mockBrief();
     render(<MorningBrief />);
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     expect(screen.getByText("Thứ Năm")).toBeInTheDocument();
     expect(screen.getByText("Chủ Nhật")).toBeInTheDocument();
@@ -116,7 +117,7 @@ describe("MorningBrief", () => {
   it("lịch đủ bảy ngày thì nói thẳng là đủ, không ẩn khối đi", async () => {
     mockBrief(brief({ calendar_gaps: [] }));
     render(<MorningBrief />);
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     expect(screen.getByText(/Bảy ngày tới đã có bài mỗi ngày/)).toBeInTheDocument();
   });
@@ -130,7 +131,7 @@ describe("MorningBrief", () => {
     );
     render(<MorningBrief />);
 
-    expect(await screen.findByText(/không có hoạt động nào/)).toBeInTheDocument();
+    expect(await screen.findByText(/chưa ghi nhận hoạt động nào/)).toBeInTheDocument();
   });
 
   it("có bài lỗi thì tô riêng ngay ở dòng thu gọn", async () => {
@@ -141,7 +142,7 @@ describe("MorningBrief", () => {
     );
     render(<MorningBrief />);
 
-    expect(await screen.findByText(/2 bài lỗi/)).toBeInTheDocument();
+    expect(await screen.findByText(/2 bài đăng lỗi/)).toBeInTheDocument();
   });
 
   it("bản tin hỏng thì IM LẶNG, không che mất hàng đợi bằng banner lỗi", async () => {
@@ -159,7 +160,7 @@ describe("MorningBrief", () => {
     // hấp dẫn nhất và Havi không có dữ liệu nào cho cả ba.
     mockBrief();
     render(<MorningBrief />);
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     const body = document.body.textContent ?? "";
     for (const banned of ["doanh thu", "Doanh thu", "engagement", "đối thủ", "follower"]) {
@@ -187,7 +188,7 @@ describe("formatMinutes", () => {
     mockBrief();
     render(<MorningBrief />);
 
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     expect(screen.getByText(/2\s*kênh đang mở nhưng lâu chưa đăng/)).toBeInTheDocument();
     expect(screen.getByText("Facebook — bài trên Trang")).toBeInTheDocument();
@@ -200,7 +201,7 @@ describe("formatMinutes", () => {
     mockBrief();
     render(<MorningBrief />);
 
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     expect(screen.getByText(/nối\s*12\s*ngày, chưa đăng bài nào/)).toBeInTheDocument();
   });
@@ -211,7 +212,7 @@ describe("formatMinutes", () => {
     mockBrief();
     render(<MorningBrief />);
 
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     const body = document.body.textContent ?? "";
     for (const claim of ["nguội", "reach", "tương tác", "thuật toán", "sẽ giảm"]) {
@@ -225,7 +226,7 @@ describe("formatMinutes", () => {
     mockBrief(brief({ silent_channels: [] }));
     render(<MorningBrief />);
 
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
     expect(screen.queryByText(/kênh đang mở nhưng lâu chưa đăng/)).toBeNull();
   });
@@ -237,8 +238,8 @@ describe("formatMinutes", () => {
     mockBrief(withoutField);
     render(<MorningBrief />);
 
-    fireEvent.click(await screen.findByRole("button"));
+    await screen.findByRole("button");
 
-    expect(screen.getByText(/Havi làm thay bạn/)).toBeInTheDocument();
+    expect(screen.getByText(/Havi đã tiết kiệm 31 phút/)).toBeInTheDocument();
   });
 });

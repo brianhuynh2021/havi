@@ -74,20 +74,31 @@ WARNING_THRESHOLD = 0.8
 
 
 class QuotaExceeded(Exception):
-    """Workspace đã dùng hết token tháng này.
+    """Workspace đã dùng hết token tháng này, báo lỗi dưới dạng số bài viết.
 
     Mang theo số liệu để router dựng được câu thông báo có ích ("đã dùng
-    480k/500k") thay vì chỉ một chữ "hết quota".
+    hết ~150 bài") thay vì chỉ một chữ "hết quota". Người dùng không hiểu token.
     """
 
-    def __init__(self, *, used: int, limit: int, resets_at: datetime) -> None:
+    def __init__(
+        self,
+        *,
+        used: int,
+        limit: int,
+        resets_at: datetime,
+        assumed_per_post: int = ASSUMED_TOKENS_PER_POST,
+    ) -> None:
+        used_posts = used // assumed_per_post
+        limit_posts = limit // assumed_per_post
         super().__init__(
-            f"Đã dùng {used:,}/{limit:,} token trong tháng này — "
-            f"quota mở lại vào {resets_at.astimezone(VN_TZ):%d/%m/%Y}"
+            f"Hạn mức ước tính khoảng {limit_posts:,} bài viết trong tháng này đã hết — "
+            f"hạn mức mở lại vào {resets_at.astimezone(VN_TZ):%d/%m/%Y}"
         )
         self.used = used
         self.limit = limit
         self.resets_at = resets_at
+        self.used_posts = used_posts
+        self.limit_posts = limit_posts
 
 
 @dataclass(frozen=True)
@@ -96,6 +107,8 @@ class QuotaStatus:
     limit: int
     #: Mốc quota mở lại (đầu tháng sau, giờ VN quy về UTC).
     resets_at: datetime
+    #: Token trung bình cho mỗi bài viết (đo từ lịch sử hoặc dùng mặc định)
+    assumed_per_post: int = ASSUMED_TOKENS_PER_POST
 
     @property
     def remaining(self) -> int:
@@ -111,6 +124,18 @@ class QuotaStatus:
         if self.limit <= 0:
             return False
         return not self.exceeded and self.used / self.limit >= WARNING_THRESHOLD
+
+    @property
+    def used_posts(self) -> int:
+        return self.used // self.assumed_per_post
+
+    @property
+    def limit_posts(self) -> int:
+        return self.limit // self.assumed_per_post
+
+    @property
+    def remaining_posts(self) -> int:
+        return max(0, self.limit_posts - self.used_posts)
 
 
 def quota_for(plan: Plan) -> int:

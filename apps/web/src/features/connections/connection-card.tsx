@@ -112,13 +112,13 @@ function PlatformIcon({ platform }: { platform: Platform }) {
 function getPlatformDescription(platform: Platform): string {
   switch (platform) {
     case "facebook":
-      return "Tự động đăng bài viết, hình ảnh và Reels lên Fanpage chính thức.";
+      return "Xuất bản bài viết, hình ảnh và Reels đã được duyệt lên Fanpage chính thức.";
     case "google_business":
       return "Đăng bài và cập nhật thông tin cơ sở lên hồ sơ Google Business.";
     case "tiktok":
       return "Kết nối tài khoản TikTok để xuất bản video ngắn.";
     case "youtube":
-      return "Tự động xuất bản video ngắn lên YouTube Shorts để phủ sóng tìm kiếm.";
+      return "Xuất bản video ngắn đã được duyệt lên YouTube Shorts.";
     case "zalo_oa":
       return "Gửi bài viết và tin nhắn chăm sóc qua Zalo Official Account.";
   }

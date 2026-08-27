@@ -107,7 +107,7 @@ export function FailedPostsPanel({ onPublished }: Props) {
             : t("Bài chưa đăng được")}
         </h2>
         <p className={styles.subtitle}>{t(
-          "Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi\n          quyết định giúp em nhé."
+          "Havi đã thử vài lần rồi dừng để không đăng trùng. Bạn xem lý do rồi chọn cách xử lý nhé."
         )}</p>
       </header>
 

@@ -13,8 +13,12 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
-export function AppNav() {
-const pathname = usePathname();
+type AppNavProps = {
+  variant: "desktop" | "mobile";
+};
+
+export function AppNav({ variant }: AppNavProps) {
+  const pathname = usePathname();
   const { t } = useLanguage();
   const [summary, setSummary] = useState<DashboardContentSummary | null>(null);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -46,8 +50,8 @@ const pathname = usePathname();
     (i) => !["/app", "/app/content", "/app/calendar", "/app/inbox"].includes(i.href)
   );
 
-  return (
-    <>
+  if (variant === "desktop") {
+    return (
       <nav className={styles.nav} aria-label={t("Điều hướng chính")}>
         {itemsWithCounts.map((item) => {
           const active = isActive(pathname, item.href);
@@ -67,8 +71,12 @@ const pathname = usePathname();
           );
         })}
       </nav>
+    );
+  }
 
-      <div className={styles.mobileNav} aria-label={t("Điều hướng mobile")}>
+  return (
+    <div className={styles.mobileNavShell}>
+      <nav className={styles.mobileNav} aria-label={t("Điều hướng mobile")}>
         {mobileMainItems.map((item) => {
           const active = isActive(pathname, item.href);
           return (
@@ -87,7 +95,8 @@ const pathname = usePathname();
           );
         })}
         
-        <button 
+        <button
+          type="button"
           className={`${styles.mobileNavItem} ${isMoreOpen ? styles.mobileNavItemActive : ""}`}
           onClick={() => setIsMoreOpen(!isMoreOpen)}
           aria-expanded={isMoreOpen}
@@ -100,7 +109,7 @@ const pathname = usePathname();
           </span>
           <span className={styles.mobileNavLabel}>{t("Thêm")}</span>
         </button>
-      </div>
+      </nav>
 
       {isMoreOpen && (
         <div className={styles.mobileMoreMenu}>
@@ -120,7 +129,6 @@ const pathname = usePathname();
           })}
         </div>
       )}
-    </>
+    </div>
   );
 }
-

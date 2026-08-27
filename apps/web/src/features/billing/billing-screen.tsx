@@ -19,7 +19,7 @@ import { PLAN_DETAILS, STATUS_LABELS } from "./billing.content";
 import styles from "./billing.module.css";
 
 export function BillingScreen() {
-const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sub, setSub] = useState<Subscription | null>(null);
@@ -31,7 +31,7 @@ const { t, lang } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
-  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const [cycle, setCycle] = useState<"monthly" | "annual">("annual");
   const [extraSeats, setExtraSeats] = useState(0);
   const [extraChannels, setExtraChannels] = useState(0);
 
@@ -163,12 +163,6 @@ const { t, lang } = useLanguage();
     Math.round((sub.token_quota_used / Math.max(1, sub.token_quota_limit)) * 100),
   );
 
-  // Định dạng theo `lang`, không cứng `vi-VN`: bản tiếng Anh phải là 17,316 chứ
-  // không phải 17.316 — dấu phân cách nghìn đổi nghĩa hoàn toàn giữa hai vùng.
-  const tokensPerPost = (sub.tokens_per_post ?? 0).toLocaleString(
-    lang === "EN" ? "en-US" : "vi-VN",
-  );
-
   const currentPlan = sub.plan as keyof typeof PLAN_DETAILS;
 
   return (
@@ -259,12 +253,12 @@ const { t, lang } = useLanguage();
           <p className={styles.quotaAssumption}>
             {sub.tokens_per_post_measured
               ? t(
-                  "Đã dùng {percent}% hạn mức. Quy đổi theo {tokens} token/bài, đo từ chính workspace của bạn.",
-                  { percent: quotaPercent, tokens: tokensPerPost },
+                  "Đã dùng {percent}% số bài viết của tháng này. Tính toán dựa trên lịch sử tạo bài thực tế của thương hiệu bạn.",
+                  { percent: quotaPercent }
                 )
               : t(
-                  "Đã dùng {percent}% hạn mức. Quy đổi theo ước lượng mặc định {tokens} token/bài — sẽ chính xác hơn sau vài bài đầu.",
-                  { percent: quotaPercent, tokens: tokensPerPost },
+                  "Đã dùng {percent}% số bài viết của tháng này. Đây là số liệu ước tính — hệ thống sẽ báo chính xác hơn sau khi bạn tạo thêm vài bài đầu.",
+                  { percent: quotaPercent }
                 )}
           </p>
         </div>
@@ -366,8 +360,18 @@ const { t, lang } = useLanguage();
                 <h3 className={styles.planTitle}>{t(plan.title)}</h3>
                 <p className={styles.planDescription}>{t(plan.desc)}</p>
                 <div className={styles.planPrice}>
-                  <span className={styles.priceAmount}>{t(plan.price)}</span>
-                  <span className={styles.pricePeriod}>{t(plan.period)}</span>
+                  {cycle === "annual" && planKey !== "trial" ? (
+                    <>
+                      <span className={styles.priceAmountOriginal}>{t(plan.price)}</span>
+                      <span className={styles.priceAmount}>{t(plan.annualPrice)}</span>
+                      <span className={styles.pricePeriod}>{t("/ năm")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={styles.priceAmount}>{t(plan.price)}</span>
+                      <span className={styles.pricePeriod}>{t(plan.period)}</span>
+                    </>
+                  )}
                 </div>
                 {plan.dailyNote ? (
                   <div className={styles.priceDailyTag}>{t(plan.dailyNote)}</div>
@@ -404,8 +408,8 @@ const { t, lang } = useLanguage();
         })}
       </section>
 
-      <p className={styles.billingDisclaimer} style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "13px", margin: "16px 0 28px" }}>{t(
-        "* Gói cước cung cấp công cụ quản trị và vận hành social media; không bao gồm ngân sách quảng cáo hoặc dịch vụ vận hành thuê ngoài."
+      <p className={styles.billingDisclaimer}>{t(
+        "* Gói cước cung cấp công cụ quản trị và vận hành social; không bao gồm ngân sách quảng cáo, dịch vụ vận hành thuê ngoài hoặc cam kết số bài, lead hay doanh thu."
       )}</p>
 
       {/* Invoices History */}

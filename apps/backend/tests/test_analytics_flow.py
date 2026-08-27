@@ -509,3 +509,32 @@ async def test_operations_metrics_dem_log_va_publish_job_theo_workspace(
         "success_rate": 0.5,
         "dead_letter_rate": 0.5,
     }
+
+
+async def test_operations_tach_rien_job_tao_bai_cham_qua_20_giay(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """P95 chung không được che một content job vượt SLA P1."""
+    token = await _onboard(client, email="analytics-slow-content@havi.vn")
+    inside = datetime(2026, 8, 9, 7, 0, tzinfo=UTC)
+    for index, duration_ms in enumerate((19_999, 20_001)):
+        await _add_event(
+            db_session,
+            workspace_id=token["active_workspace_id"],
+            created_at=inside + timedelta(minutes=index),
+            provider="gemini",
+            duration_ms=duration_ms,
+        )
+
+    response = await client.get(
+        "/analytics/operations",
+        params={"start": "2026-08-09", "end": "2026-08-09"},
+        headers=_headers(token),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["content_generation_count"] == 2
+    assert body["slow_content_generation_count"] == 1
+    assert body["content_generation_p95_ms"] == 20_001
+    assert body["slow_content_generation_threshold_ms"] == 20_000

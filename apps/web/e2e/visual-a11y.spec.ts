@@ -14,6 +14,7 @@ const API_PATH_PREFIXES = [
   "/connections",
   "/content",
   "/inbox",
+  "/queue",
   "/workspaces",
 ];
 
@@ -130,6 +131,43 @@ async function mockApi(page: Page) {
     }
     if (path.endsWith("/trends/hot")) return json(route, []);
     if (path === "/connections") return json(route, [connection]);
+    if (path === "/queue/brief") {
+      return json(route, {
+        generated_at: FIXED_NOW_ISO,
+        window_hours: 24,
+        activity: { published: 1, inbox_received: 2, replies_sent: 1, publish_failed: 0 },
+        attention_total: 2,
+        attention_costly: 1,
+        calendar_gaps: [{ date: "2026-08-13", weekday: "Thứ Năm" }],
+        silent_channels: [],
+        time_saved_minutes: 5,
+        time_saved_actions: [
+          { action: "Trả lời khách", count: 1, minutes_each: 2, minutes_total: 2 },
+          { action: "Đăng bài lên kênh", count: 1, minutes_each: 3, minutes_total: 3 },
+        ],
+      });
+    }
+    if (path === "/queue") {
+      return json(route, {
+        items: [
+          {
+            kind: "inbox",
+            id: "i1",
+            title: "Khách hỏi giá",
+            detail: "Combo gội đầu bao nhiêu tiền ạ?",
+            channel: "facebook",
+            category: "price",
+            priority: 10,
+            waiting_since: FIXED_NOW_ISO,
+            assigned_to_user_id: null,
+            assigned_to_name: null,
+            platform_url: null,
+            href: "/app/inbox",
+          },
+        ],
+        total: 1,
+      });
+    }
     if (path === "/billing/subscription") {
       return json(route, {
         workspace_id: "w1",
@@ -137,7 +175,18 @@ async function mockApi(page: Page) {
         status: "trialing",
         current_period_end: "2026-08-18T00:00:00Z",
         token_quota_used: 12000,
-        token_quota_limit: 100000,
+        token_quota_limit: 400000,
+        seats_used: 1,
+        seats_limit: 2,
+        channels_used: 1,
+        channels_limit: 2,
+        billing_cycle: "monthly",
+        extra_seats: 0,
+        extra_channels: 0,
+        posts_remaining_estimate: 25,
+        tokens_per_post: 15000,
+        tokens_per_post_measured: false,
+        days_until_due: 7,
       });
     }
     if (path === "/billing/invoices") return json(route, []);
@@ -239,9 +288,22 @@ async function mockApi(page: Page) {
         error_rate: 0.25,
         avg_duration_ms: 120,
         p95_duration_ms: 410,
+        content_generation_count: 4,
+        slow_content_generation_count: 1,
+        content_generation_p95_ms: 21_000,
+        slow_content_generation_threshold_ms: 20_000,
         tokens_in: 1000,
         tokens_out: 250,
         tokens_total: 1250,
+        job_count: 4,
+        avg_tokens_per_job: 312,
+        est_cost_per_job_vnd: 900,
+        generated_draft_count: 20,
+        approved_draft_count: 2,
+        draft_usage_rate: 0.1,
+        est_cost_per_approved_draft_vnd: 9000,
+        pricing_as_of: "2026-08-26",
+        pricing_is_stale: false,
         providers: [
           { provider: "openai", event_count: 8, error_count: 1, tokens_total: 900 },
           { provider: "facebook", event_count: 4, error_count: 2, tokens_total: 0 },
@@ -262,9 +324,11 @@ async function mockApi(page: Page) {
             id: "i1",
             workspace_id: "w1",
             platform: "facebook",
+            type: "message",
+            recipient_id: "psid-lan",
             content: "Combo gội đầu bao nhiêu tiền ạ?",
             author_name: "Chị Lan",
-            status: "pending",
+            status: "drafted",
             ai_suggested_reply: "Dạ combo gội đầu thảo dược 180k ạ.",
             external_message_id: "m1",
             created_at: FIXED_NOW_ISO,
@@ -370,16 +434,32 @@ async function expectReady(page: Page, route: VisualRoute) {
   await expect(page.getByRole("heading", { name: route.heading }).first()).toBeVisible();
   if ("auth" in route && route.auth) {
     await expect(page).not.toHaveURL(/\/login$/);
+    if ((page.viewportSize()?.width ?? 9999) <= 768) {
+      await expect(
+        page.getByRole("navigation", { name: /Điều hướng mobile/i }),
+      ).toBeVisible();
+    }
   }
   if (route.name === "landing") {
-    await expect(page.getByText(/chưa công bố testimonial, ROI/i)).toBeAttached();
+    await expect(page.getByText(/chỉ công bố phản hồi khách hàng hoặc hiệu quả đầu tư/i)).toBeAttached();
     await expect(page.getByText(/Trực Inbox 24\/7/i)).toHaveCount(0);
   }
   if (route.name === "billing") {
     await expect(
-      page.getByText(/Không bao gồm cam kết số bài, lead hoặc doanh thu/i),
+      page.getByText(/không bao gồm.*cam kết số bài, lead hay doanh thu/i),
     ).toBeAttached();
+    await expect(page.getByText("1 / 2")).toHaveCount(2);
+    await expect(page.getByText(/khoảng 25 bài/i)).toBeVisible();
+    await expect(page.getByText(/Đã dùng 3% số bài viết/i)).toBeVisible();
     await expect(page.getByText(/Dùng thử trọn vẹn sức mạnh/i)).toHaveCount(0);
+  }
+  if (route.name === "calendar") {
+    await expect(page.getByText(/Duyệt trước/i).first()).toBeVisible();
+    await expect(page.getByText(/Giờ Vàng VN/i)).toHaveCount(0);
+  }
+  if (route.name === "operations") {
+    await expect(page.getByText("Tạo bài chậm")).toBeVisible();
+    await expect(page.getByText(/NaN/)).toHaveCount(0);
   }
 }
 
@@ -398,12 +478,12 @@ const publicRoutes = [
 ] as const;
 
 const authenticatedRoutes = [
-  { name: "dashboard", path: "/app", heading: /Tổng quan/i, auth: true },
+  { name: "dashboard", path: "/app", heading: /Việc cần làm/i, auth: true },
   { name: "content", path: "/app/content", heading: /Đăng bài/i, auth: true },
   { name: "calendar", path: "/app/calendar", heading: /Lịch [Đđ]ăng/i, auth: true },
   { name: "reports", path: "/app/reports", heading: /Báo [Cc]áo/i, auth: true },
   { name: "settings", path: "/app/settings", heading: /Cài [Đđ]ặt/i, auth: true },
-  { name: "billing", path: "/app/billing", heading: /Gói Cước/i, auth: true },
+  { name: "billing", path: "/app/billing", heading: /Gói cước/i, auth: true },
   { name: "inbox", path: "/app/inbox", heading: /Hội thoại/i, auth: true },
   {
     name: "operations",
@@ -474,4 +554,33 @@ test.describe("authenticated routes", () => {
   });
 
   for (const route of authenticatedRoutes) defineRouteChecks(route);
+
+  test("inbox mobile thread remains usable without horizontal overflow", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile-only responsive regression");
+
+    await prepare(page);
+    await page.goto("/app/inbox");
+    const inboxRoute = authenticatedRoutes.find((route) => route.name === "inbox")!;
+    await expectReady(page, inboxRoute);
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText("Chọn một hội thoại ở danh sách bên trái để bắt đầu")).toBeHidden();
+
+    await page.getByRole("button", { name: /Chị Lan.*Combo gội đầu/i }).click();
+    await expect(page.getByRole("button", { name: "Quay lại danh sách hội thoại" })).toBeVisible();
+    await expect(page.getByLabel(/Trả lời Chị Lan/i)).toBeVisible();
+
+    const widths = await page.evaluate(() => ({
+      content: document.documentElement.scrollWidth,
+      viewport: document.documentElement.clientWidth,
+    }));
+    expect(widths.content).toBeLessThanOrEqual(widths.viewport);
+
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .disableRules(["color-contrast"])
+      .analyze();
+    expect(result.violations).toEqual([]);
+    await expect(page).toHaveScreenshot("inbox-thread-mobile.png");
+  });
 });

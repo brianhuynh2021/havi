@@ -24,7 +24,6 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { useCallback, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { ToastContainer, type ToastItem } from "@/components/ui/toast";
-import { pushNotification } from "@/components/notifications/notification-store";
 import { VoiceRecorderModal } from "@/features/voice-note/voice-recorder-modal";
 import { VideoBranch } from "@/features/video/video-branch";
 import { DangerConfirmModal } from "@/features/settings/danger-confirm-modal";
@@ -170,11 +169,6 @@ export function ContentCreationScreen() {
   const onJobReady = useCallback(() => {
     setToasts((prev) => prev.filter((t) => t.type !== "loading"));
     setNotice(t("Havi vừa viết xong bài mới. Cuộn xuống để xem và xếp lịch."));
-    pushNotification({
-      type: "draft_ready",
-      title: t("Havi vừa viết xong bài mới"),
-      description: t("Bản nháp đã sẵn sàng để bạn duyệt."),
-    });
     addToast({
       type: "success",
       title: t("Havi viết xong rồi"),
@@ -185,7 +179,65 @@ export function ContentCreationScreen() {
 
   const poll = useJobPolling(jobId, onJobReady);
   const uploading = uploads.some((upload) => upload.status === "uploading");
-  const generating = poll.status === "queued" || poll.status === "processing";
+  const generating = poll.activeCount > 0;
+
+  useEffect(() => {
+    if (!poll.error) return;
+    setToasts((prev) => prev.filter((toast) => toast.type !== "loading"));
+  }, [poll.error]);
+
+  async function runUpload(row: UploadRow) {
+    const result = await uploadMedia(row.file, {
+      signal: row.controller.signal,
+      onProgress: (progress) =>
+        setUploads((prev) =>
+          prev.map((upload) =>
+            upload.key === row.key
+              ? { ...upload, progress: Math.max(upload.progress, progress) }
+              : upload,
+          ),
+        ),
+    });
+
+    if (!result.ok || row.controller.signal.aborted) {
+      const cancelled = row.controller.signal.aborted;
+      setUploads((prev) =>
+        prev.map((upload) =>
+          upload.key === row.key
+            ? {
+                ...upload,
+                status: cancelled ? "cancelled" : "failed",
+                message: cancelled ? t("Đã huỷ tải ảnh.") : result.ok ? undefined : result.message,
+              }
+            : upload,
+        ),
+      );
+      return;
+    }
+
+    setError(null);
+    setUploads((prev) =>
+      prev.map((upload) =>
+        upload.key === row.key
+          ? { ...upload, progress: 100, status: "complete", assetId: result.data.id }
+          : upload,
+      ),
+    );
+    setChips((prev) => [
+      ...prev,
+      {
+        key: result.data.id,
+        kind: "photo",
+        label: row.file.name,
+        previewUrl: row.previewUrl,
+        input: {
+          kind: "photo",
+          media_asset_id: result.data.id,
+          preview_url: row.previewUrl,
+        },
+      },
+    ]);
+  }
 
   async function onPickFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -202,6 +254,7 @@ export function ContentCreationScreen() {
           previewUrl,
           progress: 0,
           status: "uploading" as const,
+          file,
           controller: new AbortController(),
         },
       };
@@ -209,61 +262,41 @@ export function ContentCreationScreen() {
 
     setUploads((prev) => [...prev, ...pending.map((item) => item.row)]);
 
-    await Promise.all(
-      pending.map(async ({ file, row }) => {
-        const result = await uploadMedia(file, {
-          signal: row.controller.signal,
-          onProgress: (progress) =>
-            setUploads((prev) =>
-              prev.map((upload) =>
-                upload.key === row.key
-                  ? { ...upload, progress: Math.max(upload.progress, progress) }
-                  : upload,
-              ),
-            ),
-        });
+    await Promise.all(pending.map(({ row }) => runUpload(row)));
+  }
 
-        if (!result.ok) {
-          setUploads((prev) =>
-            prev.map((upload) =>
-              upload.key === row.key
-                ? { ...upload, status: "failed", message: result.message }
-                : upload,
-            ),
-          );
-          setError(result.message);
-          return;
-        }
-
-        setUploads((prev) =>
-          prev.map((upload) =>
-            upload.key === row.key
-              ? { ...upload, progress: 100, status: "complete", assetId: result.data.id }
-              : upload,
-          ),
-        );
-        setChips((prev) => [
-          ...prev,
-          {
-            key: result.data.id,
-            kind: "photo",
-            label: file.name,
-            previewUrl: row.previewUrl,
-            input: {
-              kind: "photo",
-              media_asset_id: result.data.id,
-              preview_url: row.previewUrl,
-            },
-          },
-        ]);
-      }),
+  function cancelUpload(key: string) {
+    const row = uploads.find((upload) => upload.key === key);
+    if (!row || row.status !== "uploading") return;
+    row.controller.abort();
+    setUploads((prev) =>
+      prev.map((upload) =>
+        upload.key === key
+          ? { ...upload, status: "cancelled", message: t("Đã huỷ tải ảnh.") }
+          : upload,
+      ),
     );
+  }
+
+  function retryUpload(key: string) {
+    const row = uploads.find((upload) => upload.key === key);
+    if (!row || row.status === "uploading" || row.status === "complete") return;
+    const next = {
+      ...row,
+      progress: 0,
+      status: "uploading" as const,
+      message: undefined,
+      controller: new AbortController(),
+    };
+    setError(null);
+    setUploads((prev) => prev.map((upload) => (upload.key === key ? next : upload)));
+    void runUpload(next);
   }
 
   function handleMediaPick(asset: MediaAsset) {
     if (asset.type !== "image") {
       addToast({
-        type: "error", // Use string if ToastItem doesn't support 'error' type. Wait, I should check toast types. If not error, use default or something. Let's assume there is an error type or we just use alert.
+        type: "error",
         title: t("Không thể chọn video"),
         description: t("Bản nháp bài viết hiện chỉ hỗ trợ chèn ảnh."),
       });
@@ -445,12 +478,22 @@ export function ContentCreationScreen() {
           {t(notice)}
         </p>
       ) : null}
+      {poll.slow ? (
+        <p className={styles.pollSlow} role="status">
+          {t("Havi vẫn đang viết. Bạn có thể làm việc khác; bản nháp sẽ hiện ở đây khi xong.")}
+        </p>
+      ) : null}
+      {poll.error ? (
+        <p className={styles.pollError} role="alert">
+          {t(poll.error)}
+        </p>
+      ) : null}
 
       {/* BƯỚC 1 — rẽ nhánh. Từ đây trở xuống, hai loại nội dung đi hai đường
           khác nhau cho tới bước xếp lịch. */}
       <section className={styles.kindSection} aria-labelledby="kind-title">
         <div className={styles.stepTitle}>
-          <span className={styles.stepNumber}>1</span>
+          <span className={styles.stepNumber} aria-hidden="true">1</span>
           <span id="kind-title">{t("Bạn muốn đăng gì?")}</span>
         </div>
         
@@ -487,7 +530,7 @@ export function ContentCreationScreen() {
       {/* BƯỚC 1b — kênh, phụ thuộc loại nội dung đã chọn ở trên. */}
       <section className={styles.channelSection} aria-labelledby="channel-title">
         <div className={styles.stepTitle}>
-          <span className={styles.stepNumber}>2</span>
+          <span className={styles.stepNumber} aria-hidden="true">2</span>
           <span id="channel-title">{t("Đăng lên kênh nào?")}</span>
         </div>
 
@@ -551,6 +594,8 @@ export function ContentCreationScreen() {
             onAddNote={addNote}
             onRemoveChip={removeChip}
             onPickFiles={onPickFiles}
+            onCancelUpload={cancelUpload}
+            onRetryUpload={retryUpload}
             onOpenVoice={() => setVoiceModalOpen(true)}
             onOpenMediaPicker={() => setMediaPickerOpen(true)}
             onGenerate={generate}

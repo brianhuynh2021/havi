@@ -46,6 +46,9 @@ class PlatformConnection(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Ba
     account_name: Mapped[str | None] = mapped_column(default=None)
     # ID của Page trên nền tảng — cần khi gọi API đăng bài.
     external_account_id: Mapped[str | None] = mapped_column(default=None)
+    # App-scoped ID của người đã cấp OAuth. Chỉ dùng để xử lý Meta Data Deletion
+    # Request có chữ ký; không đưa ra API/UI và không dùng làm danh tính Havi.
+    external_user_id: Mapped[str | None] = mapped_column(index=True, default=None)
     connected_by: Mapped[uuid.UUID | None] = mapped_column(default=None)
 
     # Lý do mất kết nối (token hết hạn, chủ tiệm gỡ quyền ở phía Facebook…), để

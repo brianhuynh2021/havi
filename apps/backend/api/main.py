@@ -50,7 +50,7 @@ Backend của Havi — sở hữu database, secret, prompt production và approv
 
 Nguyên tắc bất di bất dịch:
 - Mặc định không nội dung nào lên mạng khi chủ chưa duyệt (`review_first`).
-- Reply cho khách không bao giờ có `full_auto`, trừ FAQ chủ đã duyệt sẵn từng câu.
+- Reply cho khách không bao giờ có `full_auto`; FAQ đã duyệt chỉ là gợi ý chờ gửi.
 - Token nền tảng mã hoá bằng `TOKEN_ENCRYPTION_KEY`, chỉ backend giải mã.
 """
 

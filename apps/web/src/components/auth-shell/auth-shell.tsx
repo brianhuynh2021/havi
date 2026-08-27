@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import styles from "./auth-shell.module.css";
 import { Logo } from "@/components/ui/logo";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 type AuthShellProps = {
@@ -15,10 +14,6 @@ export function AuthShell({ children }: AuthShellProps) {
 
   return (
     <div className={styles.page}>
-      <div style={{ position: "absolute", top: "24px", right: "24px" }}>
-        <LanguageSwitcher variant="pill" />
-      </div>
-
       <div className={styles.brand}>
         <Logo size={44} />
         <div className={styles.brandText}>Havi</div>

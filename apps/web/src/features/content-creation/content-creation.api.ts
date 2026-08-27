@@ -34,7 +34,65 @@ type UploadImageOptions = {
 };
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
+  return typeof error === "object" && error !== null && "name" in error && error.name === "AbortError";
+}
+
+type StorageUploadResult = { ok: boolean; status: number };
+
+/** POST multipart có tiến độ byte thật.
+ *
+ * `fetch` không phát sự kiện upload progress. Bản cũ vẫn nhảy 20% → 85% theo
+ * các bước API nên thanh tiến độ trông như đo bytes nhưng thực ra chỉ là ba số
+ * hardcode. XHR ở đây chỉ dùng cho lượt gửi thẳng lên storage; mọi API JSON vẫn
+ * đi qua client typed như trước.
+ */
+function uploadForm(
+  url: string,
+  form: FormData,
+  options: UploadImageOptions,
+): Promise<StorageUploadResult> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let settled = false;
+
+    const cleanup = () => options.signal?.removeEventListener("abort", abort);
+    const finish = (result: StorageUploadResult) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(result);
+    };
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(error);
+    };
+    const abort = () => xhr.abort();
+
+    xhr.open("POST", url);
+    xhr.upload.addEventListener("progress", (event) => {
+      if (!event.lengthComputable || event.total <= 0) return;
+      // 0–20% là xin ticket; 20–85% là bytes thật; 85–100% là backend xác
+      // nhận object và probe media.
+      const byteProgress = Math.round((event.loaded / event.total) * 65);
+      options.onProgress?.(Math.min(84, 20 + byteProgress));
+    });
+    xhr.addEventListener("load", () =>
+      finish({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status }),
+    );
+    xhr.addEventListener("error", () => fail(new TypeError("storage upload failed")));
+    xhr.addEventListener("abort", () =>
+      fail(new DOMException("Upload aborted", "AbortError")),
+    );
+
+    if (options.signal?.aborted) {
+      fail(new DOMException("Upload aborted", "AbortError"));
+      return;
+    }
+    options.signal?.addEventListener("abort", abort, { once: true });
+    xhr.send(form);
+  });
 }
 
 /** `video/*` → media type `video`, còn lại coi là ảnh. Backend whitelist content
@@ -91,11 +149,7 @@ export async function uploadMedia(
     }
     form.append("file", file);
 
-    const uploaded = await fetch(ticket.data.upload_url, {
-      method: "POST",
-      body: form,
-      signal: options.signal,
-    });
+    const uploaded = await uploadForm(ticket.data.upload_url, form, options);
     if (!uploaded.ok) {
       return {
         ok: false,
@@ -182,12 +236,12 @@ export async function createJob(
     if (process.env.NODE_ENV !== "production") {
       console.error("[Havi API createJob error]:", err);
     }
-    const errDetail = err instanceof Error ? err.message : String(err);
     return {
       ok: false,
-      message: errDetail
-        ? t("Không kết nối được với Havi ({errDetail}). Kiểm tra kết nối mạng hoặc server giúp em nhé.", { errDetail: errDetail })
-        : NETWORK_ERROR_MESSAGE,
+      // Không đẩy `Error.message` thô ra UI: message của fetch/client có thể
+      // chứa URL nội bộ và chi tiết kỹ thuật, nhưng vẫn không giúp người dùng
+      // quyết định hành động nào khác ngoài thử lại.
+      message: NETWORK_ERROR_MESSAGE,
     };
   }
 }

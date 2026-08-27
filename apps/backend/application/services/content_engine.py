@@ -11,6 +11,7 @@ event_log kèm token/latency/provider.
 
 import logging
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
@@ -44,6 +45,14 @@ class GenerationFailed(Exception):
 class GenerationResult:
     job: ContentJob
     items: list[ContentItem]
+
+
+def _job_elapsed_ms(job: ContentJob) -> int:
+    """Latency người dùng chờ: từ lúc API tạo job, gồm cả thời gian trong queue."""
+    created_at = job.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=UTC)
+    return max(0, round((datetime.now(UTC) - created_at).total_seconds() * 1000))
 
 
 class ContentEngine:
@@ -164,6 +173,7 @@ class ContentEngine:
                     job_id=job_id,
                     job_kind="content.generate_drafts",
                     input_summary=f"{len(creative_inputs)} raw input",
+                    duration_ms=_job_elapsed_ms(job),
                     error=reason,
                 )
             )
@@ -239,12 +249,16 @@ class ContentEngine:
                 input_summary=f"{len(creative_inputs)} raw input",
                 output_summary=(
                     f"{len(items)} draft, provider={result.served_by}, "
-                    f"attempts={len(result.attempts)}"
+                    f"attempts={len(result.attempts)}, "
+                    f"provider_latency_ms={result.response.latency_ms}"
                 ),
                 # Cộng cả lần thử thất bại — provider trả output lỗi vẫn tốn token.
                 tokens_in=result.total_tokens_in,
                 tokens_out=result.total_tokens_out,
-                duration_ms=result.response.latency_ms,
+                # SLA P1 tính thời gian người dùng thật sự chờ, không chỉ thời
+                # gian HTTP của provider: queue nghẽn 30 giây + model 2 giây vẫn
+                # là một job 32 giây đối với người dùng.
+                duration_ms=_job_elapsed_ms(job),
                 provider=result.served_by.value,
                 model=result.response.model,
             )

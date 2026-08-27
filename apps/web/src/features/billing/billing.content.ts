@@ -19,6 +19,7 @@ export const PLAN_DETAILS: Record<
   {
     title: string;
     price: string;
+    annualPrice: string;
     period: string;
     dailyNote: string;
     badge: string | null;
@@ -28,62 +29,66 @@ export const PLAN_DETAILS: Record<
   }
 > = {
   trial: {
-    title: "Gói Trải Nghiệm",
+    title: "Gói trải nghiệm",
     price: "0 đ",
+    annualPrice: "0 đ",
     period: "/ 7 ngày",
     dailyNote: "Miễn phí 100% · Không cần thẻ",
     badge: null,
     badgeTone: null,
-    desc: "Chạy thử toàn bộ vòng vận hành: nối kênh, soạn, duyệt, đăng và trả lời.",
+    desc: "Chạy thử vòng vận hành: nối kênh, soạn, duyệt, đăng và trả lời.",
     features: [
       "7 ngày dùng đầy đủ, không cần thẻ",
       "2 người dùng · 2 kênh nối",
-      "Quy trình soạn → duyệt → đăng có ràng buộc",
       "Hộp thư Messenger gộp về một nơi",
-      "Hạn mức AI dùng thử ~30 bài",
+      "Quy trình soạn → duyệt → đăng có ràng buộc",
+      "Hạn mức AI dùng thử khoảng 30 bài",
     ],
   },
   tiem_nho: {
-    title: "Gói Khởi Nghiệp",
+    title: "Gói khởi nghiệp",
     price: "189.000 đ",
+    annualPrice: "1.890.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~6.000 đ/ngày",
     badge: null,
     badgeTone: null,
-    desc: "Một thương hiệu, một người vận hành, mọi thứ trong tầm kiểm soát.",
+    desc: "Một thương hiệu, một đội nhỏ, mọi việc social trong tầm kiểm soát.",
     features: [
       "3 người dùng · 3 kênh nối",
       "Lịch đăng, thư viện media và kho nội dung dùng chung",
       "Hộp thư Messenger kèm trạng thái đã xử lý hay chưa",
       "Lịch sử hoạt động: ai làm gì, lúc nào, kết quả ra sao",
-      "Hạn mức AI soạn nháp ~150 bài mỗi tháng",
+      "Hạn mức AI soạn nháp khoảng 130 bài mỗi tháng",
     ],
   },
   toan_dien: {
-    title: "Gói Chuyên Nghiệp",
+    title: "Gói chuyên nghiệp",
     price: "369.000 đ",
+    annualPrice: "3.690.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~12.000 đ/ngày",
-    badge: null,
-    badgeTone: null,
+    badge: "🌟 Khuyên dùng",
+    badgeTone: "popular",
     desc: "Dành cho đội nhiều người: ai được soạn, ai được duyệt, ai trực hội thoại.",
     features: [
       "10 người dùng · 8 kênh nối",
-      "Phân quyền theo vai: chủ, người soạn, người duyệt, trực hội thoại",
-      "Người soạn không đăng được — quyền kiểm ở máy chủ, không chỉ ẩn nút",
-      "Đăng Reels kèm xác nhận bài đã thật sự lên Trang",
+      "Phân quyền theo vai: chủ, người soạn, người duyệt",
+      "Người soạn không đăng được — quyền được kiểm ở máy chủ",
+      "Đăng Facebook Page và Reels sau khi có người phê duyệt",
       "Báo cáo xuất bản và hội thoại theo dữ liệu nền tảng",
-      "Hạn mức AI soạn nháp cao, hỗ trợ kỹ thuật 1-1",
+      "Hạn mức AI soạn nháp cao, hỗ trợ kỹ thuật trực tiếp",
     ],
   },
   doanh_nghiep: {
-    title: "Chuỗi Doanh Nghiệp",
+    title: "Chuỗi doanh nghiệp",
     price: "799.000 đ",
+    annualPrice: "7.990.000 đ",
     period: "/ tháng",
     dailyNote: "Chỉ ~26.000 đ/ngày",
     badge: null,
     badgeTone: null,
-    desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị và một dấu vết chung. Mỗi thương hiệu tính gói riêng.",
+    desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị. Mỗi thương hiệu tính gói riêng.",
     features: [
       "50 người dùng · kênh không giới hạn",
       "Tầng doanh nghiệp: gom nhiều thương hiệu, nhìn chéo sức khoẻ mọi kênh",

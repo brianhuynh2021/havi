@@ -131,6 +131,7 @@ export function VideoBranch() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const uploadControllerRef = useRef<AbortController | null>(null);
 
   const addToast = useCallback((toast: Omit<ToastItem, "id">) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -167,6 +168,7 @@ export function VideoBranch() {
 
   useEffect(() => {
     return () => {
+      uploadControllerRef.current?.abort();
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     };
   }, []);
@@ -193,24 +195,33 @@ export function VideoBranch() {
     setError(null);
     setUploading(true);
     setUploadProgress(0);
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
 
     const previewUrl = URL.createObjectURL(file);
     previewUrlRef.current = previewUrl;
 
     const result = await uploadMedia(file, {
+      signal: controller.signal,
       onProgress: (percent) => setUploadProgress((prev) => Math.max(prev, percent)),
     });
+    if (uploadControllerRef.current === controller) uploadControllerRef.current = null;
     setUploading(false);
 
     if (!result.ok) {
       URL.revokeObjectURL(previewUrl);
       previewUrlRef.current = null;
-      setError(result.message);
+      setError(controller.signal.aborted ? null : result.message);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     setBlockReasons([]);
     setDraft({ asset: result.data, previewUrl });
+  }
+
+  function cancelClipUpload() {
+    uploadControllerRef.current?.abort();
   }
 
   async function onSubmit() {
@@ -328,13 +339,20 @@ export function VideoBranch() {
             <p className={styles.dropzoneHint}>{t(
               "Clip dọc 9:16, từ 3 đến 90 giây. Havi kiểm ngay khi tải lên để bạn còn\n              kịp quay lại nếu có gì chưa hợp."
             )}</p>
-            <Button
-              variant="primary"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? t("Đang tải lên {uploadProgress}%", { uploadProgress: uploadProgress }) : "Chọn clip từ máy"}
-            </Button>
+            <div className={styles.uploadControls}>
+              <Button
+                variant="primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? t("Đang tải lên {uploadProgress}%", { uploadProgress: uploadProgress }) : "Chọn clip từ máy"}
+              </Button>
+              {uploading ? (
+                <Button variant="outline" onClick={cancelClipUpload}>
+                  {t("Huỷ tải")}
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : (
           <div className={styles.draftGrid}>

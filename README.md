@@ -10,6 +10,8 @@
 > hoạt động mạng xã hội của doanh nghiệp — *the trusted control plane for
 > business social media operations*. Chi tiết 5–10 năm ở
 > [ROADMAP §1b](docs/product/ROADMAP.md).
+> Những gì được phép giới thiệu là đã chạy nằm ở
+> [PRODUCT_CONTRACT](docs/product/PRODUCT_CONTRACT.md).
 
 ## Havi là chỗ ngồi làm việc của người trực kênh
 
@@ -44,12 +46,15 @@ doanh thu.
 
 ## Vai trò của AI
 
-AI ở đây là **tiện ích hỗ trợ, không phải định vị**: gợi ý caption, điều chỉnh
-nội dung theo từng nền tảng, tóm tắt hội thoại, phân loại inbox, phát hiện nội
-dung trùng, cảnh báo bất thường, gợi ý câu trả lời để con người duyệt.
+Havi được định vị là **trợ lý AI điều hành social**, nhưng lời hứa phải đi theo
+năng lực đang chạy. Hiện tại AI soạn nháp nội dung; hàng đợi, bản tin và phân
+loại inbox dùng dữ liệu cùng luật xác định để dễ kiểm chứng. Business Memory,
+phát hiện bất thường và vòng lặp agent chủ động vẫn là hướng phát triển, chưa
+phải quyền lợi đang bán. Ranh giới chi tiết nằm ở
+[PRODUCT_CONTRACT](docs/product/PRODUCT_CONTRACT.md).
 
-AI **không** tự đặt mục tiêu, **không** hứa marketing, và **không** tự quyết
-định thay doanh nghiệp.
+AI **không** tự đặt mục tiêu, **không** hứa marketing, và mọi hành động ra nền
+tảng đều nằm trong quyền hạn và quy trình duyệt của con người.
 
 Đăng bài và lên lịch cũng nằm cùng nhóm này: chúng là **tính năng hỗ trợ** bên
 trong một nền tảng quản trị, không phải lý do Havi tồn tại. Một công cụ chỉ biết
@@ -88,11 +93,9 @@ Mỗi mục dưới đây từng tồn tại trong sản phẩm rồi bị gỡ.
   tiêu" trên dashboard.
 * **Không hứa khách đến, doanh thu, hay tăng trưởng.** Havi báo cáo việc nó đã
   làm; kết quả kinh doanh thuộc về doanh nghiệp.
-* **Không chạy quảng cáo, không tiêu tiền của bạn.** Havi *có* nút "🚀 Quảng bá
-  bài viết", nhưng nó kiểm tra bài, chuẩn bị dữ liệu rồi **mở đúng trang trên
-  Meta/TikTok/Google** để bạn tự đặt ngân sách và tự thanh toán. Havi theo dõi
-  ở chế độ chỉ đọc, không tự tạo, không đổi ngân sách, không bật/tắt quảng cáo.
-  Ranh giới đầy đủ ở [ROADMAP §1c](docs/product/ROADMAP.md).
+* **Không chạy quảng cáo, không tiêu tiền của bạn.** Havi không tự tạo chiến
+  dịch, không đổi ngân sách, không bật/tắt quảng cáo và không giữ tiền quảng
+  cáo. Ranh giới đầy đủ ở [ROADMAP §1c](docs/product/ROADMAP.md).
 
 Nếu còn dùng từ **"chiến dịch"**, nó chỉ có nghĩa là *một nhóm nội dung được tổ
 chức cùng nhau* — không phải cam kết tạo ra kết quả kinh doanh.
@@ -106,8 +109,9 @@ Không trả lời được câu đó thì nó không thuộc Havi — kể cả
 
 ## Chỉ số
 
-Havi **không có North Star hướng người dùng**. Sản phẩm không bắt ai theo đuổi
-một con số.
+North Star hướng người dùng là **Time Havi Saved**. Đây là số ước tính minh bạch:
+màn hình phải hiện các hành động đã đếm và giả định số phút cho từng hành động,
+không được trình bày như thời gian bấm đồng hồ thực tế.
 
 Đội vận hành theo dõi các chỉ số sức khoẻ **nội bộ**: tỷ lệ đăng thành công, số
 kết nối đang hoạt động, độ trễ đồng bộ, số bài đăng thất bại, số nội dung chờ

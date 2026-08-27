@@ -18,6 +18,7 @@ def _mock_connections(connection: PlatformConnection | None = None) -> MagicMock
     repo = MagicMock()
     repo.get = AsyncMock(return_value=connection)
     repo.read_access_token = MagicMock(return_value="EAAG_test_page_access_token")
+    repo.mark_unusable = AsyncMock()
     return repo
 
 
@@ -105,7 +106,64 @@ async def test_send_reply_meta_api_error(monkeypatch):
                 recipient_id="user_123",
             )
         )
-    assert "Meta Graph API error (190)" in str(exc.value)
+    assert "hết hiệu lực" in str(exc.value)
+    repo.mark_unusable.assert_awaited_once_with(
+        conn,
+        status=ConnectionStatus.EXPIRED,
+        reason="Quyền Facebook đã hết hiệu lực — hãy nối lại Trang.",
+    )
+
+
+async def test_reply_2xx_without_provider_id_is_not_reported_as_sent(monkeypatch):
+    workspace_id = uuid4()
+    conn = PlatformConnection(
+        workspace_id=workspace_id,
+        platform=Platform.FACEBOOK,
+        external_account_id="page_123456",
+        status=ConnectionStatus.CONNECTED,
+        access_token_encrypted="encrypted",
+    )
+    adapter = FacebookReplyAdapter(_mock_connections(conn))
+
+    async def mock_post(self, url, json=None, headers=None):
+        return httpx.Response(200, json={"success": True}, request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", mock_post)
+
+    with pytest.raises(ReplyError, match="chưa thể xác nhận đã gửi"):
+        await adapter.send_reply(
+            ReplyRequest(
+                workspace_id=workspace_id,
+                platform=Platform.FACEBOOK,
+                text="Dạ chào bạn",
+                recipient_id="user_123",
+            )
+        )
+
+
+async def test_disconnected_page_is_rejected_before_reading_token():
+    workspace_id = uuid4()
+    conn = PlatformConnection(
+        workspace_id=workspace_id,
+        platform=Platform.FACEBOOK,
+        external_account_id="page_123456",
+        status=ConnectionStatus.EXPIRED,
+        access_token_encrypted="encrypted",
+    )
+    repo = _mock_connections(conn)
+    adapter = FacebookReplyAdapter(repo)
+
+    with pytest.raises(ReplyError, match="cần được nối lại"):
+        await adapter.send_reply(
+            ReplyRequest(
+                workspace_id=workspace_id,
+                platform=Platform.FACEBOOK,
+                text="Dạ chào bạn",
+                recipient_id="user_123",
+            )
+        )
+
+    repo.read_access_token.assert_not_called()
 
 
 async def test_comment_reply_uses_comment_endpoint_even_when_author_id_exists(

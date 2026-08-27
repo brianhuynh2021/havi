@@ -7,8 +7,6 @@ import { SignOutButton } from "./sign-out-button";
 import { WorkspaceChannels } from "./workspace-channels";
 import { WorkspaceName } from "./workspace-name";
 import { Logo } from "@/components/ui/logo";
-import { NotificationBell } from "@/components/notifications/notification-bell";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PwaInstallModal } from "@/components/pwa/pwa-install-modal";
 
@@ -32,7 +30,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
 
         <div className={styles.navSection}>
-          <AppNav />
+          <AppNav variant="desktop" />
         </div>
 
         <section className={styles.bottomCard}>
@@ -40,6 +38,11 @@ export function AppShell({ children }: AppShellProps) {
           <SignOutButton />
         </section>
       </aside>
+
+      {/* Navigation mobile phải là anh em của sidebar, không phải con của nó:
+          sidebar bị ẩn ở màn hình nhỏ. Đặt nav trong sidebar khiến người dùng
+          đăng nhập được nhưng không thể rời màn hình hiện tại. */}
+      <AppNav variant="mobile" />
 
       <main className={styles.content}>
         {/* Header không lặp lại tên thương hiệu: sidebar ngay bên trái đã hiện
@@ -51,8 +54,6 @@ export function AppShell({ children }: AppShellProps) {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <PwaInstallModal />
             <ThemeToggle />
-            <LanguageSwitcher variant="pill" />
-            <NotificationBell />
           </div>
         </header>
         <div className={styles.pageBody}>{children}</div>
@@ -60,4 +61,3 @@ export function AppShell({ children }: AppShellProps) {
     </div>
   );
 }
-

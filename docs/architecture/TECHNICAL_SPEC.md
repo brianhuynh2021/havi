@@ -36,8 +36,9 @@ again until reconciled.
 
 `new → drafted → sent | failed | dismissed`
 
-Drafted replies remain editable. A send is marked successful only after the
-provider confirms it. Exact approved FAQs are the only auto-reply exception.
+Drafted replies remain editable. Approved FAQs may prefill a suggestion, but a
+person must still submit every reply. A send is marked successful only after the
+provider confirms it.
 
 ### Connections
 

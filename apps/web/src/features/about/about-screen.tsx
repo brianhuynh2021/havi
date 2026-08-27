@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useLanguage } from "@/lib/i18n/language-context";
 import styles from "./about.module.css";
 
@@ -28,7 +27,6 @@ export function AboutScreen() {
             <Link href="/" className={styles.backLink}>
               {t("← Về trang chủ")}
             </Link>
-            <LanguageSwitcher />
             <Link href="/signup" className={styles.ctaButton}>
               {t("Dùng thử 7 ngày")}
             </Link>

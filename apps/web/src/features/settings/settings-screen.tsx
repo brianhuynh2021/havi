@@ -265,7 +265,7 @@ const { t } = useLanguage();
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>{t("Không được hứa (Banned Claims)")}</span>
+            <span className={styles.label}>{t("Những điều Havi không được khẳng định")}</span>
             <Textarea
               value={form.bannedClaimsText}
               disabled={loading || saving}
@@ -305,7 +305,7 @@ const { t } = useLanguage();
           <div className={styles.cardHeaderText}>
             <h2 className={styles.sectionTitle} id="connections-title">{t("Kênh xuất bản đã kết nối")}</h2>
             <p className={styles.sectionHint}>{t(
-              "Kênh nào hết hạn hoặc mất quyền, bạn kết nối lại ở đây để lịch tự động đăng tiếp tục hoạt động."
+              "Kênh nào hết hạn hoặc mất quyền, bạn kết nối lại ở đây để tiếp tục xuất bản các bài đã duyệt."
             )}</p>
           </div>
         </div>

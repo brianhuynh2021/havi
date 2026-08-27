@@ -159,15 +159,11 @@ class ConnectionService:
         # thêm một đường Havi phải canh, và đó là chỗ chi phí lẫn giá trị cùng
         # tăng. Nối lại kênh đã có không tính là kênh mới — `upsert` ghi lên bản
         # ghi cũ, nên `existing` phải được kiểm trước.
-        existing = await self._connections.get(
-            workspace_id=payload.workspace_id, platform=platform
-        )
+        existing = await self._connections.get(workspace_id=payload.workspace_id, platform=platform)
         if existing is None and self._workspaces is not None:
             workspace = await self._workspaces.get(payload.workspace_id)
             if workspace is not None:
-                current = len(
-                    await self._connections.list_for_workspace(payload.workspace_id)
-                )
+                current = len(await self._connections.list_for_workspace(payload.workspace_id))
                 plan_limits.check_channels(
                     plan=workspace.plan,
                     current=current,
@@ -187,6 +183,7 @@ class ConnectionService:
             expires_at=account.expires_at,
             account_name=account.account_name,
             external_account_id=account.external_account_id,
+            external_user_id=account.external_user_id,
             connected_by=payload.user_id,
         )
         logger.info(

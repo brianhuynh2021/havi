@@ -1,115 +1,180 @@
-# Facebook App Review Submission Package & Guide
+# Facebook-first Pilot and Meta App Review
 
-> **Document purpose:** Complete step-by-step guide and submission texts for Meta App Review when submitting Havi for live production Graph API access (`pages_show_list`, `pages_read_engagement`, `pages_manage_posts`).
+This is the operational checklist for testing Havi with one Facebook Page and
+for later requesting Advanced Access. It deliberately covers only capabilities
+implemented today: approved Page posts/photos, Facebook Reels, Messenger, and
+public Page comments. Havi does not create or manage ads.
 
----
+## 1. Pilot boundary
 
-## 1. Prerequisites & App Dashboard Setup
+Use a dedicated test Page first. In Meta Development mode, every Facebook user
+in the pilot must have an app role and the required Page tasks. Do not test on a
+customer's production Page until the complete dry run below passes.
 
-Before clicking **Submit for Review** in the Meta Developer Dashboard:
+Havi never publishes a generated draft without human approval. “Duyệt & đăng
+ngay” is the explicit approval action. A successful API request must also return
+a provider object ID; a 2xx response without an ID is treated as ambiguous and
+must be checked on Facebook before any retry.
 
-### 1.1 App Settings -> Basic
-* **Display Name:** `Havi — Quản trị truyền thông đa kênh`
-* **App Icon:** 1024x1024 PNG logo.
-* **Category:** `Business and Pages`
-* **Privacy Policy URL:** `https://<your-domain>/bao-mat`
-* **Terms of Service URL:** `https://<your-domain>/dieu-khoan`
-* **User Data Deletion:**
-  * Select **Data Deletion Instructions URL**: `https://<your-domain>/huong-dan-xoa-du-lieu`
-  * Or **Data Deletion Request Callback**: `https://api.<your-domain>/connections/facebook/data-deletion`
+## 2. Meta Dashboard configuration
 
-### 1.2 Facebook Login for Business / Products Setup
-* **Valid OAuth Redirect URIs:** `https://api.<your-domain>/connections/facebook/callback`
-* **Enforce HTTPS:** `Yes`
+### App settings
 
----
+- Display name: `Havi — Vận hành Facebook Page`
+- Category: `Business and Pages`
+- App icon: 1024 × 1024 PNG
+- App domain: the production web domain
+- Privacy policy: `https://<web-domain>/privacy`
+- Terms: `https://<web-domain>/terms`
+- Data deletion instructions: `https://<web-domain>/data-deletion`
+- Data deletion callback: `https://<api-domain>/connections/facebook/data-deletion`
 
-## 2. Permission Request Details
+### Facebook Login for Business
 
-Havi requests three permissions for the closed-loop publishing workflow:
+- Valid OAuth redirect URI:
+  `https://<api-domain>/connections/facebook/callback`
+- Enforce HTTPS: enabled
+- Put every permission in the Login for Business configuration listed below.
+- Copy its configuration ID to `HAVI_FACEBOOK_CONFIG_ID`. Leave the variable
+  empty only when intentionally using classic Facebook Login.
 
-| Permission | Purpose in Havi | Meta Scope Name |
+### Webhooks
+
+- Product/object: `Page`
+- Callback URL: `https://<api-domain>/webhooks/meta`
+- Verify token: the exact value of `HAVI_META_WEBHOOK_VERIFY_TOKEN`
+- App-level subscribed fields: `messages` and `feed`
+
+OAuth completion also calls `/{page-id}/subscribed_apps` with
+`subscribed_fields=messages,feed`. Havi does not store the connection until Meta
+confirms this Page-level subscription.
+
+## 3. Permissions and their implemented use
+
+| Permission | Havi use | Demonstration required |
 |---|---|---|
-| **`pages_show_list`** | Display list of Facebook Pages managed by the small business owner so they can select which Page to connect. | `pages_show_list` |
-| **`pages_read_engagement`** | Read Page ID, name, and access token required to perform Page-level publishing operations. | `pages_read_engagement` |
-| **`pages_manage_posts`** | Publish owner-approved social posts directly to the connected Facebook Page. | `pages_manage_posts` |
+| `pages_show_list` | Find Pages the authenticated person can operate and retrieve the selected Page ID/token. | OAuth and connected Page name. |
+| `pages_read_engagement` | Read Page metadata needed by Page and Messenger operations. | Connected Page and incoming activity. |
+| `pages_read_user_content` | Receive user-authored Page comments through the `feed` webhook. | A new public comment appearing in Havi. |
+| `pages_manage_posts` | Publish a human-approved Page post/photo or Reel. | Draft → approval → verified Facebook post. |
+| `pages_manage_engagement` | Reply publicly beneath a Facebook Page comment. | Explicit reply action and matching Facebook reply. |
+| `pages_manage_metadata` | Subscribe the selected Page to `messages` and `feed` webhooks. | Connect Page, then receive a webhook. |
+| `pages_messaging` | Receive and explicitly reply to Messenger conversations. | Incoming message and reply within Meta's allowed window. |
 
----
+The OAuth adapter verifies `/me/permissions` and the Page tasks
+`CREATE_CONTENT`, `MESSAGING`, and `MODERATE`. Partial consent fails closed and
+does not create a green connection.
 
-## 3. Copy-Paste Justification Statements for Meta Reviewers
+## 4. Reviewer justification text
 
-### Permission 1: `pages_show_list`
-> **How is your app using this permission?**
-> Havi is a social media management and operations platform for businesses. When a user connects Facebook via OAuth, Havi uses `pages_show_list` to show the Pages they manage. The user selects the specific Page they want Havi to manage and publish approved content to.
->
-> **English Version for Reviewer:**
-> Havi is a social media management and operations platform. We request `pages_show_list` to list the Facebook Pages managed by the authenticated user during onboarding and connection. This lets the user choose the specific Page Havi should connect to for publishing content the user has reviewed and approved.
+### Page discovery and reading
 
----
+> Havi is a social operations application for businesses. We use
+> `pages_show_list` and `pages_read_engagement` during Facebook Login to identify
+> the Facebook Page the authenticated person is authorized to operate, show the
+> connected Page name, and obtain the Page access token required for the Page
+> operations demonstrated in this submission.
 
-### Permission 2: `pages_read_engagement`
-> **How is your app using this permission?**
-> Havi requires `pages_read_engagement` to retrieve the Page metadata (Page name, ID) and the Page Access Token associated with the Facebook Page chosen by the shop owner. This token is securely encrypted server-side using AES-128 Fernet encryption and is strictly used to publish content that the owner explicitly approves in the Havi dashboard.
->
-> **English Version for Reviewer:**
-> We request `pages_read_engagement` to read the metadata and Page access token for the user's selected Facebook Page. This access token is required to execute Graph API publishing endpoints when the user clicks 'Approve' or schedules a post inside our web application.
+### Approved publishing
 
----
+> Havi uses `pages_manage_posts` only to publish Facebook Page posts, photos, or
+> Reels that a human has reviewed and explicitly approved. AI-generated content
+> remains a draft. Nothing is sent to Meta until the user selects “Duyệt & đăng
+> ngay” or approves a scheduled publishing time. Havi does not create or manage
+> advertising campaigns.
 
-### Permission 3: `pages_manage_posts`
-> **How is your app using this permission?**
-> Havi uses `pages_manage_posts` to publish approved promotional posts (text + photos) to the connected Facebook Page. Content is NEVER published automatically without explicit user approval. All generated drafts remain in 'Pending Approval' until the shop owner verifies the copy and clicks 'Approve & Publish' or schedules a publishing time slot.
->
-> **English Version for Reviewer:**
-> Havi uses `pages_manage_posts` to post approved marketing updates and photo content directly to the user's Facebook Page. Our application operates strictly under an approval-first model (`review_first`): content is generated as a draft, reviewed by the shop owner, and only sent to the Meta Graph API `/feed` or `/photos` endpoints upon explicit user confirmation or scheduled execution.
+### Comments
 
----
+> Havi uses `pages_read_user_content` to receive user-authored comments on the
+> connected Page through Meta's `feed` webhook. It uses
+> `pages_manage_engagement` only after a Havi user explicitly submits a public
+> reply. Havi replies to the original comment ID and does not convert a public
+> comment into an unsolicited private message.
 
-## 4. Screencast Video Recording Script (2 Minutes)
+### Messenger and webhooks
 
-Meta requires a clear video screencast demonstrating the complete flow. Follow this step-by-step script:
+> Havi uses `pages_manage_metadata` to subscribe the selected Page to the
+> `messages` and `feed` webhook fields. It uses `pages_messaging` to display
+> messages sent to that Page in Havi's shared inbox and to send a reply only
+> after a Havi user explicitly submits it. Replies respect Meta's Messenger
+> policy and messaging window.
 
-### Step 1: Login & Navigation (0:00 - 0:20)
-1. Show the Havi Login screen at `https://<your-domain>/dang-nhap`.
-2. Log in with a test account. Show the main Havi Dashboard.
+## 5. Screencast script
 
-### Step 2: Facebook Page OAuth Connection (0:20 - 0:50)
-1. Navigate to **Cài đặt** (Settings) -> **Kênh liên kết** (Connected Channels).
-2. Click **Kết nối Facebook** (Connect Facebook).
-3. Show the official Facebook OAuth dialog opening.
-4. Log in with the test Facebook account (managing a test Facebook Page).
-5. Select the test Page and grant permissions (`pages_show_list`, `pages_read_engagement`, `pages_manage_posts`).
-6. Redirect back to Havi and show the green **Đã kết nối** (Connected) status badge displaying the Page name.
+Record the browser address bar and all clicks. Do not edit out the OAuth dialog
+or Facebook-side verification.
 
-### Step 3: Raw Input to Draft Generation (0:50 - 1:15)
-1. Navigate to **Tạo bài** (Create Content).
-2. Upload a sample product photo and type a short note (e.g., *"Khuyến mãi làm đẹp cuối tuần giảm 20%"*).
-3. Click **Tạo bài nháp** (Generate Draft). Show the draft loading state.
-4. Display the generated draft card tagged with **Trang Facebook**.
+1. Open `https://<web-domain>/login` and sign in with the reviewer account.
+2. Open **Kênh kết nối**, choose Facebook, and click **Kết nối**.
+3. Complete the official Meta permission flow. Show the connected Page name and
+   **Đã kết nối** state in Havi.
+4. Open **Tạo nội dung**, choose **Bài viết** and **Trang Facebook**, upload one
+   test image, enter a short brief, and create the draft.
+5. Review the draft and click **Duyệt & đăng ngay**. Wait for Havi to report the
+   provider-confirmed state; do not present queue acceptance as publication.
+6. Open the test Facebook Page and show the matching post and image.
+7. From a second Facebook account, send a Messenger message to the Page. Show it
+   in Havi's inbox, submit a reply, and show the same reply in Messenger.
+8. Add a public comment to the test post. Show the comment in Havi, submit a
+   public reply, and show it beneath the original comment on Facebook.
 
-### Step 4: Owner Approval & Publishing (1:15 - 1:45)
-1. Show the draft card in **Chờ duyệt** (Pending Approval).
-2. Click **⚡ Đăng ngay** (Publish Now) or **Duyệt bài** (Approve).
-3. Show the success notification toast: *"Đã đăng bài thành công lên Trang Facebook"*.
+If Meta asks for a separate recording per permission, split steps 2–3, 4–6,
+7, and 8 into focused videos rather than submitting one ambiguous recording.
 
-### Step 5: Verification on Facebook (1:45 - 2:00)
-1. Switch to a new browser tab showing the test Facebook Page.
-2. Refresh the Facebook Page feed.
-3. Show the newly published post with text and photo matching what was approved in Havi.
+## 6. Safe environment preflight
 
----
+Do not mix the local test gate with the public pilot gate. First, run the local
+gate while developing; localhost URLs and a missing public webhook are valid at
+this stage:
 
-## 5. Test Credentials & Verification Checklist
+```bash
+cd apps/backend
+.venv/bin/python scripts/facebook_preflight.py
+```
 
-When submitting:
-* **Test Account Email:** `tester@havi.vn` (or provided Meta test user)
-* **Test Account Password:** `ProvidedInReviewNotes`
-* **Test Facebook Page:** `Spa An Nhiên Test`
+After the full local test suite passes and immediately before deploying the
+closed pilot, run the stricter public-environment gate explicitly:
 
-### Submission Pre-Check:
-- [x] Privacy Policy URL is live and accessible (`/bao-mat`).
-- [x] Data Deletion Instructions URL is live and accessible (`/huong-dan-xoa-du-lieu`).
-- [x] Data Deletion Callback URL endpoint is live (`/connections/facebook/data-deletion`).
-- [x] HTTPS is enforced on backend callback redirect URIs.
-- [x] Screencast video MP4/MOV uploaded (showing entire flow from OAuth connect to published post).
-- [x] Test account credentials populated in Meta Review submission form notes.
+```bash
+.venv/bin/python scripts/facebook_preflight.py --mode pilot
+```
+
+Both commands are offline and print no credential values. All required
+`--mode pilot` checks must pass before opening OAuth on the dedicated test Page.
+
+- `HAVI_ENV=staging` for the closed pilot; never `local` on a public host.
+- `HAVI_USE_FAKE_PUBLISHER=false`
+- `HAVI_FACEBOOK_CLIENT_ID`
+- `HAVI_FACEBOOK_CLIENT_SECRET`
+- `HAVI_FACEBOOK_REDIRECT_URI=https://<api-domain>/connections/facebook/callback`
+- `HAVI_FACEBOOK_CONFIG_ID` when using Login for Business
+- `HAVI_META_WEBHOOK_VERIFY_TOKEN`
+- a non-default `HAVI_TOKEN_ENCRYPTION_KEY`
+- `HAVI_MEDIA_PUBLIC_URL` is HTTPS and fetchable from outside the private network
+- the web origin is present in `HAVI_CORS_ORIGINS`
+
+## 7. Test matrix before a real Page
+
+- [ ] Privacy, terms, and data deletion pages load without authentication.
+- [ ] A valid Meta-signed deletion request removes every Facebook connection
+      granted by that app-scoped user; missing/invalid signatures remove nothing.
+- [ ] Meta verifies `GET /webhooks/meta` with the configured verify token.
+- [ ] A bad webhook signature returns 403 and creates no inbox item.
+- [ ] OAuth cancellation or one declined permission creates no connection.
+- [ ] A connected Page has `CREATE_CONTENT`, `MESSAGING`, and `MODERATE` tasks.
+- [ ] The Page is subscribed to `messages,feed` after OAuth.
+- [ ] Text-only Page post publishes once and stores the Facebook post ID.
+- [ ] One-photo Page post publishes once and stores the post ID, not the photo ID.
+- [ ] Reel completes Meta's start/upload/finish flow and is verified before success.
+- [ ] Duplicate webhook delivery creates only one inbox item.
+- [ ] A Messenger echo from the Page is ignored.
+- [ ] Messenger reply works inside Meta's allowed messaging window.
+- [ ] Public comment reply uses `/{comment-id}/comments`.
+- [ ] A 2xx publish response without an object ID is not retried automatically.
+- [ ] Token/permission error marks the channel for reconnection.
+- [ ] Full backend, web, accessibility, and visual suites pass on a fresh server.
+- [ ] Reviewer credentials and screencasts are supplied only in Meta's review form.
+
+Only check an item after observing it in the target environment. Repository tests
+cover request construction and failure handling, but they do not replace the
+Meta-side dry run on the dedicated Page.

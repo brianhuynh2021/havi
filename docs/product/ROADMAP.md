@@ -1,5 +1,9 @@
 # Havi Product Roadmap
 
+Customer-facing claims must follow [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.md).
+This roadmap includes future capability and is not itself a list of shipped
+features.
+
 ## 1. Product contract
 
 Havi is a lightweight social media management and operations platform for
@@ -15,8 +19,10 @@ businesses, freelancers and teams. It provides one place to control:
 8. channel alerts and failures;
 9. concise multi-channel operational reports.
 
-AI may draft or summarize. It is not the product promise and does not make
-business decisions.
+The direction is an **AI Secretary (Chief of Staff)** that proactively observes,
+prioritizes anomalies, recommends actions and executes them upon approval. The
+current release implements only the subset named in PRODUCT_CONTRACT; Business
+Memory and anomaly detection remain future capability.
 
 ### The daily user is staff, not the owner
 
@@ -67,9 +73,7 @@ Havi becomes the trusted control plane for a company's social presence: one
 identity and permission layer, one media library, one review workflow, one
 calendar, one inbox, one audit trail and one truthful view of channel health.
 
-The long-term moat is not “more AI.” It is operational memory and governance:
-who can act, what was approved, what reached each platform, what failed, and
-what still needs attention across brands, branches and external collaborators.
+The long-term moat is not just “more AI.” It is **Business Memory** and governance: understanding the baseline of what is normal for a specific brand (e.g., distinguishing a viral alert from normal traffic), who can act, what was approved, what reached each platform, what failed, and what still needs attention across brands, branches and external collaborators.
 
 ## 1c. Paid-promotion boundary
 
@@ -187,9 +191,11 @@ measured from that workspace's own history and falls back to a declared default,
 which is stated on screen — an estimate presented as a measurement is the same
 class of error as inventing a metric.
 
-## 4. Internal health metrics
+## 4. Metrics
 
-Havi does not impose a user-facing North Star. The team monitors service health:
+Havi's primary user-facing North Star is **"Time Havi Saved"** (e.g., "Havi saved you 7h 18m this week"). This proves the value of the AI Secretary by measuring cognitive load and manual tasks eliminated (comments auto-triaged, issues detected proactively).
+
+Operations also monitors internal service health:
 publish success, connection health, sync latency, unresolved failures, pending
 approvals, unhandled conversations, incident recovery time, retention and paid
 workspace count.

@@ -12,8 +12,8 @@
  * và đó là chủ ý: Havi không có dữ liệu đơn hàng, chưa có quyền đọc insights.
  * Thiếu thì để trống, không đoán.
  *
- * Thu gọn được, và **mặc định thu gọn**: người mở app mỗi ngày là nhân viên, và
- * họ tới đây để làm việc chứ không để đọc báo cáo. Chủ bấm mở ra khi cần.
+ * Thu gọn được, nhưng mặc định mở để North Star "Time Havi Saved" không bị giấu
+ * sau một thao tác. Khối này vẫn đứng trên hàng đợi và giữ chiều cao ngắn.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -24,26 +24,20 @@ import styles from "./morning-brief.module.css";
 export function MorningBrief() {
   const { t } = useLanguage();
   const [brief, setBrief] = useState<Brief | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   const load = useCallback(async () => {
     const result = await fetchBrief();
     if (result.ok) setBrief(result.data);
-    // Bản tin hỏng thì **im lặng**: nó là phần phụ trợ trên hàng đợi, và một
-    // banner lỗi ở đây sẽ che mất việc cần làm — thứ người dùng vào đây để làm.
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  // Payload lạ cũng xử như không có bản tin, **không** để nó ném giữa lúc render:
-  // `MorningBrief` nằm bên trong màn hàng đợi, nên một lỗi ở đây sẽ đánh sập cả
-  // danh sách việc — thứ người dùng vào đây để làm.
   if (!brief?.activity || !brief.time_saved_actions) return null;
 
   const { activity, time_saved_minutes: saved, calendar_gaps: gaps } = brief;
-  // Backend cũ hơn frontend thì field này vắng — không để nó ném giữa render.
   const silent = brief.silent_channels ?? [];
   const quiet =
     activity.published === 0 &&
@@ -52,7 +46,7 @@ export function MorningBrief() {
     activity.publish_failed === 0;
 
   return (
-    <section className={styles.card} aria-label={t("Bản tin 24 giờ qua")}>
+    <section className={styles.card} aria-label={t("Bản tin vận hành 24 giờ qua")}>
       <button
         type="button"
         className={styles.summary}
@@ -60,11 +54,11 @@ export function MorningBrief() {
         aria-expanded={open}
       >
         <span className={styles.summaryText}>
-          {quiet
-            ? t("24 giờ qua không có hoạt động nào")
-            : t("24 giờ qua: {published} bài đã lên kênh · {inbox_received} tin khách · {replies_sent} đã trả lời", { published: activity.published, inbox_received: activity.inbox_received, replies_sent: activity.replies_sent })}
+          ✨ {t("Bản tin Havi:")} {quiet
+            ? t("24 giờ qua chưa ghi nhận hoạt động nào.")
+            : t("24 giờ qua có {published} bài đã đăng · {inbox_received} tin khách · {replies_sent} tin đã xử lý", { published: activity.published, inbox_received: activity.inbox_received, replies_sent: activity.replies_sent })}
           {activity.publish_failed > 0 ? (
-            <strong className={styles.failed}> · {activity.publish_failed} bài lỗi</strong>
+            <strong className={styles.failed}> · {activity.publish_failed} bài đăng lỗi</strong>
           ) : null}
         </span>
         <span className={styles.chevron} aria-hidden="true">
@@ -77,9 +71,9 @@ export function MorningBrief() {
           {/* Thời gian tiết kiệm — kèm phép tính, luôn luôn.
               Con số tổng mà ẩn giả định đi thì nó là quảng cáo, không phải số
               liệu. Khách thấy được phép tính thì họ tự kiểm và tin. */}
-          <div className={styles.block}>
-            <p className={styles.blockTitle}>
-              {t("Havi làm thay bạn")} {formatMinutes(saved)} {t("trong 24 giờ qua")}
+          <div className={`${styles.block} ${styles.savedBlock}`}>
+            <p className={`${styles.blockTitle} ${styles.savedTitle}`}>
+              🌟 {t("Havi đã tiết kiệm {time} trong 24 giờ qua", { time: formatMinutes(saved) })}
             </p>
             <ul className={styles.calc}>
               {brief.time_saved_actions.map((action) => (

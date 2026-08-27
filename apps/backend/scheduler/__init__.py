@@ -1,1 +1,1 @@
-"""Celery Beat — đăng bài giờ vàng, nhắc CRM Zalo/Email, refresh token nền tảng."""
+"""Celery Beat — lịch đăng đã duyệt và nhắc gia hạn cho đội vận hành."""

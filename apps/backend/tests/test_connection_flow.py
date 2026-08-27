@@ -22,7 +22,7 @@ from adapters.oauth.base import (
     OAuthPermanentError,
     OAuthTemporaryError,
 )
-from adapters.oauth.facebook import SCOPES, FacebookOAuthClient, _pick_page
+from adapters.oauth.facebook import SCOPES, WEBHOOK_FIELDS, FacebookOAuthClient, _pick_page
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.publishers.facebook import FacebookPublisher
@@ -49,6 +49,7 @@ pytestmark = pytest.mark.anyio
 
 PAGE_TOKEN = "EAAG-page-token-bi-mat"
 USER_TOKEN = "EAAG-user-token-bi-mat"
+EXTERNAL_USER_ID = "fb-user-app-scoped-1"
 
 
 def _settings(**overrides) -> Settings:
@@ -60,7 +61,8 @@ def _settings(**overrides) -> Settings:
         "facebook_client_secret": "secret-456",
         "facebook_redirect_uri": "https://api.havi.vn/connections/facebook/callback",
         "facebook_config_id": "",
-        "jwt_secret": "test-secret-du-dai-de-ky",
+        "meta_webhook_verify_token": "meta-webhook-test-token",
+        "jwt_secret": "havi-connection-test-jwt-secret-at-least-32-bytes",
         "token_encryption_key": "3Vn8Qm2xLp7YtZa1Rk4Wc6Bd9Ef0Gh5Jj2Kl3Mn4Op8=",
     }
     return Settings(**{**base, **overrides})
@@ -69,26 +71,52 @@ def _settings(**overrides) -> Settings:
 # --- Graph API giả -----------------------------------------------------------
 
 
-def _oauth_transport(*, pages: list[dict] | None = None) -> httpx.MockTransport:
-    """Graph API chạy đúng luồng 3 bước: code → short → long → /me/accounts."""
+def _oauth_transport(
+    *,
+    pages: list[dict] | None = None,
+    permissions: tuple[str, ...] = SCOPES,
+    subscription_success: bool = True,
+    calls: list[httpx.Request] | None = None,
+) -> httpx.MockTransport:
+    """Graph API chạy đủ OAuth, kiểm quyền và đăng ký webhook Page."""
     if pages is None:
         pages = [
             {
                 "id": "page-1",
                 "name": "Spa An Nhiên",
                 "access_token": PAGE_TOKEN,
-                "tasks": ["CREATE_CONTENT", "MANAGE"],
+                "tasks": ["CREATE_CONTENT", "MESSAGING", "MODERATE", "MANAGE"],
             }
         ]
 
     def handler(request: httpx.Request) -> httpx.Response:
+        if calls is not None:
+            calls.append(request)
         params = dict(request.url.params)
         if request.url.path.endswith("/oauth/access_token"):
             if params.get("grant_type") == "fb_exchange_token":
                 return httpx.Response(200, json={"access_token": USER_TOKEN, "expires_in": 5184000})
             return httpx.Response(200, json={"access_token": "short-lived", "expires_in": 3600})
+        if request.url.path.endswith("/me/permissions"):
+            return httpx.Response(
+                200,
+                json={
+                    "data": [
+                        {"permission": permission, "status": "granted"}
+                        for permission in permissions
+                    ]
+                },
+            )
+        if request.url.path.endswith("/me"):
+            return httpx.Response(200, json={"id": EXTERNAL_USER_ID})
         if request.url.path.endswith("/me/accounts"):
             return httpx.Response(200, json={"data": pages})
+        if request.url.path.endswith("/subscribed_apps"):
+            assert request.method == "POST"
+            assert params["subscribed_fields"] == ",".join(WEBHOOK_FIELDS)
+            assert request.headers["Authorization"] == f"Bearer {PAGE_TOKEN}"
+            assert "access_token" not in params
+            return httpx.Response(200, json={"success": subscription_success})
         return httpx.Response(404, json={"error": {"message": "khong co route", "code": 803}})
 
     return httpx.MockTransport(handler)
@@ -189,7 +217,7 @@ class TestAuthorizationUrl:
         params = self._params(client.authorization_url(state="st"))
 
         assert "config_id" not in params
-        assert params["scope"] == "pages_show_list,pages_read_engagement,pages_manage_posts"
+        assert params["scope"] == ",".join(SCOPES)
 
     def test_luon_kem_state_va_redirect_uri(self):
         """Hai nhánh đều phải mang `state` (chống CSRF) và đúng redirect URI."""
@@ -238,7 +266,7 @@ class TestOAuthState:
             workspace_id=ws.id,
             user_id=owner.id,
             platform=Platform.FACEBOOK,
-            settings=_settings(jwt_secret="khoa-cua-ke-tan-cong"),
+            settings=_settings(jwt_secret="havi-attacker-test-jwt-secret-at-least-32-bytes"),
         )
         service = _service(db_session, monkeypatch, transport=_oauth_transport())
 
@@ -316,10 +344,88 @@ class TestCompleteConnection:
         row = await repo.get(workspace_id=ws.id, platform=Platform.FACEBOOK)
         assert row is not None
         assert row.external_account_id == "page-1"
+        assert row.external_user_id == EXTERNAL_USER_ID
         # Lưu Page token, KHÔNG phải user token — đăng lên Page cần token Page.
         assert repo.read_access_token(row) == PAGE_TOKEN
         # Trong DB là bản mã, không phải chữ thường.
         assert PAGE_TOKEN not in row.access_token_encrypted
+
+    async def test_chi_luu_ket_noi_sau_khi_page_subscribe_webhook(self, db_session, monkeypatch):
+        ws, owner = await _workspace_with_member(db_session)
+        settings = _settings()
+        state = create_oauth_state(
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
+            settings=settings,
+        )
+        calls: list[httpx.Request] = []
+        service = _service(
+            db_session,
+            monkeypatch,
+            transport=_oauth_transport(calls=calls),
+            settings=settings,
+        )
+
+        await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
+
+        assert any(call.url.path.endswith("/page-1/subscribed_apps") for call in calls)
+
+    async def test_thieu_quyen_inbox_thi_khong_tao_ket_noi(self, db_session, monkeypatch):
+        ws, owner = await _workspace_with_member(db_session)
+        settings = _settings()
+        state = create_oauth_state(
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
+            settings=settings,
+        )
+        service = _service(
+            db_session,
+            monkeypatch,
+            transport=_oauth_transport(
+                permissions=tuple(scope for scope in SCOPES if scope != "pages_messaging")
+            ),
+            settings=settings,
+        )
+
+        with pytest.raises(OAuthPermanentError, match="pages_messaging"):
+            await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
+
+        assert (
+            await ConnectionRepository(db_session).get(
+                workspace_id=ws.id, platform=Platform.FACEBOOK
+            )
+            is None
+        )
+
+    async def test_subscribe_webhook_khong_duoc_xac_nhan_thi_khong_tao_ket_noi(
+        self, db_session, monkeypatch
+    ):
+        ws, owner = await _workspace_with_member(db_session)
+        settings = _settings()
+        state = create_oauth_state(
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
+            settings=settings,
+        )
+        service = _service(
+            db_session,
+            monkeypatch,
+            transport=_oauth_transport(subscription_success=False),
+            settings=settings,
+        )
+
+        with pytest.raises(OAuthPermanentError, match="chưa xác nhận đăng ký"):
+            await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
+
+        assert (
+            await ConnectionRepository(db_session).get(
+                workspace_id=ws.id, platform=Platform.FACEBOOK
+            )
+            is None
+        )
 
     async def test_page_token_khong_bao_gio_ra_response_schema(self, db_session, monkeypatch):
         ws, owner = await _workspace_with_member(db_session)
@@ -394,11 +500,19 @@ class TestCompleteConnection:
         service = _service(
             db_session,
             monkeypatch,
-            transport=_oauth_transport(pages=[{"id": "p1", "name": "Trang"}]),
+            transport=_oauth_transport(
+                pages=[
+                    {
+                        "id": "p1",
+                        "name": "Trang",
+                        "tasks": ["CREATE_CONTENT", "MESSAGING", "MODERATE"],
+                    }
+                ]
+            ),
             settings=settings,
         )
 
-        with pytest.raises(OAuthPermanentError, match="chưa cấp quyền đăng bài"):
+        with pytest.raises(OAuthPermanentError, match="chưa cấp đủ quyền vận hành"):
             await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
 
     async def test_facebook_loi_5xx_la_loi_tam(self, db_session, monkeypatch):
@@ -426,7 +540,11 @@ class TestPickPage:
         """
         pages = [
             {"id": "chi-xem", "name": "Page của bạn", "tasks": ["ANALYZE"]},
-            {"id": "dang-duoc", "name": "Spa", "tasks": ["ANALYZE", "CREATE_CONTENT"]},
+            {
+                "id": "dang-duoc",
+                "name": "Spa",
+                "tasks": ["ANALYZE", "CREATE_CONTENT", "MESSAGING", "MODERATE"],
+            },
         ]
         assert _pick_page(pages)["id"] == "dang-duoc"
 
@@ -450,6 +568,32 @@ class TestPlatformGuards:
 
         with pytest.raises(PlatformNotConfigured):
             service.start(workspace_id=ws.id, user_id=owner.id, platform=Platform.FACEBOOK)
+
+    async def test_pilot_thieu_webhook_token_thi_khong_bao_facebook_da_san_sang(
+        self, db_session, monkeypatch
+    ):
+        ws, owner = await _workspace_with_member(db_session)
+        settings = _settings(meta_webhook_verify_token="")
+        # Bypass validation of unrelated staging providers: this unit test only
+        # exercises the OAuth adapter's public-environment readiness guard.
+        object.__setattr__(settings, "env", "staging")
+        service = _service(
+            db_session,
+            monkeypatch,
+            settings=settings,
+        )
+
+        with pytest.raises(PlatformNotConfigured):
+            service.start(
+                workspace_id=ws.id,
+                user_id=owner.id,
+                platform=Platform.FACEBOOK,
+            )
+
+    def test_local_oauth_khong_bi_chan_boi_webhook_public(self):
+        client = FacebookOAuthClient(_settings(meta_webhook_verify_token=""))
+
+        assert client.is_configured is True
 
     async def test_ngat_ket_noi_xoa_han_ca_token(self, db_session, monkeypatch):
         ws, _ = await _workspace_with_member(db_session)
@@ -704,22 +848,101 @@ class TestTokenRedaction:
         assert "***" in repr(account)
 
 
-async def test_facebook_data_deletion_callback():
-    """Endpoint /connections/facebook/data-deletion trả JSON url &
-    confirmation_code đúng chuẩn Meta."""
-    from httpx import ASGITransport, AsyncClient
+def _facebook_signed_request(*, secret: str, user_id: str) -> str:
+    import base64
+    import hashlib
+    import hmac
+    import json
 
-    from api.main import create_app
+    payload = (
+        base64.urlsafe_b64encode(
+            json.dumps({"algorithm": "HMAC-SHA256", "user_id": user_id}).encode()
+        )
+        .decode()
+        .rstrip("=")
+    )
+    signature = (
+        base64.urlsafe_b64encode(
+            hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest()
+        )
+        .decode()
+        .rstrip("=")
+    )
+    return f"{signature}.{payload}"
 
-    app = create_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        res = await client.post("/connections/facebook/data-deletion")
-        assert res.status_code == 200
-        data = res.json()
-        assert "url" in data
-        assert "confirmation_code" in data
-        assert data["confirmation_code"].startswith("del_")
-        # Route chuẩn sau khi đổi tên sang tiếng Anh. `/huong-dan-xoa-du-lieu`
-        # vẫn sống nhờ alias trong `apps/web/src/middleware.ts`, nhưng URL Havi
-        # tự sinh ra thì phải trỏ vào đường chính thức.
-        assert "/data-deletion" in data["url"]
+
+async def test_facebook_data_deletion_verifies_signature_and_deletes_connection(
+    client, db_session, monkeypatch
+):
+    import api.routers.connections as connections_router
+
+    deletion_secret = "facebook-data-deletion-test-secret"
+    monkeypatch.setattr(
+        connections_router,
+        "get_settings",
+        lambda: _settings(facebook_client_secret=deletion_secret),
+    )
+
+    ws, owner = await _workspace_with_member(db_session)
+    repo = ConnectionRepository(db_session)
+    await repo.upsert(
+        workspace_id=ws.id,
+        platform=Platform.FACEBOOK,
+        access_token=PAGE_TOKEN,
+        external_account_id="page-delete-test",
+        external_user_id=EXTERNAL_USER_ID,
+        connected_by=owner.id,
+    )
+    signed_request = _facebook_signed_request(
+        secret=deletion_secret,
+        user_id=EXTERNAL_USER_ID,
+    )
+
+    res = await client.post(
+        "/connections/facebook/data-deletion",
+        data={"signed_request": signed_request},
+    )
+
+    assert res.status_code == 200
+    data = res.json()
+    assert data["confirmation_code"].startswith("del_")
+    assert "/data-deletion" in data["url"]
+    assert await repo.get(workspace_id=ws.id, platform=Platform.FACEBOOK) is None
+
+    # Meta retry is idempotent: no connection remains, but deletion is still
+    # acknowledged because the signed user identity is valid.
+    retry = await client.post(
+        "/connections/facebook/data-deletion",
+        data={"signed_request": signed_request},
+    )
+    assert retry.status_code == 200
+
+
+async def test_facebook_data_deletion_rejects_invalid_or_missing_signature(
+    client, db_session, monkeypatch
+):
+    import api.routers.connections as connections_router
+
+    monkeypatch.setattr(
+        connections_router,
+        "get_settings",
+        lambda: _settings(facebook_client_secret="facebook-data-deletion-test-secret"),
+    )
+    ws, _ = await _workspace_with_member(db_session)
+    repo = ConnectionRepository(db_session)
+    await repo.upsert(
+        workspace_id=ws.id,
+        platform=Platform.FACEBOOK,
+        access_token=PAGE_TOKEN,
+        external_user_id=EXTERNAL_USER_ID,
+    )
+
+    missing = await client.post("/connections/facebook/data-deletion")
+    invalid = await client.post(
+        "/connections/facebook/data-deletion",
+        data={"signed_request": "invalid.payload"},
+    )
+
+    assert missing.status_code == 400
+    assert invalid.status_code == 403
+    assert await repo.get(workspace_id=ws.id, platform=Platform.FACEBOOK) is not None

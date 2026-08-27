@@ -19,8 +19,8 @@ Before starting Day 1:
   ```bash
   npm run infra:up
   cd apps/backend && uv run uvicorn api.main:app --reload
-  cd apps/backend && uv run celery -A workers.celery_app worker --loglevel=info
-  cd apps/backend && uv run celery -A workers.celery_app beat --loglevel=info
+  cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_publish --loglevel=info
+  cd apps/backend && uv run celery -A scheduler.beat:celery_app beat --loglevel=info
   ```
 - [ ] Web frontend running:
   ```bash
@@ -34,13 +34,13 @@ Before starting Day 1:
 ## 3. 7-Day Action Checklist
 
 ### Day 1: Onboarding, Brand Profile & Platform Connection
-- [ ] **Task 1.1**: Register a test founder account via `/dang-ky` and complete onboarding (`/onboarding`).
-- [ ] **Task 1.2**: Configure Workspace Name, Industry (e.g., Spa / Tiệm làm đẹp), Brand Tone, and Banned Claims in Settings (`/cai-dat`).
+- [ ] **Task 1.1**: Register a test founder account via `/signup` and complete onboarding (`/onboarding`).
+- [ ] **Task 1.2**: Configure Workspace Name, Brand Tone, and Banned Claims in Settings (`/app/settings`).
 - [ ] **Task 1.3**: Connect a test Facebook Page via OAuth connection flow.
 - [ ] **Verification**: Confirm encrypted access tokens are stored in `platform_connections` table and NEVER exposed in API responses or browser local storage.
 
 ### Day 2: Raw Input Capture & Media Processing
-- [ ] **Task 2.1**: Upload photo raw input in Content Creation screen (`/noi-dung`).
+- [ ] **Task 2.1**: Upload photo raw input in Content Creation screen (`/app/content`).
 - [ ] **Task 2.2**: Verify upload progress bar, cancel flow (`AbortController`), and image preview functionality.
 - [ ] **Task 2.3**: Upload multi-file inputs and verify direct-to-object-storage upload contract (images bypass backend API body parsing).
 - [ ] **Verification**: Inspect object storage bucket to ensure uploaded files exist at generated key paths.
@@ -58,7 +58,7 @@ Before starting Day 1:
 - [ ] **Verification**: Confirm approved items transition to `approved` / `scheduled` state with `approved_by` and `approved_at` audit fields set.
 
 ### Day 5: Calendar Scheduling & Rescheduling
-- [ ] **Task 5.1**: View scheduled posts on Calendar screen (`/lich-dang`).
+- [ ] **Task 5.1**: View scheduled posts on Calendar screen (`/app/calendar`).
 - [ ] **Task 5.2**: Test rescheduling a post to a different date/time slot.
 - [ ] **Task 5.3**: Verify Asia/Ho_Chi_Minh timezone handling across calendar views and scheduled Celery jobs.
 - [ ] **Verification**: Ensure Celery beat picks up scheduled jobs at the exact target time.
@@ -70,9 +70,9 @@ Before starting Day 1:
 - [ ] **Verification**: Check `publish_jobs` table for idempotency keys, execution logs, and published status.
 
 ### Day 7: Analytics, Operations & Deletion Safety Audit
-- [ ] **Task 7.1**: Review Business Results on Reports screen (`/bao-cao`).
-- [ ] **Task 7.2**: Inspect Internal Operations metrics at `/noi-bo/van-hanh` (event rate, token usage totals, provider breakdown, dead-letter count).
-- [ ] **Task 7.3**: Test Workspace Deletion & Account Deletion in Settings (`/cai-dat`) Danger Zone.
+- [ ] **Task 7.1**: Review verified publishing and conversation outcomes on `/app/reports`.
+- [ ] **Task 7.2**: Inspect Internal Operations metrics at `/app/internal/operations` (content-generation P95, slow-job count, token usage, provider breakdown, and dead-letter count).
+- [ ] **Task 7.3**: Test Workspace Deletion & Account Deletion in Settings (`/app/settings`) Danger Zone.
 - [ ] **Verification**: Confirm deletion cascades to content/connections and anonymizes audit logs (`workspace_id=NULL`).
 
 ---
@@ -98,7 +98,7 @@ Copy and fill this log template daily during the 7-day dogfooding phase:
 | Priority Level | Description & Examples | SLA Response Time | Action Required |
 | :--- | :--- | :--- | :--- |
 | **P0 (Critical)** | - Duplicate post published to social platform.<br>- Secrets, API keys, or raw tokens written to logs.<br>- Tenant data cross-leakage (User A sees User B data).<br>- Total system outage or 100% publish failure rate. | **< 1 hour** | **Stop publishing immediately.** Revert build, revoke compromised tokens, and run database sanity check. |
-| **P1 (High)** | - Content generation latency > 20 seconds.<br>- Upload failure without clear error message.<br>- Calendar timezone display offset.<br>- Facebook API token refresh failure. | **< 12 hours** | Log issue, apply hotfix or retry policy, and update test coverage. |
+| **P1 (High)** | - Content generation latency > 20 seconds.<br>- Upload failure without a clear per-file error and retry action.<br>- Calendar timezone display offset.<br>- Facebook Page permission revoked without marking the connection unhealthy and offering reconnect. | **< 12 hours** | Log the incident, preserve the user's input, apply a scoped hotfix or retry/reconnect path, and update test coverage. |
 | **P2 (Medium)** | - Minor UI visual alignment bug.<br>- Non-blocking copy suggestion improvement.<br>- Optional feature request. | **< 3 days** | Add to backlog priority queue. |
 
 ---

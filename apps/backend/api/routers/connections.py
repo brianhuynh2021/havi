@@ -9,13 +9,18 @@ tới, không kèm JWT. Danh tính đến từ `state` đã ký ở `/start`, xe
 """
 
 import base64
+import hashlib
+import hmac
 import json
 import logging
 import uuid
+from urllib.parse import parse_qs
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from adapters.persistence.connection_repository import ConnectionRepository
+from adapters.persistence.db import DbSessionDep
 from api.deps import AuthDep, ConnectionServiceDep, WorkspaceDep
 from application.services.connection_service import (
     ConnectionNotFound,
@@ -43,7 +48,7 @@ def _not_configured() -> HTTPException:
     mã hoá), không phải lỗi của người dùng và không phải bug."""
     return HTTPException(
         status.HTTP_503_SERVICE_UNAVAILABLE,
-        "Kênh này chưa được cấu hình trên hệ thống — chị báo Havi giúp em nhé",
+        "Kênh này chưa được cấu hình trên hệ thống — bạn báo Havi giúp nhé",
     )
 
 
@@ -216,47 +221,78 @@ async def disconnect(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Kênh này chưa được nối") from exc
 
 
+def _facebook_deletion_user_id(*, signed_request: str, app_secret: str) -> str:
+    """Verify Meta's HMAC-SHA256 signed request and return its app-scoped user ID."""
+    try:
+        encoded_signature, encoded_payload = signed_request.split(".", 1)
+        signature = base64.urlsafe_b64decode(
+            encoded_signature + "=" * (-len(encoded_signature) % 4)
+        )
+        expected = hmac.new(
+            app_secret.encode("utf-8"),
+            encoded_payload.encode("ascii"),
+            hashlib.sha256,
+        ).digest()
+        if not hmac.compare_digest(signature, expected):
+            raise ValueError("invalid signature")
+
+        payload = base64.urlsafe_b64decode(encoded_payload + "=" * (-len(encoded_payload) % 4))
+        data = json.loads(payload.decode("utf-8"))
+    except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("invalid signed request") from exc
+
+    if str(data.get("algorithm") or "").upper() != "HMAC-SHA256":
+        raise ValueError("unsupported signed request algorithm")
+    user_id = data.get("user_id")
+    if not user_id:
+        raise ValueError("signed request has no user_id")
+    return str(user_id)
+
+
 @router.post("/facebook/data-deletion", include_in_schema=False)
-@router.get("/facebook/data-deletion", include_in_schema=False)
-async def facebook_data_deletion(request: Request) -> JSONResponse:
+async def facebook_data_deletion(request: Request, session: DbSessionDep) -> JSONResponse:
     """Callback xử lý yêu cầu xóa dữ liệu từ Facebook (Meta Data Deletion Request).
 
     Meta yêu cầu endpoint trả URL hướng dẫn/xác nhận xóa kèm `confirmation_code`.
     """
     settings = get_settings()
+    if not settings.facebook_client_secret:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Facebook Data Deletion chưa được cấu hình",
+        )
+    body = (await request.body()).decode("utf-8", errors="replace")
+    signed_request = (parse_qs(body, max_num_fields=10).get("signed_request") or [None])[0]
+    if not signed_request:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Thiếu signed_request của Meta",
+        )
+
+    try:
+        external_user_id = _facebook_deletion_user_id(
+            signed_request=signed_request,
+            app_secret=settings.facebook_client_secret,
+        )
+    except ValueError as exc:
+        # Không trả chi tiết chữ ký/payload: callback public và dữ liệu đó không
+        # cần xuất hiện trong response hay log.
+        logger.warning("facebook_data_deletion.invalid_signed_request")
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "signed_request không hợp lệ",
+        ) from exc
+
+    deleted = await ConnectionRepository(session).delete_by_external_user(
+        platform=Platform.FACEBOOK,
+        external_user_id=external_user_id,
+    )
     confirmation_code = f"del_{uuid.uuid4().hex[:12]}"
-
-    signed_request = request.query_params.get("signed_request")
-    if not signed_request and request.method == "POST":
-        try:
-            body = await request.body()
-            body_text = body.decode("utf-8", errors="ignore")
-            # Parse form urlencoded signed_request=...
-            for param in body_text.split("&"):
-                if param.startswith("signed_request="):
-                    signed_request = param.split("=", 1)[1]
-                    break
-        except Exception:
-            pass
-
-    if signed_request:
-        try:
-            parts = signed_request.split(".", 1)
-            if len(parts) == 2:
-                payload = parts[1]
-                # Fix base64url padding
-                padded_payload = payload + "=" * (-len(payload) % 4)
-                decoded_bytes = base64.urlsafe_b64decode(padded_payload)
-                data = json.loads(decoded_bytes.decode("utf-8"))
-                user_id = data.get("user_id")
-                if user_id:
-                    logger.info(
-                        "Facebook Data Deletion requested for user_id: %s (code: %s)",
-                        user_id,
-                        confirmation_code,
-                    )
-        except Exception:
-            logger.warning("Failed to parse Facebook signed_request in data deletion callback")
+    logger.info(
+        "facebook_data_deletion.completed connections=%s confirmation=%s",
+        deleted,
+        confirmation_code,
+    )
 
     status_url = f"{settings.web_base_url}/data-deletion?confirmation_code={confirmation_code}"
     return JSONResponse(

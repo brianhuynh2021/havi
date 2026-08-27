@@ -17,6 +17,8 @@ from core.request_context import get_request_id
 from domain.models.audit import EventLog
 from domain.policies import pricing, quota
 
+SLOW_CONTENT_GENERATION_MS = 20_000
+
 
 class EventLogRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -181,6 +183,17 @@ class EventLogRepository:
         if durations:
             p95_duration_ms = durations[ceil(len(durations) * 0.95) - 1]
 
+        content_generation_durations = sorted(
+            row.duration_ms
+            for row in rows
+            if row.job_kind.startswith("content.generate") and row.duration_ms > 0
+        )
+        content_generation_p95_ms = 0
+        if content_generation_durations:
+            content_generation_p95_ms = content_generation_durations[
+                ceil(len(content_generation_durations) * 0.95) - 1
+            ]
+
         providers: dict[str, dict[str, int | float]] = {}
         total_cost_vnd = 0.0
         content_cost_vnd = 0.0
@@ -220,6 +233,13 @@ class EventLogRepository:
             "error_rate": round(error_count / event_count, 4) if event_count else 0,
             "avg_duration_ms": round(sum(durations) / event_count) if event_count else 0,
             "p95_duration_ms": p95_duration_ms,
+            "content_generation_count": len(content_generation_durations),
+            "slow_content_generation_count": sum(
+                duration > SLOW_CONTENT_GENERATION_MS
+                for duration in content_generation_durations
+            ),
+            "content_generation_p95_ms": content_generation_p95_ms,
+            "slow_content_generation_threshold_ms": SLOW_CONTENT_GENERATION_MS,
             "tokens_in": tokens_in,
             "tokens_out": tokens_out,
             "tokens_total": tokens_total,

@@ -61,7 +61,7 @@ billing         SaaS plan and invoices
 
 1. Every business query is scoped by `workspace_id`.
 2. Content is reviewed before publication.
-3. Non-FAQ replies require a person to send them.
+3. Every reply, including an approved FAQ suggestion, requires a person to send it.
 4. External success requires provider confirmation.
 5. Duplicate webhooks and publish commands are idempotent.
 6. Ambiguous publish outcomes stop and enter reconciliation.
@@ -72,7 +72,10 @@ billing         SaaS plan and invoices
 
 Havi manages social operations. It does not implement business goals, sales
 pipelines, POS, inventory, delivery, full CRM, video editing or direct ad spend.
-AI is an optional utility inside the workflow, not an autonomous marketer.
+Havi is positioned as an AI secretary, not an autonomous marketer. Today AI
+drafts content inside typed workflows; deterministic policies prioritize work,
+and provider side effects remain role-gated and human-approved. The exact
+shipping boundary is in [PRODUCT_CONTRACT.md](../product/PRODUCT_CONTRACT.md).
 
 For state models and API routes, see [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md). For
 the product boundary and channel sequence, see
