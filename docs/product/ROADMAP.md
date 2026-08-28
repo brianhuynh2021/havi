@@ -6,23 +6,15 @@ features.
 
 ## 1. Product contract
 
-Havi is a lightweight social media management and operations platform for
-businesses, freelancers and teams. It provides one place to control:
-
-1. social accounts and connection health;
-2. reusable media and content;
-3. calendar and publishing status;
-4. messages, comments and reviews;
-5. members, roles and permissions;
-6. draft → review → approve → publish;
-7. activity history and audit;
-8. channel alerts and failures;
-9. concise multi-channel operational reports.
+**This document is future direction. It is not a list of shipped features.**
+What exists today and may be claimed to customers is defined only in
+[PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.md), including the canonical nine-item
+product scope. That document wins over this one on any disagreement.
 
 The direction is an **AI Secretary (Chief of Staff)** that proactively observes,
-prioritizes anomalies, recommends actions and executes them upon approval. The
-current release implements only the subset named in PRODUCT_CONTRACT; Business
-Memory and anomaly detection remain future capability.
+prioritizes anomalies, recommends actions and executes them upon approval.
+Business Memory and anomaly detection are **not shipped** and must never be
+described in the present tense.
 
 ### The daily user is staff, not the owner
 
@@ -60,6 +52,21 @@ total with the assumption hidden is advertising. Anything that is real value but
 has no timestamp to measure ("spotted a failed post", "saved five tabs") stays out
 of the number.
 
+### Pricing may only sell what ships
+
+A plan may sell seats, brands and AI quota — never a channel count that
+`domain/policies/channel_capabilities.py` does not serve. `LIVE_CHANNELS` is
+Facebook Page and Reels; every tier therefore states the same channel list and
+differs on operating scale. Selling channel counts that do not exist is the same
+class of error as inventing a metric, so this rule outlives the specific bug that
+prompted it: when a channel goes live, `LIVE_CHANNELS` and the pricing page move
+in the same change.
+
+The same applies to plan identity in the UI. Plan keys are the `Plan` enum values
+(`trial/tiem_nho/toan_dien/doanh_nghiep`) and are compared verbatim — a plan label
+looked up by a key the API never returns silently shows a paying customer the
+wrong tier, and no test fails.
+
 ### Retired product concepts
 
 The following are intentionally outside Havi: goal/roadmap/evidence operating
@@ -89,23 +96,26 @@ on the provider:
 
 ## 2. Delivery sequence
 
+A ticked box means the capability runs against a real provider and is covered by
+tests — not that the code exists. Untick anything that regresses.
+
 ### Phase A — Facebook operations core
 
-- Reliable Page and Reels publishing with external confirmation.
-- Messenger inbox with signed webhook ingestion and explicit human replies.
-- Media library, content revisions, approval queue and calendar.
-- Connection health, failed-post recovery and audit history.
-- Customer Zero operation at Trung Tâm Công Nghệ Nhật Minh.
+- [x] Reliable Page and Reels publishing with external confirmation.
+- [x] Messenger inbox with signed webhook ingestion and explicit human replies.
+- [x] Media library, content revisions, approval queue and calendar.
+- [x] Connection health, failed-post recovery and audit history.
+- [ ] Customer Zero operation at Trung Tâm Công Nghệ Nhật Minh.
 
 Exit criteria: zero false publish/reply success, no cross-workspace access, all
 critical integration tests passing.
 
 ### Phase B — Team control
 
-- Organization above workspaces for multiple brands or branches.
-- Clear owner, marketer, reviewer and support permissions.
-- Review assignments, activity filters and approval accountability.
-- Mobile-friendly daily operations.
+- [x] Organization above workspaces for multiple brands or branches.
+- [x] Clear owner, marketer, reviewer and support permissions.
+- [ ] Review assignments, activity filters and approval accountability.
+- [ ] Mobile-friendly daily operations.
 
 ### Phase B2 — Draft quality from the shop's own data
 
@@ -187,16 +197,16 @@ Expand only after the previous channel is operationally complete. Implementation
 is not the long pole; provider approval is. Every channel's review is applied
 for in parallel, well before its implementation slot comes up.
 
-1. TikTok. The second channel, because it reaches more Vietnamese small
+1. [ ] TikTok. The second channel, because it reaches more Vietnamese small
    businesses than any other after Facebook. An unaudited TikTok app can only
    post privately, so its audit is applied for during the Facebook pilot — it is
    the slowest approval in the set and sits on the critical path from day one.
-2. YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
+2. [ ] YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
    published and confirmed, so the second video channel is mostly adapter work.
    Upload quota needs an increase request against the default daily limit.
-3. Google Business Profile, deferred behind the video channels. Beyond enabling
+3. [ ] Google Business Profile, deferred behind the video channels. Beyond enabling
    the API it requires a separate access application.
-4. Email is not a channel decision. It needs list management, unsubscribe and
+4. [ ] Email is not a channel decision. It needs list management, unsubscribe and
    consent handling that social operations does not have, and is decided
    separately rather than queued behind the channels above.
 
@@ -205,19 +215,22 @@ idempotent publishing, reconciliation and channel-specific error guidance.
 
 ### Phase D — Multi-brand and agency operations
 
-- Shared media with explicit workspace ownership.
-- Cross-workspace calendar and health overview.
-- Client review links with limited permissions.
-- Reusable approval policies and exportable audit history.
-- Concise reports comparing operational workload and failures by channel.
+- [ ] Gate `POST /organizations` on plan. The multi-brand tier is sold as a paid
+      capability, but organization creation enforces no plan check, so the tier
+      is billable and free at the same time.
+- [ ] Shared media with explicit workspace ownership.
+- [ ] Cross-workspace calendar and health overview.
+- [ ] Client review links with limited permissions.
+- [ ] Reusable approval policies and exportable audit history.
+- [ ] Concise reports comparing operational workload and failures by channel.
 
 ### Phase E — Governance platform
 
-- Enterprise identity and access controls.
-- Approval policies based on brand, channel and risk.
-- Retention, export and compliance controls.
-- Provider-independent archive of approved content and external references.
-- Read-only paid-promotion status where providers permit it.
+- [ ] Enterprise identity and access controls.
+- [ ] Approval policies based on brand, channel and risk.
+- [ ] Retention, export and compliance controls.
+- [ ] Provider-independent archive of approved content and external references.
+- [ ] Read-only paid-promotion status where providers permit it.
 
 ## 3. Prioritization test
 

@@ -28,18 +28,10 @@ sang thẳng nền tảng. Thứ tốn thời gian không phải lúc trả lờ
 xem có gì cần trả lời.
 
 Havi quản trị **hệ thống social của bạn** — không quản trị mục tiêu kinh doanh
-của bạn. Cụ thể là chín thứ:
-
-| | |
-|---|---|
-| Tài khoản & kết nối social | Trạng thái kết nối, lỗi, cảnh báo cần xác thực lại |
-| Kho ảnh, video, nội dung | Thư viện dùng lại được, không phải tải lên mỗi lần |
-| Lịch đăng & trạng thái xuất bản | Cái gì lên lúc nào, cái gì đã lên, cái gì hỏng |
-| Inbox, bình luận, hội thoại | Mọi kênh về một danh sách |
-| Thành viên, vai trò, quyền hạn | Ai được soạn, ai được duyệt, ai được đăng |
-| Quy trình soạn → duyệt → đăng | Không gì lên kênh mà chưa qua mắt người |
-| Lịch sử hoạt động & audit log | Ai làm gì, lúc nào |
-| Báo cáo vận hành đa kênh | Số liệu vận hành, không phải lời hứa kinh doanh |
+của bạn. Phạm vi đầy đủ (chín thứ) định nghĩa **một lần duy nhất** ở
+[PRODUCT_CONTRACT §Product scope](docs/product/PRODUCT_CONTRACT.md): tài khoản &
+kết nối, kho nội dung, lịch đăng, hội thoại, thành viên & quyền, quy trình
+duyệt, audit log, sức khoẻ kênh, báo cáo vận hành.
 
 Hết. Không kéo sang mục tiêu kinh doanh, lộ trình tăng trưởng, hay chứng minh
 doanh thu.

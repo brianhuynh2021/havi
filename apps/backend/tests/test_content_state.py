@@ -15,10 +15,7 @@ from core.enums import ContentStatus, PublishMode
 
 def test_review_first_dung_o_pending_approval():
     assert initial_status(PublishMode.REVIEW_FIRST) is ContentStatus.PENDING_APPROVAL
-
-
-def test_full_auto_bo_qua_buoc_duyet():
-    assert initial_status(PublishMode.FULL_AUTO) is ContentStatus.SCHEDULED
+    assert initial_status() is ContentStatus.PENDING_APPROVAL
 
 
 def test_luong_duyet_day_du():

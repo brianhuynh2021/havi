@@ -236,7 +236,7 @@ class InboxRepository:
     ) -> InboxItem:
         item.status = status
         if reply_text is not None:
-            item.ai_suggested_reply = reply_text
+            item.sent_reply_text = reply_text
 
         # `replied_at` ghi **một lần**, ở lần gửi thành công đầu tiên. Gửi lại
         # hay sửa câu trả lời sau đó không được dịch mốc này: thời gian phản hồi

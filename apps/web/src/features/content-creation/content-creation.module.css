@@ -2654,3 +2654,25 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.rejectionReasonBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--color-amber-50, #fffbeb);
+  border: 1px solid var(--color-amber-200, #fde68a);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.rejectionReasonLabel {
+  font-weight: 600;
+  color: var(--color-amber-800, #92400e);
+}
+
+.rejectionReasonText {
+  color: var(--color-amber-900, #78350f);
+  line-height: 1.4;
+}

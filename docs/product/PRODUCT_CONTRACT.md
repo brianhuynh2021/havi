@@ -1,11 +1,13 @@
 # Havi Product Contract
 
-This document is the canonical boundary between what Havi ships, what it may
-claim, and what remains a product direction. Product copy, pricing, sales
-material and release tests must agree with it. `AGENTS.md` contains development
-rules; this contract contains the customer-facing truth.
+**This document is the single source of truth for what Havi is, what it ships,
+and what it may claim.** Where any other document disagrees, this one wins.
 
-Last verified: 2026-08-27.
+Product copy, pricing, sales material and release tests must agree with it.
+`AGENTS.md` contains development rules; `ROADMAP.md` contains future direction
+and must label everything not listed here as future work.
+
+Last verified: 2026-08-28.
 
 ## Product promise
 
@@ -14,9 +16,21 @@ It gathers work that needs attention, prepares safe next steps, enforces human
 approval for external actions, and records the verified outcome. It reduces
 operational load; it does not promise business growth.
 
-The product consists only of accounts and social connections, media and content,
-publishing calendar and status, conversations, team permissions, approval,
-audit history, connection health and operational reporting.
+## Product scope — the nine things
+
+This list is canonical. Do not restate it in other documents; link here instead.
+
+1. Accounts and social connections
+2. Media and content library
+3. Publishing calendar and publish status
+4. Inbox, comments, conversations
+5. Members, roles, permissions
+6. The draft → approve → publish workflow
+7. Activity history and audit log
+8. Connection health, errors, alerts
+9. Multi-channel operations reporting
+
+Nothing outside these nine is the product.
 
 ## Shipped and claimable now
 
@@ -61,7 +75,7 @@ does not count as activation.
 
 ## Safety and measurement
 
-- Nothing publishes without human approval.
+- Nothing publishes without human approval. Approval is a system constraint, not an option that can be switched off. All drafts enter `PENDING_APPROVAL` and require explicit human confirmation before publishing.
 - External success requires evidence returned by or read back from the provider.
 - Unknown states fail closed and enter reconciliation.
 - Every tenant query is scoped to a workspace.

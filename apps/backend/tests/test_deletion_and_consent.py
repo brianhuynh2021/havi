@@ -53,10 +53,10 @@ async def test_workspace_deletion_cascade_and_anonymization(
     )
     assert bp_res.status_code == 200, bp_res.text
 
-    # Change publish mode (triggers consent event)
+    # Update workspace name
     patch_res = await client.patch(
         f"/workspaces/{ws_id}",
-        json={"publish_mode": "full_auto"},
+        json={"name": "Tiệm Nail Mới"},
         headers=active_headers,
     )
     assert patch_res.status_code == 200, patch_res.text
@@ -98,7 +98,7 @@ async def test_workspace_deletion_cascade_and_anonymization(
     assert len(members_db) == 0
 
     # 5. Verify event logs are anonymized
-    log_stmt = select(EventLog).where(EventLog.job_kind == "consent.publish_mode_changed")
+    log_stmt = select(EventLog).where(EventLog.job_kind == "consent.workspace_deleted")
     logs = (await db_session.execute(log_stmt)).scalars().all()
     assert len(logs) > 0
     for log in logs:

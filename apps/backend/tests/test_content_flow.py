@@ -27,7 +27,7 @@ from adapters.persistence.workspace_repository import WorkspaceRepository
 from api.deps import get_job_queue
 from application.services.content_engine import ContentEngine, GenerationFailed
 from application.services.job_queue import RecordingJobQueue
-from core.enums import ContentJobStatus, ContentStatus, PublishMode
+from core.enums import ContentJobStatus, ContentStatus
 from domain.models.audit import EventLog
 from domain.models.content import ContentItem
 from domain.policies.provider_router import ProviderRouter
@@ -333,31 +333,6 @@ async def test_bai_chu_khong_gui_duoc_toi_kenh_chi_nhan_video(
         assert "video" in detail.lower() or "chưa mở" in detail
 
 
-async def test_full_auto_thi_draft_vao_thang_scheduled(
-    client: AsyncClient, db_session: AsyncSession, job_queue: RecordingJobQueue
-):
-    token_pair = await _onboard(client, email="c9@havi.vn")
-    workspace_id = token_pair["active_workspace_id"]
-    await client.patch(
-        f"/workspaces/{workspace_id}",
-        json={"publish_mode": "full_auto"},
-        headers=_headers(token_pair),
-    )
-    job = (
-        await client.post(
-            "/content/jobs",
-            json={"raw_inputs": [{"kind": "text", "text": "x"}]},
-            headers=_headers(token_pair),
-        )
-    ).json()
-
-    engine = _engine(db_session, FakeProvider(response_text=GOOD_OUTPUT))
-    result = await engine.generate_drafts(workspace_id=UUID(workspace_id), job_id=UUID(job["id"]))
-
-    assert {i.status for i in result.items} == {ContentStatus.SCHEDULED}
-    # Sanity: workspace phải đúng là full_auto, không phải test pass vì lý do khác.
-    workspace = await WorkspaceRepository(db_session).get_by_id(UUID(workspace_id))
-    assert workspace is not None and workspace.publish_mode == PublishMode.FULL_AUTO
 
 
 async def test_output_sai_schema_thi_fallback_provider_khac(

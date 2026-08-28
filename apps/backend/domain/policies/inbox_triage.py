@@ -30,7 +30,10 @@ khớp trên bản đã bỏ dấu, nếu không bộ keyword chỉ bắt đư�
 
 import re
 import unicodedata
+from collections.abc import Iterator
 from enum import StrEnum
+
+from core.enums import InboxItemType
 
 
 class TicketCategory(StrEnum):
@@ -219,3 +222,85 @@ def is_costly(category: str | None) -> bool:
         return TicketCategory(category) in COSTLY_CATEGORIES
     except ValueError:
         return False
+
+
+class Inquiry:
+    """Một sự kiện đã bóc tách, chuẩn hoá khỏi khác biệt giữa các loại webhook."""
+
+    __slots__ = (
+        "page_id",
+        "message_id",
+        "author_name",
+        "text",
+        "sender_id",
+        "item_type",
+    )
+
+    def __init__(
+        self,
+        *,
+        page_id: str,
+        message_id: str,
+        author_name: str,
+        text: str,
+        sender_id: str | None = None,
+        item_type: InboxItemType = InboxItemType.MESSAGE,
+    ):
+        self.page_id = page_id
+        self.message_id = message_id
+        self.author_name = author_name
+        self.text = text
+        self.sender_id = sender_id
+        self.item_type = item_type
+
+
+def iter_inquiries(payload: dict) -> Iterator[Inquiry]:
+    """Bóc `messaging` (tin nhắn) và `changes` (bình luận) ra cùng một hình dạng.
+
+    Hàm thuần, không I/O — chỗ dễ sai nhất của webhook là hình dạng payload, nên
+    tách ra để test được mà không cần dựng HTTP hay DB.
+    """
+    for entry in payload.get("entry", []) or []:
+        page_id = str(entry.get("id") or "")
+        if not page_id:
+            continue
+
+        for messaging in entry.get("messaging", []) or []:
+            message = messaging.get("message") or {}
+            text = (message.get("text") or "").strip()
+            message_id = message.get("mid")
+            sender_id = (messaging.get("sender") or {}).get("id")
+            if not text or not message_id:
+                continue
+            # Bỏ echo: tin do chính Page gửi cũng quay lại qua webhook, nhận vào
+            # thì inbox đầy những câu của chính chủ tiệm.
+            if messaging.get("message", {}).get("is_echo"):
+                continue
+            yield Inquiry(
+                page_id=page_id,
+                message_id=str(message_id),
+                author_name=f"Khách {str(sender_id)[-4:]}" if sender_id else "Khách",
+                text=text,
+                sender_id=str(sender_id) if sender_id else None,
+            )
+
+        for change in entry.get("changes", []) or []:
+            if change.get("field") != "feed":
+                continue
+            value = change.get("value") or {}
+            if value.get("item") != "comment" or value.get("verb") != "add":
+                continue
+            text = (value.get("message") or "").strip()
+            comment_id = value.get("comment_id")
+            if not text or not comment_id:
+                continue
+            author = (value.get("from") or {}).get("name") or "Khách"
+            from_id = (value.get("from") or {}).get("id")
+            yield Inquiry(
+                page_id=page_id,
+                message_id=str(comment_id),
+                author_name=author,
+                text=text,
+                sender_id=str(from_id) if from_id else None,
+                item_type=InboxItemType.COMMENT,
+            )

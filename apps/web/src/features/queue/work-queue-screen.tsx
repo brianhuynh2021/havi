@@ -19,6 +19,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { usePoll } from "@/lib/hooks/use-poll";
 import { Button } from "@/components/ui/button";
 import { ErrorState, LoadingState } from "@/components/ui/state-views";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -55,20 +56,33 @@ export function WorkQueueScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const result = await fetchQueue();
-    if (result.ok) {
-      setItems(result.data.items);
-      setTotal(result.data.total);
-      setError(null);
-    } else {
-      setError(result.message);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
     }
-    setLoading(false);
+    try {
+      const result = await fetchQueue();
+      if (result.ok) {
+        setItems(result.data.items);
+        setTotal(result.data.total);
+        setError(null);
+      } else {
+        if (!silent) {
+          setError(result.message);
+        }
+        if (silent) {
+          throw new Error(result.message);
+        }
+      }
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(false).catch(() => {});
     // Cần id của chính mình để nút "Tôi nhận" biết gán cho ai, và để phân biệt
     // "việc của tôi" với "việc người khác đang làm".
     apiClient
@@ -76,6 +90,17 @@ export function WorkQueueScreen() {
       .then(({ data }) => setMeId(data?.id ?? null))
       .catch(() => setMeId(null));
   }, [load]);
+
+  // Polling ngầm mỗi 15s khi tab active, tạm dừng khi đang gán việc
+  usePoll(
+    async () => {
+      await load(true);
+    },
+    {
+      intervalMs: 15_000,
+      enabled: busyId === null,
+    },
+  );
 
   async function toggleAssign(item: WorkItem) {
     if (!meId) return;

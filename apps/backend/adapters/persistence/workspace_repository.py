@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.enums import Industry, PublishMode
+from core.enums import Industry
 from domain.models.audit import EventLog
 from domain.models.connection import PlatformConnection
 from domain.models.content import ContentItem, ContentItemVersion, ContentJob
@@ -75,14 +75,11 @@ class WorkspaceRepository:
         *,
         name: str | None = None,
         industry: Industry | None = None,
-        publish_mode: PublishMode | None = None,
     ) -> Workspace:
         if name is not None:
             workspace.name = name
         if industry is not None:
             workspace.industry = industry
-        if publish_mode is not None:
-            workspace.publish_mode = publish_mode
         await self._session.flush()
         return workspace
 

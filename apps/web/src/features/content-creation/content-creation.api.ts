@@ -315,11 +315,17 @@ export async function approveItem(
   }
 }
 
-export async function rejectItem(itemId: string): Promise<Result<ContentItem>> {
+export async function rejectItem(
+  itemId: string,
+  reason?: string,
+): Promise<Result<ContentItem>> {
   try {
     const { data, error, response } = await apiClient.POST(
       "/content/{content_id}/reject",
-      { params: { path: { content_id: itemId } } },
+      {
+        params: { path: { content_id: itemId } },
+        body: reason ? { reason } : undefined,
+      },
     );
     if (error || !data) {
       return {

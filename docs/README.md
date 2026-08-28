@@ -29,11 +29,18 @@ modes.
 
 Preparing founder beta? Read
 [`security/SECURITY_REVIEW.md`](security/SECURITY_REVIEW.md) before inviting
-users.
+users — and check its staleness banner first. It was last run on 2026-08-11 and
+names the request surfaces added since that have not had a security pass.
 
-Positioning, vision, and scope boundaries live in
-[`product/ROADMAP.md`](product/ROADMAP.md) §1, §1b, §1c. If any other document
-disagrees with those sections, those sections win.
+**[`product/PRODUCT_CONTRACT.md`](product/PRODUCT_CONTRACT.md) is the single
+source of truth** for what Havi is, the nine things that are the product, and
+what may be claimed to customers. If any other document disagrees with it, the
+contract wins and the other document is the bug.
+
+[`product/ROADMAP.md`](product/ROADMAP.md) holds future direction (§1b vision,
+§1c paid-promotion boundary, §2 delivery sequence). Everything there that is not
+in the contract's "Shipped and claimable now" list is future work and must be
+labelled as such.
 
 Canonical deployment architecture:
 [`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md).

@@ -1,7 +1,7 @@
 """Inbox service — xử lý tin nhắn/bình luận từ khách hàng.
 
 NGUYÊN TẮC #2 & #7:
-1. Không bao giờ tự động gửi tin nhắn cho khách (full_auto = False).
+1. Không bao giờ tự động gửi tin nhắn cho khách (luôn phải do người duyệt và gửi).
 2. FAQ đã duyệt chỉ được dùng làm gợi ý; người thật vẫn phải bấm gửi.
 """
 

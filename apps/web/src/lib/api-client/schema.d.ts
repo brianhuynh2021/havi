@@ -238,7 +238,7 @@ export interface paths {
         head?: never;
         /**
          * Update Workspace
-         * @description Đổi tên, ngành, hoặc toggle "Chế độ đăng bài" (review_first | full_auto).
+         * @description Đổi tên hoặc ngành nghề của workspace.
          */
         patch: operations["update_workspace_workspaces__workspace_id__patch"];
         trace?: never;
@@ -1360,9 +1360,6 @@ export interface paths {
         /**
          * Events
          * @description Event log đã scope theo workspace để support debug.
-         *
-         *     Chưa có `request_id`: code hiện tại chưa gắn request id vào log context hoặc
-         *     bảng `event_log`, nên endpoint này chỉ expose các khoá thật đang được lưu.
          */
         get: operations["events_analytics_events_get"];
         put?: never;
@@ -1982,6 +1979,8 @@ export interface components {
             approved_by?: string | null;
             /** Approved At */
             approved_at?: string | null;
+            /** Rejection Reason */
+            rejection_reason?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2180,6 +2179,8 @@ export interface components {
             workspace_id: string | null;
             /** Job Id */
             job_id: string | null;
+            /** Content Item Id */
+            content_item_id?: string | null;
             /** Request Id */
             request_id?: string | null;
             /** Job Kind */
@@ -2278,7 +2279,11 @@ export interface components {
             sentiment?: string | null;
             /** Ai Suggested Reply */
             ai_suggested_reply?: string | null;
+            /** Sent Reply Text */
+            sent_reply_text?: string | null;
             status: components["schemas"]["InboxItemStatus"];
+            /** Replied At */
+            replied_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2297,7 +2302,7 @@ export interface components {
         InboxItemType: "comment" | "review" | "message";
         /**
          * InboxReplyRequest
-         * @description Không có full_auto: luôn phải bấm gửi.
+         * @description Không tự động gửi: người dùng luôn phải duyệt và bấm gửi.
          */
         InboxReplyRequest: {
             /** Text */
@@ -2931,10 +2936,10 @@ export interface components {
         };
         /**
          * PublishMode
-         * @description Toggle "Chế độ đăng bài", lưu theo workspace. Không áp dụng cho reply khách.
+         * @description Chế độ đăng bài, lưu theo workspace. Luôn là REVIEW_FIRST (bắt buộc duyệt trước khi đăng).
          * @enum {string}
          */
-        PublishMode: "review_first" | "full_auto";
+        PublishMode: "review_first";
         /**
          * PublishStatus
          * @description Vòng đời một publish job.
@@ -2965,6 +2970,11 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token?: string | null;
+        };
+        /** RejectContentItemRequest */
+        RejectContentItemRequest: {
+            /** Reason */
+            reason?: string | null;
         };
         /**
          * RenderWarning
@@ -3402,7 +3412,6 @@ export interface components {
             /** Name */
             name?: string | null;
             industry?: components["schemas"]["Industry"] | null;
-            publish_mode?: components["schemas"]["PublishMode"] | null;
         };
     };
     responses: never;
@@ -5356,7 +5365,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RejectContentItemRequest"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -5702,6 +5715,7 @@ export interface operations {
         parameters: {
             query?: {
                 job_id?: string | null;
+                content_item_id?: string | null;
                 request_id?: string | null;
                 job_kind?: string | null;
                 provider?: string | null;

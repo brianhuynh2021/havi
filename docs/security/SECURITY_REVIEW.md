@@ -4,17 +4,35 @@
 > Vietnamese because the target users are Vietnamese small-business owners.
 
 Review date: 2026-08-11
+Last checked against `dev`: 2026-08-28
 
-Scope: founder beta readiness for the current `dev` branch.
+> **This review is out of date and does not gate external beta on its own.**
+> The findings below were made against the 2026-08-11 tree. Since then `dev` has
+> taken 86 backend commits, and four request surfaces reached the API *after*
+> the review closed. They have tests, but no security pass:
+>
+> | Surface | Added | Why it needs its own pass |
+> |---|---|---|
+> | `POST /webhooks/payos`, `POST /webhooks/vietqr` | 2026-08-17 | Unauthenticated money-moving endpoints; signature verification and replay handling are the whole control. |
+> | `/voice` | 2026-08-17 | New upload path with a different content type from the reviewed media flow. |
+> | `/workspaces/{id}/video/posts` | 2026-08-25 | Publishes externally; needs the same idempotency and approval checks as content publishing. |
+> | `/organizations`, `/queue` | 2026-08-26 | Cross-workspace reads above the workspace scope the review verified, and they query repositories directly instead of going through a service. |
+>
+> Re-run the checklist over those five routers before inviting external users.
+> Everything below still describes the controls it names, but "Pass" means
+> passed on 2026-08-11.
+
+Scope: founder beta readiness for the `dev` branch as of 2026-08-11.
 
 ## 1. Review Summary
 
-Status: conditionally ready for founder beta.
+Status: conditionally ready for founder beta, on the 2026-08-11 tree.
 
 The core safety controls for auth, tenant isolation, platform token encryption,
 upload validation, fake-mode guardrails, and operations UI redaction are present
 and covered by tests. The remaining gaps are product/data-governance decisions
-that should be completed before inviting external beta users.
+that should be completed before inviting external beta users, plus the
+unreviewed surfaces listed above.
 
 ## 2. Checklist
 

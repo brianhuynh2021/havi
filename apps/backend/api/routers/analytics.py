@@ -76,6 +76,7 @@ async def events(
     workspace_id: AuditViewerWorkspaceDep,
     session: DbSessionDep,
     job_id: UUID | None = None,
+    content_item_id: UUID | None = None,
     request_id: str | None = Query(default=None, max_length=80),
     job_kind: str | None = Query(default=None, max_length=80),
     provider: str | None = Query(default=None, max_length=80),
@@ -83,14 +84,11 @@ async def events(
     limit: int = Query(default=50, le=200),
     offset: int = 0,
 ) -> Page[EventLogRecord]:
-    """Event log đã scope theo workspace để support debug.
-
-    Chưa có `request_id`: code hiện tại chưa gắn request id vào log context hoặc
-    bảng `event_log`, nên endpoint này chỉ expose các khoá thật đang được lưu.
-    """
+    """Event log đã scope theo workspace để support debug."""
     rows, total = await EventLogRepository(session).list_for_workspace(
         workspace_id=workspace_id,
         job_id=job_id,
+        content_item_id=content_item_id,
         request_id=request_id,
         job_kind=job_kind,
         provider=provider,

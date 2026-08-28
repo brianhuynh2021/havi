@@ -181,7 +181,6 @@ class WorkspaceCreate(HaviModel):
 class WorkspaceUpdate(HaviModel):
     name: str | None = Field(default=None, min_length=1, max_length=160)
     industry: Industry | None = None
-    publish_mode: PublishMode | None = None
 
 
 class WorkspaceMember(HaviModel):
@@ -361,6 +360,7 @@ class ContentItem(HaviModel):
     published_at: datetime | None = None
     approved_by: UUID | None = None
     approved_at: datetime | None = None
+    rejection_reason: str | None = None
     created_at: datetime
 
 
@@ -399,6 +399,10 @@ class ApproveRequest(HaviModel):
     scheduled_at: datetime | None = Field(
         default=None, description="Bỏ trống để Havi chọn khung giờ vàng."
     )
+
+
+class RejectContentItemRequest(HaviModel):
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class BulkApproveRequest(HaviModel):
@@ -538,12 +542,14 @@ class InboxItem(HaviModel):
     external_message_id: str | None = None
     sentiment: str | None = None
     ai_suggested_reply: str | None = None
+    sent_reply_text: str | None = None
     status: InboxItemStatus
+    replied_at: datetime | None = None
     created_at: datetime
 
 
 class InboxReplyRequest(HaviModel):
-    """Không có full_auto: luôn phải bấm gửi."""
+    """Không tự động gửi: người dùng luôn phải duyệt và bấm gửi."""
 
     text: str = Field(min_length=1)
 
@@ -580,6 +586,7 @@ class EventLogRecord(HaviModel):
     id: UUID
     workspace_id: UUID | None
     job_id: UUID | None
+    content_item_id: UUID | None = None
     request_id: str | None = None
     job_kind: str
     input_summary: str

@@ -538,3 +538,43 @@ async def test_operations_tach_rien_job_tao_bai_cham_qua_20_giay(
     assert body["slow_content_generation_count"] == 1
     assert body["content_generation_p95_ms"] == 20_001
     assert body["slow_content_generation_threshold_ms"] == 20_000
+
+
+async def test_events_loc_theo_content_item_id(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token = await _onboard(client, email="analytics-content-item-filter@havi.vn")
+    workspace_id = UUID(token["active_workspace_id"])
+    target_item_id = UUID("11111111-1111-1111-1111-111111111111")
+    other_item_id = UUID("22222222-2222-2222-2222-222222222222")
+
+    repo = EventLogRepository(db_session)
+    await repo.record(
+        EventLogEntry(
+            workspace_id=workspace_id,
+            content_item_id=target_item_id,
+            job_kind="publish.run_job",
+            input_summary="target post publish",
+            output_summary="published",
+        )
+    )
+    await repo.record(
+        EventLogEntry(
+            workspace_id=workspace_id,
+            content_item_id=other_item_id,
+            job_kind="publish.run_job",
+            input_summary="other post publish",
+            output_summary="published",
+        )
+    )
+
+    response = await client.get(
+        "/analytics/events",
+        params={"content_item_id": str(target_item_id)},
+        headers=_headers(token),
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["content_item_id"] == str(target_item_id)
+    assert body["items"][0]["input_summary"] == "target post publish"

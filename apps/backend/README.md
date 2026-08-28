@@ -146,7 +146,7 @@ common silent failures are:
 ## Non-Negotiable Constraints
 
 1. Default mode is `review_first`: no content goes online before approval.
-2. Customer replies never use `full_auto` except exact pre-approved FAQ answers.
+2. Customer replies are never sent automatically; approved FAQ answers only prefill suggestions for human review.
 3. Production prompts live only in the backend.
 4. Platform tokens are encrypted and never returned in API responses.
 5. Every query is scoped by `workspace_id`.

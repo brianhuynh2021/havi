@@ -1,4 +1,4 @@
-export type PublishMode = "review_first" | "full_auto";
+export type PublishMode = "review_first";
 
 export type ChannelKey =
   | "facebook_page"

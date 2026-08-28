@@ -222,6 +222,54 @@ async def test_tu_choi_dua_bai_ve_draft(client: AsyncClient, db_session: AsyncSe
     assert response.json()["status"] == "draft"
     # Từ chối là để sửa lại, không phải xoá.
     assert response.json()["text"]
+    assert response.json()["rejection_reason"] is None
+
+
+async def test_tu_choi_co_kem_ly_do_va_xoa_ly_do_khi_resubmit(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Lưu lý do từ chối và xoá sạch lý do khi bài được gửi lại / chuyển sang pending_approval."""
+    token_pair = await _onboard(client, email="a9_reason@havi.vn")
+    item = await _draft(db_session, token_pair)
+
+    # 1. Từ chối kèm lý do phức tạp chứa 'user=' và dài 500 ký tự (max schema length)
+    tricky_reason = "user=admin & reason=hacked " + "x" * 473
+    assert len(tricky_reason) == 500
+
+    response = await client.post(
+        f"/content/{item.id}/reject",
+        json={"reason": tricky_reason},
+        headers=_headers(token_pair),
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "draft"
+    assert body["rejection_reason"] == tricky_reason
+
+    # Kiểm tra audit log có chứa lý do an toàn, không làm vỡ parsing của user=
+    events_res = await client.get(
+        "/analytics/events?job_kind=content.reject", headers=_headers(token_pair)
+    )
+    assert events_res.status_code == 200
+    ev_items = events_res.json()["items"]
+    assert len(ev_items) == 1
+    input_sum = ev_items[0]["input_summary"]
+    # Audit summary chứa content_item, user và reason được quote an toàn
+    assert f"content_item={item.id}" in input_sum
+    assert 'reason="user=admin & reason=hacked' in input_sum
+    # Summary được truncate an toàn và không chứa toàn bộ 500 chars trong 1 token
+    assert len(input_sum) < 300
+
+    # 2. Chuyển lại về pending_approval, rejection_reason phải bị xoá sạch
+    repo = ContentRepository(db_session)
+    updated_item = await repo.get_item(
+        workspace_id=UUID(token_pair["active_workspace_id"]), item_id=item.id
+    )
+    assert updated_item is not None
+    assert updated_item.rejection_reason == tricky_reason
+
+    await repo.set_item_status(updated_item, status=ContentStatus.PENDING_APPROVAL)
+    assert updated_item.rejection_reason is None
 
 
 async def test_khong_duyet_duoc_bai_cua_workspace_khac(

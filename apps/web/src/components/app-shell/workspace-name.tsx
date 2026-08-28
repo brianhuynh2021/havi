@@ -13,6 +13,14 @@ type WorkspaceItem = {
   plan: string;
 };
 
+// i18n-data: nhãn gói cước, dịch ở chỗ render
+const PLAN_LABELS: Record<string, string> = {
+  trial: "Bản Dùng Thử",
+  tiem_nho: "Gói Khởi Nghiệp",
+  toan_dien: "Gói Chuyên Nghiệp",
+  doanh_nghiep: "Chuỗi Doanh Nghiệp",
+};
+
 function getIndustryIcon(industry?: string) {
   switch (industry) {
     case "spa":
@@ -205,7 +213,7 @@ export function WorkspaceName() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", textAlign: "left" }}>
                   <span style={{ fontSize: "13px", fontWeight: isActive ? 700 : 500 }}>{w.name}</span>
                   <span style={{ fontSize: "10.5px", opacity: 0.6 }}>
-                    {t(w.plan === "TOAN_DIEN" ? "Gói Toàn Diện" : "Bản Dùng Thử")}
+                    {t(PLAN_LABELS[w.plan] ?? "Bản Dùng Thử")}
                   </span>
                 </div>
                 {isActive && (

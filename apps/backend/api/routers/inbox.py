@@ -1,7 +1,7 @@
 """/inbox — 1 luồng gộp comment / review / message từ mọi nền tảng.
 
-Reply KHÔNG có full_auto: luôn phải bấm gửi. FAQ đã duyệt chỉ được điền làm gợi
-ý, không phải quyền gửi trong một hội thoại cụ thể.
+Reply KHÔNG bao giờ tự động gửi: luôn phải bấm gửi. FAQ đã duyệt chỉ được điền làm
+gợi ý, không phải quyền gửi trong một hội thoại cụ thể.
 """
 
 from uuid import UUID

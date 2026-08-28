@@ -2,26 +2,24 @@
 
 ## What we are building
 
-> **Havi — Trợ lý AI điều hành mạng xã hội** dành cho doanh nghiệp và
+> **Havi — Trợ lý vận hành social có kiểm soát** dành cho doanh nghiệp và
 > đội ngũ social.
 
-Havi is an **AI Secretary/Chief of Staff** for the customer's social system. Its primary value is not just "managing multiple channels" (which the market already provides), but actively reducing the cognitive load for business owners and teams.
+**What Havi is, what it ships, and the nine things that are the product are
+defined once in [PRODUCT_CONTRACT.md](docs/product/PRODUCT_CONTRACT.md).**
+Read it before proposing a feature. Do not restate its scope list here — a
+second copy is a second thing to forget to update.
+
+Havi today is a **control plane for social operations with AI-assisted
+drafting**: it gathers work that needs attention, prepares safe next steps,
+enforces human approval, and records provider-verified outcomes.
 
 **Product Philosophy:** *Don't make users manage Havi. Let Havi manage social for them.*
 
-Nine things, and nothing else is the product:
-
-1. Accounts and social connections
-2. Media and content library
-3. Publishing calendar and publish status
-4. Inbox, comments, conversations
-5. Members, roles, permissions
-6. The draft → approve → publish workflow
-7. Activity history and audit log
-8. Connection health, errors, alerts
-9. Multi-channel operations reporting
-
-**Long-term vision:** the trusted control plane and intelligent executive assistant for business social media operations. Havi sits between the organisation and every platform, holding the governance and proactive intelligence layer above them. Full 5–10 year picture in [ROADMAP §1b](docs/product/ROADMAP.md).
+**Long-term vision (NOT shipped):** an AI Secretary that observes, prioritizes,
+recommends and acts on approval, backed by Business Memory. This is direction,
+not current capability — see [ROADMAP §1b](docs/product/ROADMAP.md). Never
+describe it in the present tense, in code comments or in customer-facing copy.
 
 **The test every feature must pass:**
 
@@ -57,31 +55,51 @@ If the word **"chiến dịch"** appears, it means *a group of content organised
 * **Never browser-automate a third-party platform.** It breaks silently, violates terms, and makes Havi the actor in a spend it cannot account for.
 * **No promise of customers, revenue, or growth.**
 
-## AI Secretary Positioning & Business Memory
+## AI Secretary Positioning & Business Memory — FUTURE, NOT SHIPPED
 
-Havi is highly proactive: **Observe → Prioritize → Recommend → Act**.
-It is NOT a passive "Dashboard with a chatbot". Havi must watch everything, filter noise, tell the user what matters, and handle the action upon approval.
+The target loop is **Observe → Prioritize → Recommend → Act**, with Havi
+watching everything, filtering noise, and handling actions upon approval.
 
-**Business Memory:** Havi learns what is "normal" for each brand (e.g., 20 comments/hour might be normal for Brand A, but a viral alert for Brand B). This contextual awareness is the core competitive moat.
+**Business Memory** — learning what is "normal" for each brand (20 comments/hour
+is routine for Brand A, a viral alert for Brand B) — is the intended competitive
+moat.
+
+**Neither ships today.** Current behaviour: drafting is AI-assisted; the work
+queue, brief and inbox triage are deterministic rules over data Havi owns
+(`domain/policies/`), which is why they can be audited and tested. Anomaly
+detection and learned baselines do not exist.
+
+When building toward this, the constraint holds: prompt context stays
+inspectable, and no rule inferred from user behaviour is applied silently.
 
 ## Metrics
 
 Havi ships **ONE** core user-facing North Star: **Time Havi Saved**.
 This replaces raw counts or vanity metrics. The home screen should highlight: *"Havi saved you 7h 18m this week."*
 
-It also tracks AI triage metrics:
-* % social tasks handled by Havi
-* Issues detected before the user checked
-* Comments auto-triaged
-* Posts published automatically
-* Anomalies surfaced
-* Hours of reporting eliminated
+Time Saved must show the counted actions and the per-action assumption on
+screen; a total without its arithmetic is advertising, not a metric.
+
+Future triage metrics (blocked on the capability above, do not report yet):
+% tasks handled by Havi, issues detected before the user checked, anomalies
+surfaced.
 
 Operations also tracks internal health: publish success rate, active connections, sync latency, failed posts, content awaiting approval, unhandled conversations, error resolution time, retention, paying workspaces.
 
 ## Engineering standards
 
-* **Clean / Hexagonal DDD.** Entrypoints depend on application services; services depend on domain and ports; adapters implement ports. Business rules live in the domain, never in a router or a React component.
+* **Layered architecture with DI.** Entrypoints depend on application services;
+  services depend on repositories and on ports for outbound integrations;
+  adapters implement those ports. Business rules live in `domain/policies/`,
+  never in a router or a React component.
+
+  Be accurate about what this is, because an inflated claim misleads reviewers
+  and new contributors. Ports (`domain/ports/`) exist **only** for the six
+  outbound integrations: LLM, publisher, reply publisher, media, email, voice.
+  There is **no repository port** — application services import concrete
+  classes from `adapters/persistence/`, and `domain/models/` are SQLAlchemy
+  models. That is a deliberate, workable trade-off, not hexagonal architecture.
+  Do not describe it as such.
 * **Tests before release.** A feature ships only when real integration/unit tests cover it and pass.
 * **Truthful states above all.** The most expensive bugs here were never crashes — they were silent lies. Any path that can report success without proof is a defect, even with every test green.
 * **Local-only fakes stay local.** Mock LLM, fake publisher, disabled rate limits, and dev-simulate endpoints are blocked outside `HAVI_ENV=local` by config validators, not by convention.

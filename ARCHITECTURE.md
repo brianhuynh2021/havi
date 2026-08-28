@@ -4,6 +4,11 @@ Havi is a multi-tenant control plane for business social media operations. It
 centralizes channel connections, reusable media, content, approvals, publishing,
 conversations, team permissions, audit history, and operational reports.
 
+Product scope and shipped-vs-future capability are defined in
+[PRODUCT_CONTRACT.md](docs/product/PRODUCT_CONTRACT.md), which wins over this
+document on any disagreement. This file describes **how the running system is
+built**, not what it promises.
+
 ## Product boundary
 
 Havi owns social operations. It does not own business outcomes.
@@ -122,12 +127,31 @@ without a button press. Missing approval fails closed.
 apps/web/                 Next.js routes, feature screens and API client
 apps/backend/api/         HTTP composition and routers
 apps/backend/application/ Use cases and state transitions
-apps/backend/domain/      Models, policies and provider ports
+apps/backend/domain/      SQLAlchemy models, business policies, outbound ports
 apps/backend/adapters/    PostgreSQL, OAuth, storage and publisher adapters
 apps/backend/worker/      Content and publish workers
 apps/backend/scheduler/   Due-work scheduling
 apps/backend/migrations/  Alembic schema history
 ```
+
+### What the layering actually is
+
+Layered with dependency injection, not hexagonal. Stated precisely so nobody
+plans work against a shape the code does not have:
+
+- `domain/ports/` defines ports for the six **outbound integrations** only:
+  LLM, publisher, reply publisher, media, email, voice transcriber.
+- There is **no repository port**. Application services import concrete classes
+  from `adapters/persistence/` directly.
+- `domain/models/` are SQLAlchemy declarative models; rows travel from
+  repository to router. `domain/policies/` is framework-free and is where the
+  testable business rules live.
+- A few routers (`queue.py`, `analytics.py`, `organizations.py`) query
+  repositories directly rather than going through a service.
+
+The trade-off is intentional for a codebase this size. The cost is that
+`workspace_id` scoping depends on call-site discipline rather than being
+enforced by a base repository.
 
 ## Release rule
 

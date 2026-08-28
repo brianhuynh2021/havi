@@ -62,6 +62,7 @@ class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), default=None)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    rejection_reason: Mapped[str | None] = mapped_column(default=None)
 
 
 class ContentItemVersion(UUIDPrimaryKeyMixin, Base):

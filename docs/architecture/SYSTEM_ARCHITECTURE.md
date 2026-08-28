@@ -11,10 +11,15 @@ api / worker / scheduler
           ↓
 application services
           ↓
-domain rules and ports
+domain policies and outbound ports
           ↑
 persistence and provider adapters
 ```
+
+This is layered-with-DI, not hexagonal: ports exist only for the six outbound
+integrations, there is no repository port, and `domain/models/` are SQLAlchemy
+models. See [ARCHITECTURE.md](../../ARCHITECTURE.md) §"What the layering
+actually is" for the precise shape and its cost.
 
 Frontend routes compose feature screens. Screens use the generated OpenAPI
 client and shared UI primitives; they do not own provider secrets or duplicate

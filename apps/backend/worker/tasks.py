@@ -71,7 +71,7 @@ def draft_reply(self, inbox_item_id: str) -> None:  # noqa: ANN001
 
 
 @celery_app.task(name="havi.publish.run_due", max_retries=0)
-def publish_run_due(limit: int = 20) -> int:
+def publish_run_due(limit: int = 20, request_id: str | None = None) -> int:
     """Chạy các publish job đã đến hạn. Trả số job đã nhận trong lượt này.
 
     Không nhận `content_item_id`: job được nhận bằng `claim_due`
@@ -91,7 +91,12 @@ def publish_run_due(limit: int = 20) -> int:
         async with publish_service_scope() as service:
             return len(await service.run_due(limit=limit))
 
-    return asyncio.run(_run())
+    token = set_request_id(request_id) if request_id else None
+    try:
+        return asyncio.run(_run())
+    finally:
+        if token is not None:
+            reset_request_id(token)
 
 
 @celery_app.task(name="havi.video.publish", bind=True, max_retries=0)
@@ -134,7 +139,7 @@ def publish_video_post(self, workspace_id: str, post_id: str, request_id: str | 
 
 
 @celery_app.task(name="havi.video.publish_due", max_retries=0)
-def publish_due_video_posts(limit: int = 20) -> int:
+def publish_due_video_posts(limit: int = 20, request_id: str | None = None) -> int:
     """Gửi những video đã duyệt và đã tới giờ. Trả số clip đã xử trong lượt này.
 
     Chạy định kỳ, chọn bản ghi bằng truy vấn chứ không nhận `post_id` qua
@@ -165,11 +170,16 @@ def publish_due_video_posts(limit: int = 20) -> int:
                     logger.exception("Gửi video %s hỏng", post.id)
         return sent
 
-    return asyncio.run(_run())
+    token = set_request_id(request_id) if request_id else None
+    try:
+        return asyncio.run(_run())
+    finally:
+        if token is not None:
+            reset_request_id(token)
 
 
 @celery_app.task(name="havi.video.reconcile", max_retries=0)
-def reconcile_video_publishes(limit: int = 20) -> int:
+def reconcile_video_publishes(limit: int = 20, request_id: str | None = None) -> int:
     """Đối soát các lần gửi đã mất dấu. Trả số lần đã kiểm trong lượt này.
 
     Chạy định kỳ. Không nhận `job_id` từ message: job được chọn bằng truy vấn
@@ -193,4 +203,137 @@ def reconcile_video_publishes(limit: int = 20) -> int:
                     logger.exception("Đối soát attempt %s hỏng", attempt.id)
         return checked
 
-    return asyncio.run(_run())
+    token = set_request_id(request_id) if request_id else None
+    try:
+        return asyncio.run(_run())
+    finally:
+        if token is not None:
+            reset_request_id(token)
+
+
+@celery_app.task(name="havi.inbox.process_webhook", bind=True, max_retries=3)
+def process_webhook_payload(
+    self, payload: dict, request_id: str | None = None
+) -> dict[str, int]:  # noqa: ANN001
+    """Xử lý webhook payload từ Facebook/Meta đã được xác thực chữ ký ở router.
+
+    TẠI SAO CẦN RETRY Ở ĐÂY:
+    Router đã trả HTTP 200 cho Meta ngay khi chữ ký hợp lệ để tránh webhook timeout.
+    Meta coi như sự kiện đã được giao thành công và SẼ KHÔNG GỬI LẠI (Meta chỉ redeliver
+    khi nhận non-200). Do đó, Celery task này là rào chắn duy nhất bảo vệ tin nhắn của
+    khách không bị biến mất vĩnh viễn khi gặp lỗi tạm thời (DB gián đoạn, lỗi mạng).
+
+    1. Mỗi event trong batch được xử lý trong một inbox_service_scope() độc lập, đảm bảo
+       một event lỗi không làm rollback các event anh em đã xử lý thành công.
+    2. Lỗi dữ liệu/logic của từng event được log exception và ghi nhận vào EventLog với
+       field error (để hiển thị được ở GET /analytics/events?error=...).
+    3. Lỗi hạ tầng transient (DB/mạng mất kết nối) sẽ kích hoạt self.retry() với
+       exponential backoff countdown.
+    """
+    from sqlalchemy.exc import DatabaseError, DBAPIError, InterfaceError, OperationalError
+
+    from core.enums import Platform
+    from core.events import EventLogEntry
+    from domain.policies.inbox_triage import iter_inquiries
+    from worker.inbox_service_factory import inbox_service_scope
+
+    transient_exceptions = (
+        ConnectionError,
+        TimeoutError,
+        asyncio.TimeoutError,
+        OSError,
+        OperationalError,
+        DatabaseError,
+        InterfaceError,
+        DBAPIError,
+    )
+
+    async def _run() -> dict[str, int]:
+        accepted = 0
+        skipped = 0
+        failed = 0
+
+        for event in iter_inquiries(payload):
+            try:
+                async with inbox_service_scope() as (inbox_service, connections, events):
+                    connection = await connections.find_by_external_account(
+                        platform=Platform.FACEBOOK, external_account_id=event.page_id
+                    )
+                    if connection is None:
+                        # Trang không thuộc workspace nào đang kết nối. Bỏ qua chứ không lỗi:
+                        # một app Meta có thể nhận sự kiện của trang đã ngắt kết nối.
+                        skipped += 1
+                        continue
+
+                    item = await inbox_service.process_inquiry(
+                        workspace_id=connection.workspace_id,
+                        platform=Platform.FACEBOOK,
+                        author_name=event.author_name,
+                        content=event.text,
+                        item_type=event.item_type,
+                        external_message_id=event.message_id,
+                        recipient_id=event.sender_id,
+                    )
+                    await events.record(
+                        EventLogEntry(
+                            workspace_id=connection.workspace_id,
+                            job_kind="inbox.webhook_received",
+                            input_summary=f"meta_webhook:page_{event.page_id}",
+                            output_summary=f"msg_id:{event.message_id} | psid:{event.sender_id} | item_id:{item.id}",
+                        )
+                    )
+                    accepted += 1
+            except transient_exceptions:
+                # Lỗi hạ tầng tạm thời (DB/mạng) -> raise để task-level retry xử lý
+                raise
+            except Exception as exc:
+                # Lỗi logic/dữ liệu hỏng ở 1 event -> ghi log, record error event, không làm hỏng event khác
+                logger.exception(
+                    "meta_webhook.event_failed message_id=%s page_id=%s: %s",
+                    getattr(event, "message_id", None),
+                    getattr(event, "page_id", None),
+                    exc,
+                )
+                failed += 1
+                try:
+                    async with inbox_service_scope() as (_, connections, events):
+                        conn = await connections.find_by_external_account(
+                            platform=Platform.FACEBOOK, external_account_id=event.page_id
+                        )
+                        if conn is not None:
+                            await events.record(
+                                EventLogEntry(
+                                    workspace_id=conn.workspace_id,
+                                    job_kind="inbox.webhook_received",
+                                    input_summary=f"meta_webhook:page_{event.page_id}",
+                                    output_summary=f"msg_id:{event.message_id} | psid:{event.sender_id}",
+                                    error=str(exc)[:500],
+                                )
+                            )
+                except Exception:
+                    logger.exception("Failed to record error event for failed inquiry")
+
+        return {"accepted": accepted, "skipped": skipped, "failed": failed}
+
+    token = set_request_id(request_id) if request_id else None
+    try:
+        try:
+            return asyncio.run(_run())
+        except transient_exceptions as exc:
+            retries = getattr(getattr(self, "request", None), "retries", 0)
+            max_retries = getattr(self, "max_retries", 3)
+            if retries < max_retries:
+                countdown = 2**retries * 2
+                logger.warning(
+                    "Transient error in process_webhook_payload, retrying (%s/%s) in %ss: %s",
+                    retries + 1,
+                    max_retries,
+                    countdown,
+                    exc,
+                )
+                raise self.retry(exc=exc, countdown=countdown) from exc
+            logger.exception("process_webhook_payload exhausted retries: %s", exc)
+            raise
+    finally:
+        if token is not None:
+            reset_request_id(token)

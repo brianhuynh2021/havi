@@ -10,6 +10,7 @@ ro: tạo job chỉ tốn tiền LLM, còn duyệt là hành động không thu 
 đã đăng, nên cần row lock + audit event.
 """
 
+import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
@@ -127,16 +128,37 @@ class ApprovalService:
         )
         return item
 
-    async def reject(self, *, workspace_id: UUID, item_id: UUID, user_id: UUID) -> ContentItem:
+    async def reject(
+        self,
+        *,
+        workspace_id: UUID,
+        item_id: UUID,
+        user_id: UUID,
+        reason: str | None = None,
+    ) -> ContentItem:
         """pending_approval/scheduled → draft. Giữ lại bài để chủ sửa, gỡ khỏi lịch đăng."""
         item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         assert_transition(item.status, ContentStatus.DRAFT)
-        await self._content.set_item_status(item, status=ContentStatus.DRAFT, scheduled_at=None)
+        await self._content.set_item_status(
+            item,
+            status=ContentStatus.DRAFT,
+            scheduled_at=None,
+            rejection_reason=reason,
+        )
+        summary = f"user={user_id}"
+        if reason:
+            # Giới hạn độ dài trong audit summary (120 ký tự) để bảo vệ kích thước log
+            # và đóng gói an toàn bằng json.dumps, tránh làm vỡ định dạng log nếu reason
+            # chứa ký tự khoảng trắng hoặc dấu '=' (ví dụ text chứa 'user=').
+            # Toàn bộ nội dung reason đầy đủ vẫn được lưu toàn vẹn ở content_items.rejection_reason.
+            cleaned_reason = reason.strip()
+            truncated_reason = json.dumps(cleaned_reason[:120], ensure_ascii=False)
+            summary += f" reason={truncated_reason}"
         await self._audit(
             workspace_id=workspace_id,
             item=item,
             action="content.reject",
-            summary=f"user={user_id}",
+            summary=summary,
         )
         return item
 
@@ -272,6 +294,7 @@ class ApprovalService:
             EventLogEntry(
                 workspace_id=workspace_id,
                 job_id=item.job_id,
+                content_item_id=item.id,
                 job_kind=action,
                 input_summary=f"content_item={item.id} {summary}",
                 output_summary=f"status={item.status}",

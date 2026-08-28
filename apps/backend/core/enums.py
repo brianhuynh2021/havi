@@ -97,10 +97,9 @@ class Platform(StrEnum):
 
 
 class PublishMode(StrEnum):
-    """Toggle "Chế độ đăng bài", lưu theo workspace. Không áp dụng cho reply khách."""
+    """Chế độ đăng bài, lưu theo workspace. Luôn là REVIEW_FIRST (bắt buộc duyệt trước khi đăng)."""
 
     REVIEW_FIRST = "review_first"
-    FULL_AUTO = "full_auto"
 
 
 class ContentStatus(StrEnum):

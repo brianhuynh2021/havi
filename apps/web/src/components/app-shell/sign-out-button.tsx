@@ -17,9 +17,9 @@ type WorkspaceInfo = {
 
 // i18n-data: tên gói hiện trên thanh bên, `t()` dịch ở chỗ render
 const PLAN_META: Record<string, { label: string; icon: string; styleClass: string }> = {
-  trai_nghiem: { label: "Gói Trải Nghiệm", icon: "🌱", styleClass: styles.tierTrial },
-  khoi_nghiep: { label: "Gói Khởi Nghiệp", icon: "⚡", styleClass: styles.tierStarter },
-  chuyen_nghiep: { label: "Gói Chuyên Nghiệp", icon: "💎", styleClass: styles.tierGrowth },
+  trial: { label: "Gói Trải Nghiệm", icon: "🌱", styleClass: styles.tierTrial },
+  tiem_nho: { label: "Gói Khởi Nghiệp", icon: "⚡", styleClass: styles.tierStarter },
+  toan_dien: { label: "Gói Chuyên Nghiệp", icon: "💎", styleClass: styles.tierGrowth },
   doanh_nghiep: { label: "Chuỗi Doanh Nghiệp", icon: "👑", styleClass: styles.tierEnterprise },
 };
 

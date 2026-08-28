@@ -146,6 +146,34 @@ beta users manually as Administrator, Developer, or Tester.
 App Review and Business Verification are required before public signup, but they
 do not block a small closed beta where each tester is added manually.
 
+### 2.7. Payment Webhooks
+
+Billing has its own webhook path, separate from Meta's. Two endpoints accept an
+incoming payment and activate the subscription:
+
+| Endpoint | Sender | Signature | Secret |
+|---|---|---|---|
+| `POST /webhooks/payos` | PayOS | HMAC-SHA256 over the `data` object | `HAVI_PAYOS_CHECKSUM_KEY` |
+| `POST /webhooks/vietqr` | SePay / VietQR bank-transfer notice | HMAC-SHA256 over the raw body, header `X-Signature` | `HAVI_PAYMENT_WEBHOOK_SECRET` |
+
+Both verify the signature in every environment except `local`, and both reject an
+unsigned request with 401. An unsigned PayOS ping is answered only when
+`HAVI_ENV=local`; in staging or production it is treated as a real webhook and
+fails signature verification.
+
+Activation requires more than a valid signature. The transfer must be incoming
+(`transferType` in `in`/`credit`), must carry a unique transaction reference, and
+must contain an invoice code in its content — a transfer with no recognisable code
+is acknowledged and ignored rather than guessed at. Payment is then applied
+through `BillingService.process_payment_success`, which refuses a duplicate
+reference, an underpaid amount, or an invoice in the wrong state. Each of those
+returns a rejection and leaves the subscription inactive; none of them is retried
+into success.
+
+The consequence for operations: a customer who paid but is not activated is
+almost always one of those four cases, and the reason is in the
+`havi.payment_webhook` log line, not in the bank's dashboard.
+
 ## 3. Token Quota and Rate Limits
 
 ### Quota Is Measured in Tokens

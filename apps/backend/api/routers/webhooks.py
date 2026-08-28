@@ -20,12 +20,9 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
-from adapters.persistence.connection_repository import ConnectionRepository
-from adapters.persistence.db import DbSessionDep
-from adapters.persistence.event_log_repository import EventLogRepository
-from api.deps import InboxServiceDep, SettingsDep, WorkspaceDep
-from core.enums import InboxItemType, Platform
-from core.events import EventLogEntry
+from api.deps import InboxServiceDep, JobQueueDep, SettingsDep, WorkspaceDep
+from core.enums import Platform
+from core.request_context import get_request_id
 from core.schemas import HaviModel
 
 logger = logging.getLogger(__name__)
@@ -78,10 +75,9 @@ async def verify_meta_webhook(request: Request, settings: SettingsDep) -> Respon
 async def receive_meta_webhook(
     request: Request,
     settings: SettingsDep,
-    session: DbSessionDep,
-    inbox_service: InboxServiceDep,
-) -> dict[str, int]:
-    """Nhận tin nhắn và bình luận từ Facebook Page."""
+    job_queue: JobQueueDep,
+) -> dict[str, str]:
+    """Nhận tin nhắn và bình luận từ Facebook Page — trả 200 ngay sau khi xác thực."""
     app_secret = settings.facebook_client_secret
     if not app_secret:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Webhook chưa cấu hình")
@@ -98,41 +94,8 @@ async def receive_meta_webhook(
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Chữ ký không hợp lệ")
 
     payload = await request.json()
-    connections = ConnectionRepository(session)
-    events = EventLogRepository(session)
-    accepted = 0
-    skipped = 0
-
-    for event in _iter_inquiries(payload):
-        connection = await connections.find_by_external_account(
-            platform=Platform.FACEBOOK, external_account_id=event.page_id
-        )
-        if connection is None:
-            # Trang không thuộc workspace nào đang kết nối. Bỏ qua chứ không lỗi:
-            # một app Meta có thể nhận sự kiện của trang đã ngắt kết nối.
-            skipped += 1
-            continue
-
-        item = await inbox_service.process_inquiry(
-            workspace_id=connection.workspace_id,
-            platform=Platform.FACEBOOK,
-            author_name=event.author_name,
-            content=event.text,
-            item_type=event.item_type,
-            external_message_id=event.message_id,
-            recipient_id=event.sender_id,
-        )
-        await events.record(
-            EventLogEntry(
-                workspace_id=connection.workspace_id,
-                job_kind="inbox.webhook_received",
-                input_summary=f"meta_webhook:page_{event.page_id}",
-                output_summary=f"msg_id:{event.message_id} | psid:{event.sender_id} | item_id:{item.id}",
-            )
-        )
-        accepted += 1
-
-    return {"accepted": accepted, "skipped": skipped}
+    job_queue.enqueue_webhook_payload(payload=payload, request_id=get_request_id())
+    return {"status": "ok"}
 
 
 @router.post("/dev/simulate", include_in_schema=False)
@@ -165,85 +128,3 @@ async def simulate_inbound(
         external_message_id=payload.external_message_id,
     )
     return {"id": str(item.id), "status": item.status.value}
-
-
-class _Inquiry:
-    """Một sự kiện đã bóc tách, chuẩn hoá khỏi khác biệt giữa các loại webhook."""
-
-    __slots__ = (
-        "page_id",
-        "message_id",
-        "author_name",
-        "text",
-        "sender_id",
-        "item_type",
-    )
-
-    def __init__(
-        self,
-        *,
-        page_id: str,
-        message_id: str,
-        author_name: str,
-        text: str,
-        sender_id: str | None = None,
-        item_type: InboxItemType = InboxItemType.MESSAGE,
-    ):
-        self.page_id = page_id
-        self.message_id = message_id
-        self.author_name = author_name
-        self.text = text
-        self.sender_id = sender_id
-        self.item_type = item_type
-
-
-def _iter_inquiries(payload: dict):
-    """Bóc `messaging` (tin nhắn) và `changes` (bình luận) ra cùng một hình dạng.
-
-    Hàm thuần, không I/O — chỗ dễ sai nhất của webhook là hình dạng payload, nên
-    tách ra để test được mà không cần dựng HTTP hay DB.
-    """
-    for entry in payload.get("entry", []) or []:
-        page_id = str(entry.get("id") or "")
-        if not page_id:
-            continue
-
-        for messaging in entry.get("messaging", []) or []:
-            message = messaging.get("message") or {}
-            text = (message.get("text") or "").strip()
-            message_id = message.get("mid")
-            sender_id = (messaging.get("sender") or {}).get("id")
-            if not text or not message_id:
-                continue
-            # Bỏ echo: tin do chính Page gửi cũng quay lại qua webhook, nhận vào
-            # thì inbox đầy những câu của chính chủ tiệm.
-            if messaging.get("message", {}).get("is_echo"):
-                continue
-            yield _Inquiry(
-                page_id=page_id,
-                message_id=str(message_id),
-                author_name=f"Khách {str(sender_id)[-4:]}" if sender_id else "Khách",
-                text=text,
-                sender_id=str(sender_id) if sender_id else None,
-            )
-
-        for change in entry.get("changes", []) or []:
-            if change.get("field") != "feed":
-                continue
-            value = change.get("value") or {}
-            if value.get("item") != "comment" or value.get("verb") != "add":
-                continue
-            text = (value.get("message") or "").strip()
-            comment_id = value.get("comment_id")
-            if not text or not comment_id:
-                continue
-            author = (value.get("from") or {}).get("name") or "Khách"
-            from_id = (value.get("from") or {}).get("id")
-            yield _Inquiry(
-                page_id=page_id,
-                message_id=str(comment_id),
-                author_name=author,
-                text=text,
-                sender_id=str(from_id) if from_id else None,
-                item_type=InboxItemType.COMMENT,
-            )

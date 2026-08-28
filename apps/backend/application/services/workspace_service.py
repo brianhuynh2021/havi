@@ -12,7 +12,7 @@ from adapters.persistence.user_repository import UserRepository
 from adapters.persistence.workspace_member_repository import WorkspaceMemberRepository
 from adapters.persistence.workspace_repository import WorkspaceRepository
 from application.services.auth_service import AuthService, TokenPairResult
-from core.enums import Industry, PublishMode, WorkspaceRole
+from core.enums import Industry, WorkspaceRole
 from core.events import EventLogEntry
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
@@ -137,21 +137,11 @@ class WorkspaceService:
         *,
         name: str | None,
         industry: Industry | None,
-        publish_mode: PublishMode | None,
     ) -> Workspace:
         workspace = await self.get_workspace(workspace_id)
-        old_mode = workspace.publish_mode
         updated = await self._workspaces.update(
-            workspace, name=name, industry=industry, publish_mode=publish_mode
+            workspace, name=name, industry=industry
         )
-        if publish_mode is not None and publish_mode != old_mode and self._events is not None:
-            await self._events.record(
-                EventLogEntry(
-                    workspace_id=workspace_id,
-                    job_kind="consent.publish_mode_changed",
-                    input_summary=f"from={old_mode.value} to={publish_mode.value}",
-                )
-            )
         return updated
 
     async def delete_workspace(self, *, workspace_id: UUID, user_id: UUID) -> None:

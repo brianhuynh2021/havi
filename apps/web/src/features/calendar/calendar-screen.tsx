@@ -195,6 +195,7 @@ const { t } = useLanguage();
     setSelectedItem({ item, date });
     setTargetIso(datetimeLocalValue(item.scheduled_at, date));
     setRescheduleError(null);
+    setCancelReason("");
   }
 
   async function submitReschedule() {
@@ -213,18 +214,20 @@ const { t } = useLanguage();
   }
 
   const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   async function handleCancelScheduledPost() {
     if (!selectedItem) return;
     setCancelling(true);
     setRescheduleError(null);
-    const result = await rejectItem(selectedItem.item.id);
+    const result = await rejectItem(selectedItem.item.id, cancelReason.trim() || undefined);
     setCancelling(false);
     if (!result.ok) {
       setRescheduleError(result.message);
       return;
     }
     setSelectedItem(null);
+    setCancelReason("");
     setReloadKey((k) => k + 1);
   }
 
@@ -669,6 +672,13 @@ const { t } = useLanguage();
                       {rescheduleError}
                     </p>
                   ) : null}
+                  <Input
+                    type="text"
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder={t("Lý do hoãn bài về nháp (tuỳ chọn)")}
+                    aria-label={t("Lý do hoãn bài")}
+                  />
                   <div className={styles.rescheduleActions}>
                     <Button
                       type="button"

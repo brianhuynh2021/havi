@@ -93,26 +93,6 @@ async def test_bai_tu_viet_khong_tao_ban_v1_cua_may(
     assert pairs == [], "không được dạy nắn giọng văn theo chính giọng người dùng"
 
 
-async def test_ton_trong_publish_mode_full_auto(
-    client: AsyncClient, db_session: AsyncSession
-):
-    """`full_auto` thì vào SCHEDULED — cùng luật với bài AI viết, không có ngoại lệ."""
-    token_pair = await _onboard(client, email="own3@havi.vn")
-    workspace_id = UUID(token_pair["active_workspace_id"])
-    workspaces = WorkspaceRepository(db_session)
-    workspace = await workspaces.get_by_id(workspace_id)
-    assert workspace is not None
-    workspace.publish_mode = PublishMode.FULL_AUTO
-    await db_session.flush()
-
-    response = await client.post(
-        "/content/items",
-        json={"text": BAI_HOAN_CHINH},
-        headers=_headers(token_pair),
-    )
-
-    assert response.status_code == 201, response.text
-    assert response.json()["status"] == ContentStatus.SCHEDULED.value
 
 
 async def test_review_first_khong_bi_lach_qua_duong_tu_viet(

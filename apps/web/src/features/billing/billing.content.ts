@@ -39,7 +39,7 @@ export const PLAN_DETAILS: Record<
     desc: "Chạy thử vòng vận hành: nối kênh, soạn, duyệt, đăng và trả lời.",
     features: [
       "7 ngày dùng đầy đủ, không cần thẻ",
-      "2 người dùng · 2 kênh nối",
+      "2 người dùng · Facebook Page + Reels + Messenger",
       "Hộp thư Messenger gộp về một nơi",
       "Quy trình soạn → duyệt → đăng có ràng buộc",
       "Hạn mức AI dùng thử khoảng 30 bài",
@@ -55,7 +55,7 @@ export const PLAN_DETAILS: Record<
     badgeTone: null,
     desc: "Một thương hiệu, một đội nhỏ, mọi việc social trong tầm kiểm soát.",
     features: [
-      "3 người dùng · 3 kênh nối",
+      "3 người dùng · Facebook Page + Reels + Messenger",
       "Lịch đăng, thư viện media và kho nội dung dùng chung",
       "Hộp thư Messenger kèm trạng thái đã xử lý hay chưa",
       "Lịch sử hoạt động: ai làm gì, lúc nào, kết quả ra sao",
@@ -72,7 +72,7 @@ export const PLAN_DETAILS: Record<
     badgeTone: "popular",
     desc: "Dành cho đội nhiều người: ai được soạn, ai được duyệt, ai trực hội thoại.",
     features: [
-      "10 người dùng · 8 kênh nối",
+      "10 người dùng · Facebook Page + Reels + Messenger",
       "Phân quyền theo vai: chủ, người soạn, người duyệt",
       "Người soạn không đăng được — quyền được kiểm ở máy chủ",
       "Đăng Facebook Page và Reels sau khi có người phê duyệt",
@@ -90,7 +90,7 @@ export const PLAN_DETAILS: Record<
     badgeTone: null,
     desc: "Nhiều thương hiệu hoặc chi nhánh dưới một tầng quản trị. Mỗi thương hiệu tính gói riêng.",
     features: [
-      "50 người dùng · kênh không giới hạn",
+      "50 người dùng · Facebook Page + Reels + Messenger đa thương hiệu",
       "Tầng doanh nghiệp: gom nhiều thương hiệu, nhìn chéo sức khoẻ mọi kênh",
       "Giọng thương hiệu và danh sách điều không được hứa, theo từng đơn vị",
       "Hỗ trợ triển khai trực tiếp cùng Founder và đội ngũ",

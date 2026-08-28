@@ -445,6 +445,8 @@ class ContentRepository:
         status: ContentStatus,
         approved_by: UUID | None = None,
         scheduled_at: datetime | None = None,
+        rejection_reason: str | None = None,
+        clear_rejection_reason: bool = False,
         clear_schedule: bool = False,
     ) -> ContentItem:
         item.status = status
@@ -455,5 +457,11 @@ class ContentRepository:
             item.scheduled_at = None
         elif scheduled_at is not None:
             item.scheduled_at = scheduled_at
+
+        if rejection_reason is not None:
+            item.rejection_reason = rejection_reason
+        elif clear_rejection_reason or status == ContentStatus.PENDING_APPROVAL:
+            item.rejection_reason = None
+
         await self._session.flush()
         return item

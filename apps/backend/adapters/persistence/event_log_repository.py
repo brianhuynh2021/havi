@@ -34,6 +34,7 @@ class EventLogRepository:
         row = EventLog(
             workspace_id=effective_entry.workspace_id,
             job_id=effective_entry.job_id,
+            content_item_id=effective_entry.content_item_id,
             request_id=effective_entry.request_id,
             job_kind=effective_entry.job_kind,
             input_summary=effective_entry.input_summary,
@@ -85,6 +86,7 @@ class EventLogRepository:
         *,
         workspace_id: UUID,
         job_id: UUID | None = None,
+        content_item_id: UUID | None = None,
         job_kind: str | None = None,
         provider: str | None = None,
         request_id: str | None = None,
@@ -95,13 +97,15 @@ class EventLogRepository:
         """Tra event log đã scope theo workspace.
 
         Đây là query hỗ trợ vận hành, không phải analytics public. Chỉ lọc trên
-        cột có cấu trúc (`job_id`, `job_kind`, `provider`, `error`), tránh parse
+        cột có cấu trúc (`job_id`, `content_item_id`, `job_kind`, `provider`, `error`), tránh parse
         `input_summary`/`output_summary` tự do rồi tạo cảm giác tìm kiếm chính
         xác trong khi thực ra phụ thuộc format câu chữ.
         """
         filters = [EventLog.workspace_id == workspace_id]
         if job_id is not None:
             filters.append(EventLog.job_id == job_id)
+        if content_item_id is not None:
+            filters.append(EventLog.content_item_id == content_item_id)
         if job_kind is not None:
             filters.append(EventLog.job_kind == job_kind)
         if provider is not None:

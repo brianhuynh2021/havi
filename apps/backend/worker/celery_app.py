@@ -25,12 +25,15 @@ celery_app.conf.update(
     task_acks_late=True,
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
+    task_soft_time_limit=300,
+    task_time_limit=360,
     task_default_queue="havi.default",
     task_queues=(
         Queue("havi.default"),
         Queue("havi.content"),
         Queue("havi.publish"),
         Queue("havi.video_publish"),
+        Queue("havi.inbox"),
     ),
     task_routes={
         # Video tách khỏi bài viết: đăng video là tải hàng chục MB lên Facebook
@@ -41,6 +44,7 @@ celery_app.conf.update(
         "havi.video.publish_due": {"queue": "havi.video_publish"},
         "havi.content.*": {"queue": "havi.content"},
         "havi.publish.*": {"queue": "havi.publish"},
+        "havi.inbox.*": {"queue": "havi.inbox"},
     },
     timezone="Asia/Ho_Chi_Minh",
     enable_utc=True,

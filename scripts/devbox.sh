@@ -48,7 +48,7 @@ echo "⚡ [3/4] Starting Backend API (port 8000)..."
 (cd apps/backend && uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000) &
 
 echo "⚙️ [4/4] Starting Celery Worker & Beat..."
-(cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_render -l info) &
+(cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_publish,havi.inbox -l info) &
 (cd apps/backend && uv run celery -A worker.celery_app:celery_app beat -l info) &
 
 echo "🌐 Starting Next.js Web Frontend (port 3000)..."

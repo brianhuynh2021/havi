@@ -14,6 +14,7 @@ class EventLog(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
 
     workspace_id: Mapped[uuid.UUID | None] = mapped_column(index=True, default=None)
     job_id: Mapped[uuid.UUID | None] = mapped_column(default=None)
+    content_item_id: Mapped[uuid.UUID | None] = mapped_column(index=True, default=None)
     request_id: Mapped[str | None] = mapped_column(index=True, default=None)
     job_kind: Mapped[str]
     input_summary: Mapped[str] = mapped_column(default="")

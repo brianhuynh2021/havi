@@ -52,6 +52,7 @@ class TestDispatchDuePosts:
         from application.services.publish_service import DispatchResult
 
         calls: list[str] = []
+        captured_kwargs: list[dict] = []
 
         class _FakeService:
             async def dispatch_due(self):
@@ -66,13 +67,18 @@ class TestDispatchDuePosts:
             "worker.publish_service_factory.publish_service_scope",
             _scope(_FakeService()),
         )
-        monkeypatch.setattr(worker.tasks.publish_run_due, "delay", lambda: calls.append("delay"))
+        monkeypatch.setattr(
+            worker.tasks.publish_run_due,
+            "delay",
+            lambda **kwargs: (calls.append("delay"), captured_kwargs.append(kwargs)),
+        )
 
-        scheduler.tasks.dispatch_due_posts.run()
+        scheduler.tasks.dispatch_due_posts.run(request_id="req-test-123")
 
         assert calls == ["dispatch_due", "delay"], (
             "beat phải tạo job rồi giao việc đăng cho worker, không tự gọi run_due"
         )
+        assert captured_kwargs == [{"request_id": "req-test-123"}]
 
     def test_khong_tao_job_moi_van_goi_worker(self, monkeypatch):
         """Job đang chờ backoff từ lượt trước cũng cần được chạy — bỏ `delay()`
@@ -80,6 +86,7 @@ class TestDispatchDuePosts:
         from application.services.publish_service import DispatchResult
 
         calls: list[str] = []
+        captured_kwargs: list[dict] = []
 
         class _FakeService:
             async def dispatch_due(self):
@@ -89,11 +96,17 @@ class TestDispatchDuePosts:
             "worker.publish_service_factory.publish_service_scope",
             _scope(_FakeService()),
         )
-        monkeypatch.setattr(worker.tasks.publish_run_due, "delay", lambda: calls.append("delay"))
+        monkeypatch.setattr(
+            worker.tasks.publish_run_due,
+            "delay",
+            lambda **kwargs: (calls.append("delay"), captured_kwargs.append(kwargs)),
+        )
 
         scheduler.tasks.dispatch_due_posts.run()
 
         assert calls == ["delay"]
+        assert len(captured_kwargs) == 1
+        assert captured_kwargs[0].get("request_id") is not None
 
 
 class TestPublishRunDue:

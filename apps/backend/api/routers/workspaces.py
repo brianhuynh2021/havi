@@ -68,13 +68,12 @@ async def update_workspace(
     payload: WorkspaceUpdate,
     workspace_service: WorkspaceServiceDep,
 ) -> Workspace:
-    """Đổi tên, ngành, hoặc toggle "Chế độ đăng bài" (review_first | full_auto)."""
+    """Đổi tên hoặc ngành nghề của workspace."""
     try:
         workspace = await workspace_service.update_workspace(
             workspace_id,
             name=payload.name,
             industry=payload.industry,
-            publish_mode=payload.publish_mode,
         )
     except WorkspaceNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Không tìm thấy workspace") from exc

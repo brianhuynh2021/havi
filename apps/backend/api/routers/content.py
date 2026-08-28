@@ -64,6 +64,7 @@ from core.schemas import (
     OwnContentItemCreate,
     Page,
     PublishJob,
+    RejectContentItemRequest,
     TokenQuota,
 )
 from domain.policies import channel_capabilities, rate_limits
@@ -446,9 +447,10 @@ async def approve_all(
         posts_per_day=payload.posts_per_day,
     )
     try:
+        from core.request_context import get_request_id
         from scheduler.tasks import dispatch_due_posts
 
-        dispatch_due_posts.delay()
+        dispatch_due_posts.delay(request_id=get_request_id())
     except Exception as exc:
         logger.warning("Failed to trigger dispatch_due_posts: %s", exc)
     return BulkApproveResult(
@@ -501,9 +503,10 @@ async def approve_content(
     except InvalidTransitionError as exc:
         raise transition_conflict(exc) from exc
     try:
+        from core.request_context import get_request_id
         from scheduler.tasks import dispatch_due_posts
 
-        dispatch_due_posts.delay()
+        dispatch_due_posts.delay(request_id=get_request_id())
     except Exception as exc:
         logger.warning("Failed to trigger dispatch_due_posts: %s", exc)
     return ContentItem.model_validate(item)
@@ -515,11 +518,15 @@ async def reject_content(
     auth: AuthDep,
     workspace_id: WorkspaceDep,
     approvals: ApprovalServiceDep,
+    payload: RejectContentItemRequest | None = None,
 ) -> ContentItem:
     """Hoãn bài về bản nháp: pending_approval/scheduled → draft."""
     try:
         item = await approvals.reject(
-            workspace_id=workspace_id, item_id=content_id, user_id=auth.user_id
+            workspace_id=workspace_id,
+            item_id=content_id,
+            user_id=auth.user_id,
+            reason=payload.reason if payload else None,
         )
     except ContentItemNotFound as exc:
         raise _not_found() from exc

@@ -369,12 +369,13 @@ class PublishService:
         for job in jobs:
             try:
                 await self.run_job(job)
-            except Exception:
+            except Exception as exc:
                 logger.exception("publish job %s unexpected error", job.id)
+                err_detail = f"{type(exc).__name__}: {exc}" if str(exc) else type(exc).__name__
                 await self._mark_failed_with_event(
                     job,
                     kind=PublishFailureKind.TEMPORARY,
-                    detail="Lỗi hệ thống ngoài dự kiến",
+                    detail=err_detail[:1000],
                 )
         return jobs
 
@@ -416,6 +417,7 @@ class PublishService:
             EventLogEntry(
                 workspace_id=job.workspace_id,
                 job_id=job.id,
+                content_item_id=job.content_item_id,
                 job_kind="publish.run_job",
                 input_summary=(
                     f"content_item={job.content_item_id} channel={job.channel.value} "

@@ -18,7 +18,7 @@
     "i18n:audit:list": "node scripts/i18n-audit.mjs --list",
     "css:audit": "node scripts/css-module-audit.mjs",
     "dev:api": "cd apps/backend && uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000",
-    "dev:worker": "cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_publish -l info",
+    "dev:worker": "cd apps/backend && uv run celery -A worker.celery_app:celery_app worker -Q havi.default,havi.content,havi.publish,havi.video_publish,havi.inbox -l info",
     "test:api": "cd apps/backend && uv run pytest",
     "lint:api": "cd apps/backend && uv run ruff check .",
     "infra:up": "docker compose up -d",

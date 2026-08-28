@@ -2,6 +2,7 @@
 import { useLanguage } from "@/lib/i18n/language-context";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePoll } from "@/lib/hooks/use-poll";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state-views";
 import {
@@ -61,31 +62,54 @@ export function InboxScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const result = await listInbox();
-    if (result.ok) {
-      setItems(result.data);
-      // Giữ bản nháp cũ, bổ sung bản nháp mới từ backend
-      setDrafts((current) => {
-        const newDrafts = { ...current };
-        result.data.forEach((item) => {
-          if (!newDrafts[item.id] && item.ai_suggested_reply && item.status !== "sent") {
-            newDrafts[item.id] = item.ai_suggested_reply;
-          }
-        });
-        return newDrafts;
-      });
-      setError(null);
-    } else {
-      setError(result.message);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
     }
-    setLoading(false);
+    try {
+      const result = await listInbox();
+      if (result.ok) {
+        setItems(result.data);
+        // Giữ bản nháp cũ của người dùng đang soạn, chỉ bổ sung bản nháp mới từ backend
+        setDrafts((current) => {
+          const newDrafts = { ...current };
+          result.data.forEach((item) => {
+            if (!newDrafts[item.id] && item.ai_suggested_reply && item.status !== "sent") {
+              newDrafts[item.id] = item.ai_suggested_reply;
+            }
+          });
+          return newDrafts;
+        });
+        setError(null);
+      } else {
+        if (!silent) {
+          setError(result.message);
+        }
+        if (silent) {
+          throw new Error(result.message);
+        }
+      }
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(false).catch(() => {});
   }, [load]);
+
+  // Polling ngầm mỗi 15s khi tab active, tạm dừng khi đang gửi phản hồi
+  usePoll(
+    async () => {
+      await load(true);
+    },
+    {
+      intervalMs: 15_000,
+      enabled: busyId === null,
+    },
+  );
 
   // Gom nhóm thành Thread
   const threads = useMemo(() => {
@@ -172,7 +196,16 @@ export function InboxScreen() {
 
   if (loading) return <LoadingState title={t("Đang tải hội thoại…")} />;
   if (error && items.length === 0) {
-    return <ErrorState title={t(error)} action={<Button variant="outline" onClick={load}>{t("Thử lại")}</Button>} />;
+    return (
+      <ErrorState
+        title={t(error)}
+        action={
+          <Button variant="outline" onClick={() => void load(false)}>
+            {t("Thử lại")}
+          </Button>
+        }
+      />
+    );
   }
 
   return (
@@ -292,10 +325,10 @@ export function InboxScreen() {
                       )}
                       
                       {/* Shop Reply */}
-                      {item.status === "sent" && item.ai_suggested_reply && (
+                      {item.status === "sent" && (item.sent_reply_text || item.ai_suggested_reply) && (
                         <div className={`${styles.bubbleWrapper} ${styles.bubbleOutgoing}`}>
-                          <div className={styles.bubbleContent}>{item.ai_suggested_reply}</div>
-                          <span className={styles.bubbleMeta}>{t("Đã gửi qua Havi •")}{" "}{new Date(item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                          <div className={styles.bubbleContent}>{item.sent_reply_text ?? item.ai_suggested_reply}</div>
+                          <span className={styles.bubbleMeta}>{t("Đã gửi qua Havi •")}{" "}{new Date(item.replied_at ?? item.created_at).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       )}

@@ -3,8 +3,8 @@
     draft → pending_approval → approved → scheduled → publishing → published | failed
     failed → publishing (retry có backoff, max N lần) → dead_letter
 
-`full_auto` chỉ bỏ qua cặp pending_approval → approved; mọi trạng thái sau giữ nguyên.
-Reply cho khách KHÔNG dùng state machine này và KHÔNG BAO GIỜ có full_auto.
+Mọi nội dung đều bắt buộc qua bước duyệt (pending_approval → approved).
+Reply cho khách KHÔNG dùng state machine này và KHÔNG BAO GIỜ tự động gửi.
 """
 
 from core.enums import ContentStatus, PublishMode
@@ -61,14 +61,11 @@ def allowed_transitions(current: ContentStatus) -> frozenset[ContentStatus]:
     return _TRANSITIONS[current]
 
 
-def initial_status(publish_mode: PublishMode) -> ContentStatus:
+def initial_status(publish_mode: PublishMode | None = None) -> ContentStatus:
     """Trạng thái của draft ngay khi Content Engine sinh xong.
 
-    `review_first` (mặc định): dừng ở PENDING_APPROVAL, chờ chủ tiệm duyệt.
-    `full_auto` (opt-in): vào thẳng SCHEDULED.
+    Luôn dừng ở PENDING_APPROVAL, chờ chủ tiệm hoặc người duyệt duyệt trước khi lên lịch đăng.
     """
-    if publish_mode is PublishMode.FULL_AUTO:
-        return ContentStatus.SCHEDULED
     return ContentStatus.PENDING_APPROVAL
 
 

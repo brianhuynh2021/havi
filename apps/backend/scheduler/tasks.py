@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="havi.scheduler.dispatch_due_posts")
-def dispatch_due_posts() -> None:
+def dispatch_due_posts(request_id: str | None = None) -> None:
     """Tìm content_item `scheduled` tới giờ → tạo publish job → gọi worker chạy.
 
     Chỉ *tạo* job ở đây, việc gọi Graph API để `havi.publish.run_due` làm. Beat
@@ -21,21 +21,29 @@ def dispatch_due_posts() -> None:
     không sinh bài trùng. Gửi `run_due` kể cả khi lượt này không tạo job mới:
     job đang chờ backoff từ lượt trước cũng cần được chạy.
     """
+    from core.request_context import new_request_id, reset_request_id, set_request_id
     from worker.publish_service_factory import publish_service_scope
     from worker.tasks import publish_run_due
+
+    # Beat runs without request_id; minting a synthetic ID keeps scheduled runs greppable in logs.
+    effective_request_id = request_id or new_request_id()
+    token = set_request_id(effective_request_id)
 
     async def _run() -> tuple[int, int]:
         async with publish_service_scope() as service:
             result = await service.dispatch_due()
             return result.enqueued, result.skipped
 
-    enqueued, skipped = asyncio.run(_run())
-    logger.info("dispatch_due_posts: %d new jobs, %d skipped (existing jobs)", enqueued, skipped)
-    publish_run_due.delay()
+    try:
+        enqueued, skipped = asyncio.run(_run())
+        logger.info("dispatch_due_posts: %d new jobs, %d skipped (existing jobs)", enqueued, skipped)
+        publish_run_due.delay(request_id=effective_request_id)
+    finally:
+        reset_request_id(token)
 
 
 @celery_app.task(name="havi.scheduler.notify_due_renewals")
-def notify_due_renewals() -> None:
+def notify_due_renewals(request_id: str | None = None) -> None:
     """Nhắc đội vận hành về workspace sắp hoặc đã hết hạn.
 
     Gửi vào chat của đội, **không** gửi cho khách: một cuộc gọi của người thật giữ
@@ -52,7 +60,12 @@ def notify_due_renewals() -> None:
     from adapters.persistence.workspace_repository import WorkspaceRepository
     from core.alerts import Alert
     from core.config import get_settings
+    from core.request_context import new_request_id, reset_request_id, set_request_id
     from domain.policies import renewal, subscription
+
+    # Beat runs without request_id; minting a synthetic ID keeps scheduled runs greppable in logs.
+    effective_request_id = request_id or new_request_id()
+    token = set_request_id(effective_request_id)
 
     async def _run() -> int:
         settings = get_settings()
@@ -94,5 +107,8 @@ def notify_due_renewals() -> None:
                 sent += 1
         return sent
 
-    sent = asyncio.run(_run())
-    logger.info("notify_due_renewals: đã nhắc %d workspace", sent)
+    try:
+        sent = asyncio.run(_run())
+        logger.info("notify_due_renewals: đã nhắc %d workspace", sent)
+    finally:
+        reset_request_id(token)

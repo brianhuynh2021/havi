@@ -44,6 +44,8 @@ class InboxItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     author_name: Mapped[str]
     sentiment: Mapped[str | None] = mapped_column(default=None)
     ai_suggested_reply: Mapped[str | None] = mapped_column(Text, default=None)
+    #: Chữ người dùng đã gửi thực tế — tách khỏi `ai_suggested_reply` để không mất bản gợi ý gốc của AI.
+    sent_reply_text: Mapped[str | None] = mapped_column(Text, default=None)
     status: Mapped[InboxItemStatus] = mapped_column(
         Enum(InboxItemStatus, native_enum=False), default=InboxItemStatus.NEW
     )

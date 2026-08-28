@@ -167,10 +167,13 @@ class ContentEngine:
             # trong một transaction nên cùng sống sót. Đảo thứ tự thì event rơi
             # vào transaction mới và bị rollback cuốn đi khi `GenerationFailed`
             # ném ra.
+            # content_item_id cố ý để None vì event bao quát toàn bộ job sinh draft
+            # (chưa có draft nào được tạo), không gán cho một item đơn lẻ.
             await self._events.record(
                 EventLogEntry(
                     workspace_id=workspace_id,
                     job_id=job_id,
+                    content_item_id=None,
                     job_kind="content.generate_drafts",
                     input_summary=f"{len(creative_inputs)} raw input",
                     duration_ms=_job_elapsed_ms(job),
@@ -241,10 +244,13 @@ class ContentEngine:
             items.append(item)
         await self._content.mark_job_drafts_ready(job)
 
+        # content_item_id cố ý để None: event này ghi nhận kết quả của cả job sinh N drafts
+        # đa kênh, không gán đại diện cho draft đầu tiên (items[0]).
         await self._events.record(
             EventLogEntry(
                 workspace_id=workspace_id,
                 job_id=job_id,
+                content_item_id=None,
                 job_kind="content.generate_drafts",
                 input_summary=f"{len(creative_inputs)} raw input",
                 output_summary=(

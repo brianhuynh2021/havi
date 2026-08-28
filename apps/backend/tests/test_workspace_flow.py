@@ -71,7 +71,7 @@ async def test_khong_the_doc_workspace_cua_nguoi_khac(client: AsyncClient):
     assert response.status_code == 403
 
 
-async def test_update_workspace_doi_publish_mode(client: AsyncClient):
+async def test_update_workspace_doi_ten_nganh(client: AsyncClient):
     token = await _sign_up_and_login(client, email="w0006@havi.vn")
     headers = _auth_headers(token)
     create = await client.post(
@@ -80,10 +80,11 @@ async def test_update_workspace_doi_publish_mode(client: AsyncClient):
     workspace_id = create.json()["id"]
 
     update = await client.patch(
-        f"/workspaces/{workspace_id}", json={"publish_mode": "full_auto"}, headers=headers
+        f"/workspaces/{workspace_id}", json={"name": "Tiệm Mới", "industry": "food_beverage"}, headers=headers
     )
     assert update.status_code == 200
-    assert update.json()["publish_mode"] == "full_auto"
+    assert update.json()["name"] == "Tiệm Mới"
+    assert update.json()["industry"] == "food_beverage"
 
 
 async def test_activate_workspace_tra_token_moi(client: AsyncClient):

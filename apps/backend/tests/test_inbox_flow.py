@@ -87,7 +87,8 @@ async def test_inbox_faq_is_suggested_but_waits_for_human(client: AsyncClient):
     )
     assert reply_resp.status_code == 200
     assert reply_resp.json()["status"] == "sent"
-    assert reply_resp.json()["ai_suggested_reply"] is not None
+    assert reply_resp.json()["sent_reply_text"] == "Dạ tiệm xin gửi chị bảng giá mới nhất ạ!"
+    assert reply_resp.json()["replied_at"] is not None
 
 
 @pytest.mark.asyncio

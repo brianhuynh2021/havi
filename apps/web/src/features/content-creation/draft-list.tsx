@@ -100,6 +100,13 @@ export function DraftList({
                 <DraftEditor item={item} onClose={() => onEdit(null)} onSaved={onSaved} />
               ) : (
                 <>
+                  {item.rejection_reason ? (
+                    <div className={styles.rejectionReasonBox}>
+                      <span className={styles.rejectionReasonLabel}>⚠️ {t("Ghi chú sửa đổi:")}</span>
+                      <span className={styles.rejectionReasonText}>{item.rejection_reason}</span>
+                    </div>
+                  ) : null}
+
                   {item.media_url ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img className={styles.draftImage} src={item.media_url} alt="" />
