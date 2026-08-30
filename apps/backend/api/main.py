@@ -11,9 +11,15 @@ import secrets
 import time
 from html import escape
 
+import httpx
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
 
 from api.routers import (
     analytics,
@@ -186,6 +192,57 @@ def create_app() -> FastAPI:
         return HTMLResponse(
             f"<!DOCTYPE html><html><head>{meta}</head><body>Havi Backend API</body></html>"
         )
+
+    #: Đường dẫn pháp lý khai trên Meta App Dashboard → trang thật ở apps/web.
+    #:
+    #: Meta bắt buộc Privacy Policy URL phải tải được, nếu không **toàn bộ** OAuth
+    #: dialog trả "Sorry, something went wrong" — không nói lý do, và trông y hệt
+    #: lỗi thiếu quyền nên rất tốn thời gian truy.
+    #:
+    #: Các trang này sống ở apps/web (:3000), còn tunnel công khai lại trỏ vào
+    #: backend (:8000), nên không có URL nào ngoài Internet chạm được chúng.
+    #: Redirect từ đây là cách rẻ nhất: một tunnel vẫn phục vụ được cả hai, và
+    #: URL đã khai trên Dashboard không phải sửa mỗi lần đổi domain.
+    _LEGAL_REDIRECTS = {
+        "bao-mat": "/privacy",
+        "dieu-khoan": "/terms",
+        "xoa-du-lieu": "/data-deletion",
+    }
+
+    def _register_legal_page(slug: str, target: str) -> None:
+        """Khai từng đường dẫn một, không dùng `/{slug}` catch-all.
+
+        Catch-all ở gốc nuốt mọi path một đoạn chưa có route khớp — nó đã ăn mất
+        `/zalo_verifier{suffix}` và làm test đỏ. Khai tường minh thì đường dẫn
+        mới không thể vô tình che route sẵn có.
+
+        Đây là **proxy**, không phải redirect: `web_base_url` ở local là
+        `http://localhost:3000`, mà Meta đứng ngoài Internet thì không mở nổi
+        localhost — redirect sẽ dẫn nó tới một URL chết. Tải nội dung rồi trả
+        lại thì một tunnel duy nhất phục vụ được cả hai (ngrok free chỉ cho một
+        tunnel, đã thử và bị ERR_NGROK_334).
+        """
+
+        @app.get(f"/{slug}", include_in_schema=False, name=f"legal_{slug}")
+        async def _handler() -> HTMLResponse:
+            url = f"{settings.web_base_url}{target}"
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    upstream = await client.get(url, follow_redirects=True)
+            except httpx.HTTPError:
+                # Web chưa chạy: trả 503 chứ không 200 rỗng. Meta kiểm URL này
+                # để cho phép OAuth — một trang trắng "hợp lệ" sẽ khiến app qua
+                # được vòng kiểm rồi hỏng ở chỗ khác khó truy hơn nhiều.
+                raise HTTPException(
+                    status.HTTP_503_SERVICE_UNAVAILABLE,
+                    "Trang chưa sẵn sàng",
+                ) from None
+            if upstream.status_code >= 400:
+                raise HTTPException(status.HTTP_404_NOT_FOUND)
+            return HTMLResponse(upstream.text)
+
+    for _slug, _target in _LEGAL_REDIRECTS.items():
+        _register_legal_page(_slug, _target)
 
     @app.get("/zalo_verifier{suffix}", include_in_schema=False)
     async def zalo_verifier_handler(suffix: str) -> PlainTextResponse:
