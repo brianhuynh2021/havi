@@ -82,6 +82,13 @@ class Settings(BaseSettings):
     # bên dưới chặn nó ở staging/production.
     use_fake_publisher: bool = True
 
+    # Dùng FakeReplyPublisher thay vì nhắn tin thật cho khách. Tách khỏi
+    # `use_fake_publisher` vì hai việc có mức rủi ro khác nhau: đăng nhầm một
+    # bài lên Trang test thì xoá được, còn nhắn nhầm vào hộp thư của người thật
+    # thì không rút lại được. Nên muốn thử đăng bài thật không có nghĩa là đồng
+    # ý nhắn thật luôn.
+    use_fake_reply: bool = True
+
     # Tắt rate limit (dùng NullRateLimiter). Chỉ cho test — validator bên dưới
     # chặn ở staging/production, cùng khuôn với hai cờ trên: rate limit tắt âm
     # thầm ở production là mở cửa cho brute force mà không có dấu hiệu gì.
@@ -198,6 +205,21 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"HAVI_USE_FAKE_PUBLISHER=true không được phép khi HAVI_ENV={self.env}. "
                 "Fake publisher chỉ dùng ở local; staging/production phải đăng thật."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _force_real_reply_outside_local(self) -> "Settings":
+        """FakeReplyPublisher chỉ được sống ở local.
+
+        Cùng kiểu hỏng im lặng với fake publisher, nhưng nạn nhân là khách chứ
+        không phải chủ tiệm: inbox hiện "đã gửi", người trực ca yên tâm chuyển
+        sang tin kế tiếp, còn khách ngồi chờ một câu trả lời không bao giờ tới.
+        """
+        if self.use_fake_reply and self.env != "local":
+            raise ValueError(
+                f"HAVI_USE_FAKE_REPLY=true không được phép khi HAVI_ENV={self.env}. "
+                "Fake reply chỉ dùng ở local; staging/production phải nhắn thật."
             )
         return self
 

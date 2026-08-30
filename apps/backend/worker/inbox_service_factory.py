@@ -22,7 +22,10 @@ from domain.ports.reply_publisher import ReplyPublisherPort
 
 def build_reply_publishers(session) -> dict[Platform, ReplyPublisherPort]:
     settings = get_settings()
-    if settings.is_local:
+    # Theo `use_fake_reply` chứ không theo `is_local`: muốn thử nhắn thật cho
+    # một Page test thì tắt đúng cờ này, không phải đổi HAVI_ENV — đổi ENV kéo
+    # theo cả CORS, rate limit và việc chặn endpoint dev.
+    if settings.use_fake_reply:
         return {
             Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
             Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),

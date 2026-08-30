@@ -129,7 +129,9 @@ BillingServiceDep = Annotated[BillingService, Depends(get_billing_service)]
 
 
 def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxService:
-    if settings.is_local:
+    # Cùng cờ với worker (`build_reply_publishers`): hai đường gửi phải giống
+    # nhau, lệch nhau thì bấm trả lời trên web gửi thật mà qua worker lại giả.
+    if settings.use_fake_reply:
         reply_publishers: dict[Platform, ReplyPublisherPort] = {
             Platform.FACEBOOK: FakeReplyPublisher(Platform.FACEBOOK),
             Platform.ZALO_OA: FakeReplyPublisher(Platform.ZALO_OA),

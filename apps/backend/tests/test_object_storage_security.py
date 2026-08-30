@@ -23,6 +23,7 @@ def test_nonlocal_media_urls_are_short_lived_and_use_external_endpoint(monkeypat
         env="staging",
         use_mock_llm=False,
         use_fake_publisher=False,
+        use_fake_reply=False,
         disable_rate_limit=False,
         email_provider="smtp",
         email_from="no-reply@havi.vn",

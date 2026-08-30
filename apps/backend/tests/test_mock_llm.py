@@ -117,6 +117,7 @@ def test_staging_tat_mock_thi_khoi_dong_binh_thuong():
         env="staging",
         use_mock_llm=False,
         use_fake_publisher=False,
+        use_fake_reply=False,
         disable_rate_limit=False,
         email_provider="smtp",
         email_from="no-reply@havi.vn",
@@ -138,6 +139,7 @@ def test_tat_rate_limit_o_staging_thi_khong_khoi_dong_duoc():
                 env=env,
                 use_mock_llm=False,
                 use_fake_publisher=False,
+                use_fake_reply=False,
                 disable_rate_limit=True,
             )
 
