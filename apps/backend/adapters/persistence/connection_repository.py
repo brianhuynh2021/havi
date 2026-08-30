@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
@@ -94,6 +95,7 @@ class ConnectionRepository:
         external_account_id: str | None = None,
         external_user_id: str | None = None,
         connected_by: UUID | None = None,
+        granted_scopes: Sequence[str] | None = None,
     ) -> PlatformConnection:
         """Nối kênh, hoặc nối lại kênh đã có.
 
@@ -116,6 +118,7 @@ class ConnectionRepository:
             existing.connected_by = connected_by
             existing.status = ConnectionStatus.CONNECTED
             existing.failure_reason = None
+            existing.granted_scopes = list(granted_scopes) if granted_scopes is not None else None
             await self._session.flush()
             return existing
 
@@ -130,6 +133,7 @@ class ConnectionRepository:
             external_user_id=external_user_id,
             connected_by=connected_by,
             status=ConnectionStatus.CONNECTED,
+            granted_scopes=list(granted_scopes) if granted_scopes is not None else None,
         )
         self._session.add(connection)
         await self._session.flush()

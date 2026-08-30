@@ -34,6 +34,9 @@ class OAuthAccount:
     external_user_id: str | None = None
     expires_at: datetime | None = None
     refresh_token: str | None = None
+    #: Quyền nền tảng thực sự cấp. Rỗng nghĩa là adapter chưa khai báo — nơi
+    #: dùng phải coi như "không biết" chứ không phải "không có quyền nào".
+    granted_scopes: tuple[str, ...] = ()
 
     def __repr__(self) -> str:
         """Che token trong repr.

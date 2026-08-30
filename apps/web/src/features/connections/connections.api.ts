@@ -130,6 +130,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
   thieu_thong_tin: "Facebook trả về thiếu thông tin — bạn thử nối lại nhé.",
   het_han: "Lượt nối kênh đã hết hạn (quá 10 phút) — bạn bấm nối lại nhé.",
   chua_cau_hinh: NOT_CONFIGURED,
+  tam_loi: "Nền tảng đang bận — bạn bấm nối lại sau ít phút nhé.",
   he_thong: "Havi gặp lỗi khi nối kênh — bạn thử lại sau chút nhé.",
 };
 
@@ -145,6 +146,13 @@ export function readCallbackOutcome(search: string): CallbackOutcome {
   if (ketNoi === "ok") return { kind: "ok" };
   if (ketNoi !== "loi") return null;
   const lyDo = params.get("ly_do") ?? "";
+  // `tu_choi` mang theo câu giải thích của chính nền tảng (đã được backend cắt
+  // ngắn và encode). Hiện nguyên câu đó thay vì "lỗi hệ thống" chung chung:
+  // nó nói rõ thiếu quyền nào hoặc chưa có Trang nào, tức là việc cần làm tiếp.
+  if (lyDo === "tu_choi") {
+    const chiTiet = params.get("chi_tiet")?.trim();
+    if (chiTiet) return { kind: "error", message: chiTiet };
+  }
   return { kind: "error", message: CALLBACK_ERRORS[lyDo] ?? GENERIC_ERROR };
 }
 
@@ -182,4 +190,31 @@ export function statusCopy(status: ConnectionStatus): {
         needsReconnect: true,
       };
   }
+}
+
+
+/** Tính năng một kết nối có thể thiếu, kèm câu nói rõ mất gì.
+ *
+ * Kênh giờ nối được với ít quyền hơn toàn bộ (backend:
+ * `domain/policies/connection_capabilities.py`), nên thẻ kết nối phải nói ra
+ * cái gì đang tắt. Im lặng ở đây đưa ta về đúng vấn đề cũ — chấm xanh trong khi
+ * Inbox không nhận gì — chỉ khác là lần này Havi biết mà không nói. */
+const CAPABILITY_LABELS: Record<string, string> = {
+  publish_post: "Đăng bài",
+  reply_comment: "Trả lời bình luận",
+  reply_message: "Trả lời tin nhắn",
+  receive_inbox: "Nhận tin về Hộp thư",
+};
+
+/** Tính năng kênh này KHÔNG dùng được, theo thứ tự ổn định để UI không nhảy. */
+export function missingCapabilities(
+  connection: PlatformConnection | undefined,
+): string[] {
+  if (!connection) return [];
+  const granted = new Set(connection.capabilities ?? []);
+  // `capabilities` rỗng cũng có thể là kết nối cũ backend chưa ghi quyền. Backend
+  // đã quy ước trả đủ khả năng cho trường hợp đó, nên rỗng ở đây là rỗng thật.
+  return Object.entries(CAPABILITY_LABELS)
+    .filter(([key]) => !granted.has(key))
+    .map(([, label]) => label);
 }

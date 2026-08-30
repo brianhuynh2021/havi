@@ -34,6 +34,7 @@ from core.schemas import PlatformConnection as PlatformConnectionSchema
 from core.token_crypto import TokenEncryptionUnavailable
 from domain.models.connection import PlatformConnection
 from domain.policies import plan_limits
+from domain.policies.connection_capabilities import capabilities_for
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,7 @@ class ConnectionService:
             external_account_id=account.external_account_id,
             external_user_id=account.external_user_id,
             connected_by=payload.user_id,
+            granted_scopes=list(account.granted_scopes) or None,
         )
         logger.info(
             "workspace %s nối %s vào trang %s",
@@ -255,6 +257,10 @@ def to_schema(connection: PlatformConnection) -> PlatformConnectionSchema:
         account_name=connection.account_name,
         expires_at=connection.expires_at,
         connected_by=connection.connected_by,
+        capabilities=sorted(
+            c.value
+            for c in capabilities_for(connection.platform, connection.granted_scopes)
+        ),
     )
 
 

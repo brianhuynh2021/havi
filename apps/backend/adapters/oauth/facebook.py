@@ -50,7 +50,11 @@ _DIALOG_URL = f"https://www.facebook.com/{GRAPH_VERSION}/dialog/oauth"
 #: - `pages_show_list`: đọc danh sách Page chủ tiệm quản lý.
 #: - `pages_read_engagement`: đọc tên/thông tin Page (bắt buộc đi kèm khi lấy
 #:   Page token).
-#: - `pages_read_user_content`: nhận nội dung bình luận của người dùng.
+#:
+#: Cố ý KHÔNG xin `pages_read_user_content`: nội dung bình luận tới Havi qua
+#: webhook `feed` (do `pages_manage_metadata` cấp), không phải bằng lệnh đọc
+#: chủ động — nên quyền đó thừa, mà mỗi permission thừa là một câu phải trả lời
+#: trong App Review.
 #: - `pages_manage_posts`: đăng bài đã được người dùng duyệt.
 #: - `pages_manage_engagement`: trả lời bình luận công khai.
 #: - `pages_manage_metadata`: đăng ký Page nhận webhook.
@@ -58,12 +62,34 @@ _DIALOG_URL = f"https://www.facebook.com/{GRAPH_VERSION}/dialog/oauth"
 SCOPES = (
     "pages_show_list",
     "pages_read_engagement",
-    "pages_read_user_content",
     "pages_manage_posts",
     "pages_manage_engagement",
     "pages_manage_metadata",
     "pages_messaging",
 )
+
+#: Quyền **không có thì không nối được**. Thiếu một trong ba là kết nối vô dụng
+#: chứ không phải "thiếu một tính năng":
+#:
+#: - `pages_show_list` + `pages_read_engagement`: không có thì không lấy nổi
+#:   Page token, tức là chẳng có gì để lưu.
+#: - `pages_manage_metadata`: `exchange_code` kết thúc bằng đăng ký webhook.
+#:   Thiếu nó thì Havi không bao giờ nhận được tin nhắn hay bình luận, và đó
+#:   đúng là kịch bản "UI báo xanh mà Inbox im lặng" mà module này phải tránh.
+REQUIRED_SCOPES = frozenset({
+    "pages_show_list",
+    "pages_read_engagement",
+    "pages_manage_metadata",
+})
+
+#: Quyền bật thêm tính năng. Thiếu thì kênh vẫn nối được, chỉ là tính năng đó
+#: tắt — chủ tiệm thấy rõ cái nào đang bật thay vì bị chặn ở cửa.
+#: Xem `Capability` bên dưới để biết mỗi quyền mở ra cái gì.
+OPTIONAL_SCOPES = frozenset({
+    "pages_manage_posts",
+    "pages_manage_engagement",
+    "pages_messaging",
+})
 
 WEBHOOK_FIELDS = ("messages", "feed")
 
@@ -125,16 +151,16 @@ class FacebookOAuthClient(OAuthClientPort):
             short_lived = await self._code_to_token(client, code)
             long_lived, expires_at = await self._to_long_lived(client, short_lived)
             external_user_id = await self._get_external_user_id(client, long_lived)
-            await self._ensure_permissions(client, long_lived)
+            granted = await self._granted_scopes(client, long_lived)
             pages = await self._list_pages(client, long_lived)
             page = _pick_page(pages)
+            # `tasks` của Page nói chủ tiệm được làm gì trên chính Trang đó, độc
+            # lập với quyền app. Trước đây thiếu một task là chặn; giờ nó thu
+            # hẹp năng lực giống hệt quyền thiếu — cùng một cách xử lý, vì với
+            # người dùng thì "app không được phép" và "tôi không được phép" đều
+            # dẫn tới cùng một kết quả: tính năng đó tắt.
             tasks = set(page.get("tasks") or [])
-            if not {"CREATE_CONTENT", "MESSAGING", "MODERATE"}.issubset(tasks):
-                raise OAuthPermanentError(
-                    self.platform,
-                    "Tài khoản chưa có đủ quyền đăng bài, nhắn tin và quản lý "
-                    "bình luận trên Trang đã chọn",
-                )
+            granted = frozenset(granted & _scopes_allowed_by_tasks(tasks))
             page_token = page.get("access_token")
             if not page_token:
                 # Page hiện ra nhưng không kèm token khi người dùng không có
@@ -148,6 +174,7 @@ class FacebookOAuthClient(OAuthClientPort):
                 client,
                 page_id=str(page["id"]),
                 page_token=str(page_token),
+                granted=granted,
             )
 
         return OAuthAccount(
@@ -159,6 +186,7 @@ class FacebookOAuthClient(OAuthClientPort):
             # docstring module). Ghi `expires_at` của *user token* vào đây sẽ
             # làm UI báo "sắp hết hạn" sai — để None và dựa vào lỗi lúc đăng.
             expires_at=None,
+            granted_scopes=tuple(sorted(granted)),
         )
 
     # --- Năm bước Graph ------------------------------------------------------
@@ -217,8 +245,19 @@ class FacebookOAuthClient(OAuthClientPort):
             )
         return pages
 
-    async def _ensure_permissions(self, client: httpx.AsyncClient, user_token: str) -> None:
-        """Reject partial consent before it can become a green connection."""
+    async def _granted_scopes(self, client: httpx.AsyncClient, user_token: str) -> frozenset[str]:
+        """Quyền chủ tiệm thực sự đã cấp, và chặn sớm nếu thiếu quyền lõi.
+
+        Trước đây hàm này đòi đủ **cả bảy** quyền, thiếu một là ném lỗi và không
+        nối được gì. Đó là all-or-nothing: chủ tiệm bấm cấp quyền xong, chờ, rồi
+        bị đá về tay trắng chỉ vì thiếu một quyền phụ mà họ có thể không cần —
+        ví dụ tiệm chưa dùng Messenger.
+
+        Giờ chỉ `REQUIRED_SCOPES` mới chặn (xem docstring của nó: thiếu là kết
+        nối vô dụng thật). Quyền tuỳ chọn thiếu thì kênh vẫn nối, tính năng
+        tương ứng tắt, và `granted_scopes` đi theo connection để mọi nơi biết
+        cái gì đang bật.
+        """
         body = await self._get(
             client,
             "/me/permissions",
@@ -229,12 +268,14 @@ class FacebookOAuthClient(OAuthClientPort):
             for item in body.get("data") or []
             if item.get("status") == "granted"
         }
-        missing = [scope for scope in SCOPES if scope not in granted]
-        if missing:
+        missing_required = sorted(REQUIRED_SCOPES - granted)
+        if missing_required:
             raise OAuthPermanentError(
                 self.platform,
-                "Facebook chưa cấp đủ quyền cho Havi: " + ", ".join(missing),
+                "Facebook chưa cấp quyền tối thiểu để nối Trang: "
+                + ", ".join(missing_required),
             )
+        return frozenset(granted & set(SCOPES))
 
     async def _get_external_user_id(self, client: httpx.AsyncClient, user_token: str) -> str:
         """Capture Meta's app-scoped user ID for authenticated deletion requests."""
@@ -257,18 +298,27 @@ class FacebookOAuthClient(OAuthClientPort):
         *,
         page_id: str,
         page_token: str,
+        granted: frozenset[str],
     ) -> None:
-        """Subscribe the selected Page to the two event types Havi consumes."""
+        """Đăng ký Page nhận đúng những loại sự kiện quyền hiện có cho phép.
+
+        Chỉ xin `messages` khi có `pages_messaging`: xin một field không có
+        quyền thì Meta từ chối **cả lệnh**, làm mất luôn `feed` mà đáng lẽ đăng
+        ký được. Nên lọc trước rồi mới gọi.
+        """
+        fields = [f for f in WEBHOOK_FIELDS if f != "messages" or "pages_messaging" in granted]
+        if not fields:
+            return
         body = await self._post(
             client,
             f"/{page_id}/subscribed_apps",
-            params={"subscribed_fields": ",".join(WEBHOOK_FIELDS)},
+            params={"subscribed_fields": ",".join(fields)},
             access_token=page_token,
         )
         if body.get("success") is not True:
             raise OAuthPermanentError(
                 self.platform,
-                "Facebook chưa xác nhận đăng ký Messenger và bình luận cho Trang",
+                "Facebook chưa xác nhận đăng ký nhận tin cho Trang",
             )
 
     # --- HTTP ----------------------------------------------------------------
@@ -344,27 +394,43 @@ class FacebookOAuthClient(OAuthClientPort):
             ) from exc
 
 
+#: Task trên Page ↔ quyền app. Cùng một tính năng cần **cả hai**: app được cấp
+#: quyền, và người cấp quyền có task đó trên chính Trang. Thiếu vế nào cũng dẫn
+#: tới lỗi lúc gọi API, nên gộp chung một chỗ để không phải kiểm hai lần.
+_TASK_FOR_SCOPE = {
+    "pages_manage_posts": "CREATE_CONTENT",
+    "pages_manage_engagement": "MODERATE",
+    "pages_messaging": "MESSAGING",
+}
+
+
+def _scopes_allowed_by_tasks(tasks: set[str]) -> frozenset[str]:
+    """Quyền còn dùng được sau khi soi task thật của Page."""
+    return frozenset(
+        scope
+        for scope in SCOPES
+        if _TASK_FOR_SCOPE.get(scope) is None or _TASK_FOR_SCOPE[scope] in tasks
+    )
+
+
 def _pick_page(pages: list[dict]) -> dict:
     """Chọn Page khi chủ tiệm quản lý nhiều Trang.
 
     Ưu tiên Page có task `CREATE_CONTENT` và ưu tiên Page thật (không chứa chữ sandbox)
     nếu chủ tiệm có cả trang thật lẫn trang thử nghiệm.
     """
-    required_tasks = {"CREATE_CONTENT", "MESSAGING", "MODERATE"}
-    non_sandbox_actionable = [
-        p
-        for p in pages
-        if "sandbox" not in (p.get("name") or "").lower()
-        and required_tasks.issubset(set(p.get("tasks") or []))
-    ]
-    if non_sandbox_actionable:
-        return non_sandbox_actionable[0]
-
-    for page in pages:
-        tasks = set(page.get("tasks") or [])
-        if required_tasks.issubset(tasks):
-            return page
-    return pages[0]
+    # Xếp hạng thay vì lọc bỏ: Trang chỉ có CREATE_CONTENT vẫn đăng bài được,
+    # loại nó ra rồi báo "không có Trang nào" là sai sự thật. Nhiều task hơn thì
+    # xếp trước, và Trang thật luôn hơn Trang sandbox khi cùng điểm.
+    ranked = sorted(
+        pages,
+        key=lambda p: (
+            len({"CREATE_CONTENT", "MESSAGING", "MODERATE"} & set(p.get("tasks") or [])),
+            "sandbox" not in (p.get("name") or "").lower(),
+        ),
+        reverse=True,
+    )
+    return ranked[0]
 
 
 def _graph_error_message(response: httpx.Response, path: str) -> str:

@@ -2885,6 +2885,11 @@ export interface components {
             expires_at?: string | null;
             /** Connected By */
             connected_by?: string | null;
+            /**
+             * Capabilities
+             * @default []
+             */
+            capabilities: string[];
         };
         /**
          * PublishFailureKind

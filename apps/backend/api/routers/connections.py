@@ -14,11 +14,12 @@ import hmac
 import json
 import logging
 import uuid
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from adapters.oauth.base import OAuthPermanentError, OAuthTemporaryError
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.db import DbSessionDep
 from api.deps import AuthDep, ConnectionServiceDep, WorkspaceDep
@@ -199,6 +200,19 @@ async def oauth_callback(
         # dùng vừa bấm cho phép trên Facebook xong, nên câu "lỗi hệ thống" sẽ đẩy
         # họ đi thử lại mãi trong khi việc cần làm là nâng gói.
         return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=het_han_muc", status_code=302)
+    except OAuthTemporaryError as exc:
+        # Nền tảng lỗi tạm — bấm nối lại là được, nên nói đúng như vậy.
+        logger.warning("OAuth %s tạm lỗi: %s", platform.value, exc.detail)
+        return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=tam_loi", status_code=302)
+    except OAuthPermanentError as exc:
+        # Thiếu quyền, không có Page, code hỏng... Adapter đã soạn sẵn câu tiếng
+        # Việt nói rõ phải làm gì; gộp vào `he_thong` là ném đi thông tin đó và
+        # để chủ tiệm bấm lại mãi mà không biết vì sao.
+        logger.warning("OAuth %s bị từ chối: %s", platform.value, exc.detail)
+        return RedirectResponse(
+            f"{return_url}?ket_noi=loi&ly_do=tu_choi&chi_tiet={quote(exc.detail[:200])}",
+            status_code=302,
+        )
     except Exception:  # noqa: BLE001 — callback không được trả 500 vào mặt user
         logger.exception("OAuth callback %s unexpected error", platform.value)
         return RedirectResponse(f"{return_url}?ket_noi=loi&ly_do=he_thong", status_code=302)

@@ -475,6 +475,9 @@ class PlatformConnection(HaviModel):
     account_name: str | None = None
     expires_at: datetime | None = None
     connected_by: UUID | None = None
+    #: Tính năng kết nối này thực sự dùng được, suy từ quyền nền tảng đã cấp.
+    #: UI dựa vào đây để hiện "Đăng bài ✓ / Messenger ✗" thay vì hứa suông.
+    capabilities: list[str] = []
 
 
 class OAuthStartResponse(HaviModel):

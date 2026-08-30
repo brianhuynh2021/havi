@@ -143,6 +143,7 @@ def get_inbox_service(session: DbSessionDep, settings: SettingsDep) -> InboxServ
         profiles=BrandProfileRepository(session),
         events=EventLogRepository(session),
         reply_publishers=reply_publishers,
+        connections=ConnectionRepository(session),
     )
 
 

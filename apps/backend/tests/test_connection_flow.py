@@ -36,6 +36,7 @@ from application.services.connection_service import (
 from core.config import Settings
 from core.enums import ConnectionStatus, Industry, Platform, WorkspaceRole
 from core.oauth_state import InvalidOAuthState, create_oauth_state
+from domain.policies.connection_capabilities import Capability, capabilities_for
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
 from domain.ports.publisher import (
@@ -113,7 +114,15 @@ def _oauth_transport(
             return httpx.Response(200, json={"data": pages})
         if request.url.path.endswith("/subscribed_apps"):
             assert request.method == "POST"
-            assert params["subscribed_fields"] == ",".join(WEBHOOK_FIELDS)
+            # Chỉ đăng ký field mà quyền hiện có cho phép: xin `messages` khi
+            # không có `pages_messaging` sẽ bị Meta từ chối cả lệnh, mất luôn
+            # `feed` đáng lẽ đăng ký được.
+            expected = [
+                field
+                for field in WEBHOOK_FIELDS
+                if field != "messages" or "pages_messaging" in permissions
+            ]
+            assert params["subscribed_fields"] == ",".join(expected)
             assert request.headers["Authorization"] == f"Bearer {PAGE_TOKEN}"
             assert "access_token" not in params
             return httpx.Response(200, json={"success": subscription_success})
@@ -371,7 +380,15 @@ class TestCompleteConnection:
 
         assert any(call.url.path.endswith("/page-1/subscribed_apps") for call in calls)
 
-    async def test_thieu_quyen_inbox_thi_khong_tao_ket_noi(self, db_session, monkeypatch):
+    async def test_thieu_quyen_tuy_chon_van_noi_duoc_nhung_tat_tinh_nang(
+        self, db_session, monkeypatch
+    ):
+        """Thiếu `pages_messaging` thì vẫn nối, chỉ tắt khả năng trả lời tin nhắn.
+
+        Trước đây thiếu bất kỳ quyền nào là chặn cả kết nối. Tiệm chưa dùng
+        Messenger vì thế không nối nổi Facebook — mất cả đăng bài lẫn bình luận
+        chỉ vì một tính năng họ không cần.
+        """
         ws, owner = await _workspace_with_member(db_session)
         settings = _settings()
         state = create_oauth_state(
@@ -389,7 +406,40 @@ class TestCompleteConnection:
             settings=settings,
         )
 
-        with pytest.raises(OAuthPermanentError, match="pages_messaging"):
+        await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
+
+        connection = await ConnectionRepository(db_session).get(
+            workspace_id=ws.id, platform=Platform.FACEBOOK
+        )
+        assert connection is not None
+        caps = capabilities_for(Platform.FACEBOOK, connection.granted_scopes)
+        assert Capability.PUBLISH_POST in caps
+        assert Capability.REPLY_COMMENT in caps
+        assert Capability.REPLY_MESSAGE not in caps
+
+    async def test_thieu_quyen_loi_thi_khong_tao_ket_noi(self, db_session, monkeypatch):
+        """`pages_manage_metadata` thiếu là chặn thật: không có nó thì không đăng
+        ký được webhook, tức là Inbox sẽ im lặng vĩnh viễn trong khi UI báo xanh."""
+        ws, owner = await _workspace_with_member(db_session)
+        settings = _settings()
+        state = create_oauth_state(
+            workspace_id=ws.id,
+            user_id=owner.id,
+            platform=Platform.FACEBOOK,
+            settings=settings,
+        )
+        service = _service(
+            db_session,
+            monkeypatch,
+            transport=_oauth_transport(
+                permissions=tuple(
+                    scope for scope in SCOPES if scope != "pages_manage_metadata"
+                )
+            ),
+            settings=settings,
+        )
+
+        with pytest.raises(OAuthPermanentError, match="pages_manage_metadata"):
             await service.complete(platform=Platform.FACEBOOK, code="code", state=state)
 
         assert (

@@ -8,6 +8,7 @@ import {
   disconnect,
   startConnect,
   statusCopy,
+  missingCapabilities,
   type OAuthReturnTarget,
   type Platform,
   type PlatformConnection,
@@ -136,6 +137,8 @@ export function ConnectionCard({
   const [error, setError] = useState<string | null>(null);
 
   const copy = connection ? statusCopy(connection.status) : null;
+  // Chỉ nói khi có cái để nói: kênh đủ quyền không cần thêm một dòng chữ nào.
+  const missing = connection ? missingCapabilities(connection) : [];
   const isConnected = connection?.status === "connected";
 
   async function connect() {
@@ -209,6 +212,13 @@ export function ConnectionCard({
             <p className={styles.hint}>
               {t(copy?.hint || getPlatformDescription(platform))}
             </p>
+            {missing.length > 0 ? (
+              <p className={styles.missingCaps}>
+                {t("Chưa bật:")} {missing.map((m) => t(m)).join(", ")}
+                {" — "}
+                {t("nối lại và tích thêm quyền để bật.")}
+              </p>
+            ) : null}
           </div>
         </div>
 

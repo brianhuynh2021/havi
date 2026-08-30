@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, UniqueConstraint
+from sqlalchemy import ARRAY, DateTime, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.enums import ConnectionStatus, Platform
@@ -54,3 +54,10 @@ class PlatformConnection(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Ba
     # Lý do mất kết nối (token hết hạn, chủ tiệm gỡ quyền ở phía Facebook…), để
     # UI nói được vì sao phải nối lại thay vì chỉ hiện chấm đỏ.
     failure_reason: Mapped[str | None] = mapped_column(default=None)
+
+    # Quyền nền tảng thực sự cấp lúc nối. NULL = kết nối cũ nối trước khi có cột
+    # này, tức là **không rõ** — chỗ đọc phải cho phép thử chứ không được coi là
+    # "không có quyền nào", nếu không mọi kết nối cũ mất sạch tính năng.
+    granted_scopes: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String()), default=None
+    )
