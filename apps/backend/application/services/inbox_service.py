@@ -9,11 +9,13 @@ import logging
 from uuid import UUID
 
 from adapters.persistence.brand_profile_repository import BrandProfileRepository
+from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from core.enums import InboxItemStatus, InboxItemType, Platform
 from core.events import EventLogEntry
 from domain.models.inbox import InboxItem
+from domain.policies.connection_capabilities import Capability, has_capability
 from domain.ports.reply_publisher import ReplyError, ReplyPublisherPort, ReplyRequest
 
 logger = logging.getLogger(__name__)
@@ -62,10 +64,15 @@ class InboxService:
         profiles: BrandProfileRepository,
         events: EventLogRepository,
         reply_publishers: dict[Platform, ReplyPublisherPort] | None = None,
+        connections: ConnectionRepository | None = None,
     ) -> None:
         self._inbox = inbox
         self._profiles = profiles
         self._events = events
+        # Tuỳ chọn để không phá các chỗ dựng service sẵn có. None = bỏ qua kiểm
+        # quyền và cứ gửi: nền tảng vẫn từ chối nếu thiếu quyền, chỉ là thông
+        # báo khó hiểu hơn — vẫn tốt hơn chặn oan vì thiếu thông tin.
+        self._connections = connections
         # Publisher giả phải được lắp ghép rõ ràng ở composition root cho local.
         # Service không được tự rơi về fake vì điều đó biến cấu hình thiếu ở
         # production thành một lần gửi "thành công" không hề xảy ra ngoài đời.
@@ -157,6 +164,32 @@ class InboxService:
             recipient_id=recipient_id,
         )
 
+    async def _require_reply_capability(self, *, workspace_id: UUID, item) -> None:
+        """Chặn sớm khi kết nối không có quyền trả lời loại tin này.
+
+        Kênh giờ nối được với ít quyền hơn toàn bộ, nên "đã nối" không còn kéo
+        theo "trả lời được". Không kiểm ở đây thì nền tảng trả lỗi quyền thô,
+        và người trực ca chỉ thấy "gửi thất bại" mà không biết vì sao.
+        """
+        if self._connections is None:
+            return
+        connection = await self._connections.get(
+            workspace_id=workspace_id, platform=item.platform
+        )
+        if connection is None:
+            return
+        needed = (
+            Capability.REPLY_COMMENT
+            if item.type is InboxItemType.COMMENT
+            else Capability.REPLY_MESSAGE
+        )
+        if not has_capability(item.platform, connection.granted_scopes, needed):
+            raise ReplyError(
+                item.platform,
+                "Kênh chưa được cấp quyền trả lời mục này — bạn nối lại kênh "
+                "và tích thêm quyền giúp nhé",
+            )
+
     async def send_reply(
         self,
         *,
@@ -172,6 +205,7 @@ class InboxService:
             publisher = self._reply_publishers.get(item.platform)
             if publisher is None:
                 raise ReplyError(item.platform, "Chưa cấu hình kênh gửi phản hồi")
+            await self._require_reply_capability(workspace_id=workspace_id, item=item)
             reply_res = await publisher.send_reply(
                 ReplyRequest(
                     workspace_id=workspace_id,

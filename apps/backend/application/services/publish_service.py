@@ -28,6 +28,7 @@ from core.enums import (
 )
 from core.events import EventLogEntry
 from core.token_crypto import TokenDecryptionFailed, encrypt_token
+from domain.policies.connection_capabilities import Capability, has_capability
 from domain.models.publish import PublishJob
 from domain.policies.media_reachability import unreachable_reason
 from domain.ports.publisher import (
@@ -192,6 +193,19 @@ class PublishService:
                 job,
                 kind=PublishFailureKind.AUTH_PERMISSION,
                 detail="Kênh chưa nối hoặc đã mất kết nối — bạn nối lại nhé",
+            )
+
+        # Kênh nối được với ít quyền hơn toàn bộ (xem `channel_capabilities`), nên
+        # "đã nối" không còn kéo theo "đăng được". Kiểm ở đây để job chết ngay với
+        # câu nói rõ phải làm gì, thay vì gọi Graph API rồi nhận lỗi quyền khó hiểu.
+        if not has_capability(platform, connection.granted_scopes, Capability.PUBLISH_POST):
+            return await self._mark_failed_with_event(
+                job,
+                kind=PublishFailureKind.AUTH_PERMISSION,
+                detail=(
+                    "Kênh chưa được cấp quyền đăng bài — bạn nối lại và tích "
+                    "quyền đăng bài giúp nhé"
+                ),
             )
 
         try:
