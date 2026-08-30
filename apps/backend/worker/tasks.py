@@ -211,6 +211,35 @@ def reconcile_video_publishes(limit: int = 20, request_id: str | None = None) ->
             reset_request_id(token)
 
 
+async def _resolve_author_name(event, connection, connections) -> str:  # noqa: ANN001
+    """Đổi nhãn tạm "Khách 2310" thành tên thật khi Graph tra được.
+
+    Chỉ áp dụng cho tin nhắn: webhook `feed` của bình luận đã mang sẵn
+    `value.from.name`, nên `iter_inquiries` lấy được tên thật ngay và không cần
+    thêm một vòng gọi mạng nữa.
+
+    Không tra thì `event.author_name` vẫn là nhãn PSID cũ — mất tên khách khó
+    chịu hơn nhiều so với mất tin nhắn, nên không có nhánh nào ở đây được phép
+    ném lỗi lên trên.
+    """
+    from adapters.meta_profile import fetch_sender_name
+    from core.enums import InboxItemType
+
+    if event.item_type != InboxItemType.MESSAGE or not event.sender_id:
+        return event.author_name
+
+    try:
+        page_token = connections.read_access_token(connection)
+        name = await fetch_sender_name(psid=event.sender_id, page_token=page_token)
+    except Exception:
+        # Kể cả giải mã token hỏng cũng không được làm rơi tin nhắn: nhãn
+        # "Khách 2310" xấu hơn tên thật, nhưng còn hơn là mất tin của khách.
+        logger.warning("meta_profile.resolve_failed psid=%s", event.sender_id, exc_info=True)
+        return event.author_name
+
+    return name or event.author_name
+
+
 @celery_app.task(name="havi.inbox.process_webhook", bind=True, max_retries=3)
 def process_webhook_payload(
     self, payload: dict, request_id: str | None = None
@@ -268,7 +297,7 @@ def process_webhook_payload(
                     item = await inbox_service.process_inquiry(
                         workspace_id=connection.workspace_id,
                         platform=Platform.FACEBOOK,
-                        author_name=event.author_name,
+                        author_name=await _resolve_author_name(event, connection, connections),
                         content=event.text,
                         item_type=event.item_type,
                         external_message_id=event.message_id,
