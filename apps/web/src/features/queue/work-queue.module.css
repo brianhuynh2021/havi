@@ -57,7 +57,7 @@
 .filterChipActive {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .filterCount {
@@ -114,7 +114,7 @@
 
 .kindTag {
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .categoryTag {
@@ -201,7 +201,7 @@
 
 .secondaryAction:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .assignButton {
@@ -213,7 +213,7 @@
 
 .assignButton:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .assignedButton {

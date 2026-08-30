@@ -71,7 +71,7 @@
   justify-content: center;
   border-radius: 12px;
   background: var(--color-blue-50);
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
 }
 
 .cardHeaderText {

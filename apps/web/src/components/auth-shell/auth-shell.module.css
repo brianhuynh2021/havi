@@ -24,7 +24,7 @@
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--color-white);
+  color: #ffffff;
 }
 
 .card {
@@ -41,7 +41,7 @@
 
 .tagline {
   margin-top: 20px;
-  color: var(--color-slate-500);
+  color: #94a3b8;
   font-size: 12px;
   text-align: center;
 }

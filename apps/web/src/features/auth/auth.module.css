@@ -1,13 +1,13 @@
 .title {
   font-size: 24px;
   font-weight: 800;
-  color: var(--color-white);
+  color: #ffffff;
   text-align: center;
 }
 
 .subtitle {
   margin-top: 8px;
-  color: var(--color-slate-400);
+  color: #cbd5e1;
   font-size: 14.5px;
   text-align: center;
 }
@@ -28,7 +28,7 @@
 .label {
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--color-slate-200);
+  color: #e2e8f0;
 }
 
 .error {
@@ -42,7 +42,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: var(--color-indigo-300);
+  color: #93b4fd;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -51,7 +51,7 @@
 }
 
 .inlineLink:hover {
-  color: var(--color-white);
+  color: #ffffff;
 }
 
 .divider {
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 12px;
   margin-top: 24px;
-  color: var(--color-slate-500);
+  color: #94a3b8;
   font-size: 12px;
 }
 
@@ -79,25 +79,25 @@
 }
 
 .footerBlock p {
-  color: var(--color-slate-400);
+  color: #cbd5e1;
   font-size: 14.5px;
 }
 
 .footerBlock a {
-  color: var(--color-indigo-500);
+  color: #93b4fd;
   font-weight: 700;
 }
 
 .footerText {
   margin: 0;
-  color: var(--color-slate-400);
+  color: #cbd5e1;
   font-size: 13.5px;
   text-align: center;
 }
 
 .footerText a,
 .resendLink {
-  color: var(--color-indigo-300);
+  color: #93b4fd;
   font-weight: 700;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .otpHint strong {
-  color: var(--color-white);
+  color: #ffffff;
 }
 
 .resendLink {
@@ -125,7 +125,7 @@
 }
 
 .resendLink:disabled {
-  color: var(--color-slate-500);
+  color: #94a3b8;
   cursor: default;
 }
 
@@ -138,7 +138,7 @@
 }
 
 .consentText {
-  color: var(--color-slate-500);
+  color: #94a3b8;
   font-size: 12px;
   line-height: 1.5;
   text-align: center;

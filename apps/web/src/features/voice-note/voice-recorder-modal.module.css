@@ -14,7 +14,7 @@
 .modal {
   width: 100%;
   max-width: 520px;
-  background: var(--color-slate-900);
+  background: #0f172a;
   border: 1px solid rgba(0, 102, 255, 0.3);
   border-radius: 24px;
   padding: 32px 28px;
@@ -133,7 +133,7 @@
 
 .transcriptBox {
   width: 100%;
-  background: var(--color-slate-900);
+  background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 16px;
@@ -154,7 +154,7 @@
 
 .transcriptText {
   font-size: 14.5px;
-  color: var(--color-slate-200);
+  color: var(--text-on-dark-soft);
   line-height: 1.5;
   margin: 0;
 }

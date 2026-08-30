@@ -222,7 +222,7 @@
   text-align: right;
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-primary-dark);
+  color: var(--color-primary-text);
 }
 
 .dataNote {

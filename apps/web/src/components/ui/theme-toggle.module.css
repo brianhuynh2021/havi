@@ -19,7 +19,7 @@
 .button:hover {
   background: var(--color-bg);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .placeholder {

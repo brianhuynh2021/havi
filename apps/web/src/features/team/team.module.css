@@ -77,7 +77,7 @@
   font-size: 13.5px;
   line-height: 1.55;
 }
-.scopeNote a { color: var(--color-primary); font-weight: 700; }
+.scopeNote a { color: var(--color-primary-text); font-weight: 700; }
 
 /* Trần ghế của gói. Hai mức: còn chỗ là thông tin xám, hết chỗ là việc phải làm. */
 

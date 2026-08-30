@@ -39,8 +39,8 @@
   border-color: rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   font-size: 16px;
-  background: var(--color-slate-900);
-  color: var(--color-white);
+  background: #0f172a;
+  color: #ffffff;
 }
 
 .large:hover {
@@ -49,9 +49,9 @@
 
 .large:focus {
   outline: none;
-  background: var(--color-slate-800);
+  background: #1e293b;
   border-color: var(--color-brand-primary-light);
-  color: var(--color-white);
+  color: #ffffff;
   box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.18), 0 0 16px rgba(0, 210, 255, 0.2);
 }
 
@@ -59,9 +59,9 @@
 .large:-webkit-autofill:hover,
 .large:-webkit-autofill:focus,
 .large:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px var(--color-slate-900) inset !important;
-  -webkit-text-fill-color: var(--color-white) !important;
-  caret-color: var(--color-white) !important;
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 

@@ -29,7 +29,7 @@
 .headerInstallBtn:hover {
   background: var(--color-border-soft);
   border-color: var(--color-primary-light);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 /* Chấm nhấp nháy đã bỏ: nó báo hiệu "có chuyện đang xảy ra", trong khi không
@@ -366,7 +366,7 @@
 
 .tabBtnActive {
   background: var(--color-surface);
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 

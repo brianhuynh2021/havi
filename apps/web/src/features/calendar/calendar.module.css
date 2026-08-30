@@ -81,7 +81,7 @@
 .metricSubtext {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-brand-primary-dark);
+  color: var(--color-brand-primary-text);
 }
 
 /* Navigation & Controls Bar */
@@ -163,7 +163,7 @@
 .filterChipActive {
   border-color: var(--color-brand-primary);
   background: var(--color-blue-50);
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
 }
 
 .viewSwitcher {
@@ -366,7 +366,7 @@
 
 .emptySlotIcon {
   font-size: 18px;
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -429,7 +429,7 @@
 .postTime {
   font-size: 12px;
   font-weight: 800;
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
   background: var(--color-blue-50);
   padding: 2px 6px;
   border-radius: 6px;
@@ -468,7 +468,7 @@
 .postId {
   font-family: monospace;
   font-weight: 700;
-  color: var(--color-brand-primary-dark);
+  color: var(--color-brand-primary-text);
 }
 
 /* --- TIMELINE / FEED LIST VIEW (CHẾ ĐỘ DÒNG THỜI GIAN SCALE & DEBUG) --- */
@@ -562,7 +562,7 @@
 .timelineTime {
   font-size: 14px;
   font-weight: 800;
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
 }
 
 .timelineChannelText {
@@ -752,7 +752,7 @@
 .presetBtn:hover {
   border-color: var(--color-brand-primary);
   background: var(--color-blue-50);
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-text);
 }
 
 .rescheduleForm {

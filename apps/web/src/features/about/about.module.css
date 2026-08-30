@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
-  background: var(--color-slate-950);
-  color: var(--color-slate-50);
+  background: #020617;
+  color: #f8fafc;
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   overflow-x: hidden;
 }
@@ -48,7 +48,7 @@
 }
 
 .backLink {
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -135,7 +135,7 @@
 .heroLead {
   font-size: 18px;
   line-height: 1.7;
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -214,7 +214,7 @@
 
 .meaningDesc {
   font-size: 14px;
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   line-height: 1.6;
   margin: 0;
 }
@@ -243,6 +243,7 @@
 }
 
 .valueIcon {
+  color: #f8fafc;
   font-size: 32px;
 }
 
@@ -255,7 +256,7 @@
 
 .valueDesc {
   font-size: 14px;
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   line-height: 1.6;
   margin: 0;
 }
@@ -273,7 +274,7 @@
   font-size: 20px;
   font-weight: 600;
   font-style: italic;
-  color: var(--color-slate-100);
+  color: #e2e8f0;
   line-height: 1.6;
   margin: 0 0 14px;
 }
@@ -286,7 +287,7 @@
 }
 
 .ctaSection {
-  background: radial-gradient(ellipse at center, rgba(0, 102, 255, 0.2) 0%, transparent 70%), var(--color-slate-900);
+  background: radial-gradient(ellipse at center, rgba(0, 102, 255, 0.2) 0%, transparent 70%), #0f172a;
   border: 1px solid rgba(0, 210, 255, 0.25);
   border-radius: 24px;
   padding: 60px 40px;
@@ -303,7 +304,7 @@
 
 .ctaSubtitle {
   font-size: 16px;
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   margin: 0 auto 28px;
   max-width: 600px;
 }
@@ -332,7 +333,7 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 40px 24px;
   text-align: center;
-  color: var(--color-slate-500);
+  color: #a3b0c2;
   font-size: 13.5px;
 }
 
@@ -345,7 +346,7 @@
 }
 
 .footerLinks a {
-  color: var(--color-slate-400);
+  color: #b6c2d3;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s ease;

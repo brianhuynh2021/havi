@@ -20,7 +20,7 @@
   padding: 20px 14px;
   background: var(--color-slate-950);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--color-slate-50);
+  color: var(--text-on-dark);
   overflow-y: auto;
 }
 
@@ -112,7 +112,7 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: var(--color-slate-900);
+  background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -371,7 +371,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--color-slate-200);
+  color: var(--text-on-dark-soft);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -467,7 +467,7 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--color-slate-200);
+  color: var(--text-on-dark-soft);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
@@ -630,7 +630,7 @@
 .userEmail {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-slate-50);
+  color: var(--text-on-dark);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

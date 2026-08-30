@@ -336,7 +336,7 @@
   color: var(--color-white);
   background:
     radial-gradient(circle at 30% 20%, rgba(236, 72, 153, 0.5), transparent 32%),
-    linear-gradient(155deg, var(--color-slate-900), var(--color-indigo-900) 55%, var(--color-purple-900));
+    linear-gradient(155deg, #0f172a, var(--color-indigo-900) 55%, var(--color-purple-900));
 }
 
 .videoPendingPreview > span {
@@ -824,7 +824,7 @@
 
 .cancelUpload:hover {
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background: var(--color-slate-50);
 }
 
@@ -1341,7 +1341,7 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--color-slate-200);
-  background: var(--color-slate-900);
+  background: #0f172a;
   aspect-ratio: 16 / 9;
   max-height: 280px;
   width: 100%;
@@ -1666,7 +1666,7 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1.5px solid var(--color-emerald-500);
-  background: var(--color-slate-900);
+  background: #0f172a;
   margin-bottom: 12px;
   position: relative;
 }
@@ -2208,6 +2208,9 @@
 
 .kindIcon {
   font-size: 26px;
+  /* Thẻ active đổi nền sang xanh đậm ở dark mode; emoji thừa kế màu chữ
+   * của thẻ nên phải nêu rõ, nếu không nó giữ màu đen của light mode. */
+  color: var(--color-ink);
 }
 
 .kindCard strong {
@@ -2410,7 +2413,7 @@
 .channelChipActive {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   font-weight: 600;
 }
 
@@ -2424,7 +2427,7 @@
 .channelConnect {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   text-decoration: underline;
 }
 
@@ -2466,7 +2469,7 @@
 .navShortcutActive {
   background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
   border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-surface));
-  color: var(--color-primary);
+  color: var(--color-primary-text);
 }
 
 .navShortcutBadge {
