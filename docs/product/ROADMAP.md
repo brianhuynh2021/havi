@@ -106,9 +106,27 @@ tests — not that the code exists. Untick anything that regresses.
 - [x] Media library, content revisions, approval queue and calendar.
 - [x] Connection health, failed-post recovery and audit history.
 - [ ] Customer Zero operation at Trung Tâm Công Nghệ Nhật Minh.
+- [ ] Meta App Review — blocked on a business licence, not on code.
 
 Exit criteria: zero false publish/reply success, no cross-workspace access, all
 critical integration tests passing.
+
+Verified end to end against the live Page on 2026-08-31, each step confirmed by
+an ID Meta itself returned rather than by a mock: OAuth connect, signed webhook
+ingestion (`facebookexternalua` hit the tunnel), sender-name lookup, reply to a
+message, reply to a comment on a Reel, and four posts with photos.
+
+App Review is listed separately because it cannot be closed by writing code.
+Meta requires a registered business, and Havi is currently a developer project
+without one. Until it passes, the app stays in Development Mode, where Meta
+delivers no webhook for a comment by anyone without a role on the app and hides
+that person's identity from the Graph API — so Reel and Page comments from real
+customers cannot arrive no matter how correct the ingestion path is. Adding a
+tester account lifts the restriction for that one account, which is enough to
+exercise the path but not to run a pilot.
+
+The same wall stands in front of TikTok (see Phase C): an unaudited app there
+can only post privately. Neither integration is finished by more code alone.
 
 ### Phase B — Team control
 
