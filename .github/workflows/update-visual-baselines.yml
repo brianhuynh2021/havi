@@ -61,3 +61,5 @@ jobs:
           retention-days: 7
 
 # Chạm file để kích hoạt workflow: sinh lại baseline sau khi chuyển sang Material 3.
+
+# Chạm file: sinh lại baseline sau đợt dọn gradient/glow ở các màn hình.
