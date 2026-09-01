@@ -127,7 +127,7 @@
   padding: 10px 20px;
   border-radius: 10px;
   background: var(--color-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
   font-size: 14px;
   font-weight: 700;
 }
@@ -363,7 +363,7 @@
 
 .stepActive .stepNum {
   background: var(--color-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
 }
 
 .stepLabel {

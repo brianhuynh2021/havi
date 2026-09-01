@@ -509,7 +509,7 @@
 
 .stepItemActive .stepNum {
   background: var(--color-brand-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
   box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
 }
 
@@ -2112,7 +2112,7 @@
   font-size: 12.5px;
   font-weight: 800;
   background: var(--color-brand-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
   text-decoration: none;
   box-shadow: 0 4px 12px rgba(0, 104, 255, 0.3);
   transition: transform 0.2s ease;
@@ -2443,7 +2443,7 @@
 
 .sceneBtnZalo {
   background: var(--color-brand-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
 }
 
 .playerPlayToggleBtn {

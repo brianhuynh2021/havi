@@ -42,7 +42,7 @@
 .brandText {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
   letter-spacing: -0.02em;
 }
@@ -57,32 +57,35 @@
   gap: 10px;
   width: 100%;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--m3-shape-sm, 8px);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.09);
   color: var(--color-white);
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              border-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .workspaceSwitcherBtn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(0, 102, 255, 0.4);
-  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
 
 .workspaceAvatar {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: rgba(0, 102, 255, 0.15);
-  border: 1px solid rgba(0, 102, 255, 0.3);
+  border-radius: var(--m3-shape-sm, 8px);
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  font-weight: 600;
   flex-shrink: 0;
+  border: none;
 }
 
 .workspaceTextCol {
@@ -94,7 +97,7 @@
 
 .workspaceNameText {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-white);
   white-space: nowrap;
   overflow: hidden;
@@ -102,9 +105,9 @@
 }
 
 .workspaceSubText {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--color-slate-400);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .workspaceSwitcherDropdown {
@@ -112,21 +115,21 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: #191c20;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--m3-shape-md, 12px);
+  box-shadow: var(--m3-elevation-2);
   padding: 8px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn var(--m3-duration-short, 100ms) var(--m3-easing-decelerate, cubic-bezier(0, 0, 0, 1));
 }
 
 .dropdownHeader {
-  font-size: 10.5px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--color-slate-400);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -140,26 +143,26 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--m3-shape-sm, 8px);
   background: transparent;
   border: none;
   color: var(--color-slate-300);
   font: inherit;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
   width: 100%;
 }
 
 .workspaceOption:hover {
-  background: rgba(0, 102, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-white);
 }
 
 .workspaceOptionActive {
-  background: rgba(0, 102, 255, 0.25);
-  border: 1px solid rgba(0, 102, 255, 0.4);
-  color: var(--color-white);
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  font-weight: 500;
 }
 
 .workspaceName {
@@ -172,7 +175,7 @@
   min-width: 0;
   overflow: hidden;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -190,50 +193,55 @@
   gap: 4px;
 }
 
+/* Material 3 Navigation Drawer Item (Pill bo tròn full-round 999px) */
 .navItem {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--m3-shape-full, 999px);
   background: transparent;
   color: var(--color-slate-400);
   font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
   text-align: left;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
-.navItem:hover {
-  background: rgba(255, 255, 255, 0.06);
+.navItem:hover:not(.navItemActive) {
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-white);
 }
 
 .navItemActive {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 210, 255, 0.08) 100%);
-  border-color: rgba(0, 102, 255, 0.4);
-  color: var(--color-white);
-  box-shadow: 0 0 16px rgba(0, 102, 255, 0.15);
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  font-weight: 500;
+  box-shadow: none;
 }
 
 .navIcon {
-  font-size: 16px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  transition: transform 0.15s ease;
+  transition: none;
 }
 
+/* Material 3 không scale icon khi active */
 .navItemActive .navIcon {
-  transform: scale(1.12);
+  transform: none;
 }
 
 .navLabel {
@@ -243,11 +251,12 @@
 .navBadge {
   margin-left: auto;
   padding: 2px 8px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-dark) 100%);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
+  border: none;
 }
 
 .adminDivider {
@@ -266,21 +275,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--m3-shape-full, 999px);
   background: transparent;
   color: var(--color-slate-300);
   font: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .adminToggleBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-white);
 }
 
@@ -293,7 +302,7 @@
   margin-left: auto;
   font-size: 11px;
   color: var(--color-slate-400);
-  transition: transform 0.2s ease;
+  transition: transform var(--m3-duration-medium, 200ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
   display: inline-block;
 }
 
@@ -308,7 +317,7 @@
   padding-left: 8px;
   margin-top: 4px;
   overflow: hidden;
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn var(--m3-duration-short, 100ms) var(--m3-easing-decelerate, cubic-bezier(0, 0, 0, 1));
 }
 
 .adminNavItem {
@@ -316,9 +325,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--m3-shape-full, 999px);
   background: transparent;
   color: var(--color-slate-400);
   font: inherit;
@@ -327,19 +336,18 @@
   text-align: left;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
-.adminNavItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+.adminNavItem:hover:not(.adminNavItemActive) {
+  background: rgba(255, 255, 255, 0.06);
   color: var(--color-white);
 }
 
 .adminNavItemActive {
-  background: rgba(0, 102, 255, 0.18);
-  border-color: rgba(0, 102, 255, 0.35);
-  color: var(--color-white);
-  font-weight: 600;
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  font-weight: 500;
 }
 
 .adminNavIcon {
@@ -355,31 +363,31 @@
 .warningBadge {
   margin-left: auto;
   padding: 1px 7px;
-  border-radius: 999px;
-  background: var(--color-red-500);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-error);
+  color: var(--m3-on-error);
   font-size: 10.5px;
-  font-weight: 700;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  font-weight: 600;
+  box-shadow: none;
 }
 
 .mobileHeaderAdminBtn {
   display: none;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: var(--m3-shape-full, 999px);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-on-dark-soft);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .mobileHeaderAdminBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--color-white);
 }
 
@@ -390,10 +398,10 @@
 .mobileSheetBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 150;
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn var(--m3-duration-short, 100ms) var(--m3-easing-decelerate, cubic-bezier(0, 0, 0, 1));
 }
 
 .mobileSheet {
@@ -402,15 +410,15 @@
   right: 0;
   bottom: 0;
   max-height: min(82vh, 580px);
-  background: var(--color-slate-950);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px 20px 0 0;
+  background: #191c20;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--m3-shape-xl, 28px) var(--m3-shape-xl, 28px) 0 0;
   padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
   z-index: 151;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
-  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--m3-elevation-3);
+  animation: slideUp var(--m3-duration-long, 400ms) var(--m3-easing-decelerate, cubic-bezier(0, 0, 0, 1));
   overflow-y: auto;
 }
 
@@ -425,7 +433,7 @@
 
 .mobileSheetTitle {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--color-white);
   display: flex;
   align-items: center;
@@ -439,13 +447,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--m3-shape-full, 999px);
   background: rgba(255, 255, 255, 0.06);
   border: none;
   color: var(--color-slate-300);
   font-size: 16px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .mobileSheetCloseBtn:hover {
@@ -463,36 +471,36 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: var(--m3-shape-full, 999px);
+  background: transparent;
+  border: none;
   color: var(--text-on-dark-soft);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 600;
-  transition: all 0.15s ease;
+  font-weight: 500;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
-.mobileSheetItem:hover {
+.mobileSheetItem:hover:not(.mobileSheetItemActive) {
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-white);
 }
 
 .mobileSheetItemActive {
-  background: rgba(0, 102, 255, 0.18);
-  border-color: rgba(0, 102, 255, 0.35);
-  color: var(--color-white);
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+  font-weight: 500;
 }
 
 .mobileSheetBadge {
   margin-left: auto;
-  background: var(--color-red-500);
-  color: var(--color-white);
+  background: var(--m3-error);
+  color: var(--m3-on-error);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--m3-shape-full, 999px);
 }
 
 @keyframes slideUp {
@@ -501,6 +509,15 @@
   }
   to {
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -515,7 +532,7 @@
   margin-top: auto;
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border-radius: var(--m3-shape-lg, 16px);
   background: rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
@@ -530,23 +547,22 @@
 
 .workspaceChip {
   padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.28);
-  color: var(--color-emerald-400);
+  border-radius: var(--m3-shape-sm, 8px);
+  background: var(--m3-success-container);
+  color: var(--m3-on-success-container);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: none;
 }
 
 .livePulseDot {
   width: 6px;
   height: 6px;
   border-radius: 99px;
-  background: var(--color-emerald-500);
-  box-shadow: 0 0 8px var(--color-emerald-500);
+  background: var(--m3-success);
   display: inline-block;
   animation: pulseDot 2s infinite ease-in-out;
 }
@@ -564,12 +580,12 @@
 
 .workspaceChipUnconnected {
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--m3-shape-sm, 8px);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--color-slate-400);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .userProfileRow {
@@ -590,8 +606,8 @@
   text-decoration: none;
   padding: 4px 6px;
   margin: -4px -6px;
-  border-radius: 8px;
-  transition: background 0.15s ease;
+  border-radius: var(--m3-shape-sm, 8px);
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .userProfileInfoLink:hover {
@@ -609,16 +625,16 @@
 .userAvatar {
   width: 28px;
   height: 28px;
-  border-radius: 99px;
-  background: linear-gradient(135deg, var(--color-blue-500), var(--color-purple-500));
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
   font-size: 11.5px;
-  font-weight: 800;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: none;
 }
 
 .userMeta {
@@ -629,7 +645,7 @@
 
 .userEmail {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-on-dark);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -638,30 +654,30 @@
 
 .userTier {
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 3px;
 }
 
 .tierTrial {
-  color: var(--color-emerald-400);
+  color: var(--m3-success);
 }
 
 .tierStarter {
-  color: var(--color-blue-400);
+  color: var(--m3-primary);
 }
 
 .tierGrowth {
-  color: var(--color-purple-500);
+  color: #d8b4fe;
 }
 
 .tierEnterprise {
-  color: var(--color-amber-500);
+  color: var(--m3-warning);
 }
 
 .tierDefault {
-  color: var(--color-blue-400);
+  color: var(--m3-primary);
 }
 
 .signOutIconBtn {
@@ -669,17 +685,18 @@
   border: none;
   color: var(--color-slate-500);
   padding: 6px;
-  border-radius: 6px;
+  border-radius: var(--m3-shape-full, 999px);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .signOutIconBtn:hover {
   background: rgba(239, 68, 68, 0.15);
-  color: var(--color-red-400);
+  color: var(--m3-error);
 }
 
 .content {
@@ -709,13 +726,16 @@
   flex: 1;
 }
 
+/* ==========================================================================
+   MOBILE NAVIGATION BAR (Chuẩn Material 3 Navigation Bar)
+   - Indicator hình viên thuốc bo tròn (Pill) ôm lấy icon active
+   - Label 12px weight 500 đặt ngay dưới
+   - Không scale transform trên icon
+   ========================================================================== */
 @media (max-width: 768px) {
   .sidebar {
     display: none;
   }
-  /* Sidebar bị ẩn cùng với nhóm Quản trị trong đó, nên nút mở bottom sheet phải
-     hiện lên đúng tại đây — nếu không, 7 mục quản trị không còn đường nào để tới
-     trên mobile. */
   .mobileHeaderAdminBtn {
     display: inline-flex;
   }
@@ -743,51 +763,65 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
-    padding: 8px;
-    border-radius: 12px;
+    min-width: 56px;
+    padding: 4px 6px 6px;
+    border-radius: 0;
     background: transparent;
     color: var(--color-slate-400);
     border: none;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.15s ease;
+    gap: 4px;
+    transition: color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
   }
   .mobileNavItem:hover {
-    background: rgba(255, 255, 255, 0.06);
     color: var(--color-white);
   }
   .mobileNavItemActive {
-    background: rgba(0, 102, 255, 0.15);
-    color: var(--color-blue-500);
+    background: transparent;
+    color: var(--color-white);
   }
+  /* Indicator pill bao bọc lấy icon của item đang active */
   .mobileNavIcon {
     position: relative;
     font-size: 20px;
-    margin-bottom: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 56px;
+    height: 32px;
+    border-radius: var(--m3-shape-full, 999px);
+    transition: background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+                color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .mobileNavItemActive .mobileNavIcon {
+    background-color: var(--m3-secondary-container);
+    color: var(--m3-on-secondary-container);
   }
   .mobileNavBadge {
     position: absolute;
-    top: -4px;
-    right: -10px;
-    background: var(--color-red-500);
-    color: var(--color-white);
+    top: -2px;
+    right: 4px;
+    background: var(--m3-error);
+    color: var(--m3-on-error);
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     padding: 1px 5px;
-    border-radius: 9px;
+    border-radius: var(--m3-shape-full, 999px);
     border: 2px solid var(--color-slate-950);
   }
   .mobileNavLabel {
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.1px;
+    color: var(--color-slate-400);
+    transition: color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+  }
+  .mobileNavItemActive .mobileNavLabel {
+    color: var(--color-white);
   }
 
-  
   .content {
     margin-left: 0;
   }

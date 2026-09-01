@@ -1,106 +1,144 @@
+/* ==========================================================================
+   MATERIAL DESIGN 3 BUTTON SYSTEM
+   - Bo góc full-round (999px)
+   - State layer phủ mờ (8% hover / 10% focus / 10% pressed)
+   - Không translateY, không gradient, không bóng đổ màu
+   - Kích thước chạm chuẩn 48px (Google touch target accessibility)
+   ========================================================================== */
+
 .button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 48px;
   min-width: 48px;
-  padding: 12px 20px;
-  border: 0;
-  border-radius: 12px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--m3-shape-full, 999px);
   font: inherit;
-  font-size: 14.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0.1px;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  transition: box-shadow var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              border-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+}
+
+/* State Layer — lớp phủ mờ tạo cảm giác chạm tinh tế của Google */
+.button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+  z-index: 0;
+}
+
+.button:hover:not(:disabled)::before {
+  opacity: var(--m3-state-hover, 0.08);
+}
+
+.button:focus-visible::before {
+  opacity: var(--m3-state-focus, 0.10);
+}
+
+.button:active:not(:disabled)::before {
+  opacity: var(--m3-state-pressed, 0.10);
 }
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
-  transform: none !important;
+  opacity: 0.38;
   box-shadow: none !important;
+  transform: none !important;
 }
 
+/* Content wrapper để nằm trên state layer và dưới ripple */
+.button > *:not([aria-hidden="true"]) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 1. Filled Button (Màu phẳng đặc, không gradient, không glow) */
 .primary {
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-dark) 100%);
-  color: var(--color-white);
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.25);
+  background-color: var(--m3-primary);
+  color: var(--m3-on-primary);
+  box-shadow: var(--m3-elevation-0);
 }
 
 .primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-blue-600) 0%, var(--color-brand-primary-dark) 100%);
-  box-shadow: 0 6px 24px rgba(0, 102, 255, 0.4);
-  transform: translateY(-1px);
+  box-shadow: var(--m3-elevation-1);
 }
 
+.primary:disabled {
+  background-color: var(--m3-surface-container-highest);
+  color: var(--m3-on-surface);
+  opacity: 0.38;
+}
+
+/* 2. Text Button (Ghost) */
 .ghost {
-  padding: 8px 16px;
-  background: rgba(0, 102, 255, 0.1);
-  color: var(--color-primary-text);
-  border: 1px solid rgba(0, 102, 255, 0.2);
-  font-size: 13px;
-  border-radius: 8px;
+  background-color: transparent;
+  color: var(--m3-primary);
+  padding: 10px 16px;
+  box-shadow: none;
 }
 
-.ghost:hover:not(:disabled) {
-  background: rgba(0, 102, 255, 0.18);
-  border-color: rgba(0, 102, 255, 0.35);
+.ghost:disabled {
+  color: var(--m3-on-surface);
+  opacity: 0.38;
 }
 
-.large {
-  width: 100%;
-  padding: 16px 0;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.primary.large {
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-dark) 100%);
-  box-shadow: 0 8px 28px rgba(0, 102, 255, 0.35);
-}
-
-.primary.large:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-blue-600) 0%, var(--color-brand-primary-dark) 100%);
-  box-shadow: 0 10px 32px rgba(0, 210, 255, 0.4);
-  transform: translateY(-1px);
-}
-
-.primary.large:disabled {
-  background: var(--color-action-disabled);
-  opacity: 1;
-}
-
+/* 3. Outlined Button */
 .outline {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  color: var(--color-ink);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  background-color: transparent;
+  border: 1px solid var(--m3-outline);
+  color: var(--m3-primary);
+  box-shadow: none;
 }
 
 .outline:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary-text);
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.12);
-  transform: translateY(-1px);
+  border-color: var(--m3-outline);
+}
+
+.outline:disabled {
+  border-color: var(--m3-outline-variant);
+  color: var(--m3-on-surface);
+  opacity: 0.38;
+}
+
+/* 4. Large (Dành cho form đăng nhập / Full-width) */
+.large {
+  width: 100%;
+  padding: 14px 24px;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.primary.large {
+  background-color: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+
+.primary.large:hover:not(:disabled) {
+  box-shadow: var(--m3-elevation-1);
 }
 
 .outline.large {
-  padding: 14px 0;
-  border-width: 1px;
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-white);
-  font-size: 15px;
+  border: 1px solid var(--m3-outline);
+  color: var(--m3-primary);
+  background-color: transparent;
 }
-
-.outline.large:hover:not(:disabled) {
-  border-color: rgba(0, 210, 255, 0.4);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-white);
-  box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
-}
-

@@ -59,3 +59,5 @@ jobs:
           name: visual-baselines-linux
           path: apps/web/e2e/__screenshots__/
           retention-days: 7
+
+# Chạm file để kích hoạt workflow: sinh lại baseline sau khi chuyển sang Material 3.
