@@ -34,10 +34,12 @@ jobs:
       - name: Visual and Accessibility Smoke
         run: npm run test:visual
 
-      # Ảnh thật CI render ra, kèm cả ảnh "-actual" khi lệch. Baseline sinh trên
-      # macOS luôn lệch 2-6% so với Linux vì antialiasing font khác nhau, mà
-      # ngưỡng là 1% — nên không thể xác nhận baseline từ máy dev. Artifact này
-      # là cách lấy được đúng ảnh của môi trường gác cổng.
+      # Báo cáo Playwright khi đỏ — để xem *cái gì* lệch và lệch bao nhiêu.
+      #
+      # Lưu ý: artifact này KHÔNG dùng để lấy baseline mới. Lần đỏ vừa rồi cho
+      # thấy Playwright chỉ để lại `error-context.md`, không để lại `-actual.png`.
+      # Muốn baseline của Linux thì chạy workflow "Update Visual Baselines"
+      # (`update-visual-baselines.yml`) rồi tải artifact của nó về.
       #
       # `if: failure()` — chỉ tải lên khi có gì để xem, không đốt storage mỗi lần
       # CI xanh.

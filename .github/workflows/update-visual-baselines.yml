@@ -1,0 +1,46 @@
+# Sinh lại baseline ảnh Playwright TRÊN LINUX rồi tải lên làm artifact.
+#
+# Vì sao cần một workflow riêng thay vì sinh ở máy dev: baseline sinh trên macOS
+# lệch 2-6% so với Linux vì antialiasing font khác nhau, mà ngưỡng so sánh là 1%.
+# `snapshotPathTemplate` trong playwright.config.ts không có `{platform}`, nghĩa
+# là chỉ tồn tại MỘT bộ baseline — và bộ đó phải là bộ của môi trường gác cổng,
+# tức CI.
+#
+# Chạy tay: Actions → "Update Visual Baselines" → Run workflow. Tải artifact về,
+# giải nén vào apps/web/e2e/__screenshots__/ rồi commit.
+name: Update Visual Baselines
+
+on:
+  workflow_dispatch:
+
+jobs:
+  regenerate:
+    name: Regenerate baselines on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # `--update-snapshots` ghi lại toàn bộ baseline. `|| true` vì Playwright
+      # trả exit code khác 0 ở lần ghi đầu (không có baseline để so), mà đó là
+      # kết quả mong đợi ở đây chứ không phải lỗi.
+      - name: Regenerate snapshots
+        working-directory: apps/web
+        run: npx playwright test --update-snapshots || true
+
+      - name: Upload regenerated baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: apps/web/e2e/__screenshots__/
+          retention-days: 7
