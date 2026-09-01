@@ -1,58 +1,173 @@
 :root {
-  /* Tech + Business Light Theme Tokens */
-  --color-bg: #f1f3f8;
-  --color-surface: #fbfcfe;
-  --color-surface-glass: rgba(251, 252, 254, 0.86);
-  --color-primary: #0066ff; /* Electric Tech Blue */
-  --color-primary-dark: #0052cc;
-  --color-primary-light: #388bfd;
-  --color-accent-cyan: #00d2ff; /* Tech Highlight */
-  --color-action: #ff6b00; /* Vibrant CTA Amber/Orange */
-  --color-action-hover: #e05e00;
-  --color-action-disabled: #cbd5e1;
-  --color-placeholder: #94a3b8;
-  --color-ink: #0f172a;
-  --color-body: #334155;
-  --color-muted: #5b6878;
-  --color-border: #dde3ec;
-  --color-border-soft: #e9edf4;
-  --color-border-glow: rgba(0, 102, 255, 0.2);
-  --color-success: #047857;
-  --color-danger: #ef4444;
-  --color-info: #0284c7;
-  /* Badge text on tinted alpha backgrounds — needs a dark ink in light mode. */
-  --badge-success-text: #047857;
-  --badge-info-text: #0369a1;
-  --badge-warning-text: #b91c1c;
+  /* ==========================================================================
+     GOOGLE MATERIAL DESIGN 3 (MATERIAL YOU) DESIGN TOKENS — LIGHT THEME
+     ========================================================================== */
 
-  /* Ambient page glow — kept faint so the canvas stays calm. */
-  --glow-top: rgba(0, 102, 255, 0.045);
-  --glow-side: rgba(0, 210, 255, 0.022);
+  /* --- 1. Material 3 Color Roles (Grounded in Brand Primary #0066ff) --- */
+  --m3-primary: #0066ff;
+  --m3-on-primary: #ffffff;
+  --m3-primary-container: #d8e2ff;
+  --m3-on-primary-container: #001a41;
 
-  /* Elevational Shadows & Glows */
-  --shadow-card: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 6px 20px -6px rgba(15, 23, 42, 0.08);
-  --shadow-card-hover: 0 12px 32px -4px rgba(0, 102, 255, 0.14);
-  --shadow-glow: 0 0 24px rgba(0, 102, 255, 0.25);
-  --shadow-cyan-glow: 0 0 20px rgba(0, 210, 255, 0.3);
+  --m3-secondary: #575e71;
+  --m3-on-secondary: #ffffff;
+  --m3-secondary-container: #dbe2f9;
+  --m3-on-secondary-container: #141b2c;
 
+  --m3-tertiary: #715573;
+  --m3-on-tertiary: #ffffff;
+  --m3-tertiary-container: #fbd7fc;
+  --m3-on-tertiary-container: #29132d;
+
+  --m3-error: #ba1a1a;
+  --m3-on-error: #ffffff;
+  --m3-error-container: #ffdad6;
+  --m3-on-error-container: #410002;
+
+  --m3-success: #047857;
+  --m3-on-success: #ffffff;
+  --m3-success-container: #d1fae5;
+  --m3-on-success-container: #064e3b;
+
+  --m3-info: #0284c7;
+  --m3-on-info: #ffffff;
+  --m3-info-container: #e0f2fe;
+  --m3-on-info-container: #075985;
+
+  --m3-warning: #b45309;
+  --m3-on-warning: #ffffff;
+  --m3-warning-container: #fef3c7;
+  --m3-on-warning-container: #78350f;
+
+  /* Surfaces & Containers (Neutral with slight primary chroma) */
+  --m3-surface: #f8f9ff;
+  --m3-on-surface: #191c20;
+  --m3-surface-variant: #e1e2ec;
+  --m3-on-surface-variant: #44474f;
+
+  --m3-surface-container-lowest: #ffffff;
+  --m3-surface-container-low: #f2f3fa;
+  --m3-surface-container: #eceef4;
+  --m3-surface-container-high: #e6e8ee;
+  --m3-surface-container-highest: #e0e2e8;
+
+  --m3-outline: #74777f;
+  --m3-outline-variant: #c4c6d0;
+  --m3-inverse-surface: #2e3036;
+  --m3-on-inverse-surface: #f0f0f7;
+  --m3-inverse-primary: #b0c6ff;
+  --m3-scrim: #000000;
+
+  /* --- 2. Material 3 State Layers (Độ mờ lớp phủ tương tác) --- */
+  --m3-state-hover: 0.08;
+  --m3-state-focus: 0.10;
+  --m3-state-pressed: 0.10;
+  --m3-state-dragged: 0.16;
+
+  /* --- 3. Material 3 Motion (Nhịp chuyển động & Thời lượng) --- */
+  --m3-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --m3-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --m3-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+  --m3-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+
+  --m3-duration-short: 100ms;
+  --m3-duration-medium: 200ms;
+  --m3-duration-long: 400ms;
+
+  /* --- 4. Material 3 Shape (Thang phân cấp bo góc) --- */
+  --m3-shape-none: 0px;
+  --m3-shape-xs: 4px;
+  --m3-shape-sm: 8px;
+  --m3-shape-md: 12px;
+  --m3-shape-lg: 16px;
+  --m3-shape-xl: 28px;
+  --m3-shape-full: 999px;
+
+  /* --- 5. Material 3 Elevation (Bóng đổ trung tính, KHÔNG dùng glow màu) --- */
+  --m3-elevation-0: none;
+  --m3-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --m3-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --m3-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.30);
+
+  /* --- 6. Material 3 Typography Scale --- */
   --font-body: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: "Plus Jakarta Sans", sans-serif;
 
-  /* Compatibility aliases */
-  --color-background: var(--color-bg);
-  --color-paper: var(--color-surface);
-  --color-surface-dark: #090d16;
-  --color-surface-darker: #05070c;
+  --m3-typescale-display-large: 400 57px/64px var(--font-display);
+  --m3-typescale-display-medium: 400 45px/52px var(--font-display);
+  --m3-typescale-display-small: 400 36px/44px var(--font-display);
+  --m3-typescale-headline-large: 400 32px/40px var(--font-display);
+  --m3-typescale-headline-medium: 400 28px/36px var(--font-display);
+  --m3-typescale-headline-small: 400 24px/32px var(--font-display);
+  --m3-typescale-title-large: 400 22px/28px var(--font-display);
+  --m3-typescale-title-medium: 500 16px/24px var(--font-display);
+  --m3-typescale-title-small: 500 14px/20px var(--font-display);
+  --m3-typescale-body-large: 400 16px/24px var(--font-body);
+  --m3-typescale-body-medium: 400 14px/20px var(--font-body);
+  --m3-typescale-body-small: 400 12px/16px var(--font-body);
+  --m3-typescale-label-large: 500 14px/20px var(--font-body);
+  --m3-typescale-label-medium: 500 12px/16px var(--font-body);
+  --m3-typescale-label-small: 500 11px/16px var(--font-body);
 
-  /* Universal Semantic Tokens */
-  --bg-surface: #fbfcfe;
-  --bg-canvas: #f1f3f8;
-  --border-color: #dde3ec;
-  --text-primary: #0f172a;
-  --text-secondary: #5b6878;
+  /* ==========================================================================
+     BACKWARD COMPATIBILITY ALIASES (Ánh xạ 100% biến cũ sang token M3)
+     ========================================================================== */
+  --color-bg: var(--m3-surface);
+  --color-surface: var(--m3-surface-container-lowest);
+  --color-surface-glass: rgba(248, 249, 255, 0.9);
+  --color-primary: var(--m3-primary);
+  --color-primary-dark: #0052cc;
+  --color-primary-light: #388bfd;
+  --color-accent-cyan: var(--m3-primary);
+  --color-action: #ea580c;
+  --color-action-hover: #c2410c;
+  --color-action-disabled: var(--m3-surface-container-highest);
+  --color-placeholder: var(--m3-on-surface-variant);
+  --color-ink: var(--m3-on-surface);
+  --color-body: var(--m3-on-surface-variant);
+  --color-muted: var(--m3-outline);
+  --color-border: var(--m3-outline-variant);
+  --color-border-soft: var(--m3-surface-container-high);
+  --color-border-glow: var(--m3-outline-variant);
+  --color-success: var(--m3-success);
+  --color-danger: var(--m3-error);
+  --color-info: var(--m3-info);
+  --badge-success-text: var(--m3-on-success-container);
+  --badge-info-text: var(--m3-on-info-container);
+  --badge-warning-text: var(--m3-on-error-container);
+
+  /* Glows được triệt tiêu thành phẳng theo triết lý Google */
+  --glow-top: transparent;
+  --glow-side: transparent;
+
+  /* Bóng đổ được ánh xạ về thang trung tính Material 3 */
+  --shadow-card: var(--m3-elevation-1);
+  --shadow-card-hover: var(--m3-elevation-2);
+  --shadow-glow: none;
+  --shadow-cyan-glow: none;
+
+  --color-background: var(--m3-surface);
+  --color-paper: var(--m3-surface-container-lowest);
+  --color-surface-dark: #191c20;
+  --color-surface-darker: #111318;
+  --color-surface-soft: var(--m3-surface-container-low);
+
+  --bg-surface: var(--m3-surface-container-lowest);
+  --bg-canvas: var(--m3-surface);
+  --border-color: var(--m3-outline-variant);
+  --text-primary: var(--m3-on-surface);
+  --text-secondary: var(--m3-on-surface-variant);
   --text-on-dark: #f8fafc;
-  --text-on-dark-soft: #e2e8f0;
-  /* Primitive Colors */
+  --text-on-dark-soft: #c4c6d0;
+
+  --color-brand-primary: var(--m3-primary);
+  --color-brand-primary-light: #388bfd;
+  --color-brand-primary-dark: #0052cc;
+  --color-brand-action: #ea580c;
+  --color-brand-primary-text: var(--m3-primary);
+  --color-primary-text: var(--m3-primary);
+
+  /* Primitive Colors (Giữ nguyên toàn bộ thang màu nguyên bản) */
   --color-white: #ffffff;
   --color-black: #000000;
   --color-transparent: transparent;
@@ -167,38 +282,122 @@
   --color-pink-700: #be185d;
   --color-pink-800: #9d174d;
   --color-pink-900: #831843;
-  --color-brand-primary: #0066ff;
-  --color-brand-primary-light: #388bfd;
-  --color-brand-primary-dark: #0052cc;
-  --color-brand-action: #ff6b00;
-  --color-brand-primary-text: #0052cc;
-  --color-primary-text: #0052cc;
 }
 
-/* Tech + Business Dark Mode Overrides */
+/* ==========================================================================
+   GOOGLE MATERIAL DESIGN 3 (MATERIAL YOU) DESIGN TOKENS — DARK THEME
+   ========================================================================== */
 .dark {
-  --color-bg: #090d16; /* Deep Space Navy Black */
-  --color-surface: #131a29; /* Sleek Slate Glass Card */
-  --color-surface-glass: rgba(19, 26, 41, 0.8);
-  --color-primary: #0066ff;
-  --color-primary-dark: #0052cc;
-  --color-primary-light: #79c0ff;
-  --color-ink: #f8fafc;
-  --color-body: #cbd5e1;
-  --color-muted: #94a3b8;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-soft: rgba(255, 255, 255, 0.04);
-  --color-border-glow: rgba(56, 139, 253, 0.3);
-  --glow-top: rgba(0, 102, 255, 0.10);
-  --glow-side: rgba(0, 210, 255, 0.05);
-  --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  --shadow-card-hover: 0 14px 40px 0 rgba(0, 102, 255, 0.25);
+  /* --- 1. Material 3 Color Roles (Dark Mode Tonal Mapping) --- */
+  --m3-primary: #b0c6ff;
+  --m3-on-primary: #002d6f;
+  --m3-primary-container: #004397;
+  --m3-on-primary-container: #d8e2ff;
 
-  --bg-surface: #131a29;
-  --bg-canvas: #090d16;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --m3-secondary: #bfc6dc;
+  --m3-on-secondary: #293041;
+  --m3-secondary-container: #3f4759;
+  --m3-on-secondary-container: #dbe2f9;
+
+  --m3-tertiary: #debcdf;
+  --m3-on-tertiary: #402843;
+  --m3-tertiary-container: #583e5a;
+  --m3-on-tertiary-container: #fbd7fc;
+
+  --m3-error: #ffb4ab;
+  --m3-on-error: #690005;
+  --m3-error-container: #93000a;
+  --m3-on-error-container: #ffdad6;
+
+  --m3-success: #6ee7b7;
+  --m3-on-success: #064e3b;
+  --m3-success-container: #065f46;
+  --m3-on-success-container: #a7f3d0;
+
+  --m3-info: #7dd3fc;
+  --m3-on-info: #0369a1;
+  --m3-info-container: #075985;
+  --m3-on-info-container: #bae6fd;
+
+  --m3-warning: #fcd34d;
+  --m3-on-warning: #78350f;
+  --m3-warning-container: #92400e;
+  --m3-on-warning-container: #fde68a;
+
+  /* Surfaces & Containers (Slightly elevated dark tones, không đen tuyền) */
+  --m3-surface: #111318;
+  --m3-on-surface: #e2e2e9;
+  --m3-surface-variant: #44474f;
+  --m3-on-surface-variant: #c4c6d0;
+
+  --m3-surface-container-lowest: #0c0e13;
+  --m3-surface-container-low: #191c20;
+  --m3-surface-container: #1d2024;
+  --m3-surface-container-high: #282a2f;
+  --m3-surface-container-highest: #33353a;
+
+  --m3-outline: #8e9099;
+  --m3-outline-variant: #44474f;
+  --m3-inverse-surface: #e2e2e9;
+  --m3-on-inverse-surface: #2e3036;
+  --m3-inverse-primary: #0058ca;
+  --m3-scrim: #000000;
+
+  /* ==========================================================================
+     BACKWARD COMPATIBILITY ALIASES — DARK THEME
+     ========================================================================== */
+  --color-bg: var(--m3-surface);
+  --color-surface: var(--m3-surface-container);
+  --color-surface-glass: rgba(29, 32, 36, 0.85);
+  --color-primary: var(--m3-primary);
+  --color-primary-dark: #004397;
+  --color-primary-light: #d8e2ff;
+  --color-accent-cyan: var(--m3-primary);
+  --color-action: #fb923c;
+  --color-action-hover: #f97316;
+  --color-action-disabled: var(--m3-surface-container-highest);
+  --color-placeholder: var(--m3-on-surface-variant);
+  --color-ink: var(--m3-on-surface);
+  --color-body: var(--m3-on-surface-variant);
+  --color-muted: var(--m3-outline);
+  --color-border: var(--m3-outline-variant);
+  --color-border-soft: var(--m3-surface-container-high);
+  --color-border-glow: var(--m3-outline-variant);
+  --color-success: var(--m3-success);
+  --color-danger: var(--m3-error);
+  --color-info: var(--m3-info);
+  --badge-success-text: var(--m3-on-success-container);
+  --badge-info-text: var(--m3-on-info-container);
+  --badge-warning-text: var(--m3-on-error-container);
+
+  --glow-top: transparent;
+  --glow-side: transparent;
+  --shadow-card: var(--m3-elevation-1);
+  --shadow-card-hover: var(--m3-elevation-2);
+  --shadow-glow: none;
+  --shadow-cyan-glow: none;
+
+  --color-background: var(--m3-surface);
+  --color-paper: var(--m3-surface-container);
+  --color-surface-dark: var(--m3-surface-container-lowest);
+  --color-surface-darker: #080a0f;
+  --color-surface-soft: var(--m3-surface-container-low);
+
+  --bg-surface: var(--m3-surface-container);
+  --bg-canvas: var(--m3-surface);
+  --border-color: var(--m3-outline-variant);
+  --text-primary: var(--m3-on-surface);
+  --text-secondary: var(--m3-on-surface-variant);
+  --text-on-dark: #f8fafc;
+  --text-on-dark-soft: #c4c6d0;
+
+  --color-brand-primary: var(--m3-primary);
+  --color-brand-primary-light: #d8e2ff;
+  --color-brand-primary-dark: #004397;
+  --color-brand-action: #fb923c;
+  --color-brand-primary-text: var(--m3-primary);
+  --color-primary-text: var(--m3-primary);
+
   /* Inverted Primitive Colors for Dark Mode */
   --color-slate-50: #0f172a;
   --color-slate-100: #1a2333;
@@ -311,36 +510,15 @@
   --color-pink-700: #f9a8d4;
   --color-pink-800: #fbcfe8;
   --color-pink-900: #fce7f3;
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-success: #34d399;
-  --color-danger: #f87171;
-  --color-info: #38bdf8;
-  --badge-success-text: #34d399;
-  --badge-info-text: #38bdf8;
-  --badge-warning-text: #f87171;
-
-  /* Brand blues are used as TEXT on the dark navy surface; the light-mode
-   * values (#0066ff / #0052cc) only reach ~1.5:1 there, so lift them. */
-  --color-brand-primary: #0066ff;
-  --color-brand-primary-light: #388bfd;
-  --color-brand-primary-dark: #0052cc;
-  --color-brand-action: #ff9147;
-  --text-on-dark: #f8fafc;
-  --text-on-dark-soft: #e2e8f0;
-  --color-brand-primary-text: #6db0ff;
-  --color-primary-text: #6db0ff;
 }
 
-
-
-
-
-
+/* ==========================================================================
+   BASE & HTML ELEMENTS
+   ========================================================================== */
 html {
   min-height: 100%;
-  background-color: var(--color-bg);
-  color: var(--color-ink);
+  background-color: var(--m3-surface);
+  color: var(--m3-on-surface);
 }
 
 html,
@@ -353,10 +531,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  color: var(--color-ink);
-  background: radial-gradient(circle at 50% -10%, var(--glow-top) 0%, transparent 62%),
-              radial-gradient(circle at 100% 50%, var(--glow-side) 0%, transparent 52%),
-              var(--color-bg);
+  color: var(--m3-on-surface);
+  /* Material 3 dùng nền phẳng, đặc, loại bỏ hoàn toàn các lớp radial-gradient glow */
+  background: var(--m3-surface);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -373,14 +550,21 @@ a {
   text-decoration: none;
 }
 
-/* Chrome / Safari / Edge Autofill Dark Protection */
+/* Accessible focus ring chuẩn Material 3 */
+:focus-visible {
+  outline: 2px solid var(--m3-primary);
+  outline-offset: 2px;
+}
+
+/* Chrome / Safari / Edge Autofill Protection */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff !important;
+  -webkit-text-fill-color: var(--m3-on-surface) !important;
+  caret-color: var(--m3-primary) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
 
 

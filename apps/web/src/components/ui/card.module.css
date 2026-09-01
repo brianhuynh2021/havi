@@ -1,16 +1,30 @@
+/* ==========================================================================
+   MATERIAL DESIGN 3 CARD SYSTEM
+   - Bo góc large (16px)
+   - Độ cao elevation-1 với bóng đổ trung tính
+   - Viền outline-variant tinh tế
+   ========================================================================== */
+
 .card {
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-  padding: 20px 22px;
+  position: relative;
+  border-radius: var(--m3-shape-lg, 16px);
+  box-shadow: var(--m3-elevation-1);
+  padding: 20px 24px;
+  background-color: var(--m3-surface-container-low);
+  color: var(--m3-on-surface);
+  border: 1px solid var(--m3-outline-variant);
+  transition: box-shadow var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+              background-color var(--m3-duration-short, 100ms) var(--m3-easing-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 
 .paper {
-  border: 1px solid var(--color-border);
-  background: var(--color-paper, var(--color-slate-900));
-  color: var(--color-ink);
+  background-color: var(--m3-surface-container-lowest);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-surface);
 }
 
 .dark {
-  background: var(--color-surface-dark);
-  color: var(--color-paper);
+  background-color: var(--m3-surface-container-highest);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-surface);
 }
