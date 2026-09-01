@@ -13,6 +13,19 @@ Nên service này chỉ làm hai việc:
    Facebook. Việc đăng và xác minh nằm ở đó, không nằm ở đây.
 """
 
+# Annotation dạng chuỗi, đánh giá trễ (PEP 563). Cần thiết, không phải trang trí:
+# `VideoPostService` có method tên `list` (dòng ~104), và trong thân class thì cái
+# tên đó che builtin `list`. Nên annotation `list[Channel]` ở dưới nó bị resolve
+# thành *method* rồi ném `TypeError: 'function' object is not subscriptable` ngay
+# lúc import.
+#
+# Python 3.14 không lộ lỗi này (PEP 649 đánh giá annotation lười), nhưng 3.12 —
+# phiên bản CI và `requires-python` của project — thì đánh giá ngay, nên module
+# này không import nổi ở đó. Sửa bằng future import thay vì đổi tên method vì
+# `service.list(...)` đang được gọi ở router và test; đây là sửa một dòng, không
+# phải đổi API.
+from __future__ import annotations
+
 import logging
 from uuid import UUID
 
