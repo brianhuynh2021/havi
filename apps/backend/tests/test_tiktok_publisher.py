@@ -246,3 +246,123 @@ class TestKhongDangTrungVideo:
 
         assert "ConnectError" in str(exc.value)
         assert "secret-token" not in str(exc.value)
+
+
+class TestTikTokGhiDungQuyenDuocCap:
+    """`granted_scopes` phải là quyền TikTok *cấp*, không phải quyền Havi *hỏi*.
+
+    Người dùng bỏ tick được từng mục ở màn hình uỷ quyền. Không ghi lại thì
+    `granted_scopes` là None = "kết nối cũ, không rõ", và
+    `connection_capabilities` cho đăng theo diện nghi ngờ có lợi — nghĩa là lỗi
+    thiếu quyền chỉ lộ khi bài đã lỗi, không lộ lúc nối kênh.
+    """
+
+    @pytest.mark.asyncio
+    async def test_doc_scope_tu_token_response(self):
+        settings = Settings(
+            tiktok_client_key="key", tiktok_client_secret="secret", env="local"
+        )
+        client = TikTokOAuthClient(settings)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if "oauth/token" in str(request.url):
+                return httpx.Response(
+                    200,
+                    json={
+                        "access_token": "tok",
+                        "open_id": "open_abc",
+                        "expires_in": 86400,
+                        # TikTok dùng dấu phẩy; chuẩn OAuth2 dùng khoảng trắng.
+                        "scope": "user.info.basic,video.upload",
+                    },
+                )
+            return httpx.Response(404)
+
+        transport = httpx.MockTransport(handler)
+        import adapters.oauth.tiktok as mod
+
+        original = httpx.AsyncClient
+
+        def _patched(*a, **kw):
+            kw["transport"] = transport
+            return original(*a, **kw)
+
+        mod.httpx.AsyncClient = _patched
+        try:
+            account = await client.exchange_code("real_code")
+        finally:
+            mod.httpx.AsyncClient = original
+
+        assert account.granted_scopes == ("user.info.basic", "video.upload")
+
+    def test_scope_hoi_bao_phu_scope_can_de_dang_bai(self):
+        """Hai hằng số ở hai file phải nhất quán.
+
+        Lệch nhau nghĩa là chủ tiệm nối kênh xong mà Havi tự coi là không đăng
+        được — hỏng im lặng, đúng loại khó truy nhất.
+        """
+        from adapters.oauth.tiktok import TIKTOK_SCOPES
+        from core.enums import Platform
+        from domain.policies.connection_capabilities import _REQUIREMENTS
+
+        needed = set().union(*_REQUIREMENTS[Platform.TIKTOK].values())
+        assert needed.issubset(set(TIKTOK_SCOPES))
+
+    @pytest.mark.asyncio
+    async def test_luong_mock_cung_ghi_scope(self):
+        """Mock phải đi đúng nhánh capability như luồng thật.
+
+        Thiếu thì local luôn rơi vào `granted_scopes=None` và không bao giờ chạm
+        tới lỗi thiếu quyền — bug chỉ hiện ở production.
+        """
+        settings = Settings(
+            tiktok_client_key="key", tiktok_client_secret="secret", env="local"
+        )
+        account = await TikTokOAuthClient(settings).exchange_code("mock_tiktok_code")
+
+        assert "video.upload" in account.granted_scopes
+
+    @pytest.mark.asyncio
+    async def test_khong_ghep_cung_handle_ca_nhan_vao_ten_kenh(self):
+        """Trước đây mọi `display_name` chứa "huynh" bị gắn "(@huynhnguyen333)".
+
+        Handle riêng của một người lọt vào code: bất kỳ chủ tiệm tên Huynh/Huỳnh
+        cũng bị gắn tên kênh của người khác.
+        """
+        settings = Settings(
+            tiktok_client_key="key", tiktok_client_secret="secret", env="local"
+        )
+        client = TikTokOAuthClient(settings)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if "oauth/token" in str(request.url):
+                return httpx.Response(
+                    200,
+                    json={
+                        "access_token": "tok",
+                        "open_id": "open_abc",
+                        "expires_in": 86400,
+                        "scope": "video.upload",
+                    },
+                )
+            return httpx.Response(
+                200, json={"data": {"user": {"display_name": "Spa Huỳnh Anh"}}}
+            )
+
+        transport = httpx.MockTransport(handler)
+        import adapters.oauth.tiktok as mod
+
+        original = httpx.AsyncClient
+
+        def _patched(*a, **kw):
+            kw["transport"] = transport
+            return original(*a, **kw)
+
+        mod.httpx.AsyncClient = _patched
+        try:
+            account = await client.exchange_code("real_code")
+        finally:
+            mod.httpx.AsyncClient = original
+
+        assert account.account_name == "Spa Huỳnh Anh"
+        assert "huynhnguyen333" not in account.account_name

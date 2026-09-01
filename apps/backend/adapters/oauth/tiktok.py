@@ -28,6 +28,16 @@ logger = logging.getLogger(__name__)
 
 TIKTOK_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/"
 TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
+
+#: Quyền Havi xin ở TikTok. `video.upload` chứ không phải `video.publish`: app
+#: chưa qua audit chỉ được đẩy clip vào Hộp thư để chủ tài khoản tự bấm đăng
+#: (xem ROADMAP Phase C). Xin quyền chưa được cấp thì TikTok từ chối cả lượt uỷ
+#: quyền, nên đây không phải chỗ để "xin thêm cho chắc".
+#:
+#: Phải khớp với `_REQUIREMENTS[Platform.TIKTOK]` trong
+#: `domain/policies/connection_capabilities.py` — hai chỗ lệch nhau là kênh nối
+#: xong mà Havi tự coi là không đăng được.
+TIKTOK_SCOPES: tuple[str, ...] = ("user.info.basic", "video.upload")
 _TRANSIENT_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
 
 
@@ -76,7 +86,7 @@ class TikTokOAuthClient(OAuthClientPort):
 
         params = {
             "client_key": self._client_key,
-            "scope": "user.info.basic,video.upload",
+            "scope": ",".join(TIKTOK_SCOPES),
             "response_type": "code",
             "redirect_uri": self._redirect_uri,
             "state": state,
@@ -98,6 +108,10 @@ class TikTokOAuthClient(OAuthClientPort):
                 access_token="mock_tiktok_access_token",
                 refresh_token="mock_tiktok_refresh_token",
                 expires_at=datetime.now(UTC) + timedelta(days=30),
+                # Khớp `TIKTOK_SCOPES` để luồng mock ở local đi qua đúng nhánh
+                # capability như luồng thật. Thiếu dòng này thì local luôn rơi vào
+                # `granted_scopes=None` và không bao giờ chạm tới lỗi thiếu quyền.
+                granted_scopes=("user.info.basic", "video.upload"),
             )
 
         payload = {
@@ -147,6 +161,21 @@ class TikTokOAuthClient(OAuthClientPort):
         expires_in = data_body.get("expires_in") or data.get("expires_in") or 86400
         refresh_token = data_body.get("refresh_token") or data.get("refresh_token")
 
+        # Quyền TikTok *thực sự* cấp, không phải quyền Havi đã hỏi. Người dùng bỏ
+        # tick được từng mục ở màn hình uỷ quyền, nên hai thứ có thể khác nhau.
+        #
+        # `domain/policies/connection_capabilities.py` đọc giá trị này để quyết
+        # định TikTok có đăng được không. Không ghi thì `granted_scopes` là None
+        # = "kết nối cũ, không rõ" và Havi cho đăng theo diện nghi ngờ có lợi —
+        # tức lỗi thiếu quyền chỉ lộ ra khi bài đã lỗi, không lộ lúc nối kênh.
+        #
+        # TikTok trả chuỗi phân tách bằng dấu phẩy; chuẩn OAuth2 dùng khoảng
+        # trắng. Chấp cả hai vì không có gì bảo đảm TikTok giữ nguyên định dạng.
+        raw_scope = data_body.get("scope") or data.get("scope") or ""
+        granted_scopes = tuple(
+            sorted({part for part in raw_scope.replace(",", " ").split() if part})
+        )
+
         account_name = f"TikTok @{open_id[:10]}"
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as user_client:
@@ -159,11 +188,11 @@ class TikTokOAuthClient(OAuthClientPort):
                     display_name = user_data.get("display_name")
                     username = user_data.get("username")
                     if display_name:
-                        account_name = (
-                            f"{display_name} (@huynhnguyen333)"
-                            if "huynh" in display_name.lower()
-                            else display_name
-                        )
+                        # Trước đây chỗ này ghép cứng "(@huynhnguyen333)" cho mọi
+                        # display_name có chứa "huynh" — handle riêng của một
+                        # người lọt vào code. Bất kỳ chủ tiệm tên Huynh/Huỳnh
+                        # cũng bị gắn handle của người khác vào tên kênh.
+                        account_name = display_name
                     elif username:
                         account_name = f"@{username}"
         except Exception:
@@ -175,4 +204,5 @@ class TikTokOAuthClient(OAuthClientPort):
             access_token=access_token,
             refresh_token=refresh_token,
             expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
+            granted_scopes=granted_scopes,
         )

@@ -46,8 +46,43 @@ def test_danh_sach_rong_khac_han_none():
 
 
 def test_nen_tang_chua_khai_bang_quyen_thi_khong_tat_gi():
-    """Kênh mới thêm mà quên khai bảng quyền không được im lặng chết."""
-    assert capabilities_for(Platform.TIKTOK, ["bat_ky_gi"]) == frozenset(Capability)
+    """Kênh mới thêm mà quên khai bảng quyền không được im lặng chết.
+
+    Dùng YouTube vì nó chưa có mục trong `_REQUIREMENTS`. Trước đây test này
+    dùng TikTok, nhưng TikTok đã được khai (chỉ `publish_post`) — nên nếu giữ
+    nguyên thì test sẽ kiểm nhánh fallback bằng một nền tảng không còn đi vào
+    nhánh đó. Khi khai bảng quyền cho YouTube thì đổi sang nền tảng khác chưa
+    khai, đừng xoá test: nhánh fallback vẫn cần được kiểm.
+    """
+    assert capabilities_for(Platform.YOUTUBE, ["bat_ky_gi"]) == frozenset(Capability)
+
+
+class TestTikTokChiDangDuoc:
+    """TikTok không trả lời bình luận/tin nhắn được — API không có đường đó.
+
+    Trước khi TikTok được khai trong `_REQUIREMENTS`, `capabilities_for` rơi vào
+    nhánh "chưa khai → coi như đủ" và trả về cả bốn khả năng. UI hiện TikTok trả
+    lời được bình luận trong khi không có dòng code nào làm việc đó — đúng cái
+    bẫy "UI báo xanh trong khi Inbox im lặng" mà docstring module cảnh báo.
+    """
+
+    def test_chi_co_publish_post(self):
+        caps = capabilities_for(Platform.TIKTOK, ["user.info.basic", "video.upload"])
+        assert caps == frozenset({Capability.PUBLISH_POST})
+
+    def test_khong_bao_gio_bat_reply_hay_inbox(self):
+        for scopes in (None, [], ["video.upload"], ["video.publish", "comment.list"]):
+            caps = capabilities_for(Platform.TIKTOK, scopes)
+            assert Capability.REPLY_COMMENT not in caps
+            assert Capability.REPLY_MESSAGE not in caps
+            assert Capability.RECEIVE_INBOX not in caps
+
+    def test_ket_noi_cu_van_dang_duoc(self):
+        """`None` = kết nối tạo trước khi có cột `granted_scopes`; không tắt oan."""
+        assert Capability.PUBLISH_POST in capabilities_for(Platform.TIKTOK, None)
+
+    def test_thieu_video_upload_thi_tat_dang_bai(self):
+        assert capabilities_for(Platform.TIKTOK, ["user.info.basic"]) == frozenset()
 
 
 def test_has_capability_khop_voi_capabilities_for():

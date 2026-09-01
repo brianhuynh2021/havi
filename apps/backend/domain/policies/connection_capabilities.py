@@ -51,6 +51,22 @@ _REQUIREMENTS: dict[Platform, dict[Capability, frozenset[str]]] = {
         Capability.REPLY_MESSAGE: frozenset({"pages_messaging"}),
         Capability.RECEIVE_INBOX: frozenset({"pages_manage_metadata"}),
     },
+    # TikTok chỉ đăng được. Ba khả năng còn lại **không khai** ở đây, và đó là
+    # điều cố ý: TikTok Content Posting API không có đường trả lời bình luận hay
+    # tin nhắn, và Havi cũng không có reply publisher cho TikTok
+    # (`build_reply_publishers` chỉ có Facebook/Zalo).
+    #
+    # Không khai = không bao giờ bật, kể cả khi `granted_scopes` là None. Đây
+    # đúng là cái bẫy docstring module cảnh báo: trước khi có mục này,
+    # `capabilities_for(TIKTOK, ...)` rơi vào nhánh "nền tảng chưa khai bảng
+    # quyền → coi như đủ" và trả về **cả bốn** khả năng, nên UI hiện TikTok trả
+    # lời được bình luận trong khi không có một dòng code nào làm việc đó.
+    Platform.TIKTOK: {
+        # `video.upload` chứ không phải `video.publish`: app chưa qua audit chỉ
+        # được đẩy vào Hộp thư (`inbox/video/init/`) để chủ tài khoản tự bấm
+        # đăng — xem ROADMAP Phase C. Scope này khớp với `adapters/oauth/tiktok.py`.
+        Capability.PUBLISH_POST: frozenset({"video.upload"}),
+    },
 }
 
 
