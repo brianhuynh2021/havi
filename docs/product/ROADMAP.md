@@ -258,6 +258,32 @@ for in parallel, well before its implementation slot comes up.
    businesses than any other after Facebook. An unaudited TikTok app can only
    post privately, so its audit is applied for during the Facebook pilot — it is
    the slowest approval in the set and sits on the critical path from day one.
+
+   Adapter, OAuth and publish path exist and are covered by tests. The
+   commercial-hardening pass (2026-09-01) found three defects in them, now
+   fixed:
+
+   - Any failure *after* TikTok issued a `publish_id` was classified
+     `TEMPORARY`, which means "safe to retry" — so the worker called
+     `inbox/video/init/` again and got a **second** `publish_id`. Two videos on
+     one account. `X-Idempotency-Key` does not help: TikTok does not document
+     that header. These are now `AmbiguousPublishError`, carrying the
+     `publish_id` so an operator can find the clip in the TikTok inbox.
+   - TikTok had no entry in `_REQUIREMENTS`, so `capabilities_for` fell through
+     to "platform undeclared, assume everything" and reported that TikTok could
+     reply to comments, reply to messages and receive inbox events. None of
+     those exist for TikTok, in the API or in Havi.
+   - The OAuth client never recorded `granted_scopes`, so Havi could not tell a
+     channel missing publish permission from a legacy connection.
+
+   TikTok inherits the circuit breaker and publish metrics automatically —
+   `PublishService` is channel-generic, so the breaker is `publish.tiktok` with
+   no TikTok-specific wiring.
+
+   Still missing before this box can be ticked: a reconciliation path. Facebook
+   has `verify_reel` to resolve an ambiguous publish; TikTok has no equivalent,
+   so an ambiguous outcome currently needs a human to check the TikTok inbox.
+   That is honest behaviour, not a silent failure — but it is not finished.
 2. [ ] YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
    published and confirmed, so the second video channel is mostly adapter work.
    Upload quota needs an increase request against the default daily limit.
