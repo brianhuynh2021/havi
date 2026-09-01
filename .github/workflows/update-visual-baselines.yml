@@ -6,12 +6,27 @@
 # là chỉ tồn tại MỘT bộ baseline — và bộ đó phải là bộ của môi trường gác cổng,
 # tức CI.
 #
-# Chạy tay: Actions → "Update Visual Baselines" → Run workflow. Tải artifact về,
-# giải nén vào apps/web/e2e/__screenshots__/ rồi commit.
+# Cách chạy:
+#
+# - `workflow_dispatch` (Actions → "Update Visual Baselines" → Run workflow) chỉ
+#   dùng được khi file này đã có trên **default branch** (`main`) — GitHub đọc
+#   danh sách workflow chạy tay từ đó. `dev` đang đi trước `main` 250 commit nên
+#   tạm thời chưa gọi được cách này.
+#
+# - Trong lúc đó: đẩy một commit chạm vào chính file này hoặc vào baseline. Đó là
+#   lý do có `push.paths` — nó khiến workflow gọi được từ `dev` mà không phải
+#   merge sang `main` trước, và cũng không chạy ở mọi commit thường.
+#
+# Xong thì tải artifact `visual-baselines-linux`, giải nén vào
+# `apps/web/e2e/__screenshots__/` rồi commit.
 name: Update Visual Baselines
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/update-visual-baselines.yml"
+      - "apps/web/e2e/__screenshots__/**"
 
 jobs:
   regenerate:
