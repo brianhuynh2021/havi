@@ -28,13 +28,27 @@ class TestFakeReplyChiSongOLocal:
 
     @pytest.mark.parametrize("env", ["staging", "production"])
     def test_ngoai_local_thi_khong_khoi_dong_duoc(self, env):
-        # `use_mock_llm=False` tường minh: `Settings` đọc env, và CI đặt
-        # `HAVI_USE_MOCK_LLM=true` cho toàn job. Thiếu dòng này thì validator
-        # mock-LLM bắn trước, test đỏ vì một thông báo lỗi *khác* — và tệ hơn,
-        # nó xanh trên máy dev chỉ vì ở đó biến kia không được đặt. Một test chỉ
-        # đúng tuỳ môi trường thì không kiểm được gì.
+        """Tắt tường minh MỌI cờ fake khác, chỉ để `use_fake_reply` bật.
+
+        Bốn validator chạy theo thứ tự khai báo (mock_llm → fake_publisher →
+        fake_reply → rate_limit) và cái đầu tiên thấy vi phạm sẽ ném. Cả ba cờ
+        này **default là `True`** trong `Settings`, nên nếu không tắt tay thì
+        validator fake-publisher ném trước và test không bao giờ chạm tới thông
+        báo fake-reply mà nó đang assert.
+
+        Trước đây test xanh chỉ vì `.env` trên máy dev đặt các cờ đó thành
+        `false` — `Settings` đọc `.env`. Trên CI không có file đó nên default
+        `True` có hiệu lực và test đỏ. Pin hết là cách duy nhất khiến test kiểm
+        đúng một thứ, độc lập với máy chạy.
+        """
         with pytest.raises(ValidationError, match="HAVI_USE_FAKE_REPLY"):
-            Settings(env=env, use_fake_reply=True, use_mock_llm=False)
+            Settings(
+                env=env,
+                use_fake_reply=True,
+                use_mock_llm=False,
+                use_fake_publisher=False,
+                disable_rate_limit=False,
+            )
 
     def test_local_van_duoc_dung_fake(self):
         assert Settings(env="local", use_fake_reply=True).use_fake_reply is True

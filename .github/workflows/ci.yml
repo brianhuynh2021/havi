@@ -34,6 +34,23 @@ jobs:
       - name: Visual and Accessibility Smoke
         run: npm run test:visual
 
+      # Ảnh thật CI render ra, kèm cả ảnh "-actual" khi lệch. Baseline sinh trên
+      # macOS luôn lệch 2-6% so với Linux vì antialiasing font khác nhau, mà
+      # ngưỡng là 1% — nên không thể xác nhận baseline từ máy dev. Artifact này
+      # là cách lấy được đúng ảnh của môi trường gác cổng.
+      #
+      # `if: failure()` — chỉ tải lên khi có gì để xem, không đốt storage mỗi lần
+      # CI xanh.
+      - name: Upload visual diff artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7
+
       - name: Build Web
         run: npm run build:web
 
