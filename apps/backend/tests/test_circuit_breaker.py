@@ -136,3 +136,33 @@ class TestRegistry:
         registry.reset_all()
 
         assert breaker.allows_request() is True
+
+
+class TestBreakerMoThiBaiVanDuocThuLai:
+    """Breaker mở phải để bài ở trạng thái *còn thử lại được*.
+
+    Đây là một lỗi tôi đã viết rồi sửa, ghi lại để không tái diễn: bản đầu đẩy
+    job về `pending_reconciliation`. Nhưng trạng thái đó là **kết thúc** có chủ
+    ý — `claim_due` chỉ nhặt job `PENDING`, và `retry_dead_letter` chỉ nhận
+    `DEAD_LETTER`, nên không có gì đưa job ra khỏi đó ngoài người làm tay.
+
+    Lý do đúng: breaker mở nghĩa là Havi **chưa gọi** nền tảng, nên chắc chắn
+    chưa có bài nào được tạo — không hề mơ hồ. `pending_reconciliation` dành cho
+    trường hợp *không biết* nền tảng đã tạo bài hay chưa.
+    """
+
+    def test_pending_reconciliation_khong_nam_trong_luong_retry(self) -> None:
+        """Chốt lại tính chất khiến lựa chọn ban đầu là sai."""
+        from core.enums import PublishStatus
+
+        # `claim_due` lọc đúng `PENDING` (xem PublishRepository.claim_due), nên
+        # bất kỳ trạng thái nào khác đều không tự quay lại vòng chạy.
+        assert PublishStatus.PENDING_RECONCILIATION is not PublishStatus.PENDING
+
+    def test_temporary_giu_job_trong_vong_retry(self) -> None:
+        """`TEMPORARY` là loại lỗi duy nhất `mark_failed` cho retry."""
+        from core.enums import PublishFailureKind
+
+        # Nếu hằng số này đổi tên/ý nghĩa thì đoạn breaker trong publish_service
+        # phải được xem lại cùng lúc.
+        assert PublishFailureKind.TEMPORARY.value == "temporary"

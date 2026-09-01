@@ -45,6 +45,17 @@ from domain.ports.publisher import (
 logger = logging.getLogger("havi.publish_service")
 
 
+def _observe_breaker_open(platform: str) -> None:
+    """Đếm lượt bị breaker chặn, KHÔNG ghi histogram thời lượng.
+
+    Không có upstream call nào xảy ra nên "thời lượng publish" ở đây là 0 — ghi
+    vào histogram sẽ kéo P95 xuống đúng lúc nền tảng đang sập, tức chỉ số đẹp
+    lên khi hệ thống tệ đi. Số lượt bị chặn đã có
+    `havi_circuit_breaker_rejections_total` theo dõi riêng.
+    """
+    publish_attempts_total.labels(platform=platform, outcome="circuit_open").inc()
+
+
 
 #: Kênh nào đăng qua nền tảng nào.
 CHANNEL_TO_PLATFORM: dict[Channel, Platform] = {
@@ -281,18 +292,26 @@ class PublishService:
         # thật bằng chính bài đăng lỗi của mình.
         breaker = breaker_registry.get(f"publish.{job.channel.value}")
         if not breaker.allows_request():
-            # Không `mark_failed`: nền tảng đang sập không phải lỗi của bài này.
-            # Đẩy về `pending_reconciliation` để scheduler thử lại sau — hành vi
-            # giống hệt lúc gặp AmbiguousPublishError, và bài không bị mất.
+            # `TEMPORARY`, không phải `pending_reconciliation`.
+            #
+            # Breaker mở nghĩa là Havi **chưa gọi** nền tảng lần này, nên kết quả
+            # không hề mơ hồ: chắc chắn chưa có bài nào được tạo. Đó đúng là định
+            # nghĩa của TEMPORARY — an toàn để thử lại, và `mark_failed` sẽ đưa
+            # job về `PENDING` kèm backoff để scheduler nhặt lại.
+            #
+            # `pending_reconciliation` là trạng thái **kết thúc** có chủ ý (xem
+            # `PublishRepository.mark_pending_reconciliation`): không có gì tự
+            # đưa job ra khỏi đó, vì nó dành cho trường hợp *không biết* nền tảng
+            # đã tạo bài hay chưa và cần người đối soát. Dùng nó ở đây sẽ biến
+            # một sự cố tạm thời của nền tảng thành việc phải xử lý tay.
             detail = (
                 f"{job.channel.value} đang lỗi liên tục nên Havi tạm ngưng gọi "
                 "(circuit breaker). Bài vẫn còn nguyên, Havi sẽ thử lại."
             )
-            pending = await self._publishes.mark_pending_reconciliation(job, detail=detail)
-            await self._record_event(
-                pending, output_summary=f"status={pending.status.value}", error=detail
+            _observe_breaker_open(job.channel.value)
+            return await self._mark_failed_with_event(
+                job, kind=PublishFailureKind.TEMPORARY, detail=detail
             )
-            return pending
 
         publish_started = time.perf_counter()
 

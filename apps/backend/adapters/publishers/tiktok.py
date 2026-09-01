@@ -14,6 +14,7 @@ import httpx
 
 from core.enums import Channel
 from domain.ports.publisher import (
+    AmbiguousPublishError,
     AuthPermissionError,
     PublisherPort,
     PublishRequest,
@@ -105,9 +106,21 @@ class TikTokPublisher(PublisherPort):
             }
             try:
                 resp = await client.post(TIKTOK_INBOX_INIT_URL, json=init_payload, headers=headers)
+            except httpx.TimeoutException as exc:
+                # Timeout KHÔNG chứng minh là chưa tạo. TikTok có thể đã nhận
+                # request và cấp `publish_id`, chỉ là response không về tới đây.
+                # Retry lúc này tạo publish_id thứ hai, tức hai video.
+                raise AmbiguousPublishError(
+                    self.channel,
+                    f"TikTok không phản hồi sau {self._timeout}s. Kiểm tra Hộp thư "
+                    "TikTok trước khi đăng lại.",
+                ) from exc
             except httpx.RequestError as exc:
+                # Không nội suy `exc`: httpx đưa cả URL vào message, mà URL có
+                # thể mang tham số nhạy cảm.
                 raise TemporaryPublishError(
-                    self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}"
+                    self.channel,
+                    f"Lỗi mạng khi gọi TikTok Publish API: {type(exc).__name__}",
                 ) from exc
 
             if resp.status_code in _TRANSIENT_STATUSES:
@@ -140,10 +153,32 @@ class TikTokPublisher(PublisherPort):
                     "Content-Range": f"bytes 0-{video_size - 1}/{video_size}",
                     "Content-Type": "video/mp4",
                 }
-                up_resp = await client.put(upload_url, content=video_bytes, headers=upload_headers)
+                # Từ đây trở đi `publish_id` ĐÃ tồn tại ở phía TikTok. Mọi lỗi
+                # sau điểm này là *ambiguous*, không phải temporary: TikTok có
+                # thể đã nhận đủ video và vẫn xử lý tiếp dù response về tới đây
+                # bị lỗi. Ném `TemporaryPublishError` ở đây nghĩa là worker retry
+                # từ đầu, gọi lại `inbox/video/init/` và tạo **publish_id thứ
+                # hai** — tức hai video trên cùng một tài khoản.
+                #
+                # `X-Idempotency-Key` không cứu được: TikTok Content Posting API
+                # không tài liệu hoá header này, nên không thể dựa vào nó để
+                # chống trùng (Havi vẫn gửi vì vô hại).
+                try:
+                    up_resp = await client.put(
+                        upload_url, content=video_bytes, headers=upload_headers
+                    )
+                except httpx.RequestError as exc:
+                    raise AmbiguousPublishError(
+                        self.channel,
+                        f"Mất kết nối khi tải video lên TikTok (publish_id={publish_id}): "
+                        f"{exc}. Kiểm tra Hộp thư TikTok trước khi đăng lại.",
+                    ) from exc
                 if up_resp.status_code not in (200, 201):
-                    raise TemporaryPublishError(
-                        self.channel, f"Lỗi tải binary video lên TikTok: HTTP {up_resp.status_code}"
+                    raise AmbiguousPublishError(
+                        self.channel,
+                        f"Tải video lên TikTok trả HTTP {up_resp.status_code} "
+                        f"(publish_id={publish_id}). Kiểm tra Hộp thư TikTok trước "
+                        "khi đăng lại.",
                     )
 
             return PublishResult(
@@ -160,9 +195,16 @@ class TikTokPublisher(PublisherPort):
         }
         try:
             resp = await client.post(TIKTOK_INBOX_INIT_URL, json=payload, headers=headers)
+        except httpx.TimeoutException as exc:
+            raise AmbiguousPublishError(
+                self.channel,
+                f"TikTok không phản hồi sau {self._timeout}s. Kiểm tra Hộp thư "
+                "TikTok trước khi đăng lại.",
+            ) from exc
         except httpx.RequestError as exc:
             raise TemporaryPublishError(
-                self.channel, f"Lỗi mạng khi gọi TikTok Publish API: {exc}"
+                self.channel,
+                f"Lỗi mạng khi gọi TikTok Publish API: {type(exc).__name__}",
             ) from exc
 
         if resp.status_code in _TRANSIENT_STATUSES:

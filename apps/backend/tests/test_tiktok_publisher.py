@@ -15,6 +15,7 @@ from adapters.publishers.tiktok import TikTokPublisher
 from core.config import Settings
 from core.enums import Platform
 from domain.ports.publisher import (
+    AmbiguousPublishError,
     AuthPermissionError,
     PublishRequest,
     TemporaryPublishError,
@@ -137,3 +138,111 @@ async def test_tiktok_oauth_client_real_url():
     assert "state=test_state_xyz" in auth_url
     assert "code_challenge=" in auth_url
     assert "code_challenge_method=S256" in auth_url
+
+
+class TestKhongDangTrungVideo:
+    """Sau khi TikTok đã cấp `publish_id`, mọi lỗi phải là *ambiguous*.
+
+    `TemporaryPublishError` nghĩa là "an toàn để thử lại" (xem
+    `domain/ports/publisher.py`), và worker sẽ gọi lại `inbox/video/init/` từ
+    đầu — tạo publish_id **thứ hai**, tức hai video trên cùng tài khoản. Với
+    TikTok thì hậu quả nặng hơn Facebook: xoá một video đã lên là mất luôn
+    view/comment, và tài khoản đăng trùng liên tục có thể bị hạ tương tác.
+
+    `X-Idempotency-Key` không cứu được: TikTok Content Posting API không tài
+    liệu hoá header đó, nên không thể dựa vào nó để chống trùng.
+    """
+
+    @pytest.mark.asyncio
+    async def test_upload_binary_that_bai_la_ambiguous_khong_phai_temporary(self, tmp_path):
+        video = tmp_path / "clip.mp4"
+        video.write_bytes(b"\x00" * 2048)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/inbox/video/init/"):
+                return httpx.Response(
+                    200,
+                    json={
+                        "data": {
+                            "publish_id": "v_pub_tiktok_555",
+                            "upload_url": "https://upload.tiktokapis.com/put/abc",
+                        }
+                    },
+                )
+            # Bước PUT binary hỏng — nhưng publish_id đã tồn tại.
+            return httpx.Response(500)
+
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            publisher = TikTokPublisher(client=client)
+            req = PublishRequest(
+                text="clip", media_urls=[str(video)], idempotency_key="job_dup_1"
+            )
+            with pytest.raises(AmbiguousPublishError) as exc:
+                await publisher.publish(req, access_token="tok")
+
+        # publish_id phải có trong message: người đối soát cần nó để tìm đúng
+        # video trong Hộp thư TikTok.
+        assert "v_pub_tiktok_555" in str(exc.value)
+
+    @pytest.mark.asyncio
+    async def test_mat_ket_noi_giua_luc_upload_cung_la_ambiguous(self, tmp_path):
+        video = tmp_path / "clip.mp4"
+        video.write_bytes(b"\x00" * 2048)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/inbox/video/init/"):
+                return httpx.Response(
+                    200,
+                    json={
+                        "data": {
+                            "publish_id": "v_pub_tiktok_777",
+                            "upload_url": "https://upload.tiktokapis.com/put/abc",
+                        }
+                    },
+                )
+            raise httpx.ConnectError("connection reset", request=request)
+
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            publisher = TikTokPublisher(client=client)
+            req = PublishRequest(text="clip", media_urls=[str(video)])
+            with pytest.raises(AmbiguousPublishError):
+                await publisher.publish(req, access_token="tok")
+
+    @pytest.mark.asyncio
+    async def test_timeout_o_buoc_init_la_ambiguous(self):
+        """Timeout không chứng minh là chưa tạo — TikTok có thể đã nhận request."""
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ReadTimeout("too slow", request=request)
+
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            publisher = TikTokPublisher(client=client)
+            req = PublishRequest(text="clip", media_urls=["https://cdn.havi.vn/a.mp4"])
+            with pytest.raises(AmbiguousPublishError):
+                await publisher.publish(req, access_token="tok")
+
+    @pytest.mark.asyncio
+    async def test_loi_mang_khac_van_la_temporary_va_khong_lo_url(self):
+        """Không kết nối được = chắc chắn chưa tới TikTok → retry an toàn.
+
+        Và message chỉ chứa tên loại lỗi: httpx nhét cả URL vào message, mà URL
+        có thể mang tham số nhạy cảm.
+        """
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("no route to host", request=request)
+
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            publisher = TikTokPublisher(client=client)
+            req = PublishRequest(
+                text="clip", media_urls=["https://cdn.havi.vn/secret-token/a.mp4"]
+            )
+            with pytest.raises(TemporaryPublishError) as exc:
+                await publisher.publish(req, access_token="tok")
+
+        assert "ConnectError" in str(exc.value)
+        assert "secret-token" not in str(exc.value)
