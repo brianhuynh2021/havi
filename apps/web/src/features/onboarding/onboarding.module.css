@@ -81,7 +81,7 @@
 
 .stepActive .stepDot {
   background: var(--color-brand-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
   border-color: rgba(0, 210, 255, 0.8);
   box-shadow: 0 0 16px rgba(0, 102, 255, 0.6), 0 0 8px rgba(0, 210, 255, 0.4);
 }

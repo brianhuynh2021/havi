@@ -340,7 +340,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--color-brand-primary);
-  color: var(--color-white);
+  color: var(--color-on-primary);
 }
 
 .dayDate {

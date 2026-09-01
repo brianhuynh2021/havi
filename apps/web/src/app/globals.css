@@ -166,6 +166,9 @@
   --color-brand-action: #ea580c;
   --color-brand-primary-text: var(--m3-primary);
   --color-primary-text: var(--m3-primary);
+  --color-on-primary: var(--m3-on-primary);
+  --color-primary-container: var(--m3-primary-container);
+  --color-on-primary-container: var(--m3-on-primary-container);
 
   /* Primitive Colors (Giữ nguyên toàn bộ thang màu nguyên bản) */
   --color-white: #ffffff;
@@ -397,6 +400,9 @@
   --color-brand-action: #fb923c;
   --color-brand-primary-text: var(--m3-primary);
   --color-primary-text: var(--m3-primary);
+  --color-on-primary: var(--m3-on-primary);
+  --color-primary-container: var(--m3-primary-container);
+  --color-on-primary-container: var(--m3-on-primary-container);
 
   /* Inverted Primitive Colors for Dark Mode */
   --color-slate-50: #0f172a;

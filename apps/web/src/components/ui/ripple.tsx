@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type MouseEvent, type PointerEvent, type KeyboardEvent } from "react";
+import { useState, useCallback, useEffect, type MouseEvent, type PointerEvent, type KeyboardEvent } from "react";
 import styles from "./ripple.module.css";
 
 export interface RippleItem {
@@ -13,7 +13,16 @@ export interface RippleItem {
 export function useRipple() {
   const [ripples, setRipples] = useState<RippleItem[]>([]);
 
+  const removeRipple = useCallback((id: number) => {
+    setRipples((prev) => prev.filter((ripple) => ripple.id !== id));
+  }, []);
+
   const addRipple = useCallback((event: MouseEvent<HTMLElement> | PointerEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
+    // Nếu người dùng bật chế độ giảm chuyển động, không tạo ripple (tránh rò rỉ bộ nhớ do animation không chạy)
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
     const target = event.currentTarget;
     const rect = target.getBoundingClientRect();
 
@@ -36,19 +45,21 @@ export function useRipple() {
     const radius = Math.sqrt(radiusX * radiusX + radiusY * radiusY);
     const size = radius * 2;
 
+    const rippleId = Date.now() + Math.random();
     const newRipple: RippleItem = {
-      id: Date.now() + Math.random(),
+      id: rippleId,
       x,
       y,
       size,
     };
 
     setRipples((prev) => [...prev, newRipple]);
-  }, []);
 
-  const removeRipple = useCallback((id: number) => {
-    setRipples((prev) => prev.filter((ripple) => ripple.id !== id));
-  }, []);
+    // Fallback dọn dẹp sau 600ms phòng trường hợp onAnimationEnd bị bỏ lỡ
+    setTimeout(() => {
+      removeRipple(rippleId);
+    }, 600);
+  }, [removeRipple]);
 
   return { ripples, addRipple, removeRipple };
 }

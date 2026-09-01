@@ -165,7 +165,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-brand-primary);
-  color: white;
+  color: var(--color-on-primary);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
@@ -326,7 +326,7 @@
 .upgradeBtn {
   background: var(--color-brand-primary);
   border: none;
-  color: var(--color-white);
+  color: var(--color-on-primary);
   box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
 }
 
