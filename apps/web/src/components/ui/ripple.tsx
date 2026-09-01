@@ -18,9 +18,12 @@ export function useRipple() {
   }, []);
 
   const addRipple = useCallback((event: MouseEvent<HTMLElement> | PointerEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
-    // Nếu người dùng bật chế độ giảm chuyển động, không tạo ripple (tránh rò rỉ bộ nhớ do animation không chạy)
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
+    // Nếu người dùng bật chế độ giảm chuyển động, không tạo ripple (tránh rò rỉ bộ nhớ do animation không chạy).
+    // Kiểm tra sự tồn tại của matchMedia vì jsdom không cài sẵn API này.
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
     }
 
     const target = event.currentTarget;
