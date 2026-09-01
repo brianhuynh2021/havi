@@ -1,8 +1,8 @@
 :root {
   /* Tech + Business Light Theme Tokens */
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-glass: rgba(255, 255, 255, 0.85);
+  --color-bg: #f1f3f8;
+  --color-surface: #fbfcfe;
+  --color-surface-glass: rgba(251, 252, 254, 0.86);
   --color-primary: #0066ff; /* Electric Tech Blue */
   --color-primary-dark: #0052cc;
   --color-primary-light: #388bfd;
@@ -14,8 +14,8 @@
   --color-ink: #0f172a;
   --color-body: #334155;
   --color-muted: #5b6878;
-  --color-border: #e2e8f0;
-  --color-border-soft: #f1f5f9;
+  --color-border: #dde3ec;
+  --color-border-soft: #e9edf4;
   --color-border-glow: rgba(0, 102, 255, 0.2);
   --color-success: #047857;
   --color-danger: #ef4444;
@@ -25,8 +25,12 @@
   --badge-info-text: #0369a1;
   --badge-warning-text: #b91c1c;
 
+  /* Ambient page glow — kept faint so the canvas stays calm. */
+  --glow-top: rgba(0, 102, 255, 0.045);
+  --glow-side: rgba(0, 210, 255, 0.022);
+
   /* Elevational Shadows & Glows */
-  --shadow-card: 0 4px 24px -4px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 6px 20px -6px rgba(15, 23, 42, 0.08);
   --shadow-card-hover: 0 12px 32px -4px rgba(0, 102, 255, 0.14);
   --shadow-glow: 0 0 24px rgba(0, 102, 255, 0.25);
   --shadow-cyan-glow: 0 0 20px rgba(0, 210, 255, 0.3);
@@ -41,9 +45,9 @@
   --color-surface-darker: #05070c;
 
   /* Universal Semantic Tokens */
-  --bg-surface: #ffffff;
-  --bg-canvas: #f8fafc;
-  --border-color: #e2e8f0;
+  --bg-surface: #fbfcfe;
+  --bg-canvas: #f1f3f8;
+  --border-color: #dde3ec;
   --text-primary: #0f172a;
   --text-secondary: #5b6878;
   --text-on-dark: #f8fafc;
@@ -52,9 +56,9 @@
   --color-white: #ffffff;
   --color-black: #000000;
   --color-transparent: transparent;
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
+  --color-slate-50: #f4f6fa;
+  --color-slate-100: #eaeef6;
+  --color-slate-200: #dde3ec;
   --color-slate-300: #cbd5e1;
   --color-slate-400: #94a3b8;
   --color-slate-500: #5b6878;
@@ -185,6 +189,8 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-soft: rgba(255, 255, 255, 0.04);
   --color-border-glow: rgba(56, 139, 253, 0.3);
+  --glow-top: rgba(0, 102, 255, 0.10);
+  --glow-side: rgba(0, 210, 255, 0.05);
   --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 14px 40px 0 rgba(0, 102, 255, 0.25);
 
@@ -348,8 +354,8 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--color-ink);
-  background: radial-gradient(circle at 50% -10%, rgba(0, 102, 255, 0.08) 0%, transparent 60%),
-              radial-gradient(circle at 100% 50%, rgba(0, 210, 255, 0.04) 0%, transparent 50%),
+  background: radial-gradient(circle at 50% -10%, var(--glow-top) 0%, transparent 62%),
+              radial-gradient(circle at 100% 50%, var(--glow-side) 0%, transparent 52%),
               var(--color-bg);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
