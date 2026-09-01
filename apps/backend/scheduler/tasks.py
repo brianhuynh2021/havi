@@ -112,3 +112,58 @@ def notify_due_renewals(request_id: str | None = None) -> None:
         logger.info("notify_due_renewals: đã nhắc %d workspace", sent)
     finally:
         reset_request_id(token)
+
+
+@celery_app.task(name="havi.outbox.dispatch")
+def dispatch_outbox() -> None:
+    """Đẩy các bản ghi outbox đang chờ vào Celery.
+
+    Nhịp **mỗi phút** (xem `scheduler/beat.py`): đây là độ trễ thêm vào cho mọi
+    job đi qua outbox, nên nó phải là nhịp dày nhất trong beat schedule.
+
+    Không nhận `request_id`: mỗi bản ghi đã mang `request_id` của request đã sinh
+    ra nó, và đó mới là thứ dùng để truy vết. Một ID chung cho cả lượt quét sẽ
+    gộp những việc không liên quan vào cùng một dấu vết.
+    """
+    from adapters.persistence.db import session_scope
+    from adapters.persistence.outbox_repository import OutboxRepository
+    from application.services.outbox_dispatcher import OutboxDispatcher
+
+    async def _run() -> dict:
+        # Mỗi lượt một transaction: `claim_batch` giữ row lock, và lock chỉ nhả
+        # khi transaction đóng. Giữ session mở lâu hơn cần thiết sẽ chặn các
+        # dispatcher khác đúng những dòng vừa xử lý xong.
+        async with session_scope() as session:
+            dispatcher = OutboxDispatcher(OutboxRepository(session))
+            return await dispatcher.run_once()
+
+    result = asyncio.run(_run())
+    if result["dispatched"] or result["failed"]:
+        logger.info(
+            "outbox dispatch: %d sent, %d failed, %d pending",
+            result["dispatched"],
+            result["failed"],
+            result["pending"],
+        )
+
+
+@celery_app.task(name="havi.outbox.purge")
+def purge_outbox() -> None:
+    """Dọn bản ghi đã đẩy cũ hơn 7 ngày.
+
+    Outbox là hàng đợi, không phải audit log — `event_log` giữ lịch sử và nó bất
+    biến. Không dọn thì bảng phình vô hạn và index một phần `ix_outbox_pending`
+    mất dần lợi thế.
+    """
+    from adapters.persistence.db import session_scope
+    from adapters.persistence.outbox_repository import OutboxRepository
+    from application.services.outbox_dispatcher import OutboxDispatcher
+
+    async def _run() -> int:
+        async with session_scope() as session:
+            dispatcher = OutboxDispatcher(OutboxRepository(session))
+            return await dispatcher.purge_old()
+
+    purged = asyncio.run(_run())
+    if purged:
+        logger.info("outbox purge: %d bản ghi đã dọn", purged)

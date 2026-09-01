@@ -11,8 +11,40 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health */
+        /**
+         * Health
+         * @description Liveness — cố ý không chạm dependency nào. Xem docstring module.
+         */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness
+         * @description Readiness — ping Postgres và Redis, trả 503 khi có cái nào chết.
+         *
+         *     Chạy song song: hai lần chờ tuần tự thì probe chậm gấp đôi, và với timeout
+         *     3 giây mỗi cái thì tổng vượt quá chu kỳ probe thường dùng.
+         *
+         *     **Redis không chặn readiness.** Nó phục vụ rate-limit và job queue; mất Redis
+         *     thì Havi xuống cấp (rate-limit rơi về `NullRateLimiter`) chứ không mất khả
+         *     năng phục vụ. Postgres thì khác: không có nó thì không request nào có nghĩa.
+         *     Trộn hai mức độ này vào một cờ boolean sẽ khiến Redis nhấp nháy kéo sập cả
+         *     site — đúng loại sự cố tự gây mà readiness probe lẽ ra phải ngăn.
+         */
+        get: operations["readiness_health_ready_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2971,6 +3003,28 @@ export interface components {
          * @enum {string}
          */
         RawInputKind: "photo" | "voice" | "text";
+        /** ReadinessCheck */
+        ReadinessCheck: {
+            /** Name */
+            name: string;
+            /** Ok */
+            ok: boolean;
+            /** Error */
+            error?: string | null;
+            /** Duration Ms */
+            duration_ms: number;
+        };
+        /** ReadinessResponse */
+        ReadinessResponse: {
+            /** Status */
+            status: string;
+            /** Env */
+            env: string;
+            /** Version */
+            version: string;
+            /** Checks */
+            checks: components["schemas"]["ReadinessCheck"][];
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -3443,6 +3497,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    readiness_health_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessResponse"];
                 };
             };
         };

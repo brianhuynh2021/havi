@@ -12,6 +12,7 @@ from domain.models.content import ContentItem, ContentItemVersion, ContentJob
 from domain.models.inbox import InboxItem
 from domain.models.media import MediaAsset
 from domain.models.organization import Organization, OrganizationMember
+from domain.models.outbox import OutboxEntry
 from domain.models.publish import PublishJob
 from domain.models.user import OtpChallenge, RefreshSession, User
 from domain.models.video_post import VideoPost
@@ -40,6 +41,7 @@ __all__ = [
     "ContentItem",
     "ContentItemVersion",
     "EventLog",
+    "OutboxEntry",
     "PlatformConnection",
     "PublishJob",
     "InboxItem",

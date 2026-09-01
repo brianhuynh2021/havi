@@ -36,9 +36,9 @@ from application.services.connection_service import (
 from core.config import Settings
 from core.enums import ConnectionStatus, Industry, Platform, WorkspaceRole
 from core.oauth_state import InvalidOAuthState, create_oauth_state
-from domain.policies.connection_capabilities import Capability, capabilities_for
 from domain.models.user import User
 from domain.models.workspace import Workspace, WorkspaceMember
+from domain.policies.connection_capabilities import Capability, capabilities_for
 from domain.ports.publisher import (
     AuthPermissionError,
     PublishRequest,

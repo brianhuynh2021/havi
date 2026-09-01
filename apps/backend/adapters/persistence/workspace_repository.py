@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import Industry
@@ -114,6 +114,15 @@ class WorkspaceRepository:
         await self._session.execute(
             delete(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace_id)
         )
+        # `event_log` là bảng append-only (migration f2a3b4c5d6e7). Ẩn danh hoá là
+        # ngoại lệ *duy nhất* được phép, và phải khai báo ý định bằng cờ session —
+        # xem migration b4c5d6e7f8a9 để biết trigger kiểm những gì.
+        #
+        # `SET LOCAL` chứ không `SET`: cờ tự hết hiệu lực khi transaction kết thúc.
+        # Dùng `SET` thì nó sống theo cả connection, mà connection nằm trong pool
+        # và được tái sử dụng — nghĩa là mọi request sau đó trên cùng connection
+        # sẽ mang theo quyền ẩn danh hoá mà không ai yêu cầu.
+        await self._session.execute(text("SET LOCAL havi.erasure = 'on'"))
         await self._session.execute(
             update(EventLog)
             .where(EventLog.workspace_id == workspace_id)

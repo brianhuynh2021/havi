@@ -9,7 +9,7 @@ from datetime import datetime
 from math import ceil
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.events import EventLogEntry, record_event
@@ -45,10 +45,105 @@ class EventLogRepository:
             provider=effective_entry.provider,
             model=effective_entry.model,
             error=effective_entry.error,
+            # Lấy `created_at` từ entry, không để default của cột tự điền: bảng
+            # này giờ append-only (trigger chặn UPDATE), nên sửa lại thời điểm
+            # *sau* khi insert là không thể nữa. Thời điểm phải đúng ngay từ đầu.
+            #
+            # `EventLogEntry.created_at` vốn đã có default là `now()`, nên đường
+            # chạy production không đổi gì; điều này chỉ mở đường cho caller biết
+            # rõ thời điểm thật của sự kiện (backfill, test) khai báo tường minh.
+            created_at=effective_entry.created_at,
         )
         self._session.add(row)
         await self._session.flush()
         return row
+
+    async def verify_chain(self, *, workspace_id: UUID) -> dict:
+        """Kiểm hash chain của một workspace, trả chỗ đứt đầu tiên nếu có.
+
+        Trigger Postgres đã chặn UPDATE/DELETE, nên hàm này không phải tuyến
+        phòng thủ hàng ngày — nó là *bằng chứng*. Ai có SUPERUSER thì tắt được
+        trigger; điều họ không làm được là sửa một dòng mà mọi `row_hash` phía
+        sau vẫn khớp. Đây là nơi trả lời câu hỏi đó của auditor.
+
+        Tính lại hash bằng SQL (`digest`) chứ không bằng Python: công thức phải
+        **giống hệt** trigger, và giữ một bản sao công thức trong Python là mời
+        gọi hai bản trôi lệch nhau — lúc đó verify sẽ báo đứt chuỗi ở dữ liệu
+        hoàn toàn nguyên vẹn, thứ báo động giả tệ nhất trong cả hệ thống.
+
+        Bỏ qua dòng có `row_hash IS NULL` (ghi trước migration f2a3b4c5d6e7):
+        chúng không thuộc chuỗi, và coi chúng là đứt sẽ khiến mọi workspace cũ
+        đều báo lỗi vĩnh viễn.
+        """
+        result = await self._session.execute(
+            text(
+                """
+                WITH chain AS (
+                    SELECT
+                        id,
+                        created_at,
+                        row_hash,
+                        prev_hash,
+                        LAG(row_hash) OVER (ORDER BY created_at, id) AS expected_prev,
+                        encode(
+                            digest(
+                                concat_ws(
+                                    chr(31),
+                                    COALESCE(
+                                        LAG(row_hash) OVER (ORDER BY created_at, id), ''
+                                    ),
+                                    id::text,
+                                    COALESCE(workspace_id::text, ''),
+                                    COALESCE(job_id::text, ''),
+                                    COALESCE(content_item_id::text, ''),
+                                    COALESCE(request_id, ''),
+                                    job_kind,
+                                    input_summary,
+                                    output_summary,
+                                    tokens_in::text,
+                                    tokens_out::text,
+                                    duration_ms::text,
+                                    COALESCE(provider, ''),
+                                    COALESCE(model, ''),
+                                    COALESCE(error, ''),
+                                    created_at::text
+                                ),
+                                'sha256'
+                            ),
+                            'hex'
+                        ) AS recomputed
+                    FROM event_log
+                    WHERE workspace_id = :workspace_id AND row_hash IS NOT NULL
+                )
+                SELECT id, created_at, row_hash, recomputed,
+                       prev_hash IS DISTINCT FROM expected_prev AS link_broken
+                FROM chain
+                WHERE row_hash IS DISTINCT FROM recomputed
+                   OR prev_hash IS DISTINCT FROM expected_prev
+                ORDER BY created_at, id
+                LIMIT 1
+                """
+            ),
+            {"workspace_id": str(workspace_id)},
+        )
+        broken = result.first()
+        counted = await self._session.execute(
+            select(func.count()).where(
+                EventLog.workspace_id == workspace_id, EventLog.row_hash.is_not(None)
+            )
+        )
+        total = counted.scalar_one()
+        if broken is None:
+            return {"ok": True, "rows_checked": total, "broken_at": None}
+        return {
+            "ok": False,
+            "rows_checked": total,
+            "broken_at": {
+                "id": str(broken.id),
+                "created_at": broken.created_at,
+                "link_broken": bool(broken.link_broken),
+            },
+        }
 
     async def tokens_used_since(self, *, workspace_id: UUID, since: datetime) -> int:
         """Token đã dùng của workspace từ `since`, **tính trọng số theo chi phí**.

@@ -31,6 +31,7 @@ from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.media_repository import MediaRepository
 from adapters.persistence.organization_repository import OrganizationRepository
 from adapters.persistence.otp_repository import OtpRepository
+from adapters.persistence.outbox_repository import OutboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from adapters.persistence.refresh_session_repository import RefreshSessionRepository
 from adapters.persistence.user_repository import UserRepository
@@ -48,7 +49,7 @@ from application.services.brand_profile_service import BrandProfileService
 from application.services.connection_service import ConnectionService
 from application.services.content_service import ContentService
 from application.services.inbox_service import InboxService
-from application.services.job_queue import CeleryJobQueue, JobQueue
+from application.services.job_queue import JobQueue, OutboxJobQueue
 from application.services.media_service import MediaService
 from application.services.publish_service import PublishService
 from application.services.video_post_service import VideoPostService
@@ -214,8 +215,18 @@ def get_media_service(session: DbSessionDep, settings: SettingsDep) -> MediaServ
 MediaServiceDep = Annotated[MediaService, Depends(get_media_service)]
 
 
-def get_job_queue() -> JobQueue:
-    return CeleryJobQueue()
+def get_job_queue(session: DbSessionDep) -> JobQueue:
+    """Outbox, không phải Celery trực tiếp.
+
+    `OutboxJobQueue` ghi việc vào bảng `outbox` bằng **chính session của request**,
+    nên bản ghi đó commit cùng transaction với dữ liệu nghiệp vụ. Đây là điều
+    `CeleryJobQueue` không làm được: nó gọi Redis ngay, ngoài transaction, nên
+    process chết giữa hai bước là mất job (xem `domain/models/outbox.py`).
+
+    `CeleryJobQueue` vẫn còn trong codebase cho worker — chỗ đã ở ngoài vòng
+    request và tự quản transaction của mình.
+    """
+    return OutboxJobQueue(OutboxRepository(session))
 
 
 JobQueueDep = Annotated[JobQueue, Depends(get_job_queue)]

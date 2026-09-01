@@ -131,11 +131,15 @@ services:
       HAVI_YOUTUBE_REDIRECT_URI: ${HAVI_YOUTUBE_REDIRECT_URI:-}
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      # `/health/ready`, không phải `/health`: readiness ping thật Postgres nên
+      # container bị coi là unhealthy khi backend không phục vụ được. `/health`
+      # là liveness — nó xanh kể cả lúc DB chết (đúng như thiết kế), nên dùng nó
+      # ở đây thì healthcheck không phát hiện được gì.
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 15s
 
   worker:
     build:

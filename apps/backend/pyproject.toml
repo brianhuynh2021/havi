@@ -35,6 +35,10 @@ dependencies = [
     # deploy, (2) chỉ có tự vẽ mới biết *chính xác* hộp pixel của chữ — mà
     # không biết hộp thì không kiểm được safe zone, chỉ đoán được.
     "pillow>=11.0",
+    # `/metrics` cho Prometheus. Là dependency chính, không phải extra: SLA
+    # P95/P99 chỉ có nghĩa nếu *luôn* được đo — một extra thiếu ở production
+    # nghĩa là mất chỉ số đúng lúc cần nhất, và mất im lặng.
+    "prometheus-client>=0.21",
 ]
 
 [project.optional-dependencies]

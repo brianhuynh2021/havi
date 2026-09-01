@@ -70,7 +70,9 @@ async def _add_event(
     tokens_out: int = 0,
     error: str | None = None,
 ) -> None:
-    row = await EventLogRepository(session).record(
+    # `created_at` khai lúc insert, không sửa sau: `event_log` là bảng append-only
+    # (trigger Postgres chặn UPDATE — migration f2a3b4c5d6e7).
+    await EventLogRepository(session).record(
         EventLogEntry(
             workspace_id=UUID(workspace_id),
             job_id=UUID("00000000-0000-0000-0000-000000000456"),
@@ -83,9 +85,9 @@ async def _add_event(
             provider=provider,
             duration_ms=duration_ms,
             error=error,
+            created_at=created_at,
         )
     )
-    row.created_at = created_at
     await session.flush()
 
 

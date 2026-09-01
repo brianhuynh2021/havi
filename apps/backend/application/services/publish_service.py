@@ -5,6 +5,7 @@
 """
 
 import logging
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
@@ -27,9 +28,11 @@ from core.enums import (
     PublishStatus,
 )
 from core.events import EventLogEntry
+from core.metrics import publish_attempts_total, publish_duration_seconds
 from core.token_crypto import TokenDecryptionFailed, encrypt_token
-from domain.policies.connection_capabilities import Capability, has_capability
 from domain.models.publish import PublishJob
+from domain.policies.circuit_breaker import registry as breaker_registry
+from domain.policies.connection_capabilities import Capability, has_capability
 from domain.policies.media_reachability import unreachable_reason
 from domain.ports.publisher import (
     AmbiguousPublishError,
@@ -273,6 +276,34 @@ class PublishService:
                     ),
                 )
 
+        # Breaker theo *kênh*, không theo workspace: nền tảng sập là sập với mọi
+        # người, và khoá theo workspace thì mỗi khách phải tự học lại cùng một sự
+        # thật bằng chính bài đăng lỗi của mình.
+        breaker = breaker_registry.get(f"publish.{job.channel.value}")
+        if not breaker.allows_request():
+            # Không `mark_failed`: nền tảng đang sập không phải lỗi của bài này.
+            # Đẩy về `pending_reconciliation` để scheduler thử lại sau — hành vi
+            # giống hệt lúc gặp AmbiguousPublishError, và bài không bị mất.
+            detail = (
+                f"{job.channel.value} đang lỗi liên tục nên Havi tạm ngưng gọi "
+                "(circuit breaker). Bài vẫn còn nguyên, Havi sẽ thử lại."
+            )
+            pending = await self._publishes.mark_pending_reconciliation(job, detail=detail)
+            await self._record_event(
+                pending, output_summary=f"status={pending.status.value}", error=detail
+            )
+            return pending
+
+        publish_started = time.perf_counter()
+
+        def _observe(outcome: str) -> None:
+            publish_attempts_total.labels(
+                platform=job.channel.value, outcome=outcome
+            ).inc()
+            publish_duration_seconds.labels(platform=job.channel.value).observe(
+                time.perf_counter() - publish_started
+            )
+
         try:
             result = await publisher.publish(
                 PublishRequest(
@@ -284,6 +315,10 @@ class PublishService:
                 access_token=access_token,
             )
         except AmbiguousPublishError as exc:
+            # Ambiguous = timeout/mất kết nối: *đúng* loại lỗi breaker cần đếm,
+            # vì nó nói lên sức khoẻ đường truyền tới nền tảng.
+            breaker.record_failure()
+            _observe("ambiguous")
             pending = await self._publishes.mark_pending_reconciliation(job, detail=exc.detail)
             await self._record_event(
                 pending,
@@ -306,7 +341,11 @@ class PublishService:
                             ),
                             access_token=new_token,
                         )
-                        await self._content.mark_published(item, published_at=result.published_at)
+                        breaker.record_success()
+                        _observe("ok")
+                        await self._content.mark_published(
+                            item, published_at=result.published_at
+                        )
                         succeeded = await self._publishes.mark_succeeded(
                             job,
                             external_post_id=result.external_post_id,
@@ -321,6 +360,12 @@ class PublishService:
                     except Exception as retry_exc:
                         logger.warning("Retry after refresh token failed: %s", retry_exc)
 
+            # Mất quyền cũng là "nền tảng trả lời được": upstream khoẻ, chỉ token
+            # hết hiệu lực. Ghi nhận thành công cho breaker, nhưng đếm lượt publish
+            # là thất bại — hai câu hỏi khác nhau, hai chỉ số khác nhau.
+            breaker.record_success()
+            _observe("auth_failed")
+
             # Mất quyền ở phía nền tảng — đánh dấu luôn kết nối, không chỉ job.
             # Nếu không, mọi bài sau đó cũng hỏng mà UI vẫn hiện chấm xanh.
             await self._connections.mark_unusable(
@@ -328,8 +373,15 @@ class PublishService:
             )
             return await self._mark_failed_with_event(job, kind=exc.kind, detail=exc.detail)
         except PublishError as exc:
+            # PublishError còn lại là lỗi *nội dung/quyền* (validation, token sai):
+            # nền tảng vẫn trả lời được nên đây là tín hiệu upstream khoẻ. Đếm nó
+            # sẽ mở breaker vì một bài viết sai định dạng và chặn cả kênh.
+            breaker.record_success()
+            _observe("failed")
             return await self._mark_failed_with_event(job, kind=exc.kind, detail=exc.detail)
 
+        breaker.record_success()
+        _observe("ok")
         await self._content.mark_published(item, published_at=result.published_at)
         succeeded = await self._publishes.mark_succeeded(
             job,

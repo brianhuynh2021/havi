@@ -280,3 +280,19 @@ class OAuthReturnTarget(StrEnum):
 
     ONBOARDING = "onboarding"
     SETTINGS = "settings"
+
+
+class OutboxStatus(StrEnum):
+    """Trạng thái một bản ghi outbox.
+
+    Không có `processing`: dispatcher dùng `SELECT ... FOR UPDATE SKIP LOCKED`
+    nên row lock của Postgres *là* cơ chế giữ chỗ. Thêm một trạng thái trung
+    gian trong bảng nghĩa là dispatcher chết giữa đường sẽ để lại dòng mắc kẹt ở
+    `processing` mãi, và phải viết thêm job đi dọn — lock thì tự nhả khi kết nối
+    đóng.
+    """
+
+    PENDING = "pending"
+    DISPATCHED = "dispatched"
+    #: Hết số lần thử. Cần người xem: `topic` sai, hoặc Redis chết lâu hơn dự kiến.
+    FAILED = "failed"

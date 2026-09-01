@@ -43,4 +43,17 @@ celery_app.conf.beat_schedule = {
         "task": "havi.scheduler.notify_due_renewals",
         "schedule": crontab(hour=1, minute=0),
     },
+    # Transactional Outbox: đẩy việc đã commit vào Redis. Nhịp dày nhất ở đây vì
+    # đây là độ trễ thêm vào cho *mọi* job đi qua outbox — job chỉ tới worker sau
+    # khi lượt quét này chạy.
+    "dispatch-outbox": {
+        "task": "havi.outbox.dispatch",
+        "schedule": crontab(minute="*"),
+    },
+    # Dọn bản ghi outbox đã đẩy. 3h sáng giờ VN (20h UTC hôm trước) — giờ thấp
+    # điểm, và DELETE trên bảng đang bị ghi liên tục thì nên tránh giờ cao điểm.
+    "purge-outbox": {
+        "task": "havi.outbox.purge",
+        "schedule": crontab(hour=20, minute=0),
+    },
 }

@@ -128,6 +128,45 @@ exercise the path but not to run a pilot.
 The same wall stands in front of TikTok (see Phase C): an unaudited app there
 can only post privately. Neither integration is finished by more code alone.
 
+#### Commercial hardening (shipped 2026-09-01)
+
+The Facebook path worked but was not yet operable at commercial standard: nothing
+measured latency, nothing stopped Havi from hammering a dead platform, and the
+audit table could be edited by anyone who could write to it.
+
+- [x] Readiness probe that actually probes. `/health` stays liveness-only;
+      `/health/ready` pings Postgres and Redis, returns 503 when Postgres is
+      gone, and is what the container healthcheck now uses. The old `/health`
+      returned a hardcoded `ok`, so a dead database still reported healthy and
+      the load balancer kept sending traffic.
+- [x] Prometheus `/metrics` with P95/P99. Histograms (not summaries — quantiles
+      do not aggregate across worker processes) for HTTP, publish and LLM paths,
+      labelled by route template so UUIDs cannot explode cardinality.
+- [x] Circuit breaker on the LLM router and the publish path. Only transient
+      failures count toward opening it: a rejected prompt or an invalid draft
+      means the upstream answered fine, so counting those would disable a
+      healthy provider. When a channel's breaker is open, posts go back to
+      `pending_reconciliation` instead of failing — nothing is lost.
+- [x] `event_log` is append-only in the database. Triggers block
+      UPDATE/DELETE/TRUNCATE and compute a per-workspace SHA-256 hash chain in
+      PL/pgSQL, so tampering is detectable even by someone who disables the
+      triggers. `verify_chain()` reports the first break.
+- [x] Right-to-erasure carve-out, deliberately narrow. GDPR Art. 17 and Meta's
+      deletion callback outrank an internal invariant, so anonymisation is
+      allowed — but only that exact shape of UPDATE, only with
+      `SET LOCAL havi.erasure = 'on'`, and never touching token counts or the
+      hash chain. Accounting numbers stay unforgeable.
+- [x] Transactional Outbox for job dispatch. Enqueue is now an INSERT in the
+      same transaction as the business write, so a crash between "job saved" and
+      "job queued" can no longer leave a draft pending forever. At-least-once,
+      which is safe only because every job already carries a UNIQUE
+      `idempotency_key`.
+- [x] Dependency vulnerability scanning in CI (`pip-audit`, `npm audit`).
+
+Not done, and deliberately: zero-downtime deploy. Havi still has a short gap on
+deploy. It needs blue/green or rolling containers plus a CD job, and at one
+pilot customer the honest trade is to ship the observability first.
+
 ### Phase B — Team control
 
 - [x] Organization above workspaces for multiple brands or branches.

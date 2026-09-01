@@ -18,7 +18,6 @@ from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
     PlainTextResponse,
-    RedirectResponse,
 )
 
 from api.routers import (
@@ -40,7 +39,15 @@ from api.routers import (
     webhooks,
     workspaces,
 )
+from api.routers import (
+    metrics as metrics_router,
+)
 from core.config import get_settings
+from core.metrics import (
+    http_request_duration_seconds,
+    http_requests_in_progress,
+    http_requests_total,
+)
 from core.request_context import (
     REQUEST_ID_HEADER,
     reset_request_id,
@@ -50,6 +57,35 @@ from core.request_context import (
 from core.structured_logging import log_json
 
 logger = logging.getLogger("havi.http")
+
+#: Path trả về khi request không khớp route nào (404, scan bot).
+#:
+#: Không ghi path thật: Internet quét URL vô hạn kiểu `/.env`, `/wp-login.php`,
+#: và mỗi cái sẽ thành một time series sống mãi trong Prometheus. Gộp hết vào một
+#: nhãn là cách duy nhất giữ cardinality hữu hạn ở endpoint công khai.
+_UNMATCHED_PATH = "<unmatched>"
+
+
+def _route_template(request) -> str:  # noqa: ANN001
+    """Route template (`/content/{item_id}`) thay vì URL thật (`/content/9f3c…`).
+
+    Đây là chỗ metrics HTTP hay hỏng nhất: dùng `request.url.path` thì mỗi UUID
+    sinh một series mới, và Prometheus phình tới OOM sau vài ngày. Starlette gắn
+    route đã khớp vào `request.scope["route"]` sau khi routing xong, nên middleware
+    đọc được template ở đây.
+    """
+    route = request.scope.get("route")
+    path_format = getattr(route, "path_format", None) or getattr(route, "path", None)
+    return path_format or _UNMATCHED_PATH
+
+
+def _observe_http(request, *, status_code: int, seconds: float) -> None:  # noqa: ANN001
+    path = _route_template(request)
+    http_requests_total.labels(
+        method=request.method, path=path, status=str(status_code)
+    ).inc()
+    http_request_duration_seconds.labels(method=request.method, path=path).observe(seconds)
+
 
 DESCRIPTION = """
 Backend của Havi — sở hữu database, secret, prompt production và approval state machine.
@@ -62,6 +98,7 @@ Nguyên tắc bất di bất dịch:
 
 ROUTERS = (
     health.router,
+    metrics_router.router,
     auth.router,
     workspaces.router,
     brand_profile.router,
@@ -118,10 +155,12 @@ def create_app() -> FastAPI:
         request_id = sanitize_request_id(request.headers.get(REQUEST_ID_HEADER))
         started = time.perf_counter()
         token = set_request_id(request_id)
+        http_requests_in_progress.inc()
         try:
             response = await call_next(request)
         except Exception:
             duration_ms = round((time.perf_counter() - started) * 1000)
+            _observe_http(request, status_code=500, seconds=time.perf_counter() - started)
             log_json(
                 logger,
                 logging.ERROR,
@@ -134,9 +173,15 @@ def create_app() -> FastAPI:
             )
             raise
         finally:
+            # `finally` cho gauge: nhánh except ở trên `raise` lại, nên giảm gauge
+            # ở đó thì mọi request lỗi làm gauge trôi lên vĩnh viễn.
+            http_requests_in_progress.dec()
             reset_request_id(token)
         response.headers[REQUEST_ID_HEADER] = request_id
         duration_ms = round((time.perf_counter() - started) * 1000)
+        _observe_http(
+            request, status_code=response.status_code, seconds=time.perf_counter() - started
+        )
         log_json(
             logger,
             logging.INFO,

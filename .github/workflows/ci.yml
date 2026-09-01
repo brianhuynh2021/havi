@@ -151,3 +151,42 @@ jobs:
             -o ../web/src/lib/api-client/schema.d.ts
           git diff --exit-code -- ../web/src/lib/api-client/schema.d.ts \
             || { echo "::error::schema.d.ts is stale — run 'npm run generate:api' and commit"; exit 1; }
+
+  security:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Quét môi trường đã sync, không quét file requirements: chế độ
+      # `--requirement` của pip-audit tự dựng một venv riêng để resolve, và bước
+      # đó hỏng ở nhiều môi trường CI. Sync rồi quét đúng những gì đã cài vừa
+      # chắc chắn hơn vừa phản ánh đúng phiên bản chạy thật.
+      #
+      # `--skip-editable` bỏ qua chính `havi-backend` (không có trên PyPI nên
+      # không thể tra CVE). Không dùng `--strict`: nó coi lần skip đó là lỗi và
+      # làm CI đỏ vĩnh viễn. Lỗ hổng thật vẫn làm pip-audit trả exit code khác 0.
+      - name: Audit Python dependencies
+        working-directory: apps/backend
+        run: |
+          uv sync --extra dev --extra db --extra queue --extra storage
+          uv run --with pip-audit pip-audit --skip-editable
+
+      # `--omit=dev`: lỗ hổng trong test runner không đi ra production, và để nó
+      # làm đỏ CI thì cảnh báo thật sẽ bị bỏ qua vì quen. `--audit-level=high`
+      # cùng lý do — chặn ở mức đáng chặn.
+      - name: Audit Node dependencies
+        run: npm audit --omit=dev --audit-level=high
