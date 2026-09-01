@@ -28,8 +28,13 @@ class TestFakeReplyChiSongOLocal:
 
     @pytest.mark.parametrize("env", ["staging", "production"])
     def test_ngoai_local_thi_khong_khoi_dong_duoc(self, env):
+        # `use_mock_llm=False` tường minh: `Settings` đọc env, và CI đặt
+        # `HAVI_USE_MOCK_LLM=true` cho toàn job. Thiếu dòng này thì validator
+        # mock-LLM bắn trước, test đỏ vì một thông báo lỗi *khác* — và tệ hơn,
+        # nó xanh trên máy dev chỉ vì ở đó biến kia không được đặt. Một test chỉ
+        # đúng tuỳ môi trường thì không kiểm được gì.
         with pytest.raises(ValidationError, match="HAVI_USE_FAKE_REPLY"):
-            Settings(env=env, use_fake_reply=True)
+            Settings(env=env, use_fake_reply=True, use_mock_llm=False)
 
     def test_local_van_duoc_dung_fake(self):
         assert Settings(env="local", use_fake_reply=True).use_fake_reply is True
