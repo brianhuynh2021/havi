@@ -20,10 +20,10 @@
 .modal {
   width: 100%;
   max-width: 520px;
-  background: #0f172a;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: 20px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(239, 68, 68, 0.15);
+  background: var(--m3-surface-container-high, #0f172a);
+  border: 1px solid var(--m3-error);
+  border-radius: var(--m3-shape-xl, 20px);
+  box-shadow: var(--m3-elevation-3);
   overflow: hidden;
   position: relative;
   animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -47,26 +47,20 @@
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--m3-outline-variant);
 }
 
 .warningIconBox {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--m3-shape-md, 12px);
+  background: var(--m3-error-container);
+  border: 1px solid var(--m3-error);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-red-500);
+  color: var(--m3-on-error-container);
   flex-shrink: 0;
-  animation: pulseGlow 2s infinite ease-in-out;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 }
 
 .headerText {
@@ -75,14 +69,14 @@
 
 .modalTitle {
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
   margin: 0 0 4px;
 }
 
 .modalSubtitle {
   font-size: 13.5px;
-  color: var(--color-red-400);
+  color: var(--m3-error);
   font-weight: 600;
   margin: 0;
 }
@@ -94,8 +88,8 @@
   font-size: 20px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--m3-shape-sm, 8px);
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .closeBtn:hover {
@@ -110,17 +104,17 @@
   gap: 16px;
 }
 
-/* Retention Box - Stanford HCI */
+/* Retention Box */
 .retentionBox {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
   padding: 16px;
 }
 
 .retentionHeading {
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-on-dark-soft);
   margin-bottom: 10px;
   display: flex;
@@ -147,16 +141,16 @@
 }
 
 .lostItemIcon {
-  color: var(--color-red-400);
+  color: var(--m3-error);
   font-weight: 700;
 }
 
 .supportCallout {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  border-top: 1px dashed var(--m3-outline-variant);
   font-size: 12.5px;
-  color: var(--color-blue-400);
+  color: var(--m3-primary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -176,9 +170,9 @@
 }
 
 .confirmKeyword {
-  color: var(--color-red-500);
-  font-weight: 800;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--m3-error);
+  font-weight: 700;
+  background: var(--m3-error-container);
   padding: 2px 6px;
   border-radius: 4px;
   user-select: all;
@@ -188,22 +182,22 @@
   width: 100%;
   padding: 12px 14px;
   background: rgba(15, 23, 42, 0.8);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-sm, 10px);
   color: var(--color-white);
   font-size: 14px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .typeInput:focus {
-  border-color: var(--color-red-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  border-color: var(--m3-error);
+  box-shadow: 0 0 0 1px var(--m3-error);
 }
 
 .modalFooter {
   padding: 16px 24px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--m3-outline-variant);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -213,15 +207,15 @@
 .cancelStayBtn {
   flex: 1;
   padding: 12px 18px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   border: none;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
-  transition: all 0.2s ease;
+  box-shadow: var(--m3-elevation-1);
+  transition: box-shadow var(--m3-duration-short, 100ms) ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,20 +223,19 @@
 }
 
 .cancelStayBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .deleteConfirmBtn {
   padding: 12px 18px;
-  border-radius: 10px;
-  background: var(--color-red-500);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-error);
+  color: var(--m3-on-error);
   border: none;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,6 +250,5 @@
 }
 
 .deleteConfirmBtn:not(:disabled):hover {
-  background: var(--color-red-600);
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  box-shadow: var(--m3-elevation-2);
 }

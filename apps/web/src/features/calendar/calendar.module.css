@@ -54,9 +54,8 @@
 }
 
 .metricCard:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-slate-300);
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+  border-color: var(--m3-outline);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .metricLabel {
@@ -302,9 +301,9 @@
 }
 
 .dayColumnToday {
-  border-color: var(--color-brand-primary);
-  background: var(--color-surface);
-  box-shadow: 0 4px 20px -2px rgba(0, 102, 255, 0.12);
+  border-color: var(--m3-primary);
+  background: var(--m3-surface);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .dayHeader {
@@ -414,9 +413,8 @@
 }
 
 .postCard:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 6px 16px -2px rgba(0, 102, 255, 0.15);
+  border-color: var(--m3-primary);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .postMeta {
@@ -534,9 +532,9 @@
 }
 
 .timelineRow:hover {
-  border-color: var(--color-brand-primary);
+  border-color: var(--m3-primary);
   transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.08);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .timelineRowLeft {

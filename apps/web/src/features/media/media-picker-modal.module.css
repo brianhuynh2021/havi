@@ -23,8 +23,8 @@
   max-height: 80vh;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: var(--m3-shape-xl, 20px);
+  box-shadow: var(--m3-elevation-3);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -92,8 +92,8 @@
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-primary);
+  border-color: var(--m3-primary);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .thumbWrap {

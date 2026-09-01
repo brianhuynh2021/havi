@@ -1,3 +1,5 @@
+/* Cùng lý do như landing: trang giới thiệu giữ nền tối cố định ở cả hai theme,
+ * vì chữ bên trong là chữ sáng. */
 .page {
   min-height: 100vh;
   background: #020617;
@@ -10,10 +12,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(8, 13, 24, 0.85);
+  background: rgba(8, 13, 24, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--m3-outline-variant);
 }
 
 .headerInner {
@@ -34,11 +36,9 @@
 
 .brandText {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--color-surface) 30%, var(--color-blue-400) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--m3-primary);
 }
 
 .headerActions {
@@ -51,29 +51,28 @@
   color: #b6c2d3;
   text-decoration: none;
   font-size: 14px;
-  font-weight: 600;
-  transition: color 0.2s ease;
+  font-weight: 500;
+  transition: color var(--m3-duration-short, 100ms) ease;
 }
 
 .backLink:hover {
-  color: var(--color-blue-400);
+  color: var(--color-white, #ffffff);
 }
 
 .ctaButton {
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
-  padding: 8px 18px;
-  border-radius: 999px;
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  padding: 8px 20px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
-  box-shadow: 0 4px 20px rgba(0, 102, 255, 0.35);
-  transition: all 0.2s ease;
+  box-shadow: var(--m3-elevation-1);
+  transition: box-shadow var(--m3-duration-short, 100ms) ease;
 }
 
 .ctaButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 210, 255, 0.5);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .hero {
@@ -85,16 +84,7 @@
 }
 
 .heroGlow {
-  position: absolute;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 300px;
-  background: radial-gradient(ellipse, rgba(0, 102, 255, 0.25) 0%, transparent 70%);
-  filter: blur(80px);
-  z-index: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .eyebrow {
@@ -102,12 +92,12 @@
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 999px;
+  background: var(--m3-secondary-container);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 12.5px;
-  font-weight: 700;
-  color: var(--color-blue-400);
+  font-weight: 500;
+  color: var(--m3-on-secondary-container);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 20px;
@@ -117,7 +107,7 @@
 
 .heroTitle {
   font-size: 44px;
-  font-weight: 850;
+  font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--color-white);
@@ -127,9 +117,7 @@
 }
 
 .highlightGradient {
-  background: linear-gradient(135deg, var(--color-blue-400) 0%, var(--color-indigo-400) 50%, var(--color-purple-400) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--m3-primary);
 }
 
 .heroLead {
@@ -149,16 +137,16 @@
 
 .storyCard {
   background: rgba(13, 19, 34, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 20px);
   padding: 40px;
   margin-bottom: 40px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .storyCardHeading {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
   margin: 0 0 16px;
   display: flex;
@@ -186,8 +174,8 @@
 
 .meaningCard {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -202,13 +190,13 @@
 
 .meaningLetter {
   font-size: 24px;
-  font-weight: 900;
-  color: var(--color-blue-400);
+  font-weight: 700;
+  color: var(--m3-primary);
 }
 
 .meaningTitle {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
 }
 
@@ -228,18 +216,17 @@
 
 .valueCard {
   background: rgba(13, 19, 34, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-lg, 16px);
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: border-color var(--m3-duration-short, 100ms) ease;
 }
 
 .valueCard:hover {
-  transform: translateY(-3px);
-  border-color: rgba(0, 210, 255, 0.3);
+  border-color: var(--m3-outline);
 }
 
 .valueIcon {
@@ -249,7 +236,7 @@
 
 .valueTitle {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
   margin: 0;
 }
@@ -262,9 +249,9 @@
 }
 
 .quoteBox {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
-  border: 1px solid rgba(0, 210, 255, 0.2);
-  border-radius: 16px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-lg, 16px);
   padding: 32px;
   text-align: center;
   margin: 50px 0;
@@ -272,7 +259,7 @@
 
 .quoteText {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
   font-style: italic;
   color: #e2e8f0;
   line-height: 1.6;
@@ -281,15 +268,15 @@
 
 .quoteAuthor {
   font-size: 14px;
-  font-weight: 700;
-  color: var(--color-blue-400);
+  font-weight: 500;
+  color: var(--m3-primary);
   letter-spacing: 0.02em;
 }
 
 .ctaSection {
-  background: radial-gradient(ellipse at center, rgba(0, 102, 255, 0.2) 0%, transparent 70%), #0f172a;
-  border: 1px solid rgba(0, 210, 255, 0.25);
-  border-radius: 24px;
+  background: var(--m3-surface-container-high, #0f172a);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 24px);
   padding: 60px 40px;
   text-align: center;
   margin-top: 60px;
@@ -297,7 +284,7 @@
 
 .ctaHeading {
   font-size: 32px;
-  font-weight: 850;
+  font-weight: 800;
   color: var(--color-white);
   margin: 0 0 14px;
 }
@@ -313,24 +300,23 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
-  padding: 14px 32px;
-  border-radius: 999px;
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  padding: 12px 32px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 500;
   text-decoration: none;
-  box-shadow: 0 10px 30px rgba(0, 102, 255, 0.4);
-  transition: all 0.2s ease;
+  box-shadow: var(--m3-elevation-1);
+  transition: box-shadow var(--m3-duration-short, 100ms) ease;
 }
 
 .ctaActionBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 40px rgba(0, 210, 255, 0.6);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--m3-outline-variant);
   padding: 40px 24px;
   text-align: center;
   color: #a3b0c2;
@@ -348,12 +334,12 @@
 .footerLinks a {
   color: #b6c2d3;
   text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
+  font-weight: 500;
+  transition: color var(--m3-duration-short, 100ms) ease;
 }
 
 .footerLinks a:hover {
-  color: var(--color-blue-400);
+  color: var(--color-white, #ffffff);
 }
 
 @media (max-width: 768px) {

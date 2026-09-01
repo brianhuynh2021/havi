@@ -43,16 +43,16 @@
 /* Card container cho từng phần cài đặt */
 .sectionCard {
   padding: 28px 32px;
-  border: 1.5px solid var(--color-slate-200);
-  border-radius: 20px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 20px);
   background: var(--color-surface);
-  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--m3-elevation-1);
+  transition: all var(--m3-duration-short, 100ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sectionCard:hover {
-  border-color: var(--color-slate-300);
-  box-shadow: 0 8px 30px -6px rgba(15, 23, 42, 0.08);
+  border-color: var(--m3-outline);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .cardHeader {
@@ -156,8 +156,8 @@
 
 .select:focus {
   outline: none;
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12);
+  border-color: var(--m3-primary);
+  box-shadow: 0 0 0 1px var(--m3-primary);
 }
 
 .select:disabled {
@@ -249,20 +249,19 @@
 
 .dangerButton {
   padding: 10px 18px;
-  border: 1.5px solid var(--color-red-600);
-  border-radius: 10px;
-  background: var(--color-red-600);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-error);
+  color: var(--m3-on-error);
+  border: none;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .dangerButton:hover {
-  background: var(--color-red-700);
-  border-color: var(--color-red-700);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .dangerButton:disabled {
@@ -272,20 +271,20 @@
 
 .dangerButtonOutline {
   padding: 10px 18px;
-  border: 1.5px solid var(--color-red-500);
-  border-radius: 10px;
+  border: 1px solid var(--m3-error);
+  border-radius: var(--m3-shape-full, 999px);
   background: var(--color-surface);
-  color: var(--color-red-600);
+  color: var(--m3-error);
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .dangerButtonOutline:hover {
-  background: var(--color-red-50);
-  border-color: var(--color-red-600);
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
 }
 
 .dangerButtonOutline:disabled {
