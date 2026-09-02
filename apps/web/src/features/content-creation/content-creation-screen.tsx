@@ -164,12 +164,16 @@ export function ContentCreationScreen() {
     });
   }, [kind, channelOptions]);
 
-  // Cho phép mở thẳng nhánh video bằng `?kind=video` — dùng khi điều hướng từ
-  // Tổng quan. Không nạp "chủ đề" từ đâu khác: Havi không giao việc cho ai.
+  // Cho phép mở thẳng nhánh video bằng `?kind=video` hoặc mở bài viết bằng `?content={id}` / `?item={id}`
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("kind") === "video") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("kind") === "video") {
       setKind("video");
+    }
+    const targetContentId = params.get("content") ?? params.get("item");
+    if (targetContentId) {
+      setEditingId(targetContentId);
     }
   }, []);
 

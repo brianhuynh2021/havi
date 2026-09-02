@@ -26,6 +26,7 @@ class InboxItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         ),
         # Truy vấn nóng nhất của sản phẩm: màn làm việc đọc hàng đợi mỗi lần mở.
         Index("ix_inbox_items_workspace_status", "workspace_id", "status"),
+        Index("ix_inbox_items_ws_status_created", "workspace_id", "status", "created_at"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(

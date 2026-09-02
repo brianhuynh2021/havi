@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, type MouseEvent, type PointerEvent, type KeyboardEvent } from "react";
+import { useState, useCallback, type MouseEvent, type PointerEvent, type KeyboardEvent } from "react";
 import styles from "./ripple.module.css";
 
 export interface RippleItem {

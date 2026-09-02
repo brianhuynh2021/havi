@@ -155,7 +155,9 @@ InboxServiceDep = Annotated[InboxService, Depends(get_inbox_service)]
 
 @lru_cache
 def _alert_sink() -> AlertSink:
-    return LoggingAlertSink()
+    from core.alerts import get_alert_sink
+
+    return get_alert_sink()
 
 
 AlertSinkDep = Annotated[AlertSink, Depends(_alert_sink)]

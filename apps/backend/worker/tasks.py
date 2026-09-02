@@ -91,12 +91,17 @@ def publish_run_due(limit: int = 20, request_id: str | None = None) -> int:
         async with publish_service_scope() as service:
             return len(await service.run_due(limit=limit))
 
-    token = set_request_id(request_id) if request_id else None
+    from core.request_context import new_request_id, reset_request_id, set_request_id
+
+    effective_request_id = request_id or new_request_id()
+    token = set_request_id(effective_request_id)
     try:
-        return asyncio.run(_run())
+        count = asyncio.run(_run())
+        if count >= limit:
+            publish_run_due.delay(limit=limit, request_id=effective_request_id)
+        return count
     finally:
-        if token is not None:
-            reset_request_id(token)
+        reset_request_id(token)
 
 
 @celery_app.task(name="havi.video.publish", bind=True, max_retries=0)

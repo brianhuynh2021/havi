@@ -169,9 +169,10 @@ async def test_file_mp4_di_duong_reels_du_khong_khai_channel(graph):
 
 async def test_graph_tra_2xx_khong_kem_ma_bai_thi_dung_lai_cho_doi_soat(graph):
     """2xx không ID = bài rất có thể ĐÃ lên. Thử lại ở đây là đăng hai bài."""
+    from domain.ports.publisher import AmbiguousPublishError
     publisher, _ = graph({"/feed": {"success": True}})
 
-    with pytest.raises(ValidationPublishError) as exc:
+    with pytest.raises(AmbiguousPublishError) as exc:
         await publisher.publish(
             PublishRequest(text="Bài không ảnh", external_account_id="page_1"),
             access_token="tok",

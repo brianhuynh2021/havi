@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
   toVnDateString,
   type CalendarDay,
 } from "./calendar.api";
+import { ToastContainer, type ToastItem } from "@/components/ui/toast";
 import { rejectItem } from "@/features/content-creation/content-creation.api";
 import { statusLabel, statusTone } from "./calendar.fixture";
 import styles from "./calendar.module.css";
@@ -98,6 +99,13 @@ const { t } = useLanguage();
   const [targetIso, setTargetIso] = useState("");
   const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const addToast = useCallback((toast: Omit<ToastItem, "id">) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
+  }, []);
 
   // Bản tiếng Anh nằm trong từ điển như mọi chuỗi khác, không phải một nhánh
   // `lang === "VN"` riêng ở đây: hai chỗ quyết định ngôn ngữ thì sớm muộn cũng
@@ -159,7 +167,11 @@ const { t } = useLanguage();
       const item = JSON.parse(dataStr) as CalendarDay["items"][number];
       
       if (!canReschedule(item.status)) {
-        alert("Chỉ có thể đổi giờ bài đang chờ đăng hoặc đã duyệt.");
+        addToast({
+          type: "error",
+          title: t("Không thể đổi lịch"),
+          description: t("Chỉ có thể đổi giờ bài đang chờ đăng hoặc đã duyệt."),
+        });
         return;
       }
       
@@ -182,7 +194,17 @@ const { t } = useLanguage();
       setRescheduling(false);
       
       if (!result.ok) {
-        alert(result.message);
+        addToast({
+          type: "error",
+          title: t("Đổi lịch thất bại"),
+          description: result.message,
+        });
+      } else {
+        addToast({
+          type: "success",
+          title: t("Đã đổi lịch thành công"),
+          description: t("Thời gian đăng mới đã được cập nhật."),
+        });
       }
       setReloadKey(k => k + 1);
       
@@ -707,6 +729,10 @@ const { t } = useLanguage();
           </div>
         </div>
       ) : null}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
     </>
   );
 }

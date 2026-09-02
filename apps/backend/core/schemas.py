@@ -17,6 +17,7 @@ from core.enums import (
     Industry,
     MediaStatus,
     MediaType,
+    OutboxStatus,
     Plan,
     Platform,
     PublishFailureKind,
@@ -602,6 +603,18 @@ class EventLogRecord(HaviModel):
     created_at: datetime
 
 
+class AuditBrokenDetail(HaviModel):
+    id: str
+    created_at: datetime
+    link_broken: bool
+
+
+class AuditVerifyReport(HaviModel):
+    ok: bool
+    rows_checked: int
+    broken_at: AuditBrokenDetail | None = None
+
+
 class OperationsProviderMetric(HaviModel):
     provider: str
     event_count: int
@@ -888,3 +901,16 @@ class ChannelOption(HaviModel):
     #: Workspace đã nối kênh này và kết nối còn dùng được hay chưa. Kênh chưa nối
     #: vẫn hiện nhưng không tick được — ẩn đi thì người dùng không biết là có.
     connected: bool
+
+
+class OutboxEntryRecord(HaviModel):
+    id: UUID
+    topic: str
+    status: OutboxStatus
+    attempts: int
+    available_at: datetime | None = None
+    dispatched_at: datetime | None = None
+    last_error: str | None = None
+    request_id: str | None = None
+    workspace_id: UUID | None = None
+    created_at: datetime

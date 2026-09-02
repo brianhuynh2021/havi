@@ -46,15 +46,10 @@ def test_danh_sach_rong_khac_han_none():
 
 
 def test_nen_tang_chua_khai_bang_quyen_thi_khong_tat_gi():
-    """Kênh mới thêm mà quên khai bảng quyền không được im lặng chết.
-
-    Dùng YouTube vì nó chưa có mục trong `_REQUIREMENTS`. Trước đây test này
-    dùng TikTok, nhưng TikTok đã được khai (chỉ `publish_post`) — nên nếu giữ
-    nguyên thì test sẽ kiểm nhánh fallback bằng một nền tảng không còn đi vào
-    nhánh đó. Khi khai bảng quyền cho YouTube thì đổi sang nền tảng khác chưa
-    khai, đừng xoá test: nhánh fallback vẫn cần được kiểm.
-    """
-    assert capabilities_for(Platform.YOUTUBE, ["bat_ky_gi"]) == frozenset(Capability)
+    """Kênh mới thêm mà chưa có mục trong `_REQUIREMENTS` không được im lặng chết."""
+    from typing import cast
+    unlisted = cast(Platform, "unlisted_platform")
+    assert capabilities_for(unlisted, ["bat_ky_gi"]) == frozenset(Capability)
 
 
 class TestTikTokChiDangDuoc:

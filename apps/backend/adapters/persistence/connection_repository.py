@@ -193,3 +193,23 @@ class ConnectionRepository:
             await self._session.delete(row)
         await self._session.flush()
         return len(rows)
+
+    async def count_connection_health(self, workspace_id: UUID) -> tuple[int, int]:
+        """Trả về (total_connections, broken_connections) qua SQL aggregation."""
+        from sqlalchemy import case, func
+
+        result = await self._session.execute(
+            select(
+                func.count(PlatformConnection.id),
+                func.count(case((PlatformConnection.status != ConnectionStatus.CONNECTED, 1))),
+            ).where(PlatformConnection.workspace_id == workspace_id)
+        )
+        row = result.one()
+        return (int(row[0] or 0), int(row[1] or 0))
+
+    async def list_all_connected(self) -> list[PlatformConnection]:
+        """Lấy tất cả kết nối đang CONNECTED trên toàn hệ thống (dùng cho health check)."""
+        result = await self._session.execute(
+            select(PlatformConnection).where(PlatformConnection.status == ConnectionStatus.CONNECTED)
+        )
+        return list(result.scalars().all())

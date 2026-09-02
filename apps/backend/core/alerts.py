@@ -49,3 +49,60 @@ class LoggingAlertSink(AlertSink):
             request_id=alert.request_id or get_request_id(),
             **alert.fields,
         )
+
+
+class TelegramAlertSink(AlertSink):
+    """Gửi cảnh báo vận hành tới Telegram nhóm trực ca."""
+
+    def __init__(self, bot_token: str, chat_id: str, *, fallback_logging: bool = True) -> None:
+        self._bot_token = bot_token
+        self._chat_id = chat_id
+        self._fallback_logging = fallback_logging
+        self._logging_sink = LoggingAlertSink()
+
+    async def send(self, alert: Alert) -> None:
+        if self._fallback_logging:
+            await self._logging_sink.send(alert)
+
+        if not self._bot_token or not self._chat_id:
+            return
+
+        icon = "🚨" if alert.severity == "critical" else ("⚠️" if alert.severity == "error" else "ℹ️")
+        text = (
+            f"{icon} <b>[HAVI ALERT - {alert.severity.upper()}]</b>\n"
+            f"<b>Type:</b> <code>{alert.type}</code>\n"
+            f"<b>Summary:</b> {alert.summary}\n"
+        )
+        if alert.workspace_id:
+            text += f"<b>Workspace:</b> <code>{alert.workspace_id}</code>\n"
+        if alert.job_id:
+            text += f"<b>Job:</b> <code>{alert.job_id}</code>\n"
+        if alert.request_id:
+            text += f"<b>Request ID:</b> <code>{alert.request_id}</code>\n"
+
+        url = f"https://api.telegram.org/bot{self._bot_token}/sendMessage"
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                await client.post(
+                    url,
+                    json={
+                        "chat_id": self._chat_id,
+                        "text": text,
+                        "parse_mode": "HTML",
+                        "disable_web_page_preview": True,
+                    },
+                )
+        except Exception:
+            logger.warning("failed_to_send_telegram_alert", exc_info=True)
+
+
+def get_alert_sink() -> AlertSink:
+    """Trả về AlertSink phù hợp cấu hình."""
+    from core.config import get_settings
+
+    settings = get_settings()
+    if settings.telegram_bot_token and settings.telegram_default_chat_id:
+        return TelegramAlertSink(settings.telegram_bot_token, settings.telegram_default_chat_id)
+    return LoggingAlertSink()

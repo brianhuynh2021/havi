@@ -148,6 +148,13 @@ outbox_dispatched_total = Counter(
     registry=REGISTRY,
 )
 
+beat_last_run_timestamp = Gauge(
+    "havi_beat_last_run_timestamp",
+    "Unix timestamp của lần cuối Celery Beat kích hoạt task.",
+    labelnames=("task",),
+    registry=REGISTRY,
+)
+
 
 def render_latest() -> tuple[bytes, str]:
     """Trả (payload, content_type) cho endpoint `/metrics`.

@@ -3,6 +3,8 @@
 import asyncio
 import logging
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from worker.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -167,3 +169,162 @@ def purge_outbox() -> None:
     purged = asyncio.run(_run())
     if purged:
         logger.info("outbox purge: %d bản ghi đã dọn", purged)
+
+
+async def run_check_connections_health(session: AsyncSession | None = None) -> int:
+    import httpx
+    from adapters.persistence.connection_repository import ConnectionRepository
+    from adapters.persistence.db import session_scope
+    from adapters.persistence.event_log_repository import EventLogRepository
+    from core.alerts import Alert, get_alert_sink
+    from core.enums import ConnectionStatus, Platform
+    from core.events import EventLogEntry
+
+    alerts = get_alert_sink()
+    expired_count = 0
+
+    async def _check(sess: AsyncSession) -> int:
+        nonlocal expired_count
+        conn_repo = ConnectionRepository(sess)
+        events = EventLogRepository(sess)
+        connections = await conn_repo.list_all_connected()
+        for conn in connections:
+            if conn.platform != Platform.FACEBOOK:
+                continue
+            try:
+                access_token = conn_repo.read_access_token(conn)
+            except Exception:
+                continue
+
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.get(
+                        f"https://graph.facebook.com/v20.0/{conn.external_account_id}",
+                        params={"fields": "id,name", "access_token": access_token},
+                    )
+                    if resp.status_code in (400, 401, 403):
+                        data = resp.json().get("error", {})
+                        code = data.get("code")
+                        if code in (190, 102, 10, 200) or resp.status_code in (401, 403):
+                            conn.status = ConnectionStatus.EXPIRED
+                            conn.failure_reason = f"Token hết hạn hoặc bị thu hồi (FB error {code}): {data.get('message', '')}"
+                            await events.record(
+                                EventLogEntry(
+                                    workspace_id=conn.workspace_id,
+                                    job_kind="connection.expired",
+                                    input_summary=f"facebook:{conn.external_account_id}",
+                                    output_summary=f"Health check phát hiện token hết hạn: error {code}",
+                                    error=data.get("message", "Token expired"),
+                                )
+                            )
+                            await alerts.send(
+                                Alert(
+                                    type="connection.expired",
+                                    severity="error",
+                                    summary=f"Kết nối Facebook của Trang '{conn.account_name or conn.external_account_id}' đã hết hạn/bị thu hồi quyền",
+                                    workspace_id=str(conn.workspace_id),
+                                    fields={"platform": "facebook", "account_id": conn.external_account_id, "error_code": code},
+                                )
+                            )
+                            expired_count += 1
+            except Exception as exc:
+                logger.warning("Error checking Facebook connection %s: %s", conn.id, exc)
+        return expired_count
+
+    if session is not None:
+        return await _check(session)
+    async with session_scope() as sess:
+        return await _check(sess)
+
+
+@celery_app.task(name="havi.scheduler.check_connections_health")
+def check_connections_health(request_id: str | None = None) -> None:
+    """Kiểm tra sức khoẻ kết nối chủ động hàng ngày (Facebook token / page verification).
+
+    Nếu token bị thu hồi hoặc hết hạn:
+    - Đổi status sang EXPIRED
+    - Ghi failure_reason
+    - Ghi event connection.expired
+    - Gửi alert khẩn cấp qua AlertSink
+    """
+    from core.metrics import beat_last_run_timestamp
+    from core.request_context import new_request_id, reset_request_id, set_request_id
+
+    beat_last_run_timestamp.labels(task="check_connections_health").set_to_current_time()
+    effective_request_id = request_id or new_request_id()
+    token = set_request_id(effective_request_id)
+
+    try:
+        expired = asyncio.run(run_check_connections_health())
+        logger.info("check_connections_health: %d connections marked expired", expired)
+    finally:
+        reset_request_id(token)
+
+
+async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -> tuple[int, int]:
+    from datetime import UTC, datetime, timedelta
+    from adapters.persistence.content_repository import ContentRepository
+    from adapters.persistence.db import session_scope
+    from adapters.persistence.event_log_repository import EventLogRepository
+    from adapters.persistence.publish_repository import PublishRepository
+    from core.alerts import Alert, get_alert_sink
+    from core.enums import Channel, ContentStatus, PublishFailureKind, PublishStatus
+
+    resolved = 0
+    dead_lettered = 0
+    alerts = get_alert_sink()
+    now = datetime.now(UTC)
+    cutoff_10m = now - timedelta(minutes=10)
+    cutoff_24h = now - timedelta(hours=24)
+
+    async def _reconcile(sess: AsyncSession) -> tuple[int, int]:
+        nonlocal resolved, dead_lettered
+        pub_repo = PublishRepository(sess)
+        jobs = await pub_repo.list_pending_reconciliation(older_than=cutoff_10m)
+
+        for job in jobs:
+            if job.updated_at <= cutoff_24h:
+                # Đã quá 24h không đối soát được -> chuyển dead letter
+                job.status = PublishStatus.DEAD_LETTER
+                job.failure_kind = PublishFailureKind.VALIDATION_PERMANENT
+                job.failure_detail = "Không thể xác minh kết quả đăng bài sau 24 giờ đối soát"
+                job.next_attempt_at = None
+                await alerts.send(
+                    Alert(
+                        type="publish.reconciliation_timeout",
+                        severity="error",
+                        summary=f"Job publish {job.id} bị chuyển dead-letter do quá 24h đối soát không có kết quả",
+                        workspace_id=str(job.workspace_id),
+                        job_id=str(job.id),
+                    )
+                )
+                dead_lettered += 1
+                continue
+        return resolved, dead_lettered
+
+    if session is not None:
+        return await _reconcile(session)
+    async with session_scope() as sess:
+        return await _reconcile(sess)
+
+
+@celery_app.task(name="havi.scheduler.reconcile_pending_publishes")
+def reconcile_pending_publishes(request_id: str | None = None) -> None:
+    """Đối soát tự động các publish job đang PENDING_RECONCILIATION.
+
+    - Job > 10 phút: gọi verify_reel (Reels) hoặc tra soát Page feed (Facebook Page).
+    - Nếu thành công -> chuyển SUCCEEDED, gán external_post_id, cập nhật ContentItem PUBLISHED.
+    - Nếu job > 24 giờ không thể xác minh -> chuyển DEAD_LETTER và gửi alert cảnh báo.
+    """
+    from core.metrics import beat_last_run_timestamp
+    from core.request_context import new_request_id, reset_request_id, set_request_id
+
+    beat_last_run_timestamp.labels(task="reconcile_pending_publishes").set_to_current_time()
+    effective_request_id = request_id or new_request_id()
+    token = set_request_id(effective_request_id)
+
+    try:
+        resolved, dead_lettered = asyncio.run(run_reconcile_pending_publishes())
+        logger.info("reconcile_pending_publishes: %d resolved, %d dead-lettered", resolved, dead_lettered)
+    finally:
+        reset_request_id(token)

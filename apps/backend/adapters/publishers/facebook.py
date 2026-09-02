@@ -112,7 +112,7 @@ class FacebookPublisher(PublisherPort):
                 "xem bài đã lên chưa trước khi đăng lại",
                 page_id,
             )
-            raise ValidationPublishError(
+            raise AmbiguousPublishError(
                 self.channel,
                 "Facebook không trả mã bài đăng — cần kiểm tra Trang trước khi đăng lại",
             )
@@ -441,6 +441,8 @@ class FacebookPublisher(PublisherPort):
             error = {}
 
         code = error.get("code")
+        error_subcode = error.get("error_subcode")
+        fbtrace_id = error.get("fbtrace_id")
         # Chỉ lấy `error.message`, KHÔNG rơi về `response.text`: body lỗi của
         # Graph đôi khi vọng lại tham số đã gửi, mà tham số đó có `access_token`.
         # Detail này đi thẳng vào `publish_jobs.failure_detail` và log, nên một
@@ -448,7 +450,9 @@ class FacebookPublisher(PublisherPort):
         message = str(error.get("message") or "")[:300]
         if not message:
             message = f"Graph API trả HTTP {response.status_code} không kèm mô tả"
-        detail = f"[{code}] {message}" if code else message
+        code_str = f"{code}:{error_subcode}" if error_subcode else str(code or "")
+        trace_str = f" [fbtrace_id: {fbtrace_id}]" if fbtrace_id else ""
+        detail = f"[{code_str}] {message}{trace_str}" if code_str else f"{message}{trace_str}"
 
         if code in _AUTH_CODES:
             return AuthPermissionError(self.channel, detail)

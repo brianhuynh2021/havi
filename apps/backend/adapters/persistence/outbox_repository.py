@@ -156,3 +156,24 @@ class OutboxRepository:
         )
         await self._session.flush()
         return int(result.rowcount or 0)
+
+    async def list_entries(
+        self,
+        *,
+        workspace_id: UUID | None = None,
+        status: OutboxStatus | None = None,
+        limit: int = 50,
+    ) -> list[OutboxEntry]:
+        """Danh sách các bản ghi outbox theo workspace và status."""
+        filters = []
+        if workspace_id is not None:
+            filters.append(OutboxEntry.workspace_id == workspace_id)
+        if status is not None:
+            filters.append(OutboxEntry.status == status)
+        result = await self._session.execute(
+            select(OutboxEntry)
+            .where(*filters)
+            .order_by(OutboxEntry.created_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())

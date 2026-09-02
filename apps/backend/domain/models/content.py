@@ -40,6 +40,7 @@ class ContentItem(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __table_args__ = (
         Index("ix_content_items_workspace_status", "workspace_id", "status"),
         Index("ix_content_items_workspace_scheduled", "workspace_id", "scheduled_at"),
+        Index("ix_content_items_ws_status_sched", "workspace_id", "status", "scheduled_at"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), index=True)

@@ -62,10 +62,18 @@ _REQUIREMENTS: dict[Platform, dict[Capability, frozenset[str]]] = {
     # quyền → coi như đủ" và trả về **cả bốn** khả năng, nên UI hiện TikTok trả
     # lời được bình luận trong khi không có một dòng code nào làm việc đó.
     Platform.TIKTOK: {
-        # `video.upload` chứ không phải `video.publish`: app chưa qua audit chỉ
-        # được đẩy vào Hộp thư (`inbox/video/init/`) để chủ tài khoản tự bấm
-        # đăng — xem ROADMAP Phase C. Scope này khớp với `adapters/oauth/tiktok.py`.
         Capability.PUBLISH_POST: frozenset({"video.upload"}),
+    },
+    Platform.YOUTUBE: {
+        Capability.PUBLISH_POST: frozenset({"https://www.googleapis.com/auth/youtube.upload", "youtube.upload"}),
+    },
+    Platform.GOOGLE_BUSINESS: {
+        Capability.PUBLISH_POST: frozenset({"https://www.googleapis.com/auth/business.manage", "business.manage"}),
+    },
+    Platform.ZALO_OA: {
+        Capability.PUBLISH_POST: frozenset({"oa.article.manage"}),
+        Capability.REPLY_MESSAGE: frozenset({"oa.message.manage"}),
+        Capability.RECEIVE_INBOX: frozenset({"oa.message.manage"}),
     },
 }
 

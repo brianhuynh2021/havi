@@ -3,7 +3,7 @@
 from datetime import UTC, date, datetime, time, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from sqlalchemy import select
 
 from adapters.persistence.connection_repository import ConnectionRepository
@@ -13,16 +13,18 @@ from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import AuditViewerWorkspaceDep, WorkspaceDep
-from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, PublishStatus
+from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, OutboxStatus, PublishStatus
 from core.schemas import (
     AnalyticsSummary,
     AnalyticsTimeseries,
+    AuditVerifyReport,
     ChannelAttribution,
     DashboardContentSummary,
     EventLogRecord,
     FailedPostRecord,
     OperationsMetrics,
     OperationsPublishMetric,
+    OutboxEntryRecord,
     Page,
 )
 from domain.models.content import ContentItem
@@ -47,10 +49,7 @@ def _date_range(start: date, end: date) -> tuple[datetime, datetime]:
 async def dashboard(workspace_id: WorkspaceDep, session: DbSessionDep) -> DashboardContentSummary:
     """Số liệu thật tối thiểu cho tab Tổng quan."""
     counts = await ContentRepository(session).count_items_by_status(workspace_id=workspace_id)
-    
-    connections = await ConnectionRepository(session).list_for_workspace(workspace_id)
-    total_connections = len(connections)
-    broken_connections = sum(1 for c in connections if c.status != ConnectionStatus.CONNECTED)
+    total_connections, broken_connections = await ConnectionRepository(session).count_connection_health(workspace_id)
 
     unhandled_inbox = await InboxRepository(session).count_by_statuses(
         workspace_id=workspace_id,
@@ -101,6 +100,65 @@ async def events(
         total=total,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.get("/audit/verify", response_model=AuditVerifyReport)
+async def verify_audit_hash_chain(
+    workspace_id: AuditViewerWorkspaceDep,
+    session: DbSessionDep,
+) -> AuditVerifyReport:
+    """Kiểm tra tính toàn vẹn chuỗi Hash (Hash Chain Immutability) của event_log."""
+    report = await EventLogRepository(session).verify_chain(workspace_id=workspace_id)
+    return AuditVerifyReport.model_validate(report)
+
+
+@router.get("/events/export")
+async def export_events_csv(
+    workspace_id: AuditViewerWorkspaceDep,
+    session: DbSessionDep,
+    error_only: bool = False,
+) -> Response:
+    """Xuất CSV lịch sử hoạt động để phục vụ kiểm toán / lưu trữ tuân thủ."""
+    import csv
+    import io
+
+    rows, _ = await EventLogRepository(session).list_for_workspace(
+        workspace_id=workspace_id,
+        error_only=error_only,
+        limit=1000,
+        offset=0,
+    )
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "created_at",
+        "job_kind",
+        "request_id",
+        "tokens_in",
+        "tokens_out",
+        "duration_ms",
+        "provider",
+        "error",
+    ])
+    for r in rows:
+        writer.writerow([
+            str(r.id),
+            r.created_at.isoformat() if r.created_at else "",
+            r.job_kind,
+            r.request_id or "",
+            r.tokens_in,
+            r.tokens_out,
+            r.duration_ms,
+            r.provider or "",
+            r.error or "",
+        ])
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=audit-events-{workspace_id}.csv"},
     )
 
 
@@ -338,3 +396,33 @@ async def failed_posts(
             )
         )
     return records
+
+
+@router.get("/outbox", response_model=list[OutboxEntryRecord])
+async def list_outbox_entries(
+    workspace_id: WorkspaceDep,
+    session: DbSessionDep,
+    status: OutboxStatus | None = Query(None, description="Lọc theo trạng thái outbox"),
+    limit: int = Query(50, ge=1, le=100),
+) -> list[OutboxEntryRecord]:
+    """Danh sách các bản ghi outbox (hàng đợi phân tán) của workspace."""
+    from adapters.persistence.outbox_repository import OutboxRepository
+
+    entries = await OutboxRepository(session).list_entries(
+        workspace_id=workspace_id, status=status, limit=limit
+    )
+    return [
+        OutboxEntryRecord(
+            id=entry.id,
+            topic=entry.topic,
+            status=entry.status,
+            attempts=entry.attempts,
+            available_at=entry.available_at,
+            dispatched_at=entry.dispatched_at,
+            last_error=entry.last_error,
+            request_id=entry.request_id,
+            workspace_id=entry.workspace_id,
+            created_at=entry.created_at,
+        )
+        for entry in entries
+    ]

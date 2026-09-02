@@ -56,37 +56,40 @@ class OutboxDispatcher:
     def __init__(self, outbox: OutboxRepository) -> None:
         self._outbox = outbox
 
-    async def run_once(self, *, limit: int = 50) -> dict:
+    async def run_once(self, *, limit: int = 50, max_batches: int = 5) -> dict:
         """Một lượt: nhận lô, đẩy từng cái, cập nhật số liệu.
 
-        Lỗi của một bản ghi không làm hỏng cả lô — mỗi cái được bắt riêng, vì một
-        `topic` sai (lỗi vĩnh viễn) không được phép chặn những việc hợp lệ phía
-        sau nó trong cùng lô.
+        Lặp tối đa `max_batches` nếu còn việc để giải phóng hàng đợi nhanh trong một chu kỳ beat.
         """
-        entries = await self._outbox.claim_batch(limit=limit)
-        dispatched = 0
-        failed = 0
+        total_dispatched = 0
+        total_failed = 0
 
-        for entry in entries:
-            if await self._dispatch_one(entry):
-                dispatched += 1
-            else:
-                failed += 1
+        for _ in range(max_batches):
+            entries = await self._outbox.claim_batch(limit=limit)
+            if not entries:
+                break
+            for entry in entries:
+                if await self._dispatch_one(entry):
+                    total_dispatched += 1
+                else:
+                    total_failed += 1
+            if len(entries) < limit:
+                break
 
         # Đo *sau* khi xử lý: đây là tồn đọng còn lại, con số dùng để đặt alert.
         pending = await self._outbox.pending_count()
         outbox_pending.set(pending)
 
-        if dispatched or failed:
+        if total_dispatched or total_failed:
             log_json(
                 logger,
                 logging.INFO,
                 "outbox.run",
-                dispatched=dispatched,
-                failed=failed,
+                dispatched=total_dispatched,
+                failed=total_failed,
                 pending=pending,
             )
-        return {"dispatched": dispatched, "failed": failed, "pending": pending}
+        return {"dispatched": total_dispatched, "failed": total_failed, "pending": pending}
 
     async def _dispatch_one(self, entry: OutboxEntry) -> bool:
         try:

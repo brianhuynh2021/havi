@@ -26,6 +26,7 @@ class PublishJob(UUIDPrimaryKeyMixin, CreatedAtMixin, UpdatedAtMixin, Base):
         # Scheduler quét "job đến hạn còn chờ" mỗi phút — index theo đúng shape
         # của câu query đó.
         Index("ix_publish_jobs_status_scheduled", "status", "scheduled_at"),
+        Index("ix_publish_jobs_status_due", "status", "next_attempt_at", "scheduled_at"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id"), index=True)

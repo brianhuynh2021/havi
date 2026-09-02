@@ -85,22 +85,19 @@ class PublishRepository:
         """Lấy các job đến hạn và KHOÁ chúng cho worker này.
 
         `FOR UPDATE SKIP LOCKED` là mấu chốt: hai worker chạy song song, worker
-        thứ hai bỏ qua hàng đang bị khoá thay vì đợi hoặc lấy trùng. Không có
-        `SKIP LOCKED` thì hoặc worker xếp hàng chờ nhau (mất hết lợi ích chạy
-        song song), hoặc cùng đọc một job và đăng hai lần.
+        thứ hai bỏ qua hàng đang bị khoá thay vì đợi hoặc lấy trùng.
 
-        Trạng thái chuyển sang `in_flight` ngay trong cùng transaction giữ khoá
-        — sau commit, worker khác nhìn thấy nó đã được nhận.
+        Truy vấn sử dụng index ix_publish_jobs_status_due để tìm các job pending
+        đến hạn nhanh nhất.
         """
         result = await self._session.execute(
             select(PublishJob)
             .where(
                 PublishJob.status == PublishStatus.PENDING,
                 PublishJob.scheduled_at <= now,
-                # Job đang chờ backoff thì chưa tới lượt.
                 (PublishJob.next_attempt_at.is_(None)) | (PublishJob.next_attempt_at <= now),
             )
-            .order_by(PublishJob.scheduled_at)
+            .order_by(PublishJob.scheduled_at.asc())
             .limit(limit)
             .with_for_update(skip_locked=True)
         )
@@ -255,4 +252,16 @@ class PublishRepository:
             job.next_attempt_at = None
         await self._session.flush()
         return jobs
+
+    async def list_pending_reconciliation(
+        self, *, older_than: datetime | None = None
+    ) -> list[PublishJob]:
+        """Danh sách publish job đang chờ đối soát kết quả."""
+        filters = [PublishJob.status == PublishStatus.PENDING_RECONCILIATION]
+        if older_than is not None:
+            filters.append(PublishJob.updated_at <= older_than)
+        result = await self._session.execute(
+            select(PublishJob).where(*filters).order_by(PublishJob.updated_at.asc())
+        )
+        return list(result.scalars().all())
 

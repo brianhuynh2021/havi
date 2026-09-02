@@ -756,7 +756,9 @@ class TestFacebookPublish:
         """
         publisher = _publisher(monkeypatch, lambda r: httpx.Response(200, json={"ok": True}))
 
-        with pytest.raises(ValidationPublishError, match="không trả mã bài đăng"):
+        from domain.ports.publisher import AmbiguousPublishError
+
+        with pytest.raises(AmbiguousPublishError, match="không trả mã bài đăng"):
             await publisher.publish(
                 PublishRequest(text="x", external_account_id="page-1"),
                 access_token=PAGE_TOKEN,

@@ -57,3 +57,50 @@ export async function listActivity(
     return { ok: false, message: NETWORK_ERROR_MESSAGE };
   }
 }
+
+export type HashChainReport = {
+  ok: boolean;
+  rows_checked: number;
+  broken_at?: {
+    id: string;
+    created_at: string;
+    link_broken: boolean;
+  } | null;
+};
+
+export async function verifyHashChain(): Promise<Result<HashChainReport>> {
+  try {
+    const { baseUrl, authedFetch } = await import("@/lib/api-client/client");
+    const req = new Request(`${baseUrl}/analytics/audit/verify`, { method: "GET" });
+    const res = await authedFetch(req);
+    if (!res.ok) {
+      return { ok: false, message: "Không kiểm tra được chuỗi hash" };
+    }
+    const data = (await res.json()) as HashChainReport;
+    return { ok: true, data };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}
+
+export async function downloadActivityCsv(errorOnly = false): Promise<Result<boolean>> {
+  try {
+    const { baseUrl, authedFetch } = await import("@/lib/api-client/client");
+    const url = `${baseUrl}/analytics/events/export${errorOnly ? "?error_only=true" : ""}`;
+    const req = new Request(url, { method: "GET" });
+    const res = await authedFetch(req);
+    if (!res.ok) return { ok: false, message: "Không tải được tệp CSV" };
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `audit-events-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+    return { ok: true, data: true };
+  } catch {
+    return { ok: false, message: NETWORK_ERROR_MESSAGE };
+  }
+}

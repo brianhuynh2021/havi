@@ -23,7 +23,7 @@ from adapters.publishers.youtube import YouTubePublisher
 from adapters.publishers.zalo import ZaloPublisher
 from adapters.storage.object_storage import ObjectStorage
 from application.services.publish_service import PublishService
-from core.alerts import LoggingAlertSink
+from core.alerts import get_alert_sink
 from core.config import get_settings
 from core.enums import Channel
 from domain.ports.publisher import PublisherPort
@@ -69,6 +69,6 @@ async def publish_service_scope() -> AsyncGenerator[PublishService]:
             events=EventLogRepository(session),
             media=MediaRepository(session),
             storage=ObjectStorage(settings),
-            alerts=LoggingAlertSink(),
+            alerts=get_alert_sink(),
             publishers=build_publishers(),
         )

@@ -49,3 +49,46 @@ celery_app.conf.update(
     timezone="Asia/Ho_Chi_Minh",
     enable_utc=True,
 )
+
+
+from celery.signals import task_failure
+
+
+@task_failure.connect
+def handle_task_failure(
+    sender=None,
+    task_id=None,
+    exception=None,
+    args=None,
+    kwargs=None,
+    traceback=None,
+    einfo=None,
+    **extra,
+):  # noqa: ANN001
+    """Khi Celery task hỏng ngoài ý muốn: ghi log và gửi alert qua AlertSink."""
+    import asyncio
+    import logging
+    from core.alerts import Alert, get_alert_sink
+
+    logger = logging.getLogger("havi.worker.celery")
+    task_name = getattr(sender, "name", "unknown")
+    logger.error("Celery task %s [%s] failed: %s", task_name, task_id, exception)
+
+    async def _send() -> None:
+        try:
+            sink = get_alert_sink()
+            await sink.send(
+                Alert(
+                    type="celery.task_failure",
+                    severity="error",
+                    summary=f"Celery task {task_name} thất bại: {str(exception)[:200]}",
+                    fields={"task_id": task_id, "task_name": task_name},
+                )
+            )
+        except Exception:
+            pass
+
+    try:
+        asyncio.run(_send())
+    except Exception:
+        pass

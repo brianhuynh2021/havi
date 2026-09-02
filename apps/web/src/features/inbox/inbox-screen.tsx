@@ -100,6 +100,16 @@ export function InboxScreen() {
     void load(false).catch(() => {});
   }, [load]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !items.length) return;
+    const targetItemId = new URLSearchParams(window.location.search).get("item");
+    if (!targetItemId) return;
+    const targetItem = items.find((i) => i.id === targetItemId);
+    if (targetItem) {
+      setActiveThreadId(threadKey(targetItem));
+    }
+  }, [items]);
+
   // Polling ngầm mỗi 15s khi tab active, tạm dừng khi đang gửi phản hồi
   usePoll(
     async () => {

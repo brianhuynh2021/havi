@@ -56,4 +56,14 @@ celery_app.conf.beat_schedule = {
         "task": "havi.outbox.purge",
         "schedule": crontab(hour=20, minute=0),
     },
+    # Kiểm tra sức khoẻ kết nối Facebook định kỳ hàng ngày.
+    "check-connections-health": {
+        "task": "havi.scheduler.check_connections_health",
+        "schedule": crontab(hour=2, minute=0),
+    },
+    # Tự động đối soát các publish job đang PENDING_RECONCILIATION quá 10 phút.
+    "reconcile-pending-publishes": {
+        "task": "havi.scheduler.reconcile_pending_publishes",
+        "schedule": crontab(minute="*/10"),
+    },
 }
