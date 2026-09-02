@@ -1,39 +1,31 @@
 /* ==========================================================================
-   PWA INSTALL MODAL & SMART MOBILE FLOATING BANNER - FAANG / MIT AESTHETIC
+   PWA INSTALL MODAL & SMART MOBILE FLOATING BANNER - MATERIAL 3 DESIGN
    ========================================================================== */
 
 /* --- Top Header Install Button ----------------------------------------- */
-
-/* Nút phụ trợ, không phải hành động chính.
-   Bản trước dùng gradient xanh-tím, viền 1.5px, đổ bóng và một chấm xanh nhấp
-   nháy — tức là thứ nổi bật nhất trên màn hình lại là "cài app", trong khi việc
-   thật của người dùng nằm ở giữa trang. Ở đây nó chỉ là một nút chữ nhạt, nổi
-   lên khi rê chuột. */
 .headerInstallBtn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-muted);
-  padding: 6px 13px;
-  border-radius: 999px;
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-surface-variant);
+  padding: 6px 14px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: color var(--m3-duration-short, 100ms) ease, border-color var(--m3-duration-short, 100ms) ease, background-color var(--m3-duration-short, 100ms) ease;
   white-space: nowrap;
   position: relative;
 }
 
 .headerInstallBtn:hover {
-  background: var(--color-border-soft);
-  border-color: var(--color-primary-light);
-  color: var(--color-primary-text);
+  background: var(--m3-surface-container-high);
+  border-color: var(--m3-outline);
+  color: var(--m3-on-surface);
 }
 
-/* Chấm nhấp nháy đã bỏ: nó báo hiệu "có chuyện đang xảy ra", trong khi không
-   có chuyện gì cả. Dành tín hiệu đó cho lúc thật sự cần. */
 .pulseDot {
   display: none;
 }
@@ -56,10 +48,10 @@
 
 .btnText {
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-/* --- Floating Smart Mobile Install Banner (Đập vô mắt) --------------- */
+/* --- Floating Smart Mobile Install Banner ---------------------------- */
 
 .smartFloatingBanner {
   position: fixed;
@@ -69,13 +61,13 @@
   max-width: 620px;
   margin: 0 auto;
   z-index: 9990;
-  background: rgba(9, 13, 22, 0.95);
+  background: var(--m3-surface-container-high, #1e293b);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(0, 210, 255, 0.4);
-  border-radius: 20px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 20px);
   padding: 14px 18px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 210, 255, 0.2);
+  box-shadow: var(--m3-elevation-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -119,16 +111,16 @@
   gap: 8px;
   color: var(--color-white);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .bannerBadge {
-  background: linear-gradient(135deg, var(--color-amber-500), var(--color-red-500));
-  color: var(--color-white);
+  background: var(--m3-error-container);
+  color: var(--m3-on-error-container);
   font-size: 10px;
-  font-weight: 900;
-  padding: 2px 7px;
-  border-radius: 999px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--m3-shape-full, 999px);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -151,37 +143,36 @@
 }
 
 .bannerCtaBtn {
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   border: none;
-  padding: 8px 16px;
-  border-radius: 12px;
+  padding: 8px 18px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.4);
-  transition: all 0.2s ease;
+  box-shadow: var(--m3-elevation-1);
+  transition: box-shadow var(--m3-duration-short, 100ms) ease;
 }
 
 .bannerCtaBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.6);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .bannerCloseBtn {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--m3-outline-variant);
   color: var(--color-slate-400);
   width: 28px;
   height: 28px;
-  border-radius: 999px;
+  border-radius: var(--m3-shape-full, 999px);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .bannerCloseBtn:hover {
@@ -232,10 +223,10 @@
 }
 
 .modalBox {
-  background: var(--color-surface);
-  border: 1.5px solid var(--color-slate-300);
-  border-radius: 24px;
-  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.35);
+  background: var(--m3-surface, #ffffff);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 24px);
+  box-shadow: var(--m3-elevation-3);
   max-width: 480px;
   width: 100%;
   max-height: 90vh;
@@ -278,38 +269,38 @@
 .modalTitle {
   font-family: var(--font-display);
   font-size: 19px;
-  font-weight: 900;
-  color: var(--color-slate-900);
+  font-weight: 700;
+  color: var(--m3-on-surface, #0f172a);
   margin: 0;
   line-height: 1.2;
 }
 
 .modalSubtitle {
-  color: var(--color-slate-500);
+  color: var(--m3-on-surface-variant, #64748b);
   font-size: 13px;
   margin-top: 3px;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .closeBtn {
-  background: var(--color-slate-100);
-  border: 1px solid var(--color-slate-200);
+  background: var(--m3-surface-container);
+  border: 1px solid var(--m3-outline-variant);
   font-size: 14px;
-  color: var(--color-slate-500);
+  color: var(--m3-on-surface-variant);
   cursor: pointer;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--m3-shape-full, 999px);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
   flex: none;
 }
 
 .closeBtn:hover {
-  background: var(--color-slate-200);
-  color: var(--color-slate-900);
+  background: var(--m3-surface-container-high);
+  color: var(--m3-on-surface);
 }
 
 /* Benefits Strip */
@@ -319,9 +310,9 @@
   gap: 8px;
   margin-bottom: 20px;
   padding: 10px 12px;
-  background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
-  border-radius: 14px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
 }
 
 .benefitItem {
@@ -329,8 +320,8 @@
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  font-weight: 700;
-  color: var(--color-slate-700);
+  font-weight: 500;
+  color: var(--m3-on-surface-variant);
 }
 
 /* Tabs */
@@ -338,8 +329,8 @@
   display: flex;
   gap: 6px;
   padding: 4px;
-  background: var(--color-slate-100);
-  border-radius: 12px;
+  background: var(--m3-surface-container-highest);
+  border-radius: var(--m3-shape-full, 999px);
   margin-bottom: 20px;
 }
 
@@ -349,25 +340,25 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 10px;
-  border-radius: 9px;
+  padding: 8px 12px;
+  border-radius: var(--m3-shape-full, 999px);
   border: none;
   background: transparent;
-  color: var(--color-slate-500);
+  color: var(--m3-on-surface-variant);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .tabBtn:hover {
-  color: var(--color-slate-900);
+  color: var(--m3-on-surface);
 }
 
 .tabBtnActive {
-  background: var(--color-surface);
-  color: var(--color-brand-primary-text);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--m3-surface);
+  color: var(--m3-primary);
+  box-shadow: var(--m3-elevation-1);
 }
 
 /* Steps List */
@@ -386,35 +377,35 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 14px;
-  background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
-  border-radius: 14px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
 }
 
 .stepNumber {
   width: 24px;
   height: 24px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   flex: none;
   margin-top: 1px;
 }
 
 .stepText {
   font-size: 13.5px;
-  color: var(--color-slate-700);
+  color: var(--m3-on-surface-variant);
   line-height: 1.5;
 }
 
 .stepText strong {
-  color: var(--color-slate-900);
-  font-weight: 800;
+  color: var(--m3-on-surface);
+  font-weight: 600;
 }
 
 /* Android Direct Box */
@@ -423,15 +414,15 @@
   flex-direction: column;
   gap: 14px;
   padding: 16px;
-  background: var(--color-blue-50);
-  border: 1px solid var(--color-blue-200);
-  border-radius: 14px;
+  background: var(--m3-primary-container);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
   text-align: center;
 }
 
 .androidDirectText {
   font-size: 13.5px;
-  color: var(--color-blue-900);
+  color: var(--m3-on-primary-container);
   line-height: 1.5;
   margin: 0;
 }
@@ -439,20 +430,19 @@
 .primaryActionBtn {
   width: 100%;
   padding: 12px 20px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  color: var(--color-white);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   border: none;
   font-size: 14.5px;
-  font-weight: 800;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3);
-  transition: all 0.2s ease;
+  box-shadow: var(--m3-elevation-1);
+  transition: box-shadow var(--m3-duration-short, 100ms) ease;
 }
 
 .primaryActionBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.45);
+  box-shadow: var(--m3-elevation-2);
 }
 
 /* QR Code Section */
@@ -462,18 +452,18 @@
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: var(--color-slate-50);
-  border: 1px solid var(--color-slate-200);
-  border-radius: 16px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-lg, 16px);
   text-align: center;
 }
 
 .qrBox {
-  background: var(--color-surface);
+  background: var(--m3-surface);
   padding: 8px;
-  border-radius: 12px;
-  border: 1.5px solid var(--color-slate-300);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: var(--m3-shape-md, 12px);
+  border: 1px solid var(--m3-outline-variant);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .qrImage {
@@ -490,14 +480,14 @@
 
 .qrTitle {
   font-size: 14px;
-  font-weight: 800;
-  color: var(--color-slate-900);
+  font-weight: 700;
+  color: var(--m3-on-surface);
   margin: 0;
 }
 
 .qrSubtitle {
   font-size: 12.5px;
-  color: var(--color-slate-500);
+  color: var(--m3-on-surface-variant);
   line-height: 1.45;
   margin: 0;
 }
@@ -511,18 +501,16 @@
 .dismissBtn {
   width: 100%;
   padding: 11px 20px;
-  border-radius: 12px;
-  background: var(--color-slate-100);
-  border: 1px solid var(--color-slate-200);
-  color: var(--color-slate-700);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-surface-container);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-surface);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color var(--m3-duration-short, 100ms) ease;
 }
 
 .dismissBtn:hover {
-  background: var(--color-slate-200);
-  color: var(--color-slate-900);
+  background: var(--m3-surface-container-high);
 }
-

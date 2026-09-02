@@ -99,7 +99,7 @@
 .progressBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-primary-light));
+  background: var(--m3-primary);
   transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -139,24 +139,23 @@
 }
 
 .planCard:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-slate-300);
-  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08);
+  border-color: var(--m3-outline);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .planCardPopular {
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 8px 24px -4px rgba(0, 102, 255, 0.15);
+  border-color: var(--m3-primary);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .planCardFeatured {
-  border-color: var(--color-indigo-400);
-  box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.18);
+  border-color: var(--m3-primary);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .planCardEnterprise {
-  border-color: var(--color-slate-500);
-  background: linear-gradient(180deg, var(--color-surface), var(--color-slate-50));
+  border-color: var(--m3-outline-variant);
+  background: var(--m3-surface-container-low);
 }
 
 .popularBadge {
@@ -164,14 +163,14 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-brand-primary);
-  color: var(--color-on-primary);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+  box-shadow: none;
 }
 
 .enterpriseBadge {
@@ -179,12 +178,12 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: #1e293b;
-  color: white;
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -193,12 +192,12 @@
   top: -12px;
   left: 50%;
   padding: 4px 12px;
-  border-radius: 20px;
-  color: var(--color-white);
-  background: var(--color-indigo-600);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+  border-radius: var(--m3-shape-full, 999px);
+  color: var(--m3-on-primary-container);
+  background: var(--m3-primary-container);
+  box-shadow: none;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
   transform: translateX(-50%);
 }
@@ -308,31 +307,30 @@
 .planButton {
   width: 100%;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--m3-shape-full, 999px);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--m3-duration-short, 100ms) ease;
   text-align: center;
 }
 
 .currentPlanBtn {
-  background: var(--color-slate-100);
-  border: 1.5px solid var(--color-slate-200);
-  color: var(--color-slate-500);
+  background: var(--m3-surface-container);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-surface-variant);
   cursor: default;
 }
 
 .upgradeBtn {
-  background: var(--color-brand-primary);
+  background: var(--m3-primary);
   border: none;
-  color: var(--color-on-primary);
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+  color: var(--m3-on-primary);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .upgradeBtn:hover {
-  background: var(--color-brand-primary-dark);
-  transform: translateY(-1px);
+  box-shadow: var(--m3-elevation-2);
 }
 
 /* Invoices History Table */

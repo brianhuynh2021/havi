@@ -29,22 +29,22 @@
 .peaceOfMindCard {
   margin-top: 18px;
   padding: 18px 22px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-green-50) 0%, var(--color-green-100) 50%, var(--color-green-50) 100%);
-  border: 1.5px solid var(--color-green-200);
+  border-radius: var(--m3-shape-md, 14px);
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .peaceOfMindBadge {
   font-size: 11px;
-  font-weight: 800;
-  color: var(--color-green-700);
-  background: rgba(21, 128, 61, 0.1);
+  font-weight: 500;
+  color: var(--m3-on-success-container);
+  background: var(--m3-success-container);
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--m3-shape-full, 999px);
   width: fit-content;
   letter-spacing: 0.05em;
 }
@@ -64,8 +64,8 @@
 .peaceOfMindVal {
   font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 900;
-  color: var(--color-green-800);
+  font-weight: 700;
+  color: var(--m3-success);
 }
 
 .peaceOfMindLbl {
@@ -97,17 +97,17 @@
 
 .statCard {
   padding: 18px 20px;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 14px;
-  background: var(--color-surface);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
+  background: var(--m3-surface);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .statValue {
-  color: var(--color-indigo-600);
+  color: var(--m3-primary);
   font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .statLabel {
@@ -142,10 +142,10 @@
 .attributionCard {
   margin-top: 20px;
   padding: 20px 22px;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 14px;
-  background: var(--color-surface);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
+  background: var(--m3-surface);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .chartBars {
@@ -170,7 +170,7 @@
   max-width: 28px;
   min-height: 4px;
   border-radius: 6px 6px 0 0;
-  background: var(--color-primary);
+  background: var(--m3-primary);
 }
 
 .chartValue {
@@ -215,7 +215,7 @@
 .attributionFill {
   height: 100%;
   border-radius: 999px;
-  background: var(--color-primary);
+  background: var(--m3-primary);
 }
 
 .attributionPercent {
@@ -235,10 +235,10 @@
 .topPostsCard {
   margin-top: 20px;
   padding: 20px 22px;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 14px;
-  background: var(--color-surface);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-md, 14px);
+  background: var(--m3-surface);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .topPostsList {
@@ -315,22 +315,22 @@
 }
 
 .changePositive {
-  color: var(--color-green-800);
-  background: var(--color-green-100);
+  color: var(--m3-on-success-container);
+  background: var(--m3-success-container);
 }
 
 .changeNegative {
-  color: var(--color-red-800);
-  background: var(--color-red-100);
+  color: var(--m3-on-error-container);
+  background: var(--m3-error-container);
 }
 
 .failedPostsCard {
   margin-top: 20px;
   padding: 20px 22px;
-  border: 1px solid var(--color-red-200);
-  border-radius: 14px;
-  background: var(--color-red-50);
-  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.05);
+  border: 1px solid var(--m3-error);
+  border-radius: var(--m3-shape-md, 14px);
+  background: var(--m3-error-container);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .failedPostsList {

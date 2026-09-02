@@ -8,7 +8,7 @@ for worker-side steps.
 
 import json
 import os
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from httpx import AsyncClient
@@ -28,6 +28,7 @@ from application.services.publish_service import PublishService
 from core.config import get_settings
 from core.enums import Channel, Platform
 from domain.policies.provider_router import ProviderRouter
+from domain.policies.scheduling import VIETNAM_TZ
 
 GOOD_OUTPUT = json.dumps(
     {
@@ -165,7 +166,10 @@ async def test_signup_to_draft_approve_fake_publish_and_report(
         assert published.status_code == 200, published.text
         assert published.json()["status"] == "published"
 
-    today = date.today().isoformat()
+    # /analytics cắt cửa sổ theo giờ Việt Nam, nên ngày hỏi cũng phải là ngày
+    # theo giờ VN. Nếu lấy date.today() của runner (chạy UTC) thì mọi lần chạy
+    # trong khoảng 17:00-23:59 UTC rơi sang ngày VN kế tiếp và đếm ra 0.
+    today = datetime.now(VIETNAM_TZ).date().isoformat()
     summary = await client.get(
         "/analytics/summary",
         params={"start": today, "end": today},

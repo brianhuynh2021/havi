@@ -5,12 +5,8 @@
   align-items: center;
   gap: 28px;
   padding: 48px 24px 64px;
-  background-color: var(--color-slate-950);
-  background-image:
-    radial-gradient(circle at 50% 0%, rgba(0, 102, 255, 0.22) 0%, transparent 60%),
-    radial-gradient(circle at 85% 65%, rgba(0, 210, 255, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
-  color: var(--text-on-dark);
+  background-color: var(--m3-surface, #020617);
+  color: var(--text-on-dark, #f8fafc);
 }
 
 .brand {
@@ -18,21 +14,19 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: opacity var(--m3-duration-short, 100ms) ease;
 }
 
 .brand:hover {
-  transform: scale(1.02);
+  opacity: 0.9;
 }
 
 .brandText {
   font-family: var(--font-display, "Plus Jakarta Sans", sans-serif);
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--color-surface) 40%, var(--color-blue-300) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--m3-primary);
 }
 
 .steps {
@@ -42,8 +36,8 @@
   list-style: none;
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-full, 999px);
   backdrop-filter: blur(12px);
 }
 
@@ -53,77 +47,68 @@
   gap: 8px;
   color: var(--color-slate-500);
   font-size: 13.5px;
-  font-weight: 600;
-  transition: color 0.2s ease;
+  font-weight: 500;
+  transition: color var(--m3-duration-short, 100ms) ease;
 }
 
 .stepActive {
-  color: var(--color-blue-300);
+  color: var(--m3-primary);
 }
 
 .stepDone {
-  color: var(--color-emerald-400);
+  color: var(--m3-success);
 }
 
 .stepDot {
   width: 24px;
   height: 24px;
-  border-radius: 999px;
+  border-radius: var(--m3-shape-full, 999px);
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.06);
   color: var(--color-slate-400);
   font-size: 11.5px;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  font-weight: 500;
+  border: 1px solid var(--m3-outline-variant);
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .stepActive .stepDot {
-  background: var(--color-brand-primary);
-  color: var(--color-on-primary);
-  border-color: rgba(0, 210, 255, 0.8);
-  box-shadow: 0 0 16px rgba(0, 102, 255, 0.6), 0 0 8px rgba(0, 210, 255, 0.4);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  border-color: var(--m3-primary);
+  box-shadow: none;
 }
 
 .stepDone .stepDot {
-  background: var(--color-emerald-500);
-  color: var(--color-white);
-  border-color: rgba(52, 211, 153, 0.6);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  background: var(--m3-success);
+  color: var(--m3-on-success);
+  border-color: var(--m3-success);
+  box-shadow: none;
 }
 
 .panel {
   width: 100%;
   max-width: 680px;
   padding: 40px 44px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 24px;
-  background: rgba(19, 26, 41, 0.8);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-shape-xl, 24px);
+  background: rgba(19, 26, 41, 0.85);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(0, 102, 255, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: var(--m3-elevation-3);
   position: relative;
   overflow: hidden;
 }
 
 .panel::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.6), transparent);
+  display: none;
 }
 
 .title {
   font-family: var(--font-display, "Plus Jakarta Sans", sans-serif);
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-white);
   text-align: center;
   letter-spacing: -0.3px;
@@ -148,7 +133,7 @@
   display: block;
   margin-bottom: 8px;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-on-dark-soft);
   letter-spacing: 0.1px;
 }
@@ -171,13 +156,13 @@
   align-items: flex-start;
   text-align: left;
   padding: 16px 18px;
-  border-radius: 16px;
+  border-radius: var(--m3-shape-lg, 16px);
   background: rgba(255, 255, 255, 0.035);
-  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--m3-outline-variant);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--m3-duration-short, 100ms) ease;
   color: var(--color-white);
   font: inherit;
   width: 100%;
@@ -185,19 +170,15 @@
 
 .industryCard:hover {
   background: rgba(255, 255, 255, 0.065);
-  border-color: rgba(0, 210, 255, 0.35);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 16px rgba(0, 102, 255, 0.15);
+  border-color: var(--m3-outline);
+  box-shadow: var(--m3-elevation-1);
 }
 
 .industryCardActive {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.2) 0%, rgba(0, 210, 255, 0.08) 100%);
-  border-color: var(--color-brand-primary-light) !important;
-  box-shadow:
-    0 0 24px rgba(0, 210, 255, 0.25),
-    0 8px 24px -4px rgba(0, 0, 0, 0.4),
-    inset 0 0 14px rgba(0, 210, 255, 0.12);
-  transform: translateY(-1px);
+  background: var(--m3-secondary-container);
+  border-color: var(--m3-primary) !important;
+  color: var(--m3-on-secondary-container);
+  box-shadow: none;
 }
 
 .cardHeader {
@@ -218,29 +199,29 @@
 .cardIcon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--m3-shape-sm, 10px);
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--m3-outline-variant);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: transform var(--m3-duration-short, 100ms) ease;
 }
 
 .industryCard:hover .cardIcon {
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 .industryCardActive .cardIcon {
-  background: rgba(0, 210, 255, 0.15);
-  border-color: rgba(0, 210, 255, 0.4);
+  background: var(--m3-primary-container);
+  border-color: var(--m3-outline);
 }
 
 .cardTitle {
   font-size: 14.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-white);
   line-height: 1.3;
 }
@@ -251,11 +232,11 @@
   color: var(--color-slate-400);
   margin-top: 8px;
   line-height: 1.45;
-  transition: color 0.2s ease;
+  transition: color var(--m3-duration-short, 100ms) ease;
 }
 
 .industryCardActive .cardDesc {
-  color: var(--color-slate-300);
+  color: var(--m3-on-secondary-container);
 }
 
 .recommendedTag {
@@ -263,12 +244,12 @@
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(52, 211, 153, 0.4);
-  color: var(--color-emerald-400);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-success-container);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-success-container);
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.2px;
   white-space: nowrap;
 }
@@ -279,24 +260,18 @@
   right: 10px;
   width: 20px;
   height: 20px;
-  border-radius: 999px;
-  background: var(--color-brand-primary-light);
-  color: var(--color-slate-950);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
   display: grid;
   place-items: center;
-  box-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
-  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none;
+  animation: popIn var(--m3-duration-medium, 200ms) var(--m3-easing-decelerate);
 }
 
 @keyframes popIn {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .actions {
@@ -309,23 +284,22 @@
 
 .connectionListWrapper [class*="list"] > [class*="row"] {
   background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--m3-outline-variant);
+  box-shadow: var(--m3-elevation-1);
   backdrop-filter: blur(12px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .connectionListWrapper [class*="list"] > [class*="row"]:hover {
   background: rgba(255, 255, 255, 0.065);
-  border-color: rgba(0, 102, 255, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(0, 102, 255, 0.15);
-  transform: translateY(-2px);
+  border-color: var(--m3-outline);
+  box-shadow: var(--m3-elevation-2);
 }
 
 .connectionListWrapper [class*="list"] > [class*="rowConnected"] {
-  border-color: rgba(52, 211, 153, 0.45);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 78, 59, 0.12) 100%);
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+  border-color: var(--m3-success);
+  background: var(--m3-success-container);
+  box-shadow: none;
 }
 
 .connectionListWrapper [class*="rowLabel"] {
@@ -337,27 +311,27 @@
 }
 
 .connectionListWrapper [class*="hint"] strong {
-  color: var(--color-blue-400);
+  color: var(--m3-primary);
 }
 
 .connectionListWrapper [class*="accountName"] {
-  background: rgba(0, 102, 255, 0.15);
-  border: 1px solid rgba(0, 210, 255, 0.35);
-  color: var(--color-blue-400);
+  background: var(--m3-primary-container);
+  border: 1px solid var(--m3-outline-variant);
+  color: var(--m3-on-primary-container);
 }
 
 .connectionListWrapper [class*="rowRight"] button[class*="outline"] {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--m3-outline-variant);
   color: var(--text-on-dark-soft);
   box-shadow: none;
 }
 
 .connectionListWrapper [class*="rowRight"] button[class*="outline"]:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: var(--color-red-300);
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+  background: var(--m3-error-container);
+  border-color: var(--m3-error);
+  color: var(--m3-on-error-container);
+  box-shadow: none;
 }
 
 .stepActions {
@@ -368,16 +342,15 @@
   margin-top: 32px;
 }
 
-
 .error {
   margin-top: 16px;
   padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: var(--color-red-300);
+  border-radius: var(--m3-shape-md, 12px);
+  background: var(--m3-error-container);
+  border: 1px solid var(--m3-error);
+  color: var(--m3-on-error-container);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 500;
   text-align: center;
   animation: shake 0.3s ease-in-out;
 }
@@ -391,10 +364,10 @@
 .learningCard {
   margin-top: 32px;
   padding: 36px 24px;
-  border-radius: 20px;
+  border-radius: var(--m3-shape-xl, 20px);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--m3-outline-variant);
+  box-shadow: var(--m3-elevation-2);
   backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
@@ -407,24 +380,25 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 3px solid rgba(0, 102, 255, 0.2);
-  border-top-color: var(--color-brand-primary-light);
-  border-right-color: var(--color-brand-primary);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--m3-primary);
+  border-right-color: var(--m3-primary);
   animation: spin 0.8s linear infinite;
-  box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+  box-shadow: none;
 }
 
 .successIconBadge {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%);
-  border: 1.5px solid var(--color-emerald-400);
+  background: var(--m3-success-container);
+  border: 1.5px solid var(--m3-success);
+  color: var(--m3-on-success-container);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  box-shadow: 0 0 24px rgba(52, 211, 153, 0.3);
+  box-shadow: none;
   animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -439,23 +413,23 @@
 .progressBarWrapper {
   flex: 1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--m3-shape-full, 999px);
   background: rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 
 .progressBarFill {
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
-  box-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
+  border-radius: var(--m3-shape-full, 999px);
+  background: var(--m3-primary);
+  box-shadow: none;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .progressPercentText {
   font-size: 13px;
-  font-weight: 800;
-  color: var(--color-brand-primary-light);
+  font-weight: 700;
+  color: var(--m3-primary);
   min-width: 36px;
   text-align: right;
   font-family: monospace;
@@ -477,22 +451,22 @@
   font-size: 13px;
   color: var(--color-slate-500);
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--m3-shape-sm, 10px);
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.25s ease;
+  border: 1px solid var(--m3-outline-variant);
+  transition: all var(--m3-duration-short, 100ms) ease;
 }
 
 .stageItemDone {
   color: var(--text-on-dark-soft);
-  background: rgba(16, 185, 129, 0.06);
-  border-color: rgba(52, 211, 153, 0.25);
+  background: var(--m3-success-container);
+  border-color: var(--m3-success);
 }
 
 .stageIcon {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 13px;
-  color: var(--color-emerald-400);
+  color: var(--m3-success);
   width: 16px;
   display: inline-block;
   text-align: center;
@@ -506,7 +480,7 @@
   
   .panel {
     padding: 28px 20px;
-    border-radius: 20px;
+    border-radius: var(--m3-shape-xl, 20px);
   }
 
   .title {
@@ -538,4 +512,3 @@
     font-size: 10.5px;
   }
 }
-
