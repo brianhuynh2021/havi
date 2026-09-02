@@ -13,7 +13,7 @@ from adapters.persistence.event_log_repository import EventLogRepository
 from adapters.persistence.inbox_repository import InboxRepository
 from adapters.persistence.publish_repository import PublishRepository
 from api.deps import AuditViewerWorkspaceDep, WorkspaceDep
-from core.enums import ConnectionStatus, ContentStatus, InboxItemStatus, OutboxStatus, PublishStatus
+from core.enums import ContentStatus, InboxItemStatus, OutboxStatus, PublishStatus
 from core.schemas import (
     AnalyticsSummary,
     AnalyticsTimeseries,

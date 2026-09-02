@@ -117,7 +117,6 @@ export function ActivityScreen() {
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <Button
               variant="outline"
-              size="sm"
               onClick={handleVerify}
               disabled={verifying}
             >
@@ -125,7 +124,6 @@ export function ActivityScreen() {
             </Button>
             <Button
               variant="outline"
-              size="sm"
               onClick={handleExport}
               disabled={exporting}
             >
@@ -167,7 +165,7 @@ export function ActivityScreen() {
               </span>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setVerifyReport(null)}>
+          <Button variant="ghost" onClick={() => setVerifyReport(null)}>
             {t("Đóng")}
           </Button>
         </div>

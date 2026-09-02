@@ -7,12 +7,11 @@ Triển khai `PublisherPort` theo chuẩn TikTok Content Posting API v2:
 
 import logging
 import os
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
-
-from dataclasses import dataclass
 
 from core.enums import Channel
 from domain.ports.publisher import (

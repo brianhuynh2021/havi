@@ -10,8 +10,6 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
-import httpx
-
 from adapters.persistence.connection_repository import ConnectionRepository
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
@@ -29,7 +27,7 @@ from core.enums import (
 )
 from core.events import EventLogEntry
 from core.metrics import publish_attempts_total, publish_duration_seconds
-from core.token_crypto import TokenDecryptionFailed, encrypt_token
+from core.token_crypto import TokenDecryptionFailed
 from domain.models.publish import PublishJob
 from domain.policies.circuit_breaker import registry as breaker_registry
 from domain.policies.connection_capabilities import Capability, has_capability

@@ -8,6 +8,7 @@ LLM chỉ chạy khi có job rõ ràng — không loop nền.
 """
 
 from celery import Celery
+from celery.signals import task_failure
 from kombu import Queue
 
 from core.config import get_settings
@@ -51,9 +52,6 @@ celery_app.conf.update(
 )
 
 
-from celery.signals import task_failure
-
-
 @task_failure.connect
 def handle_task_failure(
     sender=None,
@@ -68,6 +66,7 @@ def handle_task_failure(
     """Khi Celery task hỏng ngoài ý muốn: ghi log và gửi alert qua AlertSink."""
     import asyncio
     import logging
+
     from core.alerts import Alert, get_alert_sink
 
     logger = logging.getLogger("havi.worker.celery")

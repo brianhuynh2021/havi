@@ -1,7 +1,6 @@
 """Integration tests for YouTube Shorts publishing, video constraints, and quota flow."""
 
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import httpx

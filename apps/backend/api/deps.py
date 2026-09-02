@@ -56,7 +56,7 @@ from application.services.video_post_service import VideoPostService
 from application.services.video_publish_service import VideoPublishService
 from application.services.voice_service import VoiceService
 from application.services.workspace_service import WorkspaceService
-from core.alerts import AlertSink, LoggingAlertSink
+from core.alerts import AlertSink
 from core.config import Settings, get_settings
 from core.enums import Platform, WorkspaceRole
 from core.security import decode_access_token

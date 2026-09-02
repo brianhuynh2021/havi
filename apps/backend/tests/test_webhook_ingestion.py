@@ -383,6 +383,7 @@ class TestLocalSimulator:
     ):
         """Khi nổ race condition giữa hai lần nhận cùng external_message_id, không ném lỗi và không sinh dòng trùng."""
         from uuid import UUID, uuid4
+
         from adapters.persistence.inbox_repository import InboxRepository
         from core.enums import Platform
 

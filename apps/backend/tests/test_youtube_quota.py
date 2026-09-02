@@ -1,20 +1,15 @@
 """Unit tests for YouTube Quota tracking in Pacific Time."""
 
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock
+from datetime import UTC, datetime
 
 import pytest
 
 from core.alerts import Alert, AlertSink
 from domain.policies.youtube_quota import (
-    DEFAULT_DAILY_QUOTA_UNITS,
-    PACIFIC_TZ,
-    VIDEO_INSERT_COST_UNITS,
     check_quota_available,
     get_next_pacific_midnight_utc,
     get_pacific_date,
     get_pacific_now,
-    get_used_quota,
     record_quota_consumption,
 )
 

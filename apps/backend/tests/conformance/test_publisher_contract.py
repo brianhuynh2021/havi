@@ -5,23 +5,18 @@ Một kênh chỉ được coi là LIVE khi adapter của nó vượt qua cùng 
 Adapter TikTok/YouTube/Zalo/Google hiện có được phép skip có ghi lý do rõ ràng.
 """
 
-from datetime import UTC, datetime
-from uuid import uuid4
 
 import httpx
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from adapters.publishers.facebook import FacebookPublisher
 from core.config import Settings
 from core.enums import Channel, Platform, PublishFailureKind
-from domain.policies.connection_capabilities import Capability, capabilities_for, has_capability
+from domain.policies.connection_capabilities import Capability, capabilities_for
 from domain.ports.publisher import (
     AmbiguousPublishError,
     AuthPermissionError,
-    PublishError,
     PublishRequest,
-    PublishResult,
     TemporaryPublishError,
     ValidationPublishError,
 )

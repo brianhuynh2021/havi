@@ -173,7 +173,9 @@ def purge_outbox() -> None:
 
 async def run_check_connections_health(session: AsyncSession | None = None) -> int:
     from datetime import UTC, datetime, timedelta
+
     import httpx
+
     from adapters.oauth.google_business import GoogleBusinessOAuthClient
     from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
     from adapters.oauth.tiktok import TikTokOAuthClient
@@ -356,6 +358,7 @@ def check_connections_health(request_id: str | None = None) -> None:
 
 async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -> tuple[int, int]:
     from datetime import UTC, datetime, timedelta
+
     from adapters.persistence.connection_repository import ConnectionRepository
     from adapters.persistence.content_repository import ContentRepository
     from adapters.persistence.db import session_scope
@@ -366,7 +369,14 @@ async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -
     from adapters.publishers.youtube import YouTubePublisher
     from core.alerts import Alert, get_alert_sink
     from core.config import get_settings
-    from core.enums import Channel, ConnectionStatus, ContentStatus, Platform, PublishFailureKind, PublishStatus
+    from core.enums import (
+        Channel,
+        ConnectionStatus,
+        ContentStatus,
+        Platform,
+        PublishFailureKind,
+        PublishStatus,
+    )
     from core.events import EventLogEntry
     from domain.ports.publisher import PublisherPort
 
