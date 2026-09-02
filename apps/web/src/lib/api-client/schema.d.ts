@@ -1402,6 +1402,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/audit/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify Audit Hash Chain
+         * @description Kiểm tra tính toàn vẹn chuỗi Hash (Hash Chain Immutability) của event_log.
+         */
+        get: operations["verify_audit_hash_chain_analytics_audit_verify_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/events/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Events Csv
+         * @description Xuất CSV lịch sử hoạt động để phục vụ kiểm toán / lưu trữ tuân thủ.
+         */
+        get: operations["export_events_csv_analytics_events_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/analytics/operations": {
         parameters: {
             query?: never;
@@ -1494,6 +1534,26 @@ export interface paths {
          * @description Danh sách các bài đăng thất bại trong kỳ, kèm lý do.
          */
         get: operations["failed_posts_analytics_failed_posts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/outbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Outbox Entries
+         * @description Danh sách các bản ghi outbox (hàng đợi phân tán) của workspace.
+         */
+        get: operations["list_outbox_entries_analytics_outbox_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1688,6 +1748,26 @@ export interface components {
         AssignRequest: {
             /** User Id */
             user_id?: string | null;
+        };
+        /** AuditBrokenDetail */
+        AuditBrokenDetail: {
+            /** Id */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Link Broken */
+            link_broken: boolean;
+        };
+        /** AuditVerifyReport */
+        AuditVerifyReport: {
+            /** Ok */
+            ok: boolean;
+            /** Rows Checked */
+            rows_checked: number;
+            broken_at?: components["schemas"]["AuditBrokenDetail"] | null;
         };
         /**
          * Base64VoiceRequest
@@ -2737,6 +2817,46 @@ export interface components {
             /** Debug Code */
             debug_code?: string | null;
         };
+        /** OutboxEntryRecord */
+        OutboxEntryRecord: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Topic */
+            topic: string;
+            status: components["schemas"]["OutboxStatus"];
+            /** Attempts */
+            attempts: number;
+            /** Available At */
+            available_at?: string | null;
+            /** Dispatched At */
+            dispatched_at?: string | null;
+            /** Last Error */
+            last_error?: string | null;
+            /** Request Id */
+            request_id?: string | null;
+            /** Workspace Id */
+            workspace_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * OutboxStatus
+         * @description Trạng thái một bản ghi outbox.
+         *
+         *     Không có `processing`: dispatcher dùng `SELECT ... FOR UPDATE SKIP LOCKED`
+         *     nên row lock của Postgres *là* cơ chế giữ chỗ. Thêm một trạng thái trung
+         *     gian trong bảng nghĩa là dispatcher chết giữa đường sẽ để lại dòng mắc kẹt ở
+         *     `processing` mãi, và phải viết thêm job đi dọn — lock thì tự nhả khi kết nối
+         *     đóng.
+         * @enum {string}
+         */
+        OutboxStatus: "pending" | "dispatched" | "failed";
         /**
          * OwnContentItemCreate
          * @description Bài người dùng **tự viết** — Havi không sửa một chữ nào.
@@ -5828,6 +5948,57 @@ export interface operations {
             };
         };
     };
+    verify_audit_hash_chain_analytics_audit_verify_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditVerifyReport"];
+                };
+            };
+        };
+    };
+    export_events_csv_analytics_events_export_get: {
+        parameters: {
+            query?: {
+                error_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     operations_analytics_operations_get: {
         parameters: {
             query: {
@@ -5975,6 +6146,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FailedPostRecord"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_outbox_entries_analytics_outbox_get: {
+        parameters: {
+            query?: {
+                /** @description Lọc theo trạng thái outbox */
+                status?: components["schemas"]["OutboxStatus"] | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutboxEntryRecord"][];
                 };
             };
             /** @description Validation Error */
