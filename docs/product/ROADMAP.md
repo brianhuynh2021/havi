@@ -280,10 +280,11 @@ for in parallel, well before its implementation slot comes up.
    `PublishService` is channel-generic, so the breaker is `publish.tiktok` with
    no TikTok-specific wiring.
 
-   Still missing before this box can be ticked: a reconciliation path. Facebook
-   has `verify_reel` to resolve an ambiguous publish; TikTok has no equivalent,
-   so an ambiguous outcome currently needs a human to check the TikTok inbox.
-   That is honest behaviour, not a silent failure — but it is not finished.
+    Reconciliation path: implemented via TikTok Content Posting API v2 endpoint
+    `POST /v2/post/publish/status/fetch/` with `publish_id`. TikTokPublisher
+    implements `verify_publish_status` and `reconcile` to automatically resolve
+    ambiguous outcomes (checking `PUBLISH_COMPLETE` vs `FAILED` vs in-progress).
+    Proactive health check also handles token refreshes before expiry.
 2. [ ] YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
    published and confirmed, so the second video channel is mostly adapter work.
    Upload quota needs an increase request against the default daily limit.

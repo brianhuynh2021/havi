@@ -12,6 +12,8 @@ from pathlib import Path
 
 import httpx
 
+from dataclasses import dataclass
+
 from core.enums import Channel
 from domain.ports.publisher import (
     AmbiguousPublishError,
@@ -19,6 +21,7 @@ from domain.ports.publisher import (
     PublisherPort,
     PublishRequest,
     PublishResult,
+    ReconciliationOutcome,
     TemporaryPublishError,
     ValidationPublishError,
 )
@@ -145,8 +148,8 @@ class TikTokPublisher(PublisherPort):
             upload_url = data.get("upload_url")
 
             if not publish_id:
-                err_msg = body.get("error", {}).get("message") or "Không nhận được publish_id"
-                raise ValidationPublishError(self.channel, f"TikTok Publish lỗi: {err_msg}")
+                err_msg = body.get("error", {}).get("message") or "Không nhận được publish_id từ TikTok"
+                raise AmbiguousPublishError(self.channel, f"TikTok trả 2xx nhưng không có publish_id: {err_msg}")
 
             if upload_url:
                 upload_headers = {
@@ -218,9 +221,112 @@ class TikTokPublisher(PublisherPort):
         data = body.get("data") or {}
         publish_id = data.get("publish_id")
         if not publish_id:
-            raise ValidationPublishError(self.channel, "Không nhận được publish_id từ TikTok")
+            raise AmbiguousPublishError(self.channel, "TikTok trả 2xx nhưng không nhận được publish_id từ TikTok")
 
         return PublishResult(
             external_post_id=publish_id,
             published_at=datetime.now(UTC),
         )
+
+    async def verify_publish_status(
+        self, publish_id: str, *, access_token: str
+    ) -> "TikTokPublishStatus":
+        """Kiểm tra trạng thái xuất bản của video trên TikTok qua Content Posting API.
+
+        Endpoint: POST https://open.tiktokapis.com/v2/post/publish/status/fetch/
+        """
+        url = "https://open.tiktokapis.com/v2/post/publish/status/fetch/"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json; charset=UTF-8",
+        }
+        payload = {"publish_id": publish_id}
+
+        async def _fetch(client: httpx.AsyncClient) -> TikTokPublishStatus:
+            try:
+                res = await client.post(url, json=payload, headers=headers)
+            except httpx.HTTPError as exc:
+                raise TemporaryPublishError(
+                    self.channel,
+                    f"Không đọc được trạng thái TikTok {publish_id}: {type(exc).__name__}",
+                ) from exc
+
+            if res.status_code in (401, 403):
+                raise AuthPermissionError(
+                    self.channel, "Token TikTok hết hạn hoặc mất quyền khi đối soát"
+                )
+            if res.status_code in _TRANSIENT_STATUSES:
+                raise TemporaryPublishError(
+                    self.channel, f"TikTok trả về HTTP {res.status_code} khi đối soát"
+                )
+            if res.status_code >= 400:
+                raise ValidationPublishError(
+                    self.channel, f"Lỗi đối soát TikTok: {res.text[:200]}"
+                )
+
+            body = res.json()
+            data = body.get("data") or {}
+            status = data.get("status") or "PROCESSING"
+            fail_reason = data.get("fail_reason")
+            post_ids = data.get("publicaly_available_post_id") or []
+            return TikTokPublishStatus(
+                publish_id=publish_id,
+                status=status,
+                fail_reason=fail_reason,
+                post_ids=post_ids,
+            )
+
+        if self._client is not None:
+            return await _fetch(self._client)
+
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            return await _fetch(client)
+
+    async def reconcile(
+        self,
+        *,
+        external_post_id: str | None = None,
+        access_token: str,
+        **kwargs,
+    ) -> ReconciliationOutcome:
+        """Đối soát publish_id với TikTok Content Posting API."""
+        if not external_post_id:
+            return ReconciliationOutcome(
+                status="failed",
+                error_message="Không có publish_id để đối soát TikTok",
+            )
+        status_info = await self.verify_publish_status(external_post_id, access_token=access_token)
+        if status_info.is_published:
+            ext_id = status_info.post_ids[0] if status_info.post_ids else external_post_id
+            return ReconciliationOutcome(
+                status="published",
+                external_post_id=ext_id,
+            )
+        if status_info.is_failed:
+            return ReconciliationOutcome(
+                status="failed",
+                error_message=status_info.fail_reason or "TikTok báo video xuất bản thất bại",
+            )
+        return ReconciliationOutcome(status="in_progress")
+
+
+@dataclass(frozen=True)
+class TikTokPublishStatus:
+    """Trạng thái đối soát của video trên TikTok."""
+
+    publish_id: str
+    status: str  # "PUBLISH_COMPLETE", "FAILED", "PROCESSING_DOWNLOAD", "PROCESSING_UPLOAD", "IN_REVIEW", "PROCESSING"
+    fail_reason: str | None = None
+    post_ids: list[str] | None = None
+
+    @property
+    def is_published(self) -> bool:
+        return self.status == "PUBLISH_COMPLETE"
+
+    @property
+    def is_failed(self) -> bool:
+        return self.status == "FAILED"
+
+    @property
+    def is_pending(self) -> bool:
+        return not self.is_published and not self.is_failed

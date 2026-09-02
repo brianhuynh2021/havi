@@ -33,6 +33,7 @@ from domain.ports.publisher import (
     PublisherPort,
     PublishRequest,
     PublishResult,
+    ReconciliationOutcome,
     ReelStatus,
     TemporaryPublishError,
     ValidationPublishError,
@@ -394,6 +395,61 @@ class FacebookPublisher(PublisherPort):
                 permalink_url=body.get("permalink_url"),
                 error_message=phase_block.get("errors") and str(phase_block["errors"])[:300],
             )
+
+    async def reconcile(
+        self,
+        *,
+        external_post_id: str | None = None,
+        access_token: str,
+        **kwargs,
+    ) -> ReconciliationOutcome:
+        """Đối soát lại bài đăng trên Facebook (Reels hoặc Page Post)."""
+        if not external_post_id:
+            return ReconciliationOutcome(
+                status="failed",
+                error_message="Không có external_post_id để đối soát Facebook",
+            )
+        if self.channel == Channel.REELS:
+            reel_status = await self.verify_reel(external_post_id, access_token=access_token)
+            if reel_status.is_published:
+                return ReconciliationOutcome(
+                    status="published",
+                    external_post_id=reel_status.video_id,
+                    permalink_url=reel_status.permalink_url,
+                )
+            if reel_status.is_failed:
+                return ReconciliationOutcome(
+                    status="failed",
+                    error_message=reel_status.error_message or "Facebook báo Reel lỗi",
+                )
+            return ReconciliationOutcome(status="in_progress")
+        else:
+            url = f"{GRAPH_BASE}/{external_post_id}"
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                try:
+                    res = await client.get(
+                        url,
+                        params={"fields": "id,permalink_url", "access_token": access_token},
+                    )
+                except httpx.HTTPError as exc:
+                    raise TemporaryPublishError(
+                        self.channel, f"Không đọc được bài viết Facebook {external_post_id}: {exc}"
+                    ) from exc
+
+                if res.status_code == 404:
+                    return ReconciliationOutcome(
+                        status="failed",
+                        error_message="Không tìm thấy bài viết trên Facebook (404)",
+                    )
+                if res.status_code >= 400:
+                    raise self._classify_error(res)
+
+                body = res.json()
+                return ReconciliationOutcome(
+                    status="published",
+                    external_post_id=body.get("id") or external_post_id,
+                    permalink_url=body.get("permalink_url"),
+                )
 
     async def _post(
         self, client: httpx.AsyncClient, url: str, payload: dict, access_token: str

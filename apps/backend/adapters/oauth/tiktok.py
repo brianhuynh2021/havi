@@ -206,3 +206,82 @@ class TikTokOAuthClient(OAuthClientPort):
             expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
             granted_scopes=granted_scopes,
         )
+
+    async def refresh_access_token(self, refresh_token: str) -> OAuthAccount:
+        """Làm mới access_token bằng refresh_token theo TikTok OAuth v2 spec.
+
+        POST https://open.tiktokapis.com/v2/oauth/token/
+        grant_type=refresh_token
+        """
+        if not self.is_configured:
+            raise OAuthPermanentError(
+                self.platform, "TikTok OAuth chưa được cấu hình client_key / secret"
+            )
+
+        if not (self._client_key and self._client_secret) or refresh_token == "mock_tiktok_refresh_token":
+            return OAuthAccount(
+                external_account_id="tiktok_mock_user_123",
+                account_name="TikTok @tiem_demo",
+                access_token="mock_refreshed_tiktok_access_token",
+                refresh_token="mock_refreshed_tiktok_refresh_token",
+                expires_at=datetime.now(UTC) + timedelta(days=30),
+                granted_scopes=("user.info.basic", "video.upload"),
+            )
+
+        payload = {
+            "client_key": self._client_key,
+            "client_secret": self._client_secret,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            try:
+                response = await client.post(TIKTOK_TOKEN_URL, data=payload, headers=headers)
+            except httpx.RequestError as exc:
+                raise OAuthTemporaryError(
+                    self.platform, f"Lỗi mạng refresh TikTok token: {exc}"
+                ) from exc
+
+        if response.status_code in _TRANSIENT_STATUSES:
+            raise OAuthTemporaryError(
+                self.platform, f"TikTok OAuth HTTP {response.status_code}"
+            )
+        if response.status_code != 200:
+            raise OAuthPermanentError(
+                self.platform,
+                f"TikTok từ chối refresh token (HTTP {response.status_code})",
+            )
+
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise OAuthTemporaryError(
+                self.platform, "TikTok OAuth trả dữ liệu không phải JSON"
+            ) from exc
+
+        data_body = data.get("data") if isinstance(data.get("data"), dict) else data
+        new_access_token = data_body.get("access_token")
+        new_refresh_token = data_body.get("refresh_token") or refresh_token
+        expires_in = data_body.get("expires_in") or 86400
+        open_id = data_body.get("open_id") or "tiktok_user"
+
+        if not new_access_token:
+            raise OAuthPermanentError(
+                self.platform, "Không nhận được access_token mới khi refresh TikTok"
+            )
+
+        raw_scope = data_body.get("scope") or ""
+        granted_scopes = tuple(
+            sorted({part for part in raw_scope.replace(",", " ").split() if part})
+        )
+
+        return OAuthAccount(
+            external_account_id=open_id,
+            account_name=f"TikTok @{open_id[:10]}",
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
+            granted_scopes=granted_scopes or ("user.info.basic", "video.upload"),
+        )

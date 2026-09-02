@@ -115,6 +115,28 @@ class ReelStatus:
         return not self.is_published and not self.is_failed
 
 
+@dataclass(frozen=True)
+class ReconciliationOutcome:
+    """Kết quả đối soát một publish job bị mơ hồ / chờ xác nhận."""
+
+    status: str  # "published" | "failed" | "in_progress"
+    external_post_id: str | None = None
+    permalink_url: str | None = None
+    error_message: str | None = None
+
+    @property
+    def is_published(self) -> bool:
+        return self.status == "published"
+
+    @property
+    def is_failed(self) -> bool:
+        return self.status == "failed"
+
+    @property
+    def is_in_progress(self) -> bool:
+        return self.status == "in_progress"
+
+
 class PublisherPort(ABC):
     """Một adapter cho một kênh."""
 
@@ -129,3 +151,13 @@ class PublisherPort(ABC):
         `access_token` truyền vào đã giải mã sẵn — adapter không tự đọc DB và
         không tự giải mã, để chỗ nào chạm token là đếm được.
         """
+
+    async def reconcile(
+        self,
+        *,
+        external_post_id: str | None = None,
+        access_token: str,
+        **kwargs,
+    ) -> ReconciliationOutcome:
+        """Đối soát lại trạng thái bài đăng trên kênh đối tác."""
+        raise NotImplementedError

@@ -153,6 +153,25 @@ class ConnectionRepository:
             return None
         return decrypt_token(connection.refresh_token_encrypted)
 
+    async def update_tokens(
+        self,
+        connection: PlatformConnection,
+        *,
+        access_token: str,
+        refresh_token: str | None = None,
+        expires_at: datetime | None = None,
+    ) -> PlatformConnection:
+        """Cập nhật access_token và refresh_token mới (sau khi refresh)."""
+        connection.access_token_encrypted = encrypt_token(access_token)
+        if refresh_token is not None:
+            connection.refresh_token_encrypted = encrypt_token(refresh_token)
+        if expires_at is not None:
+            connection.expires_at = expires_at
+        connection.status = ConnectionStatus.CONNECTED
+        connection.failure_reason = None
+        await self._session.flush()
+        return connection
+
     async def mark_unusable(
         self,
         connection: PlatformConnection,

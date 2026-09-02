@@ -150,3 +150,130 @@ async def test_reconcile_pending_publishes_dead_letters_after_24h(
     assert len(jobs) == 1
     assert jobs[0].status == PublishStatus.DEAD_LETTER
     assert "24 giờ" in (jobs[0].failure_detail or "")
+
+
+@pytest.mark.asyncio
+async def test_check_connections_health_tiktok_token_refresh(
+    db_session: AsyncSession, monkeypatch
+):
+    """Health check chủ động làm mới token TikTok khi token sắp hết hạn (trong vòng 24h)."""
+    user = User(name="TikTok User", email=f"tiktok_{uuid4()}@havi.vn", password_hash="hash")
+    db_session.add(user)
+    await db_session.flush()
+
+    ws = Workspace(name="TikTok WS", industry=Industry.SPA, owner_user_id=user.id)
+    db_session.add(ws)
+    await db_session.flush()
+
+    # Token expires in 2 hours
+    exp_time = datetime.now(UTC) + timedelta(hours=2)
+    conn = PlatformConnection(
+        workspace_id=ws.id,
+        platform=Platform.TIKTOK,
+        external_account_id="tiktok_user_999",
+        account_name="TikTok Spa",
+        access_token_encrypted=encrypt_token("old_tiktok_access_token"),
+        refresh_token_encrypted=encrypt_token("mock_tiktok_refresh_token"),
+        expires_at=exp_time,
+        status=ConnectionStatus.CONNECTED,
+    )
+    db_session.add(conn)
+    await db_session.commit()
+
+    # Run health check
+    await run_check_connections_health(db_session)
+
+    conn_repo = ConnectionRepository(db_session)
+    updated_conn = await conn_repo.get(workspace_id=ws.id, platform=Platform.TIKTOK)
+    assert updated_conn is not None
+    assert updated_conn.status == ConnectionStatus.CONNECTED
+    # Token has been refreshed and expires in 30 days
+    assert updated_conn.expires_at > datetime.now(UTC) + timedelta(days=1)
+    new_access = conn_repo.read_access_token(updated_conn)
+    assert new_access == "mock_refreshed_tiktok_access_token"
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_publishes_tiktok_success(
+    db_session: AsyncSession, monkeypatch
+):
+    """Job TikTok PENDING_RECONCILIATION được đối soát thành công qua API status/fetch/."""
+    user = User(name="Test TikTok User", email=f"reconcile_tt_{uuid4()}@havi.vn", password_hash="hash")
+    db_session.add(user)
+    await db_session.flush()
+
+    ws = Workspace(name="Test Reconcile TT WS", industry=Industry.SPA, owner_user_id=user.id)
+    db_session.add(ws)
+    await db_session.flush()
+
+    conn = PlatformConnection(
+        workspace_id=ws.id,
+        platform=Platform.TIKTOK,
+        external_account_id="tiktok_user_111",
+        account_name="TikTok Channel",
+        access_token_encrypted=encrypt_token("valid_tiktok_token"),
+        status=ConnectionStatus.CONNECTED,
+    )
+    db_session.add(conn)
+    await db_session.flush()
+
+    from domain.models.content import ContentItem
+    item = ContentItem(
+        workspace_id=ws.id,
+        channel=Channel.TIKTOK,
+        kind="video",
+        text="TikTok video content",
+        status=ContentStatus.APPROVED,
+    )
+    db_session.add(item)
+    await db_session.flush()
+
+    job = PublishJob(
+        workspace_id=ws.id,
+        content_item_id=item.id,
+        channel=Channel.TIKTOK,
+        idempotency_key=f"idem_tt_{uuid4()}",
+        status=PublishStatus.PENDING_RECONCILIATION,
+        external_post_id="v_pub_tiktok_pending_999",
+        scheduled_at=datetime.now(UTC) - timedelta(minutes=20),
+    )
+    db_session.add(job)
+    await db_session.commit()
+
+    # Force updated_at back 15 minutes (> 10m cutoff)
+    job.updated_at = datetime.now(UTC) - timedelta(minutes=15)
+    await db_session.commit()
+
+    # Mock TikTok status fetch API
+    def _tiktok_status_handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "data": {
+                    "status": "PUBLISH_COMPLETE",
+                    "publicaly_available_post_id": ["v_tiktok_live_final_id"],
+                }
+            },
+            request=request,
+        )
+
+    transport = httpx.MockTransport(_tiktok_status_handler)
+    _orig_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        "httpx.AsyncClient",
+        lambda *args, **kwargs: _orig_client(transport=transport),
+    )
+
+    await run_reconcile_pending_publishes(db_session)
+
+    pub_repo = PublishRepository(db_session)
+    updated_job = await pub_repo.get_by_id(job.id)
+    assert updated_job is not None
+    assert updated_job.status == PublishStatus.SUCCEEDED
+    assert updated_job.external_post_id == "v_tiktok_live_final_id"
+
+    from adapters.persistence.content_repository import ContentRepository
+    content_repo = ContentRepository(db_session)
+    updated_item = await content_repo.get_item(workspace_id=ws.id, item_id=item.id)
+    assert updated_item is not None
+    assert updated_item.status == ContentStatus.PUBLISHED

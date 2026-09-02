@@ -34,6 +34,12 @@ class PublishRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def get_by_id(self, job_id: UUID) -> PublishJob | None:
+        result = await self._session.execute(
+            select(PublishJob).where(PublishJob.id == job_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_idempotency_key(self, key: str) -> PublishJob | None:
         result = await self._session.execute(
             select(PublishJob).where(PublishJob.idempotency_key == key)
