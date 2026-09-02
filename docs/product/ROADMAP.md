@@ -285,9 +285,16 @@ for in parallel, well before its implementation slot comes up.
     implements `verify_publish_status` and `reconcile` to automatically resolve
     ambiguous outcomes (checking `PUBLISH_COMPLETE` vs `FAILED` vs in-progress).
     Proactive health check also handles token refreshes before expiry.
-2. [ ] YouTube Shorts. Same Havi path as TikTok: a finished vertical clip is
-   published and confirmed, so the second video channel is mostly adapter work.
-   Upload quota needs an increase request against the default daily limit.
+2. [ ] YouTube Shorts. Resumable upload (`uploadType=resumable`) with truthful
+   error classification and `AmbiguousPublishError` handling.
+   - Reconciliation implemented via `videos.list(part=status,processingDetails)`:
+     `processed`/`succeeded` -> published, `failed`/`rejected` -> dead-letter,
+     `uploaded`/`processing` -> in-progress.
+   - Shared daily quota (default 10,000 units/day) tracked in Redis resetting
+     at midnight Pacific Time (America/Los_Angeles); jobs defer to next day if
+     < 1,600 units remain. Alert triggers at >= 80% daily quota.
+   - Proactive health check handles Google OAuth token refresh automatically.
+   - Production readiness awaits official Google verification & quota increase.
 3. [ ] Google Business Profile, deferred behind the video channels. Beyond enabling
    the API it requires a separate access application.
 4. [ ] Email is not a channel decision. It needs list management, unsubscribe and

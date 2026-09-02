@@ -34,6 +34,7 @@ from domain.models.publish import PublishJob
 from domain.policies.circuit_breaker import registry as breaker_registry
 from domain.policies.connection_capabilities import Capability, has_capability
 from domain.policies.media_reachability import unreachable_reason
+from domain.policies.youtube_quota import check_quota_available, record_quota_consumption
 from domain.ports.publisher import (
     AmbiguousPublishError,
     AuthPermissionError,
@@ -100,6 +101,7 @@ class PublishService:
         media_public_url: str | None = None,
         alerts: AlertSink | None = None,
         publishers: dict[Channel, PublisherPort],
+        redis_client=None,
     ) -> None:
         self._content = content
         self._connections = connections
@@ -110,6 +112,7 @@ class PublishService:
         self._media_public_url = media_public_url or get_settings().media_public_url
         self._alerts = alerts or LoggingAlertSink()
         self._publishers = publishers
+        self._redis = redis_client
 
     async def dispatch_due(self, *, now: datetime | None = None) -> DispatchResult:
         """Scheduler: tìm bài đã duyệt tới giờ đăng và xếp vào hàng đợi.
@@ -143,33 +146,6 @@ class PublishService:
             skipped += int(not created)
 
         return DispatchResult(enqueued=enqueued, skipped=skipped)
-
-    async def _try_refresh_oauth_token(self, connection) -> str | None:
-        """Tự động làm mới access token Google khi hết hạn bằng refresh_token."""
-        refresh_token = self._connections.read_refresh_token(connection)
-        if not refresh_token:
-            return None
-        settings = get_settings()
-        if not (settings.google_client_id and settings.google_client_secret):
-            return None
-        payload = {
-            "client_id": settings.google_client_id,
-            "client_secret": settings.google_client_secret,
-            "refresh_token": refresh_token,
-            "grant_type": "refresh_token",
-        }
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                res = await client.post("https://oauth2.googleapis.com/token", data=payload)
-                if res.status_code == 200:
-                    data = res.json()
-                    new_token = data.get("access_token")
-                    if new_token:
-                        connection.access_token_encrypted = encrypt_token(new_token)
-                        return new_token
-        except Exception as exc:
-            logger.warning("Auto-refreshing Google token failed: %s", exc)
-        return None
 
     async def run_job(self, job: PublishJob) -> PublishJob:
         """Worker: đăng một job đã được `claim_due` khoá.
@@ -313,6 +289,31 @@ class PublishService:
                 job, kind=PublishFailureKind.TEMPORARY, detail=detail
             )
 
+        # Kiểm tra quota chia sẻ nếu là YouTube Shorts
+        if job.channel == Channel.YOUTUBE:
+            is_avail, used_quota, next_reset_utc = await check_quota_available(self._redis)
+            if not is_avail:
+                logger.warning(
+                    "YouTube daily quota đã dùng %d/10.000 units. Reschedule job %s sang %s",
+                    used_quota,
+                    job.id,
+                    next_reset_utc,
+                )
+                job.status = PublishStatus.PENDING
+                job.next_attempt_at = next_reset_utc
+                job.failure_kind = PublishFailureKind.TEMPORARY
+                job.failure_detail = (
+                    f"Hết hạn mức YouTube hôm nay ({used_quota}/10.000 units). "
+                    f"Tự động chờ sang ngày sau (00:00 giờ Pacific) để đăng."
+                )
+                await self._publishes._session.flush()
+                await self._record_event(
+                    job,
+                    output_summary=f"status=pending (quota_deferred: reset={next_reset_utc.isoformat()})",
+                    error=job.failure_detail,
+                )
+                return job
+
         publish_started = time.perf_counter()
 
         def _observe(outcome: str) -> None:
@@ -346,39 +347,6 @@ class PublishService:
             )
             return pending
         except AuthPermissionError as exc:
-            # Thử tự động refresh token nếu nền tảng là Google/YouTube và có refresh_token
-            if platform in (Platform.YOUTUBE, Platform.GOOGLE_BUSINESS):
-                new_token = await self._try_refresh_oauth_token(connection)
-                if new_token:
-                    try:
-                        result = await publisher.publish(
-                            PublishRequest(
-                                text=item.text,
-                                media_urls=media_urls,
-                                external_account_id=connection.external_account_id,
-                                idempotency_key=job.idempotency_key,
-                            ),
-                            access_token=new_token,
-                        )
-                        breaker.record_success()
-                        _observe("ok")
-                        await self._content.mark_published(
-                            item, published_at=result.published_at
-                        )
-                        succeeded = await self._publishes.mark_succeeded(
-                            job,
-                            external_post_id=result.external_post_id,
-                            published_at=result.published_at,
-                        )
-                        summary = f"status={succeeded.status.value} external_post_id={result.external_post_id}"
-                        await self._record_event(
-                            succeeded,
-                            output_summary=summary,
-                        )
-                        return succeeded
-                    except Exception as retry_exc:
-                        logger.warning("Retry after refresh token failed: %s", retry_exc)
-
             # Mất quyền cũng là "nền tảng trả lời được": upstream khoẻ, chỉ token
             # hết hiệu lực. Ghi nhận thành công cho breaker, nhưng đếm lượt publish
             # là thất bại — hai câu hỏi khác nhau, hai chỉ số khác nhau.
@@ -401,6 +369,11 @@ class PublishService:
 
         breaker.record_success()
         _observe("ok")
+
+        # Ghi nhận quota YouTube sau khi đăng thành công
+        if job.channel == Channel.YOUTUBE:
+            await record_quota_consumption(self._redis)
+
         await self._content.mark_published(item, published_at=result.published_at)
         succeeded = await self._publishes.mark_succeeded(
             job,

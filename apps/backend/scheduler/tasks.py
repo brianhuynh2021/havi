@@ -174,6 +174,8 @@ def purge_outbox() -> None:
 async def run_check_connections_health(session: AsyncSession | None = None) -> int:
     from datetime import UTC, datetime, timedelta
     import httpx
+    from adapters.oauth.google_business import GoogleBusinessOAuthClient
+    from adapters.oauth.google_youtube import GoogleYouTubeOAuthClient
     from adapters.oauth.tiktok import TikTokOAuthClient
     from adapters.persistence.connection_repository import ConnectionRepository
     from adapters.persistence.db import session_scope
@@ -274,6 +276,52 @@ async def run_check_connections_health(session: AsyncSession | None = None) -> i
                             )
                         )
                         expired_count += 1
+
+            elif conn.platform in (Platform.YOUTUBE, Platform.GOOGLE_BUSINESS):
+                # Google (YouTube / Business Profile): kiểm tra hạn token và tự động refresh
+                now = datetime.now(UTC)
+                is_near_expiry = conn.expires_at is None or conn.expires_at <= now + timedelta(hours=24)
+                if is_near_expiry and conn.refresh_token_encrypted:
+                    try:
+                        refresh_tok = conn_repo.read_refresh_token(conn)
+                        if refresh_tok:
+                            if conn.platform == Platform.YOUTUBE:
+                                oauth_g = GoogleYouTubeOAuthClient(settings)
+                            else:
+                                oauth_g = GoogleBusinessOAuthClient(settings)
+                            new_acc = await oauth_g.refresh_access_token(refresh_tok)
+                            await conn_repo.update_tokens(
+                                conn,
+                                access_token=new_acc.access_token,
+                                refresh_token=new_acc.refresh_token,
+                                expires_at=new_acc.expires_at,
+                                granted_scopes=new_acc.granted_scopes,
+                            )
+                            logger.info("Đã làm mới token Google (%s) chủ động cho conn %s", conn.platform.value, conn.id)
+                            continue
+                    except Exception as exc:
+                        logger.warning("Không thể làm mới token Google cho conn %s: %s", conn.id, exc)
+                        conn.status = ConnectionStatus.EXPIRED
+                        conn.failure_reason = f"Làm mới token Google ({conn.platform.value}) thất bại: {exc}"
+                        await events.record(
+                            EventLogEntry(
+                                workspace_id=conn.workspace_id,
+                                job_kind="connection.expired",
+                                input_summary=f"{conn.platform.value}:{conn.external_account_id}",
+                                output_summary="Health check phát hiện refresh token Google thất bại",
+                                error=str(exc),
+                            )
+                        )
+                        await alerts.send(
+                            Alert(
+                                type="connection.expired",
+                                severity="error",
+                                summary=f"Kết nối Google ({conn.platform.value}) '{conn.account_name or conn.external_account_id}' hết hạn và không thể làm mới token",
+                                workspace_id=str(conn.workspace_id),
+                                fields={"platform": conn.platform.value, "account_id": conn.external_account_id},
+                            )
+                        )
+                        expired_count += 1
         return expired_count
 
     if session is not None:
@@ -315,6 +363,7 @@ async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -
     from adapters.persistence.publish_repository import PublishRepository
     from adapters.publishers.facebook import FacebookPublisher
     from adapters.publishers.tiktok import TikTokPublisher
+    from adapters.publishers.youtube import YouTubePublisher
     from core.alerts import Alert, get_alert_sink
     from core.config import get_settings
     from core.enums import Channel, ConnectionStatus, ContentStatus, Platform, PublishFailureKind, PublishStatus
@@ -363,6 +412,8 @@ async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -
                     if job.channel in (Channel.FACEBOOK_PAGE, Channel.REELS)
                     else Platform.TIKTOK
                     if job.channel == Channel.TIKTOK
+                    else Platform.YOUTUBE
+                    if job.channel == Channel.YOUTUBE
                     else None
                 )
                 if not platform:
@@ -377,6 +428,8 @@ async def run_reconcile_pending_publishes(session: AsyncSession | None = None) -
                     publisher = FacebookPublisher(settings, channel=job.channel)
                 elif job.channel == Channel.TIKTOK:
                     publisher = TikTokPublisher()
+                elif job.channel == Channel.YOUTUBE:
+                    publisher = YouTubePublisher()
                 else:
                     continue
 

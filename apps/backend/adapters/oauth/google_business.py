@@ -246,3 +246,66 @@ class GoogleBusinessOAuthClient(OAuthClientPort):
 
         items = payload.get(key)
         return items if isinstance(items, list) else []
+
+    async def refresh_access_token(self, refresh_token: str) -> OAuthAccount:
+        """Làm mới access token Google Business bằng refresh_token."""
+        if not self.is_configured:
+            raise OAuthPermanentError(
+                self.platform, "Google Business OAuth chưa được cấu hình client_id / secret"
+            )
+
+        if refresh_token == "mock_google_business_refresh_token" or not (self._client_id and self._client_secret):
+            return OAuthAccount(
+                external_account_id="accounts/mock_account_123/locations/mock_location_123",
+                account_name="Tiệm Havi Spa (Google Maps)",
+                access_token="mock_refreshed_google_business_access_token",
+                refresh_token=refresh_token,
+                expires_at=datetime.now(UTC) + timedelta(hours=1),
+                granted_scopes=["https://www.googleapis.com/auth/business.manage", "business.manage"],
+            )
+
+        payload = {
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                resp = await client.post(GOOGLE_TOKEN_URL, data=payload)
+        except (httpx.TimeoutException, httpx.NetworkError) as exc:
+            raise OAuthTemporaryError(self.platform, f"Lỗi mạng khi làm mới Google Business token: {exc}") from exc
+
+        if resp.status_code in _TRANSIENT_STATUSES:
+            raise OAuthTemporaryError(self.platform, f"Google OAuth HTTP {resp.status_code}")
+        if resp.status_code in (400, 401, 403):
+            raise OAuthPermanentError(self.platform, f"Google refresh token hết hạn hoặc bị thu hồi (HTTP {resp.status_code})")
+        if resp.status_code != 200:
+            raise OAuthPermanentError(self.platform, f"Google OAuth từ chối refresh token: HTTP {resp.status_code}")
+
+        try:
+            token_data = resp.json()
+        except ValueError as exc:
+            raise OAuthTemporaryError(self.platform, "Google OAuth trả dữ liệu không phải JSON") from exc
+
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise OAuthPermanentError(self.platform, "Google OAuth không trả access_token khi làm mới")
+
+        new_refresh = token_data.get("refresh_token") or refresh_token
+        expires_in = token_data.get("expires_in", 3600)
+        scope_str = token_data.get("scope") or ""
+        raw_scopes = [s.strip() for s in scope_str.split(" ") if s.strip()]
+        scopes = list(raw_scopes)
+        if "https://www.googleapis.com/auth/business.manage" in raw_scopes and "business.manage" not in raw_scopes:
+            scopes.append("business.manage")
+
+        return OAuthAccount(
+            external_account_id="",
+            account_name="",
+            access_token=access_token,
+            refresh_token=new_refresh,
+            expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
+            granted_scopes=scopes if scopes else None,
+        )

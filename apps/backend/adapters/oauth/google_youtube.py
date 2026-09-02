@@ -3,10 +3,11 @@
 Triển khai `OAuthClientPort` theo chuẩn Google OAuth 2.0:
 1. `authorization_url`: redirect tới màn hình cấp quyền Google với scope `youtube.upload`.
 2. `exchange_code`: POST tới `https://oauth2.googleapis.com/token`.
+3. `refresh_access_token`: làm mới token bằng `refresh_token`.
 """
 
-import logging
 from datetime import UTC, datetime, timedelta
+import logging
 from urllib.parse import urlencode
 
 import httpx
@@ -78,6 +79,7 @@ class GoogleYouTubeOAuthClient(OAuthClientPort):
                 access_token="mock_youtube_access_token",
                 refresh_token="mock_youtube_refresh_token",
                 expires_at=datetime.now(UTC) + timedelta(hours=1),
+                granted_scopes=["https://www.googleapis.com/auth/youtube.upload", "youtube.upload"],
             )
 
         payload = {
@@ -114,6 +116,12 @@ class GoogleYouTubeOAuthClient(OAuthClientPort):
 
         refresh_token = data.get("refresh_token")
         expires_in = data.get("expires_in", 3600)
+        scope_str = data.get("scope") or ""
+        raw_scopes = [s.strip() for s in scope_str.split(" ") if s.strip()]
+        # Đảm bảo có cả short-name và URI đầy đủ
+        scopes: list[str] = list(raw_scopes)
+        if "https://www.googleapis.com/auth/youtube.upload" in raw_scopes and "youtube.upload" not in raw_scopes:
+            scopes.append("youtube.upload")
 
         # Lấy thông tin kênh YouTube
         channel_name = "YouTube Channel"
@@ -139,4 +147,69 @@ class GoogleYouTubeOAuthClient(OAuthClientPort):
             access_token=access_token,
             refresh_token=refresh_token,
             expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
+            granted_scopes=scopes if scopes else None,
+        )
+
+    async def refresh_access_token(self, refresh_token: str) -> OAuthAccount:
+        """Làm mới access token Google/YouTube bằng refresh_token."""
+        if not self.is_configured:
+            raise OAuthPermanentError(
+                self.platform, "Google/YouTube OAuth chưa được cấu hình client_id / secret"
+            )
+
+        if refresh_token == "mock_youtube_refresh_token" or not (self._client_id and self._client_secret):
+            return OAuthAccount(
+                external_account_id="youtube_mock_channel_123",
+                account_name="YouTube @KenhTiemDemo",
+                access_token="mock_refreshed_youtube_access_token",
+                refresh_token=refresh_token,
+                expires_at=datetime.now(UTC) + timedelta(hours=1),
+                granted_scopes=["https://www.googleapis.com/auth/youtube.upload", "youtube.upload"],
+            )
+
+        payload = {
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            try:
+                response = await client.post(GOOGLE_TOKEN_URL, data=payload, headers=headers)
+            except httpx.RequestError as exc:
+                raise OAuthTemporaryError(self.platform, f"Lỗi mạng khi làm mới Google token: {exc}") from exc
+
+        if response.status_code in _TRANSIENT_STATUSES:
+            raise OAuthTemporaryError(self.platform, f"Google OAuth HTTP {response.status_code}")
+        if response.status_code in (400, 401, 403):
+            raise OAuthPermanentError(self.platform, f"Google refresh token hết hạn hoặc bị thu hồi (HTTP {response.status_code})")
+        if response.status_code != 200:
+            raise OAuthPermanentError(self.platform, f"Google OAuth từ chối refresh token: HTTP {response.status_code}")
+
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise OAuthTemporaryError(self.platform, "Google OAuth trả dữ liệu không phải JSON") from exc
+
+        access_token = data.get("access_token")
+        if not access_token:
+            raise OAuthPermanentError(self.platform, "Google OAuth không trả access_token khi làm mới")
+
+        new_refresh = data.get("refresh_token") or refresh_token
+        expires_in = data.get("expires_in", 3600)
+        scope_str = data.get("scope") or ""
+        raw_scopes = [s.strip() for s in scope_str.split(" ") if s.strip()]
+        scopes: list[str] = list(raw_scopes)
+        if "https://www.googleapis.com/auth/youtube.upload" in raw_scopes and "youtube.upload" not in raw_scopes:
+            scopes.append("youtube.upload")
+
+        return OAuthAccount(
+            external_account_id="",
+            account_name="",
+            access_token=access_token,
+            refresh_token=new_refresh,
+            expires_at=datetime.now(UTC) + timedelta(seconds=expires_in),
+            granted_scopes=scopes if scopes else None,
         )

@@ -37,8 +37,8 @@ ALL_CHANNELS = [
 
 
 def _skip_if_unsupported(channel: Channel) -> None:
-    if channel in (Channel.YOUTUBE, Channel.GOOGLE_BUSINESS, Channel.ZALO_OA):
-        pytest.skip(f"{channel.value} conformance validation is scheduled for Phase 3 / Phase 4")
+    if channel in (Channel.GOOGLE_BUSINESS, Channel.ZALO_OA):
+        pytest.skip(f"{channel.value} conformance validation is scheduled for Phase 4")
 
 
 @pytest.mark.parametrize("channel", ALL_CHANNELS)
@@ -89,6 +89,26 @@ async def test_ambiguous_outcome_when_2xx_has_no_external_id(channel: Channel, m
             with pytest.raises(AmbiguousPublishError):
                 await pub.publish(
                     PublishRequest(text="TikTok video", media_urls=["https://havi.vn/clip.mp4"]),
+                    access_token="mock_tok",
+                )
+        return
+
+    if channel is Channel.YOUTUBE:
+        from adapters.publishers.youtube import YouTubePublisher
+
+        def _yt_handler(req: httpx.Request) -> httpx.Response:
+            if "uploadType=resumable" in str(req.url):
+                return httpx.Response(200, headers={"Location": "https://upload.youtube.com/put_file"}, request=req)
+            if "upload.youtube.com" in str(req.url):
+                return httpx.Response(200, json={}, request=req)  # 2xx without id -> ambiguous
+            return httpx.Response(200, content=b"fake_mp4_bytes", request=req)
+
+        transport = httpx.MockTransport(_yt_handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            pub = YouTubePublisher(client=client)
+            with pytest.raises(AmbiguousPublishError):
+                await pub.publish(
+                    PublishRequest(text="Shorts video", media_urls=["https://havi.vn/clip.mp4"]),
                     access_token="mock_tok",
                 )
         return
@@ -146,6 +166,20 @@ async def test_temporary_error_classification_for_rate_limits_and_5xx(channel: C
                     )
         return
 
+    if channel is Channel.YOUTUBE:
+        from adapters.publishers.youtube import YouTubePublisher
+
+        for status in (429, 500, 503):
+            transport = httpx.MockTransport(lambda req, s=status: httpx.Response(s, json={"error": "rate limit"}, request=req))
+            async with httpx.AsyncClient(transport=transport) as client:
+                pub = YouTubePublisher(client=client)
+                with pytest.raises(TemporaryPublishError):
+                    await pub.publish(
+                        PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]),
+                        access_token="tok",
+                    )
+        return
+
     settings = Settings(facebook_client_id="x", facebook_client_secret="y")
     pub = FacebookPublisher(settings)
 
@@ -183,6 +217,20 @@ async def test_auth_error_classification(channel: Channel):
                 await pub2.publish(PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]), access_token="invalid_tok")
         return
 
+    if channel is Channel.YOUTUBE:
+        from adapters.publishers.youtube import YouTubePublisher
+
+        pub = YouTubePublisher()
+        with pytest.raises(AuthPermissionError):
+            await pub.publish(PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]), access_token="")
+
+        transport = httpx.MockTransport(lambda req: httpx.Response(401, json={"error": "unauthorized"}, request=req))
+        async with httpx.AsyncClient(transport=transport) as client:
+            pub2 = YouTubePublisher(client=client)
+            with pytest.raises(AuthPermissionError):
+                await pub2.publish(PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]), access_token="invalid_tok")
+        return
+
     settings = Settings(facebook_client_id="x", facebook_client_secret="y")
     pub = FacebookPublisher(settings)
 
@@ -215,6 +263,20 @@ async def test_validation_permanent_error_classification(channel: Channel):
                 await pub2.publish(PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]), access_token="tok")
         return
 
+    if channel is Channel.YOUTUBE:
+        from adapters.publishers.youtube import YouTubePublisher
+
+        pub = YouTubePublisher()
+        with pytest.raises(ValidationPublishError):
+            await pub.publish(PublishRequest(text="No video", media_urls=[]), access_token="tok")
+
+        transport = httpx.MockTransport(lambda req: httpx.Response(400, json={"error": "bad format"}, request=req))
+        async with httpx.AsyncClient(transport=transport) as client:
+            pub2 = YouTubePublisher(client=client)
+            with pytest.raises(ValidationPublishError):
+                await pub2.publish(PublishRequest(text="vid", media_urls=["https://havi.vn/clip.mp4"]), access_token="tok")
+        return
+
     settings = Settings(facebook_client_id="x", facebook_client_secret="y")
     pub = FacebookPublisher(settings)
 
@@ -233,6 +295,12 @@ def test_granted_scopes_verification(channel: Channel):
         from adapters.oauth.tiktok import TIKTOK_SCOPES
         assert "video.upload" in TIKTOK_SCOPES
         assert "user.info.basic" in TIKTOK_SCOPES
+        return
+
+    if channel is Channel.YOUTUBE:
+        from domain.policies.connection_capabilities import _REQUIREMENTS
+        needed = _REQUIREMENTS[Platform.YOUTUBE][Capability.PUBLISH_POST]
+        assert "https://www.googleapis.com/auth/youtube.upload" in needed or "youtube.upload" in needed
         return
 
     from adapters.oauth.facebook import SCOPES
@@ -269,6 +337,33 @@ async def test_reconciliation_support(channel: Channel):
             outcome = await pub.reconcile(external_post_id="v_pub_123", access_token="tok")
             assert outcome.is_published
             assert outcome.external_post_id == "v_pub_tiktok_live_123"
+        return
+
+    if channel is Channel.YOUTUBE:
+        from adapters.publishers.youtube import YouTubePublisher
+
+        def _yt_status_handler(req: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "id": "yt_vid_live_123",
+                            "status": {"uploadStatus": "processed"},
+                            "processingDetails": {"processingStatus": "succeeded"},
+                        }
+                    ]
+                },
+                request=req,
+            )
+
+        transport = httpx.MockTransport(_yt_status_handler)
+        async with httpx.AsyncClient(transport=transport) as client:
+            pub = YouTubePublisher(client=client)
+            assert hasattr(pub, "reconcile")
+            outcome = await pub.reconcile(external_post_id="yt_vid_live_123", access_token="tok")
+            assert outcome.is_published
+            assert outcome.external_post_id == "yt_vid_live_123"
         return
 
     settings = Settings(facebook_client_id="x", facebook_client_secret="y")

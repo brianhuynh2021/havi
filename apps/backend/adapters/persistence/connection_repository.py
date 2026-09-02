@@ -160,6 +160,7 @@ class ConnectionRepository:
         access_token: str,
         refresh_token: str | None = None,
         expires_at: datetime | None = None,
+        granted_scopes: list[str] | None = None,
     ) -> PlatformConnection:
         """Cập nhật access_token và refresh_token mới (sau khi refresh)."""
         connection.access_token_encrypted = encrypt_token(access_token)
@@ -167,6 +168,8 @@ class ConnectionRepository:
             connection.refresh_token_encrypted = encrypt_token(refresh_token)
         if expires_at is not None:
             connection.expires_at = expires_at
+        if granted_scopes is not None:
+            connection.granted_scopes = list(granted_scopes)
         connection.status = ConnectionStatus.CONNECTED
         connection.failure_reason = None
         await self._session.flush()

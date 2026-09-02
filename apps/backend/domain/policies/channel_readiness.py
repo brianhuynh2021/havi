@@ -60,9 +60,9 @@ CHANNEL_REGISTRY: dict[Channel, ChannelReadiness] = {
     Channel.YOUTUBE: ChannelReadiness(
         provider_audit_passed=False,
         publish_verified_live_on=None,
-        reconciliation_implemented=False,
-        conformance_suite_passing=False,
-        proactive_health_check=False,
+        reconciliation_implemented=True,
+        conformance_suite_passing=True,
+        proactive_health_check=True,
         pricing_page_updated=False,
     ),
     Channel.GOOGLE_BUSINESS: ChannelReadiness(

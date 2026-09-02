@@ -277,3 +277,132 @@ async def test_reconcile_pending_publishes_tiktok_success(
     updated_item = await content_repo.get_item(workspace_id=ws.id, item_id=item.id)
     assert updated_item is not None
     assert updated_item.status == ContentStatus.PUBLISHED
+
+
+@pytest.mark.asyncio
+async def test_check_connections_health_youtube_token_refresh(
+    db_session: AsyncSession, monkeypatch
+):
+    """Health check chủ động làm mới token YouTube/Google khi token sắp hết hạn trong vòng 24h."""
+    user = User(name="YouTube User", email=f"yt_{uuid4()}@havi.vn", password_hash="hash")
+    db_session.add(user)
+    await db_session.flush()
+
+    ws = Workspace(name="YouTube WS", industry=Industry.SPA, owner_user_id=user.id)
+    db_session.add(ws)
+    await db_session.flush()
+
+    # Token expires in 1 hour
+    exp_time = datetime.now(UTC) + timedelta(hours=1)
+    conn = PlatformConnection(
+        workspace_id=ws.id,
+        platform=Platform.YOUTUBE,
+        external_account_id="UC_youtube_channel_123",
+        account_name="Spa YouTube Channel",
+        access_token_encrypted=encrypt_token("old_youtube_access_token"),
+        refresh_token_encrypted=encrypt_token("mock_youtube_refresh_token"),
+        expires_at=exp_time,
+        status=ConnectionStatus.CONNECTED,
+    )
+    db_session.add(conn)
+    await db_session.commit()
+
+    # Run health check
+    await run_check_connections_health(db_session)
+
+    conn_repo = ConnectionRepository(db_session)
+    updated_conn = await conn_repo.get(workspace_id=ws.id, platform=Platform.YOUTUBE)
+    assert updated_conn is not None
+    assert updated_conn.status == ConnectionStatus.CONNECTED
+    assert updated_conn.expires_at > datetime.now(UTC) + timedelta(minutes=30)
+    new_access = conn_repo.read_access_token(updated_conn)
+    assert new_access == "mock_refreshed_youtube_access_token"
+
+
+@pytest.mark.asyncio
+async def test_reconcile_pending_publishes_youtube_success(
+    db_session: AsyncSession, monkeypatch
+):
+    """Job YouTube PENDING_RECONCILIATION được đối soát thành công qua videos.list API."""
+    user = User(name="Test YT User", email=f"reconcile_yt_{uuid4()}@havi.vn", password_hash="hash")
+    db_session.add(user)
+    await db_session.flush()
+
+    ws = Workspace(name="Test Reconcile YT WS", industry=Industry.SPA, owner_user_id=user.id)
+    db_session.add(ws)
+    await db_session.flush()
+
+    conn = PlatformConnection(
+        workspace_id=ws.id,
+        platform=Platform.YOUTUBE,
+        external_account_id="UC_youtube_chan_999",
+        account_name="YouTube Shorts Channel",
+        access_token_encrypted=encrypt_token("valid_yt_token"),
+        status=ConnectionStatus.CONNECTED,
+    )
+    db_session.add(conn)
+    await db_session.flush()
+
+    from domain.models.content import ContentItem
+    item = ContentItem(
+        workspace_id=ws.id,
+        channel=Channel.YOUTUBE,
+        kind="video",
+        text="YouTube Shorts content #Shorts",
+        status=ContentStatus.APPROVED,
+    )
+    db_session.add(item)
+    await db_session.flush()
+
+    job = PublishJob(
+        workspace_id=ws.id,
+        content_item_id=item.id,
+        channel=Channel.YOUTUBE,
+        idempotency_key=f"idem_yt_{uuid4()}",
+        status=PublishStatus.PENDING_RECONCILIATION,
+        external_post_id="yt_vid_recon_123",
+        scheduled_at=datetime.now(UTC) - timedelta(minutes=20),
+    )
+    db_session.add(job)
+    await db_session.commit()
+
+    # Force updated_at back 15 minutes (> 10m cutoff)
+    job.updated_at = datetime.now(UTC) - timedelta(minutes=15)
+    await db_session.commit()
+
+    # Mock YouTube videos.list API
+    def _yt_status_handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "items": [
+                    {
+                        "id": "yt_vid_recon_123",
+                        "status": {"uploadStatus": "processed"},
+                        "processingDetails": {"processingStatus": "succeeded"},
+                    }
+                ]
+            },
+            request=request,
+        )
+
+    transport = httpx.MockTransport(_yt_status_handler)
+    _orig_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        "httpx.AsyncClient",
+        lambda *args, **kwargs: _orig_client(transport=transport),
+    )
+
+    await run_reconcile_pending_publishes(db_session)
+
+    pub_repo = PublishRepository(db_session)
+    updated_job = await pub_repo.get_by_id(job.id)
+    assert updated_job is not None
+    assert updated_job.status == PublishStatus.SUCCEEDED
+    assert updated_job.external_post_id == "yt_vid_recon_123"
+
+    from adapters.persistence.content_repository import ContentRepository
+    content_repo = ContentRepository(db_session)
+    updated_item = await content_repo.get_item(workspace_id=ws.id, item_id=item.id)
+    assert updated_item is not None
+    assert updated_item.status == ContentStatus.PUBLISHED
