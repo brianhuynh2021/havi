@@ -5,6 +5,7 @@ from math import ceil
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.enums import InboxItemStatus, InboxItemType, Platform
@@ -111,9 +112,26 @@ class InboxRepository:
             # tạo ra tin không có category rồi tin đó chìm dưới hàng đợi.
             category=inbox_triage.classify(content).value,
         )
-        self._session.add(item)
-        await self._session.flush()
-        return item
+        if external_message_id:
+            try:
+                async with self._session.begin_nested():
+                    self._session.add(item)
+                    await self._session.flush()
+                return item
+            except IntegrityError:
+                # Nền tảng gửi lại hoặc hai worker xử lý song song cùng một external_message_id
+                existing = await self.get_by_external_id(
+                    workspace_id=workspace_id,
+                    platform=platform,
+                    external_message_id=external_message_id,
+                )
+                if existing is not None:
+                    return existing
+                raise
+        else:
+            self._session.add(item)
+            await self._session.flush()
+            return item
 
     async def list_items(
         self,

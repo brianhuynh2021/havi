@@ -210,3 +210,52 @@ async def test_payment_replay_is_idempotent_and_reference_is_unique(
             amount_paid_vnd=second["amount_vnd"],
             now=first_paid_until,
         )
+
+
+def test_past_due_scheduled_publish_grace_policy():
+    """Chính sách hết hạn (b):
+    - Gói ACTIVE/TRIALING: Cho phép xuất bản.
+    - Gói PAST_DUE: Cho phép xuất bản bài đã lên lịch trong 7 ngày tới.
+    - Quá 7 ngày: Chặn xuất bản.
+    """
+    from datetime import timedelta
+    from domain.policies.subscription import (
+        SubscriptionState,
+        can_publish_scheduled_post,
+    )
+
+    now = datetime(2026, 9, 2, 10, 0, tzinfo=UTC)
+    expired_end = datetime(2026, 9, 1, 0, 0, tzinfo=UTC)
+
+    # 1. Active / Trialing -> True
+    active_sub = SubscriptionState(
+        plan=Plan.TIEM_NHO,
+        status=SubscriptionStatus.ACTIVE,
+        current_period_end=now + timedelta(days=20),
+    )
+    assert can_publish_scheduled_post(
+        subscription_state=active_sub,
+        scheduled_at=now + timedelta(days=10),
+        now=now,
+    )
+
+    # 2. Past due nhưng bài lên lịch trong vòng 7 ngày kể từ lúc hết hạn -> True
+    past_due_sub = SubscriptionState(
+        plan=Plan.TIEM_NHO,
+        status=SubscriptionStatus.PAST_DUE,
+        current_period_end=expired_end,
+    )
+    scheduled_within_7d = expired_end + timedelta(days=3)
+    assert can_publish_scheduled_post(
+        subscription_state=past_due_sub,
+        scheduled_at=scheduled_within_7d,
+        now=now,
+    )
+
+    # 3. Past due nhưng bài lên lịch sau 7 ngày -> False
+    scheduled_after_7d = expired_end + timedelta(days=8)
+    assert not can_publish_scheduled_post(
+        subscription_state=past_due_sub,
+        scheduled_at=scheduled_after_7d,
+        now=now,
+    )

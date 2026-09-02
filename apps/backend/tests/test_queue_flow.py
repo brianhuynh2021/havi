@@ -66,8 +66,38 @@ async def _add_inbox(
     return item
 
 
-async def test_workspace_moi_thi_hang_doi_rong(client: AsyncClient):
+async def _connect_facebook(session: AsyncSession, *, workspace_id: str) -> None:
+    from adapters.persistence.connection_repository import ConnectionRepository
+
+    await ConnectionRepository(session).upsert(
+        workspace_id=UUID(workspace_id),
+        platform=Platform.FACEBOOK,
+        access_token="mock_token",
+        external_account_id="page_123",
+        account_name="Facebook Page",
+    )
+    await session.flush()
+
+
+async def test_workspace_moi_chua_noi_kenh_sinh_item_blocking(client: AsyncClient):
     token_pair = await _onboard(client, email="queue-empty@havi.vn")
+
+    response = await client.get("/queue", headers=_headers(token_pair))
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["kind"] == "connection"
+    assert body["items"][0]["title"] == "Chưa nối kênh nào"
+    assert body["items"][0]["priority"] == 0
+    assert body["items"][0]["href"] == "/app/connections"
+
+
+async def test_workspace_da_noi_kenh_khong_co_viec_thi_hang_doi_rong(
+    client: AsyncClient, db_session: AsyncSession
+):
+    token_pair = await _onboard(client, email="queue-connected-empty@havi.vn")
+    await _connect_facebook(db_session, workspace_id=token_pair["active_workspace_id"])
 
     response = await client.get("/queue", headers=_headers(token_pair))
 
@@ -86,6 +116,7 @@ async def test_bon_nguon_ve_mot_danh_sach_va_xep_theo_thiet_hai(
     """
     token_pair = await _onboard(client, email="queue-mixed@havi.vn")
     workspace_id = token_pair["active_workspace_id"]
+    await _connect_facebook(db_session, workspace_id=workspace_id)
     now = datetime.now(UTC)
 
     draft = ContentItem(
@@ -142,6 +173,8 @@ async def test_hang_doi_khong_lan_sang_workspace_khac(
 ):
     token_a = await _onboard(client, email="queue-tenant-a@havi.vn")
     token_b = await _onboard(client, email="queue-tenant-b@havi.vn")
+    await _connect_facebook(db_session, workspace_id=token_a["active_workspace_id"])
+    await _connect_facebook(db_session, workspace_id=token_b["active_workspace_id"])
     now = datetime.now(UTC)
 
     await _add_inbox(
@@ -161,6 +194,7 @@ async def test_tin_da_tra_loi_roi_thi_ra_khoi_hang_doi(
     client: AsyncClient, db_session: AsyncSession
 ):
     token_pair = await _onboard(client, email="queue-closed@havi.vn")
+    await _connect_facebook(db_session, workspace_id=token_pair["active_workspace_id"])
     now = datetime.now(UTC)
 
     await _add_inbox(
@@ -188,6 +222,7 @@ async def test_binh_luan_co_link_ra_nen_tang_tin_nhan_thi_khong(
     """Thà không có nút hơn là nút dẫn sai — xem `domain/policies/platform_links.py`."""
     token_pair = await _onboard(client, email="queue-links@havi.vn")
     workspace_id = token_pair["active_workspace_id"]
+    await _connect_facebook(db_session, workspace_id=workspace_id)
     now = datetime.now(UTC)
 
     await _add_inbox(
@@ -220,9 +255,11 @@ async def test_nhan_viec_roi_tra_lai_hang_doi(client: AsyncClient, db_session: A
     """Resort có nhiều nhân viên trực ca. Không có chỗ ghi "ai đang xử lý" thì hai
     người cùng mở một tin và cùng trả lời một khách."""
     token_pair = await _onboard(client, email="queue-assign@havi.vn")
+    workspace_id = token_pair["active_workspace_id"]
+    await _connect_facebook(db_session, workspace_id=workspace_id)
     item = await _add_inbox(
         db_session,
-        workspace_id=token_pair["active_workspace_id"],
+        workspace_id=workspace_id,
         content="Cho em xin báo giá",
         created_at=datetime.now(UTC),
     )

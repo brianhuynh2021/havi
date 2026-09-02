@@ -34,6 +34,7 @@ def test_luong_duyet_day_du():
 def test_khong_the_dang_thang_khi_chua_duyet():
     assert not can_transition(ContentStatus.PENDING_APPROVAL, ContentStatus.PUBLISHING)
     assert not can_transition(ContentStatus.DRAFT, ContentStatus.PUBLISHED)
+    assert not can_transition(ContentStatus.DRAFT, ContentStatus.SCHEDULED)
 
 
 def test_published_la_trang_thai_cuoi():

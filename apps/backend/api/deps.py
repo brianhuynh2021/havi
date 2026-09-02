@@ -250,7 +250,11 @@ ContentServiceDep = Annotated[ContentService, Depends(get_content_service)]
 
 
 def get_approval_service(session: DbSessionDep) -> ApprovalService:
-    return ApprovalService(content=ContentRepository(session), events=EventLogRepository(session))
+    return ApprovalService(
+        content=ContentRepository(session),
+        events=EventLogRepository(session),
+        publishes=PublishRepository(session),
+    )
 
 
 ApprovalServiceDep = Annotated[ApprovalService, Depends(get_approval_service)]
@@ -495,6 +499,8 @@ _ROLE_NAMES = {
     WorkspaceRole.SALES: "Trực hội thoại",
 }
 
+#: Người soạn, Người duyệt và Chủ workspace được soạn/sửa/xoá nội dung.
+DrafterWorkspaceDep = Annotated[UUID, Depends(_require_permission("draft_content"))]
 #: Chỉ Người duyệt và Chủ workspace được đưa nội dung lên kênh.
 ApproverWorkspaceDep = Annotated[UUID, Depends(_require_permission("approve_content"))]
 #: Xem lịch sử hoạt động của cả workspace.

@@ -186,3 +186,29 @@ def check_plan_change(*, current: Plan, target: Plan) -> None:
         raise PlanChangeNotAllowed(
             "Không quay lại gói dùng thử được — dùng thử chỉ có một lần cho mỗi tiệm"
         )
+
+
+def can_publish_scheduled_post(
+    *,
+    subscription_state: SubscriptionState,
+    scheduled_at: datetime,
+    now: datetime | None = None,
+) -> bool:
+    """Kiểm tra một bài đã lên lịch từ trước có được phép xuất bản khi tới giờ không.
+
+    Chính sách an toàn (b):
+    - Gói còn hiệu lực (ACTIVE / TRIALING): Cho phép xuất bản bình thường.
+    - Gói PAST_DUE: Các bài đã được duyệt và lên lịch trong vòng 7 ngày tới (tính từ
+      mốc hết hạn hoặc mốc hiện tại) vẫn ĐƯỢC PHÉP xuất bản để không làm gãy chiến
+      dịch của khách hàng vừa hết hạn thẻ / chưa kịp thanh toán.
+    - Quá 7 ngày sau khi hết hạn: Chặn xuất bản.
+    """
+    if subscription_state.is_active:
+        return True
+
+    now_utc = _to_utc(now) or datetime.now(UTC)
+    scheduled_utc = _to_utc(scheduled_at) or now_utc
+    period_end_utc = _to_utc(subscription_state.current_period_end) or now_utc
+
+    cutoff = period_end_utc + timedelta(days=7)
+    return scheduled_utc <= cutoff

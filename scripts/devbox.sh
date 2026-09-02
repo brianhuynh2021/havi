@@ -9,6 +9,7 @@ echo "========================================================"
 echo "🧹 [0/4] Checking and freeing ports 3000, 8000 and background workers..."
 lsof -ti :3000 -ti :8000 | xargs kill -9 2>/dev/null || true
 pkill -9 -f "worker.celery_app" 2>/dev/null || true
+rm -f apps/web/.next/dev/lock 2>/dev/null || true
 
 # 1. Ensure Docker is running
 echo "📦 [1/4] Starting Docker infrastructure (Postgres, Redis, MinIO)..."

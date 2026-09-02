@@ -13,7 +13,7 @@ MAX_PUBLISH_RETRIES = 3
 
 _TRANSITIONS: dict[ContentStatus, frozenset[ContentStatus]] = {
     ContentStatus.DRAFT: frozenset(
-        {ContentStatus.PENDING_APPROVAL, ContentStatus.SCHEDULED, ContentStatus.DISMISSED}
+        {ContentStatus.PENDING_APPROVAL, ContentStatus.DISMISSED}
     ),
     ContentStatus.PENDING_APPROVAL: frozenset(
         {ContentStatus.APPROVED, ContentStatus.DRAFT, ContentStatus.DISMISSED}

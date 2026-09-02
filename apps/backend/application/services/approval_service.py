@@ -17,6 +17,7 @@ from uuid import UUID
 
 from adapters.persistence.content_repository import ContentRepository
 from adapters.persistence.event_log_repository import EventLogRepository
+from adapters.persistence.publish_repository import PublishRepository
 from core.content_state import (
     RESCHEDULABLE_STATUSES,
     InvalidTransitionError,
@@ -48,9 +49,16 @@ class BulkApproveOutcome:
 
 
 class ApprovalService:
-    def __init__(self, *, content: ContentRepository, events: EventLogRepository) -> None:
+    def __init__(
+        self,
+        *,
+        content: ContentRepository,
+        events: EventLogRepository,
+        publishes: PublishRepository | None = None,
+    ) -> None:
         self._content = content
         self._events = events
+        self._publishes = publishes
 
     async def update_item(
         self,
@@ -63,12 +71,18 @@ class ApprovalService:
         media_url: str | None = None,
         scheduled_at: datetime | None,
     ) -> ContentItem:
-        item = await self._require_item(workspace_id=workspace_id, item_id=item_id)
+        item = await self._require_item(workspace_id=workspace_id, item_id=item_id, for_update=True)
         if item.status in {ContentStatus.PUBLISHED, ContentStatus.PUBLISHING}:
             # Sửa text của bài đã/đang lên mạng thì bản trên Facebook và bản trong
             # DB lệch nhau — audit trail nói dối.
             raise NotReschedulable(item.status)
+        old_status = item.status
         old_text = item.text
+        old_media_url = item.media_url
+        content_changed = (text is not None and text != old_text) or (
+            media_url is not None and media_url != old_media_url
+        )
+
         updated = await self._content.update_item(
             item,
             text=text,
@@ -86,6 +100,23 @@ class ApprovalService:
                 action="content.edit",
                 summary=f"user={user_id} v{updated.version_no} diff_chars={diff_sign}",
             )
+
+        # Sửa chữ hoặc media sau khi duyệt -> hạ trạng thái về PENDING_APPROVAL,
+        # huỷ job chờ đăng và ghi audit event riêng.
+        if content_changed and old_status in {ContentStatus.APPROVED, ContentStatus.SCHEDULED}:
+            await self._content.set_item_status(updated, status=ContentStatus.PENDING_APPROVAL)
+            if self._publishes is not None:
+                await self._publishes.cancel_pending_for_item(
+                    content_item_id=updated.id,
+                    reason="Bản nháp bị chỉnh sửa sau khi duyệt, đã huỷ job chờ đăng.",
+                )
+            await self._audit(
+                workspace_id=workspace_id,
+                item=updated,
+                action="content.edit_after_approval",
+                summary=f"user={user_id} v{updated.version_no} demoted to pending_approval",
+            )
+
         return updated
 
     async def get_item(self, *, workspace_id: UUID, item_id: UUID) -> ContentItem:

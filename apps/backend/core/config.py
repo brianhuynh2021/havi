@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+psycopg://havi:havi@localhost:5432/havi"
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
     redis_url: str = "redis://localhost:6379/0"
 
     media_bucket: str = "havi-media"

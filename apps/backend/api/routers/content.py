@@ -20,6 +20,7 @@ from api.deps import (
     ApproverWorkspaceDep,
     AuthDep,
     ContentServiceDep,
+    DrafterWorkspaceDep,
     ObjectStorageDep,
     PublishServiceDep,
     WorkspaceDep,
@@ -393,7 +394,7 @@ async def update_content(
     content_id: UUID,
     payload: ContentItemUpdate,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    workspace_id: DrafterWorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> ContentItem:
     """Sửa text tạo `content_item_version` mới, không ghi đè bản cũ.
@@ -466,7 +467,7 @@ async def approve_all(
 async def dismiss_all(
     payload: BulkDismissRequest,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    workspace_id: DrafterWorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> BulkDismissResult:
     """Nút "Xoá tất cả bản nháp" — chuyển hàng loạt item sang DISMISSED."""
@@ -516,7 +517,7 @@ async def approve_content(
 async def reject_content(
     content_id: UUID,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    workspace_id: DrafterWorkspaceDep,
     approvals: ApprovalServiceDep,
     payload: RejectContentItemRequest | None = None,
 ) -> ContentItem:
@@ -540,7 +541,7 @@ async def reject_content(
 async def dismiss_content(
     content_id: UUID,
     auth: AuthDep,
-    workspace_id: WorkspaceDep,
+    workspace_id: DrafterWorkspaceDep,
     approvals: ApprovalServiceDep,
 ) -> ContentItem:
     """Xoá bỏ bài nháp vĩnh viễn: PENDING_APPROVAL/DRAFT/SCHEDULED → DISMISSED."""

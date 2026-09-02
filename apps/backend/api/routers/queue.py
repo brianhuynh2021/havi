@@ -69,22 +69,43 @@ async def work_queue(workspace_id: WorkspaceDep, session: DbSessionDep) -> WorkQ
     """Mọi việc đang mở, xếp theo thiệt hại khi bỏ sót rồi tới thời gian chờ."""
     items: list[WorkItem] = []
 
-    # 1. Kênh mất quyền — chặn mọi việc khác, nên lên đầu.
-    for connection in await ConnectionRepository(session).list_for_workspace(workspace_id):
+    # 1. Kênh kết nối — mất quyền hoặc chưa nối kênh nào, chặn mọi việc khác nên lên đầu.
+    connections = await ConnectionRepository(session).list_for_workspace(workspace_id)
+    connected_live_channels: list[Channel] = []
+    for connection in connections:
         if connection.status is ConnectionStatus.CONNECTED:
-            continue
+            for ch in PLATFORM_TO_CHANNELS.get(connection.platform, []):
+                if ch in channel_capabilities.LIVE_CHANNELS:
+                    connected_live_channels.append(ch)
+        else:
+            items.append(
+                WorkItem(
+                    kind=WorkKind.CONNECTION.value,
+                    id=connection.id,
+                    title=f"Kênh {connection.platform.value} cần xác thực lại",
+                    detail=(
+                        connection.external_account_name
+                        or "Nối lại để Havi đăng và nhận tin được"
+                    ),
+                    channel=connection.platform.value,
+                    priority=priority_for(kind=WorkKind.CONNECTION),
+                    waiting_since=connection.created_at,
+                    href="/app/connections",
+                )
+            )
+
+    if not connected_live_channels and not any(i.kind == WorkKind.CONNECTION.value for i in items):
+        from uuid import NAMESPACE_URL, uuid5
+        dummy_id = uuid5(NAMESPACE_URL, f"havi:no-connection:{workspace_id}")
         items.append(
             WorkItem(
                 kind=WorkKind.CONNECTION.value,
-                id=connection.id,
-                title=f"Kênh {connection.platform.value} cần xác thực lại",
-                detail=(
-                    connection.external_account_name
-                    or "Nối lại để Havi đăng và nhận tin được"
-                ),
-                channel=connection.platform.value,
+                id=dummy_id,
+                title="Chưa nối kênh nào",
+                detail="Chưa có kênh mạng xã hội nào được kết nối. Nối ít nhất một kênh để Havi bắt đầu hỗ trợ đăng bài và chăm sóc khách.",
+                channel=None,
                 priority=priority_for(kind=WorkKind.CONNECTION),
-                waiting_since=connection.created_at,
+                waiting_since=datetime.now(UTC),
                 href="/app/connections",
             )
         )

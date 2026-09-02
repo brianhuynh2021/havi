@@ -12,6 +12,7 @@ import json
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.routers.webhooks import _signature_matches
 from core.config import get_settings
@@ -375,6 +376,38 @@ class TestLocalSimulator:
         assert first.json()["id"] == second.json()["id"]
         listing = await client.get("/inbox", headers=headers)
         assert listing.json()["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_concurrent_webhook_ingestion_no_false_error(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
+        """Khi nổ race condition giữa hai lần nhận cùng external_message_id, không ném lỗi và không sinh dòng trùng."""
+        from uuid import UUID, uuid4
+        from adapters.persistence.inbox_repository import InboxRepository
+        from core.enums import Platform
+
+        mid = f"mid_race_{uuid4()}"
+        headers = await _onboard(client, f"webhook.race.{uuid4()}@havi.vn")
+        workspaces = (await client.get("/workspaces", headers=headers)).json()
+        ws_id = UUID(workspaces[0]["id"])
+
+        repo = InboxRepository(db_session)
+        item1 = await repo.create(
+            workspace_id=ws_id,
+            platform=Platform.FACEBOOK,
+            content="Tin nhắn 1",
+            author_name="Khách A",
+            external_message_id=mid,
+        )
+        # Second insert in same or concurrent context
+        item2 = await repo.create(
+            workspace_id=ws_id,
+            platform=Platform.FACEBOOK,
+            content="Tin nhắn 1 retry",
+            author_name="Khách A",
+            external_message_id=mid,
+        )
+        assert item1.id == item2.id
 
     @pytest.mark.asyncio
     async def test_exact_faq_is_suggested_but_never_auto_sent(self, client: AsyncClient):

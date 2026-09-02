@@ -11,11 +11,29 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 from core.config import get_settings
 
-_engine: AsyncEngine = create_async_engine(get_settings().database_url, pool_pre_ping=True)
+_settings = get_settings()
+
+#: Engine cho FastAPI app (chạy trong cùng một long-lived event loop)
+_engine: AsyncEngine = create_async_engine(
+    _settings.database_url,
+    pool_pre_ping=True,
+    pool_size=_settings.db_pool_size,
+    max_overflow=_settings.db_max_overflow,
+)
 _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
+
+#: Engine cho worker / scheduler / scripts (mỗi task chạy trong asyncio.run() riêng)
+#: Dùng NullPool để không giữ connection socket gắn với event loop đã kết thúc.
+_worker_engine: AsyncEngine = create_async_engine(
+    _settings.database_url,
+    poolclass=NullPool,
+    pool_pre_ping=True,
+)
+_worker_session_factory = async_sessionmaker(_worker_engine, expire_on_commit=False)
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession]:
@@ -36,9 +54,9 @@ DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 async def session_scope() -> AsyncGenerator[AsyncSession]:
     """Cho worker/scheduler — chỗ không có FastAPI dependency injection.
 
-    Cùng semantics commit/rollback như `get_db_session`, chỉ khác cách gọi.
+    Dùng NullPool engine để an toàn qua nhiều lần asyncio.run() khác nhau.
     """
-    async with _session_factory() as session:
+    async with _worker_session_factory() as session:
         try:
             yield session
             await session.commit()

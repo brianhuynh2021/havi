@@ -236,3 +236,23 @@ class PublishRepository:
         job.failure_detail = None
         await self._session.flush()
         return job
+
+    async def cancel_pending_for_item(
+        self, *, content_item_id: UUID, reason: str = "Bản nháp bị chỉnh sửa sau khi duyệt"
+    ) -> list[PublishJob]:
+        """Huỷ các publish job đang pending của một content item khi nội dung bị chỉnh sửa sau duyệt."""
+        result = await self._session.execute(
+            select(PublishJob).where(
+                PublishJob.content_item_id == content_item_id,
+                PublishJob.status == PublishStatus.PENDING,
+            )
+        )
+        jobs = list(result.scalars().all())
+        for job in jobs:
+            job.status = PublishStatus.DEAD_LETTER
+            job.failure_kind = PublishFailureKind.VALIDATION_PERMANENT
+            job.failure_detail = reason[:1000]
+            job.next_attempt_at = None
+        await self._session.flush()
+        return jobs
+

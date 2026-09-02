@@ -608,3 +608,118 @@ async def test_update_item_media_url_va_xoa_anh(client: AsyncClient, db_session:
     )
     assert remove_resp.status_code == 200
     assert remove_resp.json()["media_url"] is None
+
+
+async def test_sua_text_bai_da_duyet_chuyen_ve_pending_approval_va_huy_job_cho(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Marketer/chủ sửa text bài đã duyệt/scheduled -> hạ về pending_approval và huỷ job publish đang chờ."""
+    from adapters.persistence.publish_repository import PublishRepository
+    from core.enums import PublishStatus
+
+    token_pair = await _onboard(client, email="edit_approved@havi.vn")
+    item = await _draft(db_session, token_pair)
+    when = datetime.now(UTC) + timedelta(days=2)
+
+    # 1. Duyệt bài -> scheduled
+    approve_resp = await client.post(
+        f"/content/{item.id}/approve",
+        json={"scheduled_at": when.isoformat()},
+        headers=_headers(token_pair),
+    )
+    assert approve_resp.status_code == 200
+    assert approve_resp.json()["status"] == "scheduled"
+
+    # 2. Giả lập publish job đã được enqueue ở trạng thái PENDING
+    pub_repo = PublishRepository(db_session)
+    job, created = await pub_repo.enqueue(
+        workspace_id=UUID(token_pair["active_workspace_id"]),
+        content_item_id=item.id,
+        channel=Channel.FACEBOOK_PAGE,
+        scheduled_at=when,
+    )
+    assert created
+    assert job.status is PublishStatus.PENDING
+
+    # 3. Sửa text sau khi duyệt
+    patch_resp = await client.patch(
+        f"/content/{item.id}",
+        json={"text": "Nội dung mới toanh sau khi đã duyệt"},
+        headers=_headers(token_pair),
+    )
+    assert patch_resp.status_code == 200, patch_resp.text
+    body = patch_resp.json()
+    assert body["status"] == "pending_approval"
+    assert body["text"] == "Nội dung mới toanh sau khi đã duyệt"
+
+    # 4. Job publish chờ đăng phải bị huỷ (không còn ở PENDING)
+    await db_session.refresh(job)
+    assert job.status is not PublishStatus.PENDING
+    assert job.status is PublishStatus.DEAD_LETTER
+
+    # 5. Audit event content.edit_after_approval được ghi
+    events_res = await client.get(
+        "/analytics/events?job_kind=content.edit_after_approval", headers=_headers(token_pair)
+    )
+    assert events_res.status_code == 200
+    ev_items = events_res.json()["items"]
+    assert len(ev_items) == 1
+    assert "pending_approval" in ev_items[0]["input_summary"] or "pending_approval" in ev_items[0]["output_summary"]
+
+
+async def test_sales_khong_duoc_sua_hoac_tu_choi_hoac_dismiss_content(
+    client: AsyncClient, db_session: AsyncSession
+):
+    """Vai SALES không có quyền draft_content hay approve_content -> nhận 403."""
+    from tests.test_role_permissions import _member_headers, _owner_workspace
+
+    owner_headers, ws_id = await _owner_workspace(client, "owner_sales_check@havi.vn")
+    sales_headers = await _member_headers(
+        client,
+        owner_headers=owner_headers,
+        ws_id=ws_id,
+        email="sales_content_block@havi.vn",
+        role="sales",
+    )
+
+    item = await ContentRepository(db_session).create_item(
+        workspace_id=UUID(ws_id),
+        job_id=None,
+        channel=Channel.FACEBOOK_PAGE,
+        kind="Bài ảnh",
+        text="Bài kiểm tra quyền sales",
+        media_note=None,
+        status=ContentStatus.PENDING_APPROVAL,
+    )
+
+    # PATCH /content/{id} -> 403
+    patch_resp = await client.patch(
+        f"/content/{item.id}",
+        json={"text": "Sales cố sửa text"},
+        headers=sales_headers,
+    )
+    assert patch_resp.status_code == 403
+
+    # POST /content/{id}/reject -> 403
+    reject_resp = await client.post(
+        f"/content/{item.id}/reject",
+        json={"reason": "Sales cố từ chối"},
+        headers=sales_headers,
+    )
+    assert reject_resp.status_code == 403
+
+    # POST /content/{id}/dismiss -> 403
+    dismiss_resp = await client.post(
+        f"/content/{item.id}/dismiss",
+        headers=sales_headers,
+    )
+    assert dismiss_resp.status_code == 403
+
+    # POST /content/dismiss-all -> 403
+    dismiss_all_resp = await client.post(
+        "/content/dismiss-all",
+        json={"content_item_ids": [str(item.id)]},
+        headers=sales_headers,
+    )
+    assert dismiss_all_resp.status_code == 403
+

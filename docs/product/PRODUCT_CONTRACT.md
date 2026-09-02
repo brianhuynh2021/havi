@@ -76,6 +76,7 @@ does not count as activation.
 ## Safety and measurement
 
 - Nothing publishes without human approval. Approval is a system constraint, not an option that can be switched off. All drafts enter `PENDING_APPROVAL` and require explicit human confirmation before publishing.
+- When a subscription enters `PAST_DUE`, the workspace becomes read-only immediately (no new drafts, edits, or post scheduling). Posts already approved and scheduled within 7 days of expiration are permitted to publish so customer campaigns do not abruptly fail.
 - External success requires evidence returned by or read back from the provider.
 - Unknown states fail closed and enter reconciliation.
 - Every tenant query is scoped to a workspace.
