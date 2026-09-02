@@ -7,7 +7,7 @@ Product copy, pricing, sales material and release tests must agree with it.
 `AGENTS.md` contains development rules; `ROADMAP.md` contains future direction
 and must label everything not listed here as future work.
 
-Last verified: 2026-08-28.
+Last verified: 2026-09-02.
 
 ## Product promise
 
