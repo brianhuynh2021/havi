@@ -116,8 +116,11 @@ function getPlatformDescription(platform: Platform): string {
       return "Xuất bản bài viết, hình ảnh và Reels đã được duyệt lên Fanpage chính thức.";
     case "google_business":
       return "Đăng bài và cập nhật thông tin cơ sở lên hồ sơ Google Business.";
+    // Havi nộp video vào Hộp thư nháp TikTok (inbox), chủ kênh mở app TikTok
+    // bấm đăng. Nói "xuất bản" ở đây là hứa quá: đăng thẳng cần scope
+    // `video.publish` và phải qua App Review.
     case "tiktok":
-      return "Kết nối tài khoản TikTok để xuất bản video ngắn.";
+      return "Havi gửi video vào Hộp thư nháp TikTok. Bạn mở app TikTok để xem lại và bấm đăng.";
     case "youtube":
       return "Xuất bản video ngắn đã được duyệt lên YouTube Shorts.";
     case "zalo_oa":
@@ -217,6 +220,16 @@ export function ConnectionCard({
                 {t("Chưa bật:")} {missing.map((m) => t(m)).join(", ")}
                 {" — "}
                 {t("nối lại và tích thêm quyền để bật.")}
+              </p>
+            ) : null}
+            {/* Lịch hiện "Đã đăng" ngay khi TikTok nhận video, nhưng video mới
+              * nằm ở Hộp thư nháp. Không nói ra thì người dùng vào TikTok không
+              * thấy bài và tưởng Havi đăng hỏng. */}
+            {platform === "tiktok" && connection ? (
+              <p className={styles.missingCaps}>
+                {t(
+                  'Havi gửi video vào Hộp thư nháp TikTok. Lịch báo "Đã đăng" nghĩa là TikTok đã nhận — mở app TikTok bấm Đăng để video lên kênh.',
+                )}
               </p>
             ) : null}
           </div>

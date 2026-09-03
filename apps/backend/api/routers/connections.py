@@ -80,11 +80,15 @@ PLATFORM_CAPABILITIES: dict[Platform, dict] = {
         "max_text_length": 2000,
         "supported_features": ["paragraph_messages", "broadcast_care"],
     },
+    # `inbox_upload` chứ không phải `direct_post`: publisher gọi
+    # `post/publish/inbox/video/init/`, tức video vào Hộp thư nháp của TikTok và
+    # chủ kênh tự bấm đăng trong app. Direct post cần scope `video.publish` và
+    # phải qua App Review; scope đang xin là `video.upload`.
     Platform.TIKTOK: {
         "name": "TikTok Account",
         "supported_media": ["video"],
         "max_text_length": 4000,
-        "supported_features": ["short_form_video", "direct_post"],
+        "supported_features": ["short_form_video", "inbox_upload"],
     },
     Platform.YOUTUBE: {
         "name": "YouTube Channel",

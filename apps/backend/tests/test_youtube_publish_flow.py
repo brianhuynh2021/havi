@@ -20,7 +20,7 @@ from domain.models.content import ContentItem
 from domain.models.publish import PublishJob
 from domain.models.user import User
 from domain.models.workspace import Workspace
-from domain.policies.youtube_quota import record_quota_consumption
+from domain.policies.youtube_quota import get_pacific_now, record_quota_consumption
 from tests.test_youtube_quota import MockRedis
 
 
@@ -97,8 +97,10 @@ async def test_youtube_shorts_publish_success_increments_quota(
     assert result_job.status == PublishStatus.SUCCEEDED
     assert result_job.external_post_id == "yt_video_new_id_999"
 
-    # Quota đã tiêu thụ 1600 units
-    used_val = await redis.get(f"youtube_quota:{datetime.now(UTC).date().isoformat()}")
+    # Quota đã tiêu thụ 1600 units. Khoá Redis đánh theo ngày giờ Pacific vì
+    # YouTube reset quota lúc nửa đêm Pacific — lấy ngày UTC thì mọi lần chạy
+    # sau 17:00 Pacific đọc nhầm khoá của ngày hôm sau và thấy None.
+    used_val = await redis.get(f"youtube_quota:{get_pacific_now().date().isoformat()}")
     assert used_val is not None
     assert int(used_val) >= 1600
 
